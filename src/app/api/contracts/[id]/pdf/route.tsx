@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { auth } from '@/auth';
 import { ReservationContract } from '@/components/pdf/ReservationContract';
 import path from 'path';
+import { SIGNATURE_BASE64 } from '@/lib/signatureData';
 
 export async function GET(
     request: NextRequest,
