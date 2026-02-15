@@ -176,8 +176,8 @@ export const ReservationContract = ({ reservation, lot, logoPath, signaturePath 
                     <View style={{ width: '45%', alignItems: 'center' }}>
                         {/* Signature Image */}
                         <Image
-                            src="/firma_patricio_escobar.png"
-                            style={{ width: 150, height: 'auto', marginBottom: 10 }}
+                            src={signaturePath}
+                            style={{ width: 150, height: 80, marginBottom: 10 }} // Fixed height to prevent collapse
                         />
                         <View style={{ borderBottomWidth: 1, borderBottomColor: 'black', width: '100%', marginBottom: 5 }} />
                         <Text style={{ fontSize: 10, textAlign: 'center' }}>Patricio Escobar representante legal Alimin</Text>
