@@ -66,7 +66,7 @@ export const Header = ({ projectName }: HeaderProps) => {
                 <h1 className="text-xl font-bold text-white truncate">
                   {projectName}
                 </h1>
-                <p className="text-sm text-white/80 uppercase tracking-wide truncate">
+                <p className="text-sm text-white/80 uppercase tracking-wide truncate hidden md:block">
                   Tu terreno a pasos del mar
                 </p>
               </div>

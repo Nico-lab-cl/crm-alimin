@@ -785,7 +785,7 @@ export const LotReservationPopup = ({ lot, isOpen, onClose, onConfirm, isTempora
               ) : (
                 <>
                   <CreditCard className="w-4 h-4" />
-                  Reservar y Pagar Primera Cuota
+                  Reservar y Pagar
                 </>
               )}
             </Button>

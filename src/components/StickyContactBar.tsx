@@ -23,6 +23,7 @@ export const StickyContactBar = () => {
 
                 {/* Helper Text */}
                 <span className="text-white font-bold text-sm whitespace-nowrap hidden lg:block">
+                    {/* Texto de ayuda */}
                     ¿Tienes alguna duda?
                 </span>
 
