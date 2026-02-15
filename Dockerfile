@@ -40,7 +40,7 @@ RUN adduser --system --uid 1001 nextjs
 
 # Install OpenSSL 1.1 compatibility for Prisma
 # usage of "compat-openssl1.1" is critical for some Prisma versions on Alpine >3.16
-RUN apk add --no-cache compat-openssl1.1 openssl
+RUN apk add --no-cache openssl
 
 COPY --from=builder /app/public ./public
 
