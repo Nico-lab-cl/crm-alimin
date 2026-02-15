@@ -147,7 +147,7 @@ export const ReservationContract = ({ reservation, lot, logoPath }: ReservationC
                 </Text>
 
                 <Text style={styles.text}>
-                    1- <Text style={styles.bold}>{userName}</Text>, hace entrega en este acto la cantidad de $500.000 pesos chilenos, con pago mediante transferencia a la cuenta de Alimin, quedando de modo reserva por el terreno número {loteNumero} etapa {loteEtapa}, del proyecto Lomas del Mar, el cual, el monto antes indicado será descontado del valor del pie del terreno, el terreno se encuentra ubicado en el tabo nuevo camino costero hijuela 5.
+                    1- <Text style={styles.bold}>{userName}</Text>, hace entrega en este acto la cantidad de $500.000 pesos chilenos, con pago mediante transferencia a la cuenta de Alimin, quedando de modo reserva por el terreno número {loteNumero} etapa {loteEtapa}, del proyecto Lomas del Mar, el cual, el monto antes indicado será descontado del valor del pie del terreno. El terreno se encuentra ubicado en el tabo nuevo camino costero hijuela 5. IMPORTANTE: El valor del pie se descuenta del precio total del terreno.
                 </Text>
 
                 <Text style={styles.text}>

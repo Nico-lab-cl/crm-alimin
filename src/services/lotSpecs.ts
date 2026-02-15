@@ -184,8 +184,8 @@ export const getLotSpec = (lotId: number): LotSpec | null => {
 // Precios en CLP
 
 export const PRICING_RULES = {
-  PRICE_200M2: 34900000,
-  PRICE_390M2: 42900000,
+  PRICE_200M2: 35990000,
+  PRICE_390M2: 43990000,
 } as const;
 
 /**
