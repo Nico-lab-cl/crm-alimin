@@ -116,6 +116,7 @@ async function handleCommitRequest(req: NextRequest) {
                             name: buyerName,
                             password: hashedPassword,
                             role: 'USER',
+                            emailVerified: new Date(), // Auto-verify email for buyers
                         }
                     });
 
