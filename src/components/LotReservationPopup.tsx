@@ -71,12 +71,7 @@ export const LotReservationPopup = ({ lot, isOpen, onClose, onConfirm, isTempora
   });
   const [errors, setErrors] = useState<Partial<ContactFormData>>({});
 
-  const getTotalInstallments = (area: number | null | undefined) => {
-    if (area == null) return null;
-    if (area >= 200 && area <= 299) return 64;
-    if (area >= 300 && area <= 399) return 78;
-    return null;
-  };
+
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('es-CL', {
@@ -280,7 +275,8 @@ export const LotReservationPopup = ({ lot, isOpen, onClose, onConfirm, isTempora
       : getLotSpec(lot.id);
   const dimensions = lotSpec?.dimensions;
   const lotArea = lotSpec?.area_m2 || lot.area;
-  const totalInstallments = getTotalInstallments(lotArea);
+  // Use cuotas from lot data (DB)
+  const totalInstallments = lot.cuotas;
   const offerPrice = OFFER_PRICE;
   const showOfferSection = totalInstallments != null;
   const whatsappHref = `https://wa.me/56973077128?text=${encodeURIComponent(

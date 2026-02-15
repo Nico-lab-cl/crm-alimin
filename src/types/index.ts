@@ -19,6 +19,7 @@ export interface Lot {
   y: number; // percentage position
   size?: number; // visual size multiplier (default 1)
   // Nuevos campos opcionales
+  cuotas?: number | null; // Número de cuotas (desde DB)
   stage?: number; // Etapa 1..4
   stageLotNumber?: number; // Lote dentro de su etapa
   displayStage?: number; // Etapa visible en UI (considera overrides)

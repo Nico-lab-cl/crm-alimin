@@ -16,6 +16,7 @@ model Lot {
   price_total_clp        Int?
   reservation_amount_clp Int?
   status                 String    @default("available") // available, reserved, sold
+  cuotas                 Int?
   reserved_until         DateTime?
   reserved_at            DateTime?
   reserved_by            String?
