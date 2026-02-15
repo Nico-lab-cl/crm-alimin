@@ -24,6 +24,7 @@ import { useToast } from '@/hooks/use-toast';
 import { RutInput } from '@/components/RutInput';
 import { z } from 'zod';
 import { validateRutRaw } from '@/lib/rut';
+import { REGIONES_Y_COMUNAS } from '@/data/chile-data';
 
 
 
@@ -646,7 +647,6 @@ export const LotReservationPopup = ({ lot, isOpen, onClose, onConfirm, isTempora
                 <option value="Casado/a">Casado/a</option>
                 <option value="Viudo/a">Viudo/a</option>
                 <option value="Divorciado/a">Divorciado/a</option>
-                <option value="Conviviente Civil">Conviviente Civil</option>
               </select>
               {errors.marital_status && <p className="text-sm text-destructive animate-fade-in">{errors.marital_status}</p>}
             </div>
@@ -714,33 +714,47 @@ export const LotReservationPopup = ({ lot, isOpen, onClose, onConfirm, isTempora
 
             <div className="col-span-1 md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="group space-y-2">
-                <Label htmlFor="address_commune" className="flex items-center gap-2 text-sm">Comuna</Label>
-                <Input
-                  id="address_commune"
-                  placeholder="Ej: Santiago"
-                  value={formData.address_commune}
-                  onChange={(e: ChangeEvent<HTMLInputElement>) => {
-                    setFormData({ ...formData, address_commune: e.target.value });
-                    if (errors.address_commune) setErrors({ ...errors, address_commune: undefined });
+                <Label htmlFor="address_region" className="flex items-center gap-2 text-sm">Región</Label>
+                <select
+                  id="address_region"
+                  value={formData.address_region}
+                  onChange={(e) => {
+                    setFormData({ ...formData, address_region: e.target.value, address_commune: '' });
+                    if (errors.address_region) setErrors({ ...errors, address_region: undefined });
                   }}
-                  className={`transition-all duration-200 focus:scale-[1.01] ${errors.address_commune ? 'border-destructive' : ''}`}
-                />
-                {errors.address_commune && <p className="text-sm text-destructive animate-fade-in">{errors.address_commune}</p>}
+                  className={`flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200 focus:scale-[1.01] ${errors.address_region ? 'border-destructive' : ''}`}
+                >
+                  <option value="" disabled>Selecciona una región</option>
+                  {REGIONES_Y_COMUNAS.map((region) => (
+                    <option key={region.name} value={region.name}>
+                      {region.name}
+                    </option>
+                  ))}
+                </select>
+                {errors.address_region && <p className="text-sm text-destructive animate-fade-in">{errors.address_region}</p>}
               </div>
 
               <div className="group space-y-2">
-                <Label htmlFor="address_region" className="flex items-center gap-2 text-sm">Región</Label>
-                <Input
-                  id="address_region"
-                  placeholder="Ej: Metropolitana"
-                  value={formData.address_region}
-                  onChange={(e: ChangeEvent<HTMLInputElement>) => {
-                    setFormData({ ...formData, address_region: e.target.value });
-                    if (errors.address_region) setErrors({ ...errors, address_region: undefined });
+                <Label htmlFor="address_commune" className="flex items-center gap-2 text-sm">Comuna</Label>
+                <select
+                  id="address_commune"
+                  value={formData.address_commune}
+                  onChange={(e) => {
+                    setFormData({ ...formData, address_commune: e.target.value });
+                    if (errors.address_commune) setErrors({ ...errors, address_commune: undefined });
                   }}
-                  className={`transition-all duration-200 focus:scale-[1.01] ${errors.address_region ? 'border-destructive' : ''}`}
-                />
-                {errors.address_region && <p className="text-sm text-destructive animate-fade-in">{errors.address_region}</p>}
+                  disabled={!formData.address_region}
+                  className={`flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200 focus:scale-[1.01] ${errors.address_commune ? 'border-destructive' : ''}`}
+                >
+                  <option value="" disabled>Selecciona una comuna</option>
+                  {formData.address_region &&
+                    REGIONES_Y_COMUNAS.find((r) => r.name === formData.address_region)?.communes.map((commune) => (
+                      <option key={commune} value={commune}>
+                        {commune}
+                      </option>
+                    ))}
+                </select>
+                {errors.address_commune && <p className="text-sm text-destructive animate-fade-in">{errors.address_commune}</p>}
               </div>
             </div>
           </div>
@@ -778,6 +792,6 @@ export const LotReservationPopup = ({ lot, isOpen, onClose, onConfirm, isTempora
           </div>
         </div>
       </div>
-    </div>
+    </div >
   );
 };
