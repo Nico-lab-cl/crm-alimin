@@ -36,7 +36,7 @@ interface VideoGalleryProps {
 
 export const VideoGallery = ({ onCtaClick }: VideoGalleryProps) => {
     return (
-        <section className="bg-background py-16 md:py-24 animate-in fade-in duration-700">
+        <section className="py-16 md:py-24 animate-in fade-in duration-700">
             <div className="container mx-auto px-4">
                 <div className="text-center mb-12">
                     <h2 className="text-3xl md:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-b from-foreground to-foreground/70 mb-4 font-heading">

@@ -470,7 +470,7 @@ export default function Home() {
   return (
     <div
       className="min-h-screen relative z-10 text-foreground font-sans antialiased"
-      style={{ background: 'linear-gradient(180deg, #edf4f5 0%, #f8fafc 100%)' }}
+      style={{ background: 'linear-gradient(180deg, #e0ebeb 0%, #f5fcfc 100%)' }}
     >
 
       {/* Header */}
@@ -488,7 +488,7 @@ export default function Home() {
       </div>
 
       {/* MOBILE MAP SECTION - VISIBLE ONLY ON MOBILE */}
-      <section ref={mobileMapSectionRef} className="w-full pt-16 pb-24 bg-muted/5 animate-in fade-in duration-1000 block md:hidden">
+      <section ref={mobileMapSectionRef} className="w-full pt-16 pb-24 animate-in fade-in duration-1000 block md:hidden">
         <div className="container mx-auto px-4 text-center mb-10 overflow-hidden">
           <div className="flex flex-col items-center justify-center gap-6 mb-6">
             <img src="/logo.png" alt="Lomas del Mar" className="h-16 w-auto object-contain drop-shadow-sm" />
@@ -541,7 +541,7 @@ export default function Home() {
 
 
         {/* 2. Vista Satelital (Secundaria) - Immersive Full Bleed - DESKTOP ONLY */}
-        <section ref={mapSectionRef} className="w-full pt-16 pb-24 bg-muted/5 animate-in fade-in duration-1000 hidden md:block">
+        <section ref={mapSectionRef} className="w-full pt-16 pb-24 animate-in fade-in duration-1000 hidden md:block">
           <div className="container mx-auto px-4 text-center mb-10 overflow-hidden">
             <div className="flex flex-col md:flex-row items-center justify-center gap-6 mb-6">
               <img
