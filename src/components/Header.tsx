@@ -67,7 +67,7 @@ export const Header = ({ projectName }: HeaderProps) => {
                   {projectName}
                 </h1>
                 <p className="text-sm text-white/80 uppercase tracking-wide truncate">
-                  Compra tu terreno en El Tabo
+                  Tu terreno a pasos del mar
                 </p>
               </div>
             </Link>
