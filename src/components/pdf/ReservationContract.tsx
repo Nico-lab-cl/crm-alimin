@@ -14,22 +14,22 @@ interface ReservationContractProps {
 
 const styles = StyleSheet.create({
     page: {
-        paddingTop: 70, // ~2.5 cm
-        paddingBottom: 70,
-        paddingLeft: 70,
-        paddingRight: 70,
+        paddingTop: 50, // Reduced from 70
+        paddingBottom: 50,
+        paddingLeft: 60,
+        paddingRight: 60,
         fontFamily: 'Helvetica',
         fontSize: 11,
         lineHeight: 1.5,
     },
     header: {
-        marginBottom: 20,
+        marginBottom: 10, // Reduced from 20
         flexDirection: 'row',
-        justifyContent: 'flex-start', // Or 'center' based on PDF visual
+        justifyContent: 'flex-start',
         alignItems: 'center',
     },
     logo: {
-        width: 70, // Reduced to fit on one page
+        width: 50, // Reduced from 70
         height: 'auto',
     },
     title: {
