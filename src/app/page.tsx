@@ -61,6 +61,7 @@ type ApiLotsRow = {
   status: string;
   reserved_until?: string | null;
   cuotas?: number | null;
+  pie?: number | null;
 };
 
 const normalizeStatus = (status: unknown): Lot['status'] | null => {
@@ -120,6 +121,7 @@ export default function Home() {
           status: nextStatus,
           reservedUntil: Number.isFinite(reservedUntilMs) ? reservedUntilMs : null,
           cuotas: row?.cuotas ?? lot.cuotas, // Map cuotas from API
+          pie: row?.pie ?? lot.pie, // Map pie from API
           // Backend is the source-of-truth; locks from legacy local data should not drive reserved.
           lockedBy: null,
           lockedUntil: null,

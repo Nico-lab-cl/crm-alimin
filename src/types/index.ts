@@ -20,6 +20,7 @@ export interface Lot {
   size?: number; // visual size multiplier (default 1)
   // Nuevos campos opcionales
   cuotas?: number | null; // Número de cuotas (desde DB)
+  pie?: number | null; // Pie (desde DB o calculado)
   stage?: number; // Etapa 1..4
   stageLotNumber?: number; // Lote dentro de su etapa
   displayStage?: number; // Etapa visible en UI (considera overrides)
