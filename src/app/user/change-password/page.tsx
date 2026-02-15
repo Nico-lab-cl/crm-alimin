@@ -56,10 +56,17 @@ export default function ChangePasswordPage() {
 
             toast({
                 title: "Contraseña actualizada",
-                description: "Tu contraseña ha sido cambiada exitosamente.",
+                description: "Tu contraseña ha sido cambiada exitosamente. Por favor inicia sesión nuevamente.",
             });
 
             form.reset();
+
+            // Force sign out to clear stale session data (mustChangePassword: true)
+            // This forces them to re-login with new password, getting a fresh token.
+            // We use window.location to ensure a full refresh/redirect
+            setTimeout(() => {
+                window.location.href = "/api/auth/signout?callbackUrl=/login";
+            }, 2000);
         } catch (error: any) {
             toast({
                 variant: "destructive",

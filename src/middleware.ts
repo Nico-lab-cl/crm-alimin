@@ -24,5 +24,5 @@ export default auth((req) => {
 export const config = {
     // Apply to all user dashboard routes and potentially others where auth is required
     // We exclude api (except maybe protected ones?), static files, etc.
-    matcher: ['/user/:path*'],
+    matcher: ['/', '/user/:path*'],
 }
