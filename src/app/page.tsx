@@ -41,7 +41,7 @@ import { InvestmentThesis } from '@/components/InvestmentThesis';
 import { VideoGallery } from '@/components/VideoGallery';
 import { ProjectFeatures } from '@/components/ProjectFeatures';
 import { GoogleMapsButton } from '@/components/GoogleMapsButton';
-import { LegalDocumentsPopup } from '@/components/LegalDocumentsPopup';
+
 import { Footer } from '@/components/Footer';
 import { AdminLogin } from '@/components/AdminLogin';
 import { useToast } from '@/hooks/use-toast';
@@ -462,7 +462,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-background relative z-10">
-      <LegalDocumentsPopup />
+
       {/* Header */}
       <Header projectName="Lomas Del Mar" />
 
