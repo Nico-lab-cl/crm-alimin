@@ -75,29 +75,19 @@ export const ProjectFeatures = () => {
                         <div
                             key={index}
                             className={`
-                group relative p-6 rounded-2xl transition-all duration-300 hover:-translate-y-1
-                ${feature.highlight
-                                    ? 'bg-white shadow-xl border-2 border-alimin-green/20 ring-4 ring-alimin-green/10'
-                                    : 'bg-white shadow-sm hover:shadow-lg border border-slate-100'
-                                }
+                group relative p-6 rounded-2xl transition-all duration-300 hover:-translate-y-1 bg-alimin-green shadow-sm hover:shadow-lg border border-alimin-green/50
               `}
                         >
                             {/* Icono con fondo */}
-                            <div className={`
-                w-12 h-12 rounded-xl flex items-center justify-center mb-4 transition-colors
-                ${feature.highlight
-                                    ? 'bg-alimin-gold text-white'
-                                    : 'bg-alimin-gold/10 text-alimin-gold group-hover:bg-alimin-gold group-hover:text-white'
-                                }
-              `}>
+                            <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-4 transition-colors bg-white/10 text-alimin-gold group-hover:bg-white/20">
                                 <feature.icon className="w-6 h-6" />
                             </div>
 
                             {/* Textos */}
-                            <h3 className="text-xl font-bold text-slate-900 mb-2">
+                            <h3 className="text-xl font-bold text-white mb-2">
                                 {feature.title}
                             </h3>
-                            <p className="text-sm text-slate-500 leading-relaxed">
+                            <p className="text-sm text-white/80 leading-relaxed font-medium">
                                 {feature.description}
                             </p>
                         </div>

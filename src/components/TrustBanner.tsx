@@ -7,7 +7,7 @@ export const TrustBanner = () => {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12">
                     {/* Crédito Directo */}
                     <div className="flex flex-col items-center text-center gap-3 group hover:scale-105 transition-transform duration-300">
-                        <div className="p-4 bg-white/80 rounded-2xl shadow-sm group-hover:shadow-md transition-shadow ring-1 ring-alimin-green/10">
+                        <div className="p-4 bg-alimin-green rounded-2xl shadow-sm group-hover:shadow-md transition-shadow ring-1 ring-white/10">
                             <Banknote className="w-10 h-10 text-alimin-gold" strokeWidth={1.5} />
                         </div>
                         <div className="space-y-1">
@@ -22,7 +22,7 @@ export const TrustBanner = () => {
 
                     {/* Proyecto en construcción */}
                     <div className="flex flex-col items-center text-center gap-3 group hover:scale-105 transition-transform duration-300">
-                        <div className="p-4 bg-white/80 rounded-2xl shadow-sm group-hover:shadow-md transition-shadow ring-1 ring-alimin-green/10">
+                        <div className="p-4 bg-alimin-green rounded-2xl shadow-sm group-hover:shadow-md transition-shadow ring-1 ring-white/10">
                             <Key className="w-10 h-10 text-alimin-gold" strokeWidth={1.5} />
                         </div>
                         <div className="space-y-1">
@@ -37,7 +37,7 @@ export const TrustBanner = () => {
 
                     {/* Alta Plusvalía */}
                     <div className="flex flex-col items-center text-center gap-3 group hover:scale-105 transition-transform duration-300">
-                        <div className="p-4 bg-white/80 rounded-2xl shadow-sm group-hover:shadow-md transition-shadow ring-1 ring-alimin-green/10">
+                        <div className="p-4 bg-alimin-green rounded-2xl shadow-sm group-hover:shadow-md transition-shadow ring-1 ring-white/10">
                             <TrendingUp className="w-10 h-10 text-alimin-gold" strokeWidth={1.5} />
                         </div>
                         <div className="space-y-1">
