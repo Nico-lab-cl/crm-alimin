@@ -1,0 +1,173 @@
+import React from 'react';
+import { Document, Page, Text, View, StyleSheet, Image, Font } from '@react-pdf/renderer';
+import { Reservation, Lot } from '@prisma/client';
+
+// Register fonts if needed, but standard ones are built-in (Helvetica, Times-Roman)
+// Font.register({ family: 'Roboto', src: 'path/to/font' });
+
+interface ReservationContractProps {
+    reservation: Reservation;
+    lot: Lot;
+    logoPath: string; // Server-side path to logo
+}
+
+const styles = StyleSheet.create({
+    page: {
+        paddingTop: 70, // ~2.5 cm
+        paddingBottom: 70,
+        paddingLeft: 70,
+        paddingRight: 70,
+        fontFamily: 'Helvetica',
+        fontSize: 11,
+        lineHeight: 1.5,
+    },
+    header: {
+        marginBottom: 20,
+        flexDirection: 'row',
+        justifyContent: 'flex-start', // Or 'center' based on PDF visual
+        alignItems: 'center',
+    },
+    logo: {
+        width: 100, // Adjust size as needed
+        height: 'auto',
+    },
+    title: {
+        marginTop: 20,
+        marginBottom: 20,
+        fontSize: 14,
+        fontWeight: 'bold',
+        textAlign: 'center',
+        textTransform: 'uppercase',
+    },
+    text: {
+        marginBottom: 10,
+        textAlign: 'justify',
+    },
+    bold: {
+        fontWeight: 'bold', // Helvetica-Bold
+        fontFamily: 'Helvetica-Bold',
+    },
+});
+
+const formatCurrency = (amount: number | null | undefined) => {
+    if (amount == null) return '$0';
+    return '$' + amount.toLocaleString('es-CL');
+};
+
+const formatDate = (date: Date) => {
+    // Format: "27 de Enero del año dos mil veintiséis"
+    // Using Intl for basic formatting, but "dos mil veintiséis" is tricky without a specialized library or hardcoding for current year context.
+    // The user requested: "27 de Enero del año dos mil veintiséis".
+    // I will use a standard "27 de Enero de 2026" unless I implement a number-to-words converter, which is complex.
+    // Given the request "FECHA_ACTUAL_TEXTO" example, I'll try to match it as best as possible with standard JS dates.
+
+    const options: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'long', year: 'numeric' };
+    return date.toLocaleDateString('es-ES', options);
+};
+
+// Helper strictly for the year to words if needed, or just use digits as fallback
+const yearToText = (year: number) => {
+    // Simple mapping for likely years? Or just use digits. 
+    // Legal documents often use words. 
+    // Users instructions: "10 de Marzo del año dos mil veintiséis"
+    if (year === 2024) return "dos mil veinticuatro";
+    if (year === 2025) return "dos mil veinticinco";
+    if (year === 2026) return "dos mil veintiséis";
+    if (year === 2027) return "dos mil veintisiete";
+    return year.toString();
+}
+
+const getFullDateText = (date: Date) => {
+    const day = date.getDate();
+    const month = date.toLocaleDateString('es-ES', { month: 'long' });
+    const year = date.getFullYear();
+    const yearText = yearToText(year);
+    // Capitalize month? Usually lowercase in Spanish unless start of sentence, but legal docs might cap.
+    // User example: "Enero" capitalized.
+    const monthCap = month.charAt(0).toUpperCase() + month.slice(1);
+    return `${day} de ${monthCap} del año ${yearText}`;
+}
+
+
+export const ReservationContract = ({ reservation, lot, logoPath }: ReservationContractProps) => {
+    const currentDate = new Date();
+    const fechaActualTexto = getFullDateText(currentDate);
+
+    const userName = reservation.name.toUpperCase();
+    const estadoCivil = reservation.marital_status || 'SOLTERO/A';
+    const profesion = reservation.profession || 'OFICIO NO INFORMADO';
+    const userRut = reservation.rut || 'SIN RUT';
+    const direccionCompleta = [
+        reservation.address_street,
+        reservation.address_number,
+        reservation.address_commune,
+        reservation.address_region
+    ].filter(Boolean).join(', ') || 'DIRECCIÓN NO INFORMADA';
+
+    const loteNumero = lot.number || 'SN';
+    const loteEtapa = lot.stage?.toString() || 'SN'; // Assuming stage is Int in DB
+    const precioTotal = formatCurrency(lot.price_total_clp);
+    const pieLote = lot.pie || 0; // Default or null check
+    const valorPieLote = formatCurrency(pieLote);
+
+    const reservaAmount = 500000;
+    const saldoPie = Math.max(0, pieLote - reservaAmount);
+    const calculoSaldoPie = formatCurrency(saldoPie);
+
+    let textoCuotas = '';
+    if (lot.cuotas && lot.cuotas > 0) {
+        const valorCuotaFormatted = formatCurrency(lot.valor_cuota);
+        textoCuotas = `${lot.cuotas} cuotas mensuales de ${valorCuotaFormatted} al mes siguiente de la firma de la promesa de compraventa`;
+    }
+
+    // Fecha Promesa: Fecha Reserva (created_at) + 10 dias
+    // If reservation.created_at is Date object from Prisma
+    const fechaReserva = new Date(reservation.created_at);
+    const fechaPromesaDate = new Date(fechaReserva);
+    fechaPromesaDate.setDate(fechaPromesaDate.getDate() + 10);
+    const fechaPromesa = getFullDateText(fechaPromesaDate);
+
+
+    return (
+        <Document>
+            <Page size="A4" style={styles.page}>
+                {/* Header with Logo */}
+                <View style={styles.header}>
+                    {/* Use absolute path for server-side generation */}
+                    {/* If logoPath is valid, image will render */}
+                    <Image src={logoPath} style={styles.logo} />
+                </View>
+
+                <Text style={styles.title}>CONTRATO RESERVA ALIMIN LOMAS DEL MAR</Text>
+
+                <Text style={styles.text}>
+                    Con fecha {fechaActualTexto}, Comparecen: <Text style={styles.bold}>{userName}</Text>, {estadoCivil}, {profesion}, cédula de identidad {userRut}, domiciliada en {direccionCompleta}, en representación de Alimin Lomas del Mar, domiciliado en Hijuela 3 camino antiguo algarrobo comuna El Tabo Región Valparaíso, con Rut número 78.174.613-4, Don Patricio Andrés Escobar Díaz, chileno, soltero, cédula de identidad número 18.147.698-2 representante legal de Alimin.
+                </Text>
+
+                <Text style={styles.text}>
+                    1- <Text style={styles.bold}>{userName}</Text>, hace entrega en este acto la cantidad de $500.000 pesos chilenos, con pago mediante transferencia a la cuenta de Alimin, quedando de modo reserva por el terreno número {loteNumero} etapa {loteEtapa}, del proyecto Lomas del Mar, el cual, el monto antes indicado será descontado del valor del pie del terreno, el terreno se encuentra ubicado en el tabo nuevo camino costero hijuela 5.
+                </Text>
+
+                <Text style={styles.text}>
+                    2- El precio total del terreno tiene un valor de {precioTotal}, los cuales serán pagados mediante el pago de un pie inicial de {valorPieLote}, menos la reserva de $500.000 ya abonada, quedando un saldo de pie a pagar de {calculoSaldoPie} y {textoCuotas}.
+                </Text>
+
+                <Text style={styles.text}>
+                    3- El terreno incluirá, empalme de luz, arranque de agua de pozo certificada por la SEREMI de salud y rol propio en un condominio con áreas comunes. El terreno tiene una superficie de {lot.area_m2} metros cuadrados aproximadamente, con rol individual.
+                </Text>
+
+                <Text style={styles.text}>
+                    4- La venta del terreno reservado se realizará en verde en un "proyecto en construcción", por lo cual la parte compradora ya se encuentra en conocimiento de esto.
+                </Text>
+
+                <Text style={styles.text}>
+                    5- La promesa de compraventa deberá firmarse a más tardar con fecha {fechaPromesa}.
+                </Text>
+
+                <Text style={styles.text}>
+                    6- En caso de que la parte compradora desista de la compra, no hay devolución de la reserva.
+                </Text>
+            </Page>
+        </Document>
+    );
+};
