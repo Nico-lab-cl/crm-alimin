@@ -112,6 +112,7 @@ model User {
   password  String
   name      String
   role      Role     @default(SELLER)
+  mustChangePassword Boolean @default(false)
   createdAt DateTime @default(now())
 
   // Relations

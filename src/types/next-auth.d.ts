@@ -11,11 +11,13 @@ declare module "next-auth" {
             /** The user's role. */
             role: Role
             id: string
+            mustChangePassword: boolean
         } & DefaultSession["user"]
     }
 
     interface User {
         role: Role
+        mustChangePassword: boolean
     }
 }
 

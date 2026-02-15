@@ -53,7 +53,10 @@ export async function POST(req: NextRequest) {
         // Update user
         await prisma.user.update({
             where: { email: session.user.email },
-            data: { password: hashedPassword },
+            data: {
+                password: hashedPassword,
+                mustChangePassword: false // Clear the forced change flag
+            },
         });
 
         return NextResponse.json({ message: 'Contraseña actualizada exitosamente' });

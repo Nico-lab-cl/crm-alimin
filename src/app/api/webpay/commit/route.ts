@@ -117,6 +117,7 @@ async function handleCommitRequest(req: NextRequest) {
                             password: hashedPassword,
                             role: 'USER',
                             emailVerified: new Date(), // Auto-verify email for buyers
+                            mustChangePassword: true, // Force password change on first login
                         }
                     });
 

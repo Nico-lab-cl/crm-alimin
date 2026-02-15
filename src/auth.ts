@@ -61,6 +61,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             if (user) {
                 token.role = user.role
                 token.id = user.id
+                // Use type assertion if needed, though extending types/next-auth.d.ts should handle it
+                token.mustChangePassword = (user as any).mustChangePassword;
             }
             return token
         },
@@ -68,6 +70,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             if (token && session.user) {
                 session.user.role = token.role as Role
                 session.user.id = token.id as string
+                session.user.mustChangePassword = token.mustChangePassword as boolean;
             }
             return session
         },
