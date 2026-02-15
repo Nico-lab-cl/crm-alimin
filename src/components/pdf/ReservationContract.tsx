@@ -29,7 +29,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     logo: {
-        width: 100, // Adjust size as needed
+        width: 70, // Reduced to fit on one page
         height: 'auto',
     },
     title: {
@@ -180,7 +180,7 @@ export const ReservationContract = ({ reservation, lot, logoPath, signaturePath 
                             style={{ width: 150, height: 'auto', marginBottom: 10 }}
                         />
                         <View style={{ borderBottomWidth: 1, borderBottomColor: 'black', width: '100%', marginBottom: 5 }} />
-                        <Text style={{ fontSize: 10, textAlign: 'center' }}>POR ALIMIN LOMAS DEL MAR</Text>
+                        <Text style={{ fontSize: 10, textAlign: 'center' }}>Patricio Escobar representante legal Alimin</Text>
                         <Text style={{ fontSize: 8, textAlign: 'center' }}>78.174.613-4</Text>
                     </View>
 
