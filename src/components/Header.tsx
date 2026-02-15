@@ -50,7 +50,7 @@ export const Header = ({ projectName }: HeaderProps) => {
 
   return (
     <header
-      className="bg-card/95 backdrop-blur-md border-b border-border fixed top-0 left-0 right-0 z-50 transition-none"
+      className="bg-alimin-green/95 backdrop-blur-md border-b border-alimin-gold/20 fixed top-0 left-0 right-0 z-50 transition-none"
       style={{ height: 'var(--header-height)' }}
     >
       <div className="container mx-auto px-4 h-full flex items-center">
@@ -63,10 +63,10 @@ export const Header = ({ projectName }: HeaderProps) => {
             >
               <img src={logo} alt="Logo" className="w-14 h-14 object-contain" />
               <div className="min-w-0">
-                <h1 className="text-xl font-bold text-foreground truncate">
+                <h1 className="text-xl font-bold text-white truncate">
                   {projectName}
                 </h1>
-                <p className="text-sm text-muted-foreground uppercase tracking-wide truncate">
+                <p className="text-sm text-white/80 uppercase tracking-wide truncate">
                   Compra tu terreno en El Tabo
                 </p>
               </div>
