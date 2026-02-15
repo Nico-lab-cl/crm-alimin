@@ -75,7 +75,7 @@ export const LotReservationPopup = ({ lot, isOpen, onClose, onConfirm, isTempora
   // Fallback calculation in case DB data is missing or loading
   const getTotalInstallments = (area: number | null | undefined) => {
     if (area == null) return null;
-    if (area >= 200 && area <= 299) return 67;
+    if (area >= 200 && area <= 299) return 64;
     if (area >= 300 && area <= 399) return 77;
     return null;
   };
@@ -538,7 +538,7 @@ export const LotReservationPopup = ({ lot, isOpen, onClose, onConfirm, isTempora
               <div className="w-full border-t border-border"></div>
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="bg-card px-4 py-1 text-foreground font-semibold">Con este pago estás reservando tu terreno y pagando la primera cuota</span>
+              <span className="bg-card px-4 py-1 text-foreground font-semibold">Con este pago estás reservando tu terreno y pagando parte del pie</span>
             </div>
           </div>
 
