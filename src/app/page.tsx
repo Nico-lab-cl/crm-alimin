@@ -470,7 +470,7 @@ export default function Home() {
   return (
     <div
       className="min-h-screen relative z-10 text-foreground font-sans antialiased"
-      style={{ background: 'linear-gradient(180deg, #e0ebeb 0%, #f5fcfc 100%)' }}
+      style={{ background: 'linear-gradient(180deg, #d3e4e6 0%, #ebf2f5 100%)' }}
     >
 
       {/* Header */}
