@@ -86,6 +86,13 @@ export const LotReservationPopup = ({ lot, isOpen, onClose, onConfirm, isTempora
     return null;
   };
 
+  const getValorCuota = (area: number | null | undefined) => {
+    if (area == null) return null;
+    if (area >= 200 && area <= 299) return 550000;
+    if (area >= 300 && area <= 399) return 550000;
+    return null;
+  };
+
 
 
   const formatCurrency = (amount: number) => {
@@ -294,6 +301,8 @@ export const LotReservationPopup = ({ lot, isOpen, onClose, onConfirm, isTempora
   const totalInstallments = lot.cuotas ?? getTotalInstallments(lotArea);
   // Use pie from lot data (DB) first, fallback to calculation if missing
   const pieAmount = lot.pie ?? getPieAmount(lotArea);
+  // Use valorCuota from lot data (DB) first, fallback to calculation if missing
+  const valorCuotaAmount = lot.valorCuota ?? getValorCuota(lotArea);
   const offerPrice = OFFER_PRICE;
   const showOfferSection = totalInstallments != null;
   const whatsappHref = `https://wa.me/56973077128?text=${encodeURIComponent(
@@ -438,29 +447,38 @@ export const LotReservationPopup = ({ lot, isOpen, onClose, onConfirm, isTempora
           {/* Price Section */}
           <div className="mb-4 space-y-2">
             <div className="bg-muted/50 rounded-xl p-4 transition-all duration-200 hover:bg-muted/70 hover:scale-[1.02]">
-              <div className="flex justify-between items-center text-sm md:text-base text-gray-600">
-                <span className="font-medium">Valor Cuota (aprox)</span>
-                <span className="font-bold text-gray-900">
-                  {totalInstallments ? formatCurrency(Math.round((34900000 - (pieAmount || 0)) / totalInstallments)) : '---'}
-                </span>
-              </div>
               {pieAmount && (
-                <div className="flex justify-between items-center text-sm md:text-base text-gray-600 mt-1">
+                <div className="flex justify-between items-center text-sm md:text-base text-gray-600">
                   <span className="font-medium">Pie</span>
                   <span className="font-bold text-gray-900">{formatCurrency(pieAmount)}</span>
                 </div>
               )}
+
               <div className="flex justify-between items-center text-sm md:text-base text-gray-600 mt-1">
-                <span className="font-medium">Cuotas</span>
-                <span className="font-bold text-gray-900">{totalInstallments ?? '---'}</span>
-              </div>
-              <div className="mt-3 pt-3 border-t border-gray-200 flex items-center justify-between">
-                <span className="text-muted-foreground">Precio Total</span>
+                <span className="font-medium">Valor Total</span>
                 <span className="text-lg font-bold text-foreground">
                   {lot.totalPrice ? formatCurrency(lot.totalPrice) : 'Consultar'}
                 </span>
               </div>
+
+              <div className="flex justify-between items-center text-sm md:text-base text-gray-600 mt-1">
+                <span className="font-medium">Financiamiento</span>
+                <span className="font-bold text-gray-900">{totalInstallments ?? '---'} cuotas</span>
+              </div>
+
+              <div className="flex justify-between items-center text-sm md:text-base text-gray-600 mt-1">
+                <span className="font-medium">Cuota mensual</span>
+                <span className="font-bold text-gray-900">
+                  {valorCuotaAmount ? formatCurrency(valorCuotaAmount) : '---'}
+                </span>
+              </div>
+
+              <div className="flex justify-between items-center text-sm md:text-base text-gray-600 mt-1">
+                <span className="font-medium">Gastos operacionales</span>
+                <span className="font-bold text-gray-900">{formatCurrency(350000)}</span>
+              </div>
             </div>
+
             {showOfferSection && (
               <>
                 <div className="bg-primary/10 p-6 rounded-2xl border border-primary/20">
@@ -469,7 +487,7 @@ export const LotReservationPopup = ({ lot, isOpen, onClose, onConfirm, isTempora
                       <div className="p-2 bg-primary/20 rounded-lg">
                         <DollarSign className="w-5 h-5 text-primary transition-transform duration-200 group-hover:scale-110" />
                       </div>
-                      <span className="font-medium text-foreground">Primera cuota</span>
+                      <span className="font-medium text-foreground">Reserva</span>
                     </div>
                     <span className="text-2xl font-bold text-primary">{formatCurrency(offerPrice)}</span>
                   </div>

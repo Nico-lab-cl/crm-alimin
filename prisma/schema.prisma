@@ -18,6 +18,7 @@ model Lot {
   status                 String    @default("available") // available, reserved, sold
   cuotas                 Int?
   pie                    Int?
+  valor_cuota            Int?
   reserved_until         DateTime?
   reserved_at            DateTime?
   reserved_by            String?

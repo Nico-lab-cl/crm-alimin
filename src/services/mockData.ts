@@ -25,7 +25,8 @@ export { PRICING_RULES, calculateLotPricing } from './lotSpecs';
 
 // Oferta price is the same for all lots
 // Oferta price is the same for all lots
-export const OFFER_PRICE = 550000; // $550.000 CLP
+// Oferta price is the same for all lots
+export const OFFER_PRICE = 500000; // $500.000 CLP
 
 // Tipo para el mapa de posiciones por id
 type PositionsMap = Record<string, { x: number; y: number; size?: number }>;
@@ -266,13 +267,19 @@ const generateInitialLots = (): Lot[] => {
     // Mirror DB logic for initial state (fallback)
     let cuotas: number | null = null;
     let pie: number | null = null;
+    let valorCuota: number | null = null;
+    let fallbackTotalPrice: number | null = null;
 
     if (area && area >= 200 && area <= 299) {
       cuotas = 67;
       pie = 1000000;
+      valorCuota = 550000;
+      fallbackTotalPrice = 35990000;
     } else if (area && area >= 300 && area <= 399) {
       cuotas = 77;
       pie = 2000000;
+      valorCuota = 550000;
+      fallbackTotalPrice = 43990000;
     }
 
     // Determinar estado del lote (fuente de verdad final: Supabase/DB, pero inicializar con forceSold)
@@ -290,10 +297,11 @@ const generateInitialLots = (): Lot[] => {
       stage,
       stageLotNumber,
       forceSold,
-      totalPrice: pricing.totalPrice,
+      totalPrice: fallbackTotalPrice ?? pricing.totalPrice,
       dimensions,
       cuotas,
       pie,
+      valorCuota,
     });
   });
 
