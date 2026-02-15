@@ -42,6 +42,21 @@ export default function LoginPage() {
         resolver: zodResolver(loginSchema),
     });
 
+    // Check for password changed flag
+    React.useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('passwordChanged')) {
+            toast.success("Contraseña cambiada exitosamente. Por favor inicia sesión.", {
+                duration: 5000,
+                style: {
+                    background: '#36595F',
+                    color: 'white',
+                    border: '1px solid #36595F'
+                }
+            });
+        }
+    }, []);
+
     const onSubmit = async (data: LoginFormData) => {
         setIsLoading(true);
 

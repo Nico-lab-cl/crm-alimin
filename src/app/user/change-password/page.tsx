@@ -1,6 +1,6 @@
 "use client";
 
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -61,11 +61,11 @@ export default function ChangePasswordPage() {
 
             form.reset();
 
-            // Force sign out to clear stale session data (mustChangePassword: true)
-            // This forces them to re-login with new password, getting a fresh token.
-            // We use window.location to ensure a full refresh/redirect
-            setTimeout(() => {
-                window.location.href = "/api/auth/signout?callbackUrl=/login";
+            // Force sign out to clear stale session data
+            // Use signOut from next-auth/react to skip the confirmation page
+            // Redirect to login with a special flag
+            setTimeout(async () => {
+                await signOut({ callbackUrl: '/login?passwordChanged=true' });
             }, 2000);
         } catch (error: any) {
             toast({
