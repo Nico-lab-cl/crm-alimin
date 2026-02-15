@@ -9,6 +9,7 @@ interface ReservationContractProps {
     reservation: Reservation;
     lot: PrismaLot;
     logoPath: string; // Server-side path to logo
+    signaturePath: string; // Server-side path to signature
 }
 
 const styles = StyleSheet.create({
@@ -89,7 +90,7 @@ const getFullDateText = (date: Date) => {
 }
 
 
-export const ReservationContract = ({ reservation, lot, logoPath }: ReservationContractProps) => {
+export const ReservationContract = ({ reservation, lot, logoPath, signaturePath }: ReservationContractProps) => {
     const currentDate = new Date();
     const fechaActualTexto = getFullDateText(currentDate);
 
@@ -169,6 +170,27 @@ export const ReservationContract = ({ reservation, lot, logoPath }: ReservationC
                 <Text style={styles.text}>
                     6- En caso de que la parte compradora desista de la compra, no hay devolución de la reserva.
                 </Text>
+
+                {/* Signature Section */}
+                <View style={{ marginTop: 50, flexDirection: 'row', justifyContent: 'space-between' }}>
+                    <View style={{ width: '45%', alignItems: 'center' }}>
+                        {/* Signature Image */}
+                        <Image
+                            src="/firma_patricio_escobar.png"
+                            style={{ width: 150, height: 'auto', marginBottom: 10 }}
+                        />
+                        <View style={{ borderBottomWidth: 1, borderBottomColor: 'black', width: '100%', marginBottom: 5 }} />
+                        <Text style={{ fontSize: 10, textAlign: 'center' }}>POR ALIMIN LOMAS DEL MAR</Text>
+                        <Text style={{ fontSize: 8, textAlign: 'center' }}>78.174.613-4</Text>
+                    </View>
+
+                    <View style={{ width: '45%', alignItems: 'center', justifyContent: 'flex-end' }}>
+                        <View style={{ borderBottomWidth: 1, borderBottomColor: 'black', width: '100%', marginBottom: 5 }} />
+                        <Text style={{ fontSize: 10, textAlign: 'center' }}>POR CLIENTE</Text>
+                        <Text style={{ fontSize: 10, textAlign: 'center' }}>{userName}</Text>
+                        <Text style={{ fontSize: 8, textAlign: 'center' }}>{userRut}</Text>
+                    </View>
+                </View>
             </Page>
         </Document>
     );

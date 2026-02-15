@@ -52,12 +52,14 @@ export async function GET(
         }
 
         const logoPath = path.join(process.cwd(), 'public', 'logo.png');
+        const signaturePath = path.join(process.cwd(), 'public', 'firma_patricio_escobar.png');
 
         const stream = await renderToStream(
             <ReservationContract
                 reservation={reservation}
                 lot={reservation.lot}
                 logoPath={logoPath}
+                signaturePath={signaturePath}
             />
         );
 
