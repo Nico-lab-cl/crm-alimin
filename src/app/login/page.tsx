@@ -65,6 +65,9 @@ export default function LoginPage() {
                 if (session?.user?.role === 'ADMIN') {
                     // Redirect to home/map for everyone initially
                     router.push('/');
+                } else if (session?.user?.mustChangePassword) {
+                    // Force redirect to change password if required
+                    router.push('/user/change-password');
                 } else {
                     router.push('/');
                 }
