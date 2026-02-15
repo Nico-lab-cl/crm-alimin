@@ -111,9 +111,9 @@ export const Header = ({ projectName }: HeaderProps) => {
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild>
-                        <Link href="/user/contracts" className="cursor-pointer">
-                          <FileText className="mr-2 h-4 w-4" />
-                          <span>Mis Contratos</span>
+                        <Link href="/user/change-password" className="cursor-pointer">
+                          <Settings className="mr-2 h-4 w-4" />
+                          <span>Cambiar Contraseña</span>
                         </Link>
                       </DropdownMenuItem>
                     </>
