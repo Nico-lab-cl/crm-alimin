@@ -74,8 +74,8 @@ export const LotReservationPopup = ({ lot, isOpen, onClose, onConfirm, isTempora
   // Fallback calculation in case DB data is missing or loading
   const getTotalInstallments = (area: number | null | undefined) => {
     if (area == null) return null;
-    if (area >= 200 && area <= 299) return 64;
-    if (area >= 300 && area <= 399) return 78;
+    if (area >= 200 && area <= 299) return 67;
+    if (area >= 300 && area <= 399) return 77;
     return null;
   };
 

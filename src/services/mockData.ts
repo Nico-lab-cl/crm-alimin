@@ -265,8 +265,8 @@ const generateInitialLots = (): Lot[] => {
 
     // Mirror DB logic for initial state (fallback)
     let cuotas: number | null = null;
-    if (area && area >= 200 && area <= 299) cuotas = 64;
-    else if (area && area >= 300 && area <= 399) cuotas = 78;
+    if (area && area >= 200 && area <= 299) cuotas = 67;
+    else if (area && area >= 300 && area <= 399) cuotas = 77;
 
     // Determinar estado del lote (fuente de verdad final: Supabase/DB, pero inicializar con forceSold)
     const status: LotStatus = (forceSold && !FORCE_ALL_AVAILABLE) ? 'sold' : 'available';
