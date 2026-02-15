@@ -55,24 +55,34 @@ export const Header = ({ projectName }: HeaderProps) => {
     >
       <div className="container mx-auto px-4 h-full flex items-center">
         <div className="flex items-center justify-between w-full">
-          <Link
-            href="/"
-            className="flex items-center gap-4 min-w-0 hover:opacity-90 transition-opacity"
-            aria-label="Ir al inicio"
-          >
-            <img src={logo} alt="Logo" className="w-14 h-14 object-contain" />
-            <div className="min-w-0">
-              <h1 className="text-xl font-bold text-foreground truncate">
-                {projectName}
-              </h1>
-              <p className="text-sm text-muted-foreground uppercase tracking-wide truncate">
-                Compra tu terreno en El Tabo
-              </p>
+          <div className="flex items-center gap-4">
+            <Link
+              href="/"
+              className="flex items-center gap-4 min-w-0 hover:opacity-90 transition-opacity"
+              aria-label="Ir al inicio"
+            >
+              <img src={logo} alt="Logo" className="w-14 h-14 object-contain" />
+              <div className="min-w-0">
+                <h1 className="text-xl font-bold text-foreground truncate">
+                  {projectName}
+                </h1>
+                <p className="text-sm text-muted-foreground uppercase tracking-wide truncate">
+                  Compra tu terreno en El Tabo
+                </p>
+              </div>
+            </Link>
+
+            {/* Theme Toggle - Left Side */}
+            <div className="hidden md:flex ml-4 border-l pl-4 border-border">
+              <ThemeToggle />
             </div>
-          </Link>
+          </div>
 
-          <div className="flex items-start gap-2 md:gap-4">
-
+          <div className="flex items-center gap-2 md:gap-4">
+            {/* Mobile Theme Toggle */}
+            <div className="md:hidden flex mr-2">
+              <ThemeToggle />
+            </div>
 
             {session ? (
               <DropdownMenu>
@@ -181,16 +191,6 @@ export const Header = ({ projectName }: HeaderProps) => {
                 </Link>
               </div>
             )}
-
-            <div className="hidden md:flex">
-              <ThemeToggle />
-            </div>
-
-
-
-            <div className="md:hidden flex">
-              <ThemeToggle />
-            </div>
           </div>
         </div>
       </div>
