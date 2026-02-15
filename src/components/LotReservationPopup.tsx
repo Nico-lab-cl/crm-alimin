@@ -472,11 +472,6 @@ export const LotReservationPopup = ({ lot, isOpen, onClose, onConfirm, isTempora
                   {valorCuotaAmount ? formatCurrency(valorCuotaAmount) : '---'}
                 </span>
               </div>
-
-              <div className="flex justify-between items-center text-sm md:text-base text-gray-600 mt-1">
-                <span className="font-medium">Gastos operacionales</span>
-                <span className="font-bold text-gray-900">{formatCurrency(350000)}</span>
-              </div>
             </div>
 
             {showOfferSection && (
