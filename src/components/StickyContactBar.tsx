@@ -22,7 +22,7 @@ export const StickyContactBar = () => {
             <div className="flex items-center gap-3 md:gap-4 bg-alimin-gold/95 backdrop-blur-md rounded-full shadow-2xl border border-white/20 p-2 pl-4 md:pl-6 pr-2 overflow-x-auto md:overflow-hidden max-w-full">
 
                 {/* Helper Text */}
-                <span className="text-alimin-green font-bold text-sm whitespace-nowrap hidden lg:block">
+                <span className="text-white font-bold text-sm whitespace-nowrap hidden lg:block">
                     ¿Tienes alguna duda?
                 </span>
 
@@ -33,7 +33,7 @@ export const StickyContactBar = () => {
                         href="https://www.instagram.com/inmobiliaria.alimin/"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-alimin-green/80 hover:text-alimin-green transition-colors"
+                        className="text-white/80 hover:text-white transition-colors"
                         aria-label="Instagram"
                     >
                         <Instagram className="w-5 h-5" />
@@ -44,7 +44,7 @@ export const StickyContactBar = () => {
                         href="https://www.facebook.com/alimininmobiliaria"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-alimin-green/80 hover:text-alimin-green transition-colors"
+                        className="text-white/80 hover:text-white transition-colors"
                         aria-label="Facebook"
                     >
                         <Facebook className="w-5 h-5" />
@@ -55,7 +55,7 @@ export const StickyContactBar = () => {
                         href="https://www.tiktok.com/@inmobiliaria.alimin"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-alimin-green/80 hover:text-alimin-green transition-colors"
+                        className="text-white/80 hover:text-white transition-colors"
                         aria-label="TikTok"
                     >
                         <svg
@@ -79,7 +79,7 @@ export const StickyContactBar = () => {
                         href="https://www.youtube.com/@alimininmobiliaria"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-alimin-green/80 hover:text-alimin-green transition-colors"
+                        className="text-white/80 hover:text-white transition-colors"
                         aria-label="YouTube"
                     >
                         <Youtube className="w-5 h-5" />
@@ -88,7 +88,7 @@ export const StickyContactBar = () => {
                     {/* Email */}
                     <a
                         href="mailto:Inmobiliaria@aliminspa.cl"
-                        className="text-alimin-green/80 hover:text-alimin-green transition-colors"
+                        className="text-white/80 hover:text-white transition-colors"
                         aria-label="Email"
                     >
                         <Mail className="w-5 h-5" />
@@ -96,7 +96,7 @@ export const StickyContactBar = () => {
                 </div>
 
                 {/* Separator */}
-                <div className="w-px h-6 bg-alimin-green/30 flex-shrink-0" />
+                <div className="w-px h-6 bg-white/30 flex-shrink-0" />
 
                 {/* WhatsApp CTA */}
                 <a
