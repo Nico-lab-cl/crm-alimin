@@ -212,6 +212,45 @@ async function handleCommitRequest(req: NextRequest) {
                 console.warn('[n8n] N8N_WEBHOOK_URL not configured, skipping webhook', { reservationId: txRow.reservation_id });
             }
 
+            // ------------------------------------------------------------------
+            // NEW USER WEBHOOK TRIGGER (Guest Purchase -> Welcome Email)
+            // ------------------------------------------------------------------
+            if (isNewUser && generatedPassword) {
+                const NEW_USER_WEBHOOK_URL = 'https://n8n-n8n.yszha2.easypanel.host/webhook/7febf5b8-27dd-4988-b137-364480bcba58';
+
+                const newUserPayload = {
+                    email: txRow.reservation.email,
+                    name: txRow.reservation.name,
+                    temp_password: generatedPassword,
+                    login_url: `${process.env.NEXTAUTH_URL}/login`,
+                    dashboard_url: `${process.env.NEXTAUTH_URL}/user/plots`,
+                    rut: txRow.reservation.rut,
+                    phone: txRow.reservation.phone
+                };
+
+                console.log('[AutoRegister] Triggering New User Webhook', { email: txRow.reservation.email });
+
+                // Fire and forget (non-blocking) within reasonable timeout
+                const controllerNu = new AbortController();
+                const timeoutNu = setTimeout(() => controllerNu.abort(), 10000);
+
+                fetch(NEW_USER_WEBHOOK_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(newUserPayload),
+                    signal: controllerNu.signal
+                })
+                    .then(res => {
+                        clearTimeout(timeoutNu);
+                        console.log('[AutoRegister] New User Webhook sent', { status: res.status });
+                    })
+                    .catch(err => {
+                        clearTimeout(timeoutNu);
+                        console.error('[AutoRegister] New User Webhook failed', err);
+                    });
+            }
+            // ------------------------------------------------------------------
+
             return NextResponse.redirect(`${WEBPAY_CONFIG.finalOkUrl}?lotId=${txRow.lot_id}&reservationId=${txRow.reservation_id}`);
 
         } else {
