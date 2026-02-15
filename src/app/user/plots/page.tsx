@@ -112,9 +112,14 @@ export default function UserPlotsPage() {
                                         </div>
 
                                         <div className="pt-4 space-y-2">
-                                            <button className="w-full py-2 px-4 bg-[#36595F] text-white rounded hover:bg-[#2A464B] transition-colors text-sm font-medium">
+                                            <a
+                                                href={`/api/contracts/${res.id}/pdf`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="block w-full text-center py-2 px-4 bg-[#36595F] text-white rounded hover:bg-[#2A464B] transition-colors text-sm font-medium decoration-0"
+                                            >
                                                 Ver Contrato
-                                            </button>
+                                            </a>
                                             <button className="w-full py-2 px-4 border border-[#36595F] text-[#36595F] rounded hover:bg-[#36595F]/10 transition-colors text-sm font-medium">
                                                 Ver Pagos
                                             </button>

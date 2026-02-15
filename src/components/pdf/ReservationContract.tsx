@@ -1,13 +1,19 @@
 import React from 'react';
 import { Document, Page, Text, View, StyleSheet, Image, Font } from '@react-pdf/renderer';
-import { Reservation, Lot } from '@prisma/client';
+import { Reservation, Lot as PrismaLot } from '@prisma/client';
 
 // Register fonts if needed, but standard ones are built-in (Helvetica, Times-Roman)
 // Font.register({ family: 'Roboto', src: 'path/to/font' });
 
+interface ExtendedLot extends PrismaLot {
+    pie?: number | null;
+    cuotas?: number | null;
+    valor_cuota?: number | null;
+}
+
 interface ReservationContractProps {
     reservation: Reservation;
-    lot: Lot;
+    lot: ExtendedLot;
     logoPath: string; // Server-side path to logo
 }
 
