@@ -172,7 +172,10 @@ async function handleCommitRequest(req: NextRequest) {
                 // New User Credentials for Email (Handled by n8n)
                 user_is_new: isNewUser,
                 user_temp_password: generatedPassword || '',
-                login_url: `${process.env.NEXTAUTH_URL}/login`
+                login_url: `${process.env.NEXTAUTH_URL}/login`,
+
+                // PDF Download Link for Email
+                contract_pdf_url: `${process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXTAUTH_URL}/api/contracts/${txRow.reservation_id}/pdf`
             };
 
             // Trigger N8N (Non-blocking)
