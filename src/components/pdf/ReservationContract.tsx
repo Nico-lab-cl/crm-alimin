@@ -5,15 +5,9 @@ import { Reservation, Lot as PrismaLot } from '@prisma/client';
 // Register fonts if needed, but standard ones are built-in (Helvetica, Times-Roman)
 // Font.register({ family: 'Roboto', src: 'path/to/font' });
 
-interface ExtendedLot extends PrismaLot {
-    pie?: number | null;
-    cuotas?: number | null;
-    valor_cuota?: number | null;
-}
-
 interface ReservationContractProps {
     reservation: Reservation;
-    lot: ExtendedLot;
+    lot: PrismaLot;
     logoPath: string; // Server-side path to logo
 }
 
@@ -113,7 +107,9 @@ export const ReservationContract = ({ reservation, lot, logoPath }: ReservationC
     const loteNumero = lot.number || 'SN';
     const loteEtapa = lot.stage?.toString() || 'SN'; // Assuming stage is Int in DB
     const precioTotal = formatCurrency(lot.price_total_clp);
-    const pieLote = lot.pie || 0; // Default or null check
+    // Explicitly cast to any to avoid local type discrepancies if Prisma client isn't fully synced locally
+    const lotAny = lot as any;
+    const pieLote = lotAny.pie || 0; // Default or null check
     const valorPieLote = formatCurrency(pieLote);
 
     const reservaAmount = 500000;
@@ -121,9 +117,9 @@ export const ReservationContract = ({ reservation, lot, logoPath }: ReservationC
     const calculoSaldoPie = formatCurrency(saldoPie);
 
     let textoCuotas = '';
-    if (lot.cuotas && lot.cuotas > 0) {
-        const valorCuotaFormatted = formatCurrency(lot.valor_cuota);
-        textoCuotas = `${lot.cuotas} cuotas mensuales de ${valorCuotaFormatted} al mes siguiente de la firma de la promesa de compraventa`;
+    if (lotAny.cuotas && lotAny.cuotas > 0) {
+        const valorCuotaFormatted = formatCurrency(lotAny.valor_cuota);
+        textoCuotas = `${lotAny.cuotas} cuotas mensuales de ${valorCuotaFormatted} al mes siguiente de la firma de la promesa de compraventa`;
     }
 
     // Fecha Promesa: Fecha Reserva (created_at) + 10 dias
