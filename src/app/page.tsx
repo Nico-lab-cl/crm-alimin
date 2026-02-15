@@ -468,7 +468,10 @@ export default function Home() {
   );
 
   return (
-    <div className="min-h-screen bg-background relative z-10">
+    <div
+      className="min-h-screen relative z-10 text-foreground font-sans antialiased"
+      style={{ background: 'linear-gradient(180deg, #edf4f5 0%, #f8fafc 100%)' }}
+    >
 
       {/* Header */}
       <Header projectName="Lomas Del Mar" />
