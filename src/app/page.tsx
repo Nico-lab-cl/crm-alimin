@@ -51,9 +51,9 @@ import { MapPin, Sparkles, Droplets, Zap, Lock, Route, Footprints, Sun, Trees, S
 import Link from 'next/link';
 
 const BLOCK_DURATION = 60 * 1000; // 60 seconds
-const DISABLE_WAITING_ROOM = false;
-const DISABLE_COUNTDOWN = false;
-const DISABLE_SESSION_EXPIRY = false;
+const DISABLE_WAITING_ROOM = true;
+const DISABLE_COUNTDOWN = true;
+const DISABLE_SESSION_EXPIRY = true;
 
 type ApiLotsRow = {
   id: number;
