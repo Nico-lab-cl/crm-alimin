@@ -8,7 +8,7 @@ export const TrustBanner = () => {
                     {/* Crédito Directo */}
                     <div className="flex flex-col items-center text-center gap-3 group hover:scale-105 transition-transform duration-300">
                         <div className="p-4 bg-white/80 rounded-2xl shadow-sm group-hover:shadow-md transition-shadow ring-1 ring-alimin-green/10">
-                            <Banknote className="w-10 h-10 text-alimin-green" strokeWidth={1.5} />
+                            <Banknote className="w-10 h-10 text-alimin-gold" strokeWidth={1.5} />
                         </div>
                         <div className="space-y-1">
                             <h3 className="text-xl font-bold text-foreground group-hover:text-alimin-green transition-colors">
@@ -23,7 +23,7 @@ export const TrustBanner = () => {
                     {/* Proyecto en construcción */}
                     <div className="flex flex-col items-center text-center gap-3 group hover:scale-105 transition-transform duration-300">
                         <div className="p-4 bg-white/80 rounded-2xl shadow-sm group-hover:shadow-md transition-shadow ring-1 ring-alimin-green/10">
-                            <Key className="w-10 h-10 text-alimin-green" strokeWidth={1.5} />
+                            <Key className="w-10 h-10 text-alimin-gold" strokeWidth={1.5} />
                         </div>
                         <div className="space-y-1">
                             <h3 className="text-xl font-bold text-foreground group-hover:text-alimin-green transition-colors">
@@ -38,7 +38,7 @@ export const TrustBanner = () => {
                     {/* Alta Plusvalía */}
                     <div className="flex flex-col items-center text-center gap-3 group hover:scale-105 transition-transform duration-300">
                         <div className="p-4 bg-white/80 rounded-2xl shadow-sm group-hover:shadow-md transition-shadow ring-1 ring-alimin-green/10">
-                            <TrendingUp className="w-10 h-10 text-alimin-green" strokeWidth={1.5} />
+                            <TrendingUp className="w-10 h-10 text-alimin-gold" strokeWidth={1.5} />
                         </div>
                         <div className="space-y-1">
                             <h3 className="text-xl font-bold text-foreground group-hover:text-alimin-green transition-colors">

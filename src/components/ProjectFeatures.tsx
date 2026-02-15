@@ -86,8 +86,8 @@ export const ProjectFeatures = () => {
                             <div className={`
                 w-12 h-12 rounded-xl flex items-center justify-center mb-4 transition-colors
                 ${feature.highlight
-                                    ? 'bg-alimin-green text-white'
-                                    : 'bg-alimin-green/10 text-alimin-green group-hover:bg-alimin-green group-hover:text-white'
+                                    ? 'bg-alimin-gold text-white'
+                                    : 'bg-alimin-gold/10 text-alimin-gold group-hover:bg-alimin-gold group-hover:text-white'
                                 }
               `}>
                                 <feature.icon className="w-6 h-6" />
