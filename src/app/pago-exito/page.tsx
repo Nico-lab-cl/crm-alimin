@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { CheckCircle2, Home, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { getLotSpec, getStageLotSpec } from '@/services/lotSpecs';
 
@@ -183,12 +182,7 @@ function PagoExitoContent() {
         }
       `}</style>
 
-            {/* Header with high Z-index to ensure it sits on top */}
-            <div className="relative z-[100] w-full">
-                <Header projectName="Lomas Del Mar" />
-            </div>
-
-            <main className="container mx-auto px-4 pt-32 pb-12 flex-grow relative z-10">
+            <main className="container mx-auto px-4 py-12 flex-grow relative z-10">
                 <div className="max-w-3xl mx-auto print-container">
                     {/* Card Container: White background, rounded, shadow */}
                     <div className="bg-white rounded-2xl shadow-2xl overflow-hidden print-area">

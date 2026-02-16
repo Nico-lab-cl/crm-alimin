@@ -4,7 +4,6 @@ import { useMemo, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { XCircle, Home, RefreshCcw, AlertCircle, HelpCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { getLotSpec } from '@/services/lotSpecs';
 
@@ -36,10 +35,6 @@ function PagoFalloContent() {
     return (
         <div className="min-h-screen bg-black/95 relative flex flex-col">
             <div className="absolute inset-0 bg-[url('/terreno-bg.JPG')] bg-cover bg-center opacity-20 blur-sm fixed" />
-
-            <div className="relative z-10 w-full">
-                <Header projectName="Lomas Del Mar" />
-            </div>
 
             <main className="container mx-auto px-4 py-12 relative z-10 flex-grow flex items-center justify-center">
                 <div className="w-full max-w-2xl">
