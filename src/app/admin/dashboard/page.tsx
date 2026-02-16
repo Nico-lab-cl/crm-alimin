@@ -12,12 +12,18 @@ export default async function AdminDashboard() {
     }
 
     return (
-        <div className="h-full w-full">
-            <h2 className="text-2xl font-bold mb-6 text-[#36595F]">Control Global de Ventas</h2>
-            <AdminPipeline
-                initialData={pipelineResult.data as any}
-                sellers={sellersResult.data || []}
-            />
+        <div className="min-h-screen bg-black/95 relative w-full pt-8 px-4 pb-12">
+            <div className="absolute inset-0 bg-[url('/terreno-bg.JPG')] bg-cover bg-center opacity-20 blur-sm fixed" />
+
+            <div className="relative z-10 container mx-auto bg-black/60 p-8 rounded-xl border border-white/10 backdrop-blur-md">
+                <h2 className="text-2xl font-bold mb-6 text-[#36595F] bg-white/10 p-4 rounded-lg inline-block border border-white/5">Control Global de Ventas</h2>
+                <div className="bg-white/95 rounded-xl p-4 shadow-xl">
+                    <AdminPipeline
+                        initialData={pipelineResult.data as any}
+                        sellers={sellersResult.data || []}
+                    />
+                </div>
+            </div>
         </div>
     )
 }

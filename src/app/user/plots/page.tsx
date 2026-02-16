@@ -72,17 +72,19 @@ export default function UserPlotsPage() {
     }
 
     return (
-        <div className="min-h-screen bg-[#FDF9F3] text-[#36595F]">
-            <div className="container mx-auto p-8">
-                <header className="mb-12">
-                    <h1 className="text-4xl font-bold mb-2">Mis Terrenos</h1>
-                    <p className="text-lg opacity-80">Gestiona tus inversiones en Lomas del Mar.</p>
+        <div className="min-h-screen relative flex flex-col items-center pt-24 pb-12 px-4 bg-black/95">
+            <div className="absolute inset-0 bg-[url('/terreno-bg.JPG')] bg-cover bg-center opacity-20 blur-sm fixed" />
+
+            <div className="container mx-auto relative z-10">
+                <header className="mb-12 text-center">
+                    <h1 className="text-4xl font-bold mb-2 text-[#36595F]">Mis Terrenos</h1>
+                    <p className="text-lg opacity-80 text-gray-300">Gestiona tus inversiones en Lomas del Mar.</p>
                 </header>
 
                 <section>
                     {reservations.length === 0 ? (
-                        <Card>
-                            <CardContent className="p-8 text-center text-[#36595F]/70">
+                        <Card className="bg-black/40 border-white/10 text-white backdrop-blur-sm">
+                            <CardContent className="p-8 text-center text-gray-300">
                                 <p>No tienes terrenos asociados a tu cuenta aún.</p>
                                 <p className="text-sm mt-2">Si ya compraste uno, asegúrate de haber usado este correo electrónico.</p>
                             </CardContent>
@@ -90,42 +92,35 @@ export default function UserPlotsPage() {
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {reservations.map((res) => (
-                                <Card key={res.id} className="border-[#36595F]/20 shadow-md hover:shadow-lg transition-shadow bg-white">
-                                    <CardHeader className="bg-[#36595F] text-white rounded-t-lg">
+                                <Card key={res.id} className="border-white/10 shadow-lg hover:shadow-xl transition-shadow bg-black/60 text-white backdrop-blur-md">
+                                    <CardHeader className="bg-[#36595F]/90 text-white rounded-t-lg border-b border-white/10">
                                         <CardTitle>Lote {res.lot.number}</CardTitle>
                                         <CardDescription className="text-white/80">Etapa {res.lot.stage}</CardDescription>
                                     </CardHeader>
                                     <CardContent className="p-6 space-y-4">
-                                        <div className="flex justify-between items-center border-b pb-2">
+                                        <div className="flex justify-between items-center border-b border-white/10 pb-2">
                                             <span className="font-medium text-[#36595F]">Estado:</span>
-                                            <span className={`px-2 py-1 rounded text-xs font-bold ${res.status === 'paid' ? 'bg-green-100 text-green-800' :
-                                                res.status === 'pending_payment' ? 'bg-yellow-100 text-yellow-800' :
-                                                    'bg-gray-100 text-gray-800'
+                                            <span className={`px-2 py-1 rounded text-xs font-bold ${res.status === 'paid' ? 'bg-green-900/50 text-green-400 border border-green-500/30' :
+                                                res.status === 'pending_payment' ? 'bg-yellow-900/50 text-yellow-400 border border-yellow-500/30' :
+                                                    'bg-gray-800 text-gray-400 border border-gray-600/30'
                                                 }`}>
                                                 {res.status === 'paid' ? 'PAGADO' : res.status.toUpperCase()}
                                             </span>
                                         </div>
-                                        <div className="flex justify-between items-center text-sm">
+                                        <div className="flex justify-between items-center text-sm text-gray-300">
                                             <span>Superficie:</span>
                                             <span>{res.lot.area_m2} m²</span>
                                         </div>
-                                        <div className="flex justify-between items-center text-sm">
+                                        <div className="flex justify-between items-center text-sm text-gray-300">
                                             <span>Valor Total:</span>
                                             <span>${res.lot.price_total_clp?.toLocaleString('es-CL') || 'N/A'}</span>
                                         </div>
 
-                                        <div className="space-y-2">
-                                            <a
-                                                href={`/api/contracts/${res.id}/pdf`}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="block w-full text-center py-2 px-4 bg-[#36595F] text-white rounded hover:bg-[#2A464B] transition-colors text-sm font-medium decoration-0"
-                                            >
-                                                Ver Contrato Base
-                                            </a>
+                                        <div className="space-y-3 pt-2">
+                                            {/* Base Contract button removed as requested */}
 
                                             {res.signed_at ? (
-                                                <div className="w-full py-2 px-4 bg-green-100 text-green-800 border border-green-200 rounded text-center text-sm font-bold flex items-center justify-center gap-2">
+                                                <div className="w-full py-2 px-4 bg-green-900/30 text-green-400 border border-green-500/30 rounded text-center text-sm font-bold flex items-center justify-center gap-2">
                                                     <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
                                                     Firmado Digitalmente
                                                 </div>
@@ -141,8 +136,8 @@ export default function UserPlotsPage() {
                                                 />
                                             )}
 
-                                            <button className="w-full py-2 px-4 border border-[#36595F] text-[#36595F] rounded hover:bg-[#36595F]/10 transition-colors text-sm font-medium">
-                                                Ver Pagos
+                                            <button className="w-full py-2 px-4 bg-[#36595F] text-white rounded hover:bg-[#2A464B] transition-colors text-sm font-medium shadow-lg hover:shadow-[#36595F]/20">
+                                                Gestiona tus Pagos
                                             </button>
                                         </div>
                                     </CardContent>

@@ -93,7 +93,7 @@ export function SignContractModal({ reservationId, lotNumber, lotStage, onSucces
             else setIsOpen(true);
         }}>
             <DialogTrigger asChild>
-                <Button variant="outline" className="w-full border-[#36595F] text-[#36595F] hover:bg-[#36595F]/10">
+                <Button className="w-full bg-[#36595F] hover:bg-[#2A464B] text-white shadow-lg hover:shadow-[#36595F]/20 transition-all">
                     Firmar Contrato Digital
                 </Button>
             </DialogTrigger>

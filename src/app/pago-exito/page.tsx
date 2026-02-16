@@ -166,7 +166,9 @@ function PagoExitoContent() {
         }).format(amount);
 
     return (
-        <div className="min-h-screen bg-background relative z-10 flex flex-col">
+        <div className="min-h-screen bg-black/95 relative flex flex-col">
+            <div className="absolute inset-0 bg-[url('/terreno-bg.JPG')] bg-cover bg-center opacity-20 blur-sm fixed" />
+
             <style>{`
         @media print {
           @page { margin: 12mm; }
@@ -176,24 +178,26 @@ function PagoExitoContent() {
           main { padding: 0 !important; }
           .print-container { max-width: none !important; margin: 0 !important; }
           .print-area { border: 0 !important; background: #fff !important; padding: 0 !important; }
-          .print-area * { box-shadow: none !important; }
+          .print-area * { box-shadow: none !important; color: #000 !important; }
           .print-area a[href]:after { content: "" !important; }
         }
       `}</style>
-            <Header projectName="Lomas Del Mar" />
+            <div className="relative z-10 w-full">
+                <Header projectName="Lomas Del Mar" />
+            </div>
 
-            <main className="container mx-auto px-4 pt-32 pb-12 flex-grow">
+            <main className="container mx-auto px-4 pt-32 pb-12 flex-grow relative z-10 text-white">
                 <div className="max-w-3xl mx-auto print-container">
-                    <div className="bg-card shadow-lg border border-border rounded-xl p-8 mb-8 print-area">
+                    <div className="bg-black/60 shadow-2xl border border-white/10 rounded-xl p-8 mb-8 print-area backdrop-blur-md">
                         <div className="text-center mb-10 no-print">
-                            <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-alimin-green/10 dark:bg-alimin-green/30 mb-6 animate-scale-in">
-                                <CheckCircle2 className="w-12 h-12 text-alimin-green dark:text-[#4EA898]" />
+                            <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-[#36595F]/20 mb-6 animate-scale-in">
+                                <CheckCircle2 className="w-12 h-12 text-[#36595F]" />
                             </div>
 
-                            <h1 className="text-4xl font-bold text-foreground mb-4">
+                            <h1 className="text-4xl font-bold text-white mb-4">
                                 {receipt ? '¡Pago Confirmado!' : 'Procesando...'}
                             </h1>
-                            <p className="text-lg text-muted-foreground">
+                            <p className="text-lg text-gray-300">
                                 {receipt
                                     ? 'Tu reserva ha sido registrada con éxito.'
                                     : 'Estamos validando tu pago, por favor espera un momento.'}
@@ -201,90 +205,90 @@ function PagoExitoContent() {
                         </div>
 
                         <div className="status-card mb-6">
-                            <h2 className="text-2xl font-bold text-foreground mb-6 border-b pb-2">Resumen de la Operación</h2>
+                            <h2 className="text-2xl font-bold text-white mb-6 border-b border-white/10 pb-2">Resumen de la Operación</h2>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 no-print mb-8">
-                                <div className="p-5 bg-muted/50 rounded-lg flex flex-col justify-center items-center text-center">
-                                    <p className="text-sm text-muted-foreground uppercase tracking-wider mb-1">Estado</p>
-                                    <div className={`text-xl font-bold px-4 py-1 rounded-full ${receipt ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-yellow-100 text-yellow-700'}`}>
+                                <div className="p-5 bg-white/5 rounded-lg flex flex-col justify-center items-center text-center border border-white/5">
+                                    <p className="text-sm text-gray-400 uppercase tracking-wider mb-1">Estado</p>
+                                    <div className={`text-xl font-bold px-4 py-1 rounded-full ${receipt ? 'bg-green-900/50 text-green-400 border border-green-500/30' : 'bg-yellow-900/50 text-yellow-400 border border-yellow-500/30'}`}>
                                         {receipt ? 'APROBADO' : isLoading ? 'Procesando...' : 'En Verificación'}
                                     </div>
                                 </div>
 
-                                <div className="p-5 bg-muted/50 rounded-lg flex flex-col justify-center items-center text-center">
-                                    <p className="text-sm text-muted-foreground uppercase tracking-wider mb-1">Lote Reservado</p>
-                                    <p className="text-2xl font-bold text-foreground">{summaryLotLabel}</p>
+                                <div className="p-5 bg-white/5 rounded-lg flex flex-col justify-center items-center text-center border border-white/5">
+                                    <p className="text-sm text-gray-400 uppercase tracking-wider mb-1">Lote Reservado</p>
+                                    <p className="text-2xl font-bold text-white">{summaryLotLabel}</p>
                                     {summaryStageLabel && (
-                                        <p className="text-sm text-muted-foreground font-medium">{summaryStageLabel}</p>
+                                        <p className="text-sm text-gray-400 font-medium">{summaryStageLabel}</p>
                                     )}
                                 </div>
                             </div>
 
                             <div className="space-y-6">
-                                <h3 className="text-xl font-semibold text-foreground">Detalles del Comprobante</h3>
+                                <h3 className="text-xl font-semibold text-white">Detalles del Comprobante</h3>
 
                                 {isLoading && (
-                                    <div className="p-4 bg-muted/50 rounded-lg animate-pulse">
-                                        <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                                        <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                                    <div className="p-4 bg-white/5 rounded-lg animate-pulse">
+                                        <div className="h-4 bg-white/10 rounded w-3/4 mb-2"></div>
+                                        <div className="h-4 bg-white/10 rounded w-1/2"></div>
                                     </div>
                                 )}
 
                                 {!isLoading && receiptError === 'pending_confirmation' && (
-                                    <div className="p-4 bg-yellow-50 text-yellow-800 border border-yellow-200 rounded-lg">
+                                    <div className="p-4 bg-yellow-900/20 text-yellow-200 border border-yellow-500/30 rounded-lg">
                                         <p className="text-sm font-medium">
                                             Pago procesado, pero aún estamos confirmando la boleta.
                                         </p>
-                                        <p className="text-xs mt-1">Refresca la página en unos segundos.</p>
-                                        <p className="text-xs mt-2 font-mono bg-yellow-100 p-1 rounded inline-block">
+                                        <p className="text-xs mt-1 text-yellow-200/70">Refresca la página en unos segundos.</p>
+                                        <p className="text-xs mt-2 font-mono bg-yellow-900/40 p-1 rounded inline-block">
                                             ID: {safeText(reservationId)}
                                         </p>
                                     </div>
                                 )}
 
                                 {!isLoading && !receiptError && receipt && (
-                                    <div className="rounded-xl border border-border bg-muted/10 overflow-hidden">
-                                        <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-border">
+                                    <div className="rounded-xl border border-white/10 bg-white/5 overflow-hidden">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-white/10">
                                             {/* Comprador */}
                                             <div className="p-6 space-y-3">
-                                                <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Comprador</h4>
+                                                <h4 className="text-sm font-semibold text-gray-400 uppercase tracking-wide">Comprador</h4>
                                                 <div>
-                                                    <p className="font-bold text-lg text-foreground">{safeText(receipt.reservation?.name)}</p>
-                                                    <p className="text-sm text-muted-foreground">{safeText(receipt.reservation?.email)}</p>
-                                                    <p className="text-sm text-muted-foreground">{safeText(receipt.reservation?.phone)}</p>
-                                                    <p className="text-sm text-muted-foreground">RUT: {safeText(receipt.reservation?.rut)}</p>
+                                                    <p className="font-bold text-lg text-white">{safeText(receipt.reservation?.name)}</p>
+                                                    <p className="text-sm text-gray-300">{safeText(receipt.reservation?.email)}</p>
+                                                    <p className="text-sm text-gray-300">{safeText(receipt.reservation?.phone)}</p>
+                                                    <p className="text-sm text-gray-300">RUT: {safeText(receipt.reservation?.rut)}</p>
                                                 </div>
                                             </div>
 
                                             {/* Lote Detalle */}
                                             <div className="p-6 space-y-3">
-                                                <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Detalle Propiedad</h4>
+                                                <h4 className="text-sm font-semibold text-gray-400 uppercase tracking-wide">Detalle Propiedad</h4>
                                                 <div>
-                                                    <p className="font-bold text-lg text-foreground">
+                                                    <p className="font-bold text-lg text-white">
                                                         {receipt?.lot?.number != null ? `Lote ${safeText(receipt.lot.number)}` : lotId != null ? `Lote #${lotId}` : '—'}
                                                     </p>
                                                     {receiptStage != null && (
-                                                        <p className="text-sm text-muted-foreground">Etapa {receiptStage}</p>
+                                                        <p className="text-sm text-gray-300">Etapa {receiptStage}</p>
                                                     )}
                                                     {lotMetrajeToShow != null && (
-                                                        <p className="text-sm text-muted-foreground">Superficie: {lotMetrajeToShow} m²</p>
+                                                        <p className="text-sm text-gray-300">Superficie: {lotMetrajeToShow} m²</p>
                                                     )}
-                                                    <p className="text-xs text-muted-foreground mt-2 font-mono">Folio: {safeText(receipt.reservation?.folio)}</p>
+                                                    <p className="text-xs text-gray-500 mt-2 font-mono">Folio: {safeText(receipt.reservation?.folio)}</p>
                                                 </div>
                                             </div>
                                         </div>
 
                                         {/* Webpay Detalle */}
-                                        <div className="border-t border-border p-6 bg-muted/30">
-                                            <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-4">Transacción Webpay</h4>
+                                        <div className="border-t border-white/10 p-6 bg-white/5">
+                                            <h4 className="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-4">Transacción Webpay</h4>
                                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                                                 <div>
-                                                    <p className="text-xs text-muted-foreground">Orden de Compra</p>
-                                                    <p className="font-medium font-mono text-foreground truncate" title={safeText(receipt.payment?.buy_order)}>{safeText(receipt.payment?.buy_order)}</p>
+                                                    <p className="text-xs text-gray-500">Orden de Compra</p>
+                                                    <p className="font-medium font-mono text-white truncate" title={safeText(receipt.payment?.buy_order)}>{safeText(receipt.payment?.buy_order)}</p>
                                                 </div>
                                                 <div>
-                                                    <p className="text-xs text-muted-foreground">Monto Pagado</p>
-                                                    <p className="font-bold text-alimin-green">
+                                                    <p className="text-xs text-gray-500">Monto Pagado</p>
+                                                    <p className="font-bold text-[#36595F]">
                                                         {(() => {
                                                             const amount = asRecord(receipt.payment)?.amount_clp;
                                                             return typeof amount === 'number' && Number.isFinite(amount) ? formatCurrency(amount) : '—';
@@ -292,12 +296,12 @@ function PagoExitoContent() {
                                                     </p>
                                                 </div>
                                                 <div>
-                                                    <p className="text-xs text-muted-foreground">Cod. Autorización</p>
-                                                    <p className="font-medium text-foreground">{safeText(receipt.payment?.authorization_code)}</p>
+                                                    <p className="text-xs text-gray-500">Cod. Autorización</p>
+                                                    <p className="font-medium text-white">{safeText(receipt.payment?.authorization_code)}</p>
                                                 </div>
                                                 <div>
-                                                    <p className="text-xs text-muted-foreground">Fecha</p>
-                                                    <p className="font-medium text-foreground">
+                                                    <p className="text-xs text-gray-500">Fecha</p>
+                                                    <p className="font-medium text-white">
                                                         {new Date().toLocaleDateString('es-CL')}
                                                     </p>
                                                 </div>
@@ -308,12 +312,12 @@ function PagoExitoContent() {
                             </div>
 
                             <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-end no-print">
-                                <Button variant="outline" onClick={() => window.print()} className="gap-2 border-primary/20 hover:bg-primary/5">
+                                <Button variant="outline" onClick={() => window.print()} className="gap-2 border-white/20 hover:bg-white/10 text-white bg-transparent">
                                     <FileText className="w-4 h-4" />
                                     Descargar Comprobante PDF
                                 </Button>
                                 {reservationId && (
-                                    <Button variant="default" asChild className="gap-2 bg-alimin-green hover:bg-alimin-green/90">
+                                    <Button variant="default" asChild className="gap-2 bg-[#36595F] hover:bg-[#2A464B] text-white border-0">
                                         <a href={`/api/contracts/${reservationId}/pdf`} target="_blank" rel="noopener noreferrer">
                                             <FileText className="w-4 h-4" />
                                             Descargar Contrato de Reserva
@@ -323,14 +327,14 @@ function PagoExitoContent() {
                             </div>
                         </div>
 
-                        <div className="mt-8 rounded-xl border border-blue-200 bg-blue-50 dark:bg-blue-900/10 dark:border-blue-800 p-5 no-print">
+                        <div className="mt-8 rounded-xl border border-blue-500/30 bg-blue-900/20 p-5 no-print">
                             <div className="flex items-start gap-4">
-                                <div className="bg-blue-100 dark:bg-blue-800 p-2 rounded-full mt-1">
-                                    <FileText className="w-5 h-5 text-blue-600 dark:text-blue-300" />
+                                <div className="bg-blue-900/50 p-2 rounded-full mt-1">
+                                    <FileText className="w-5 h-5 text-blue-300" />
                                 </div>
                                 <div>
-                                    <p className="font-bold text-blue-800 dark:text-blue-200 text-lg">Próximos Pasos</p>
-                                    <p className="text-blue-700 dark:text-blue-300 mt-1">
+                                    <p className="font-bold text-blue-200 text-lg">Próximos Pasos</p>
+                                    <p className="text-blue-300 mt-1">
                                         Hemos enviado un correo con este comprobante y las instrucciones para la firma de escritura.
                                         Nuestro equipo comercial te contactará a la brevedad.
                                     </p>
@@ -340,7 +344,7 @@ function PagoExitoContent() {
                     </div>
 
                     <div className="flex flex-col sm:flex-row gap-4 justify-center no-print pb-8">
-                        <Button size="lg" onClick={() => router.push('/')} className="gap-2 px-8 shadow-lg hover:shadow-xl transition-all">
+                        <Button size="lg" onClick={() => router.push('/')} className="gap-2 px-8 shadow-lg hover:shadow-xl transition-all bg-[#36595F] hover:bg-[#2A464B] text-white">
                             <Home className="w-5 h-5" />
                             Volver al Mapa
                         </Button>
