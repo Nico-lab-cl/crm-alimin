@@ -352,6 +352,22 @@ function PagoExitoContent() {
                         </div>
                     </div>
 
+                    {/* Tutorial Video Section */}
+                    <div className="mt-8 no-print">
+                        <h3 className="text-xl font-bold text-gray-900 mb-4 text-center">Video Tutorial: Siguientes Pasos</h3>
+                        <div className="bg-[#36595F] rounded-2xl p-1 shadow-lg overflow-hidden ring-2 ring-[#E0B457]/20 max-w-2xl mx-auto">
+                            <div className="bg-black/20 rounded-xl overflow-hidden aspect-video relative">
+                                <video
+                                    className="w-full h-full object-cover"
+                                    controls
+                                >
+                                    <source src="/alimin-tutorial.mp4" type="video/mp4" />
+                                    Tu navegador no soporta el elemento de video.
+                                </video>
+                            </div>
+                        </div>
+                    </div>
+
                     <div className="flex flex-col sm:flex-row gap-4 justify-center no-print mt-8">
                         <Button size="lg" onClick={() => router.push('/')} className="gap-2 px-8 shadow-xl bg-[#36595F] hover:bg-[#2A464B] text-white font-bold h-14 rounded-full">
                             <Home className="w-5 h-5" />

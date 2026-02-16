@@ -86,22 +86,18 @@ export const HowToBuy = () => {
                     ))}
                 </div>
 
-                {/* Video Placeholder */}
+                {/* Video Container */}
                 <div className="max-w-4xl mx-auto">
                     <div className="bg-[#36595F] rounded-3xl p-1 shadow-2xl overflow-hidden ring-4 ring-[#E0B457]/20">
-                        <div className="bg-black/20 rounded-[1.4rem] overflow-hidden aspect-video relative group cursor-pointer">
-                            <div className="absolute inset-0 flex items-center justify-center bg-black/40 group-hover:bg-black/30 transition-colors">
-                                <div className="w-24 h-24 bg-[#E0B457]/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-[0_0_30px_rgba(224,180,87,0.4)] group-hover:scale-110 transition-transform">
-                                    <Play className="w-10 h-10 text-[#36595F] fill-[#36595F] ml-1" />
-                                </div>
-                            </div>
-                            <div className="absolute bottom-0 left-0 right-0 p-8 bg-gradient-to-t from-black/90 via-black/50 to-transparent">
-                                <p className="text-white font-bold text-xl mb-1">Video Tutorial</p>
-                                <p className="text-[#E0B457] text-sm font-medium tracking-wide uppercase">Aprende a Invertir</p>
-                            </div>
-                            <div className="absolute top-4 right-4 bg-[#E0B457] text-[#36595F] font-bold px-4 py-1.5 rounded-full text-xs shadow-lg">
-                                Próximamente
-                            </div>
+                        <div className="bg-black/20 rounded-[1.4rem] overflow-hidden aspect-video relative group">
+                            <video
+                                className="w-full h-full object-cover"
+                                controls
+                                poster="/video-poster.jpg" // Optional: Add a poster image if available, or remove
+                            >
+                                <source src="/alimin-tutorial.mp4" type="video/mp4" />
+                                Tu navegador no soporta el elemento de video.
+                            </video>
                         </div>
                     </div>
                 </div>
