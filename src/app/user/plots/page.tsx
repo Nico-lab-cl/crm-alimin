@@ -80,9 +80,19 @@ export default function UserPlotsPage() {
                     <h1 className="text-5xl font-extrabold mb-4 text-[#36595F] drop-shadow-[0_2px_4px_rgba(255,255,255,0.1)] tracking-tight">
                         Mis Terrenos
                     </h1>
-                    <p className="text-xl font-medium text-gray-200 drop-shadow-md">
+                    <p className="text-xl font-medium text-gray-200 drop-shadow-md mb-8">
                         Gestiona tus inversiones en Lomas del Mar.
                     </p>
+
+                    <div className="inline-block animate-in fade-in slide-in-from-bottom-4 duration-700 delay-150">
+                        <div className="bg-gradient-to-r from-amber-900/40 via-yellow-900/40 to-amber-900/40 border border-amber-500/30 text-amber-100 px-8 py-4 rounded-[2rem] shadow-[0_0_20px_rgba(251,191,36,0.15)] backdrop-blur-md relative mx-auto max-w-2xl">
+                            <p className="font-medium flex flex-col md:flex-row items-center gap-2 justify-center text-center">
+                                <span className="text-xl filter drop-shadow-lg">✨</span>
+                                <span>Al firmar el contrato, nuestro equipo te contactará en las próximas 48 horas. Gracias por preferirnos.</span>
+                                <span className="text-xl filter drop-shadow-lg">✨</span>
+                            </p>
+                        </div>
+                    </div>
                 </header>
 
                 <section>
