@@ -56,7 +56,7 @@ export const NotificationBell = () => {
     }, [session?.user]);
 
     const handleNotificationClick = () => {
-        router.push('/user/dashboard');
+        router.push('/user/plots');
     };
 
     const unreadCount = notifications.length;
