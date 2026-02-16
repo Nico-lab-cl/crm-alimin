@@ -23,7 +23,7 @@ export const InvestmentDetails = ({ selectedLot, onReserve, isSessionActive }: I
   const lotLabel = selectedLot ? `L-${lotDisplay}` : '';
   const lotStageLabel = lotStage ? `Etapa ${lotStage}` : '';
   const whatsappHref = selectedLot
-    ? `https://wa.me/56956654833?text=${encodeURIComponent(
+    ? `https://wa.me/56973077128?text=${encodeURIComponent(
       `${lotStageLabel ? `${lotStageLabel} - ` : ''}Quiero comprar mi terreno en Lomas del Mar, quiero consultar por el lote "${lotLabel}".`
     )}`
     : '';

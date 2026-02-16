@@ -306,7 +306,7 @@ export const LotReservationPopup = ({ lot, isOpen, onClose, onConfirm, isTempora
   const valorCuotaAmount = lot.valorCuota ?? getValorCuota(lotArea);
   const offerPrice = OFFER_PRICE;
   const showOfferSection = totalInstallments != null;
-  const whatsappHref = `https://wa.me/56956654833?text=${encodeURIComponent(
+  const whatsappHref = `https://wa.me/56973077128?text=${encodeURIComponent(
     `Promoción Lomas del Mar - ${lotStageLabel != null ? `Etapa ${lotStageLabel} - ` : ''}Quiero comprar mi terreno en Lomas del Mar, quiero consultar por el lote "${lotLabel}".`
   )}`;
 

@@ -64,12 +64,11 @@ export async function GET() {
             }
 
             // Check for recently purchased lots (within last 7 days)
-            // Only show this if contract is already signed (to avoid showing both notifications)
             const purchaseDate = new Date(reservation.created_at);
             const daysSincePurchase = Math.floor((Date.now() - purchaseDate.getTime()) / (1000 * 60 * 60 * 24));
 
-            // Show notification only if: paid, signed, and within 7 days
-            if (daysSincePurchase <= 7 && reservation.status === 'paid' && reservation.signed_at) {
+            // Show notification for any paid reservation in the last 7 days
+            if (daysSincePurchase <= 7 && reservation.status === 'paid') {
                 notifications.push({
                     id: `purchase-${reservation.id}`,
                     type: 'lot_purchased',

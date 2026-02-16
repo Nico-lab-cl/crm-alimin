@@ -119,7 +119,7 @@ function PagoFalloContent() {
                                             Si el problema persiste, contáctanos por WhatsApp y te ayudaremos a completar tu reserva.
                                         </p>
                                         <a
-                                            href="https://wa.me/56956654833?text=Hola,%20tuve%20un%20problema%20con%20el%20pago%20y%20necesito%20ayuda"
+                                            href="https://wa.me/56973077128?text=Hola,%20tuve%20un%20problema%20con%20el%20pago%20y%20necesito%20ayuda"
                                             target="_blank"
                                             rel="noopener noreferrer"
                                         >
