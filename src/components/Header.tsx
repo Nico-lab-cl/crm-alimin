@@ -55,18 +55,18 @@ export const Header = ({ projectName }: HeaderProps) => {
     >
       <div className="container mx-auto px-4 h-full flex items-center">
         <div className="flex items-center justify-between w-full">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 md:gap-4">
             <Link
               href="/"
-              className="flex items-center gap-4 min-w-0 hover:opacity-90 transition-opacity"
+              className="flex items-center gap-2 md:gap-4 min-w-0 hover:opacity-90 transition-opacity"
               aria-label="Ir al inicio"
             >
-              <img src={logo} alt="Logo" className="w-14 h-14 object-contain" />
+              <img src={logo} alt="Logo" className="w-10 h-10 md:w-14 md:h-14 object-contain flex-shrink-0" />
               <div className="min-w-0">
-                <h1 className="text-xl font-bold text-white truncate">
-                  {projectName}
+                <h1 className="text-base md:text-xl font-bold text-white whitespace-nowrap">
+                  Lomas Del Mar
                 </h1>
-                <p className="text-sm text-white/80 uppercase tracking-wide truncate hidden md:block">
+                <p className="text-xs md:text-sm text-white/80 uppercase tracking-wide hidden md:block">
                   Tu terreno a pasos del mar
                 </p>
               </div>
