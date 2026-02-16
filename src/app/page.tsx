@@ -488,6 +488,11 @@ export default function Home() {
         <VideoGallery onCtaClick={scrollToMap} />
       </div>
 
+      {/* How To Buy Section - MOBILE ORDER: Shows before map on mobile */}
+      <div className="block md:hidden">
+        <HowToBuy />
+      </div>
+
       {/* MOBILE MAP SECTION - VISIBLE ONLY ON MOBILE */}
       <section ref={mobileMapSectionRef} className="w-full pt-16 pb-24 animate-in fade-in duration-1000 block md:hidden">
         <div className="container mx-auto px-4 text-center mb-10 overflow-hidden">
@@ -539,8 +544,10 @@ export default function Home() {
           <ProgressBar lots={lots} />
         </div>
 
-        {/* How To Buy Section - Full Width */}
-        <HowToBuy />
+        {/* How To Buy Section - DESKTOP ONLY (Already shown above on mobile) */}
+        <div className="hidden md:block">
+          <HowToBuy />
+        </div>
 
         {/* 2. Vista Satelital (Secundaria) - Immersive Full Bleed - DESKTOP ONLY */}
         <section ref={mapSectionRef} className="w-full pt-16 pb-24 animate-in fade-in duration-1000 hidden md:block">
