@@ -198,21 +198,41 @@ export const ReservationContract = ({ reservation, lot, logoPath, signaturePath 
 
                     <View style={{ width: '45%', alignItems: 'center', justifyContent: 'flex-end' }}>
                         {reservation.signed_at ? (
-                            <View style={{ alignItems: 'center', width: '100%' }}>
+                            <View style={{
+                                width: '100%',
+                                borderWidth: 2,
+                                borderColor: '#0f3c4c',
+                                borderStyle: 'solid',
+                                padding: 5,
+                                alignItems: 'center',
+                                backgroundColor: '#f8fbfc'
+                            }}>
                                 <Text style={{
-                                    fontFamily: 'Helvetica-Oblique',
-                                    fontSize: 18,
-                                    marginBottom: 5,
-                                    color: '#000000'
+                                    fontSize: 8,
+                                    color: '#0f3c4c',
+                                    fontWeight: 'bold',
+                                    marginBottom: 4,
+                                    fontFamily: 'Helvetica-Bold'
+                                }}>
+                                    FIRMADO DIGITALMENTE
+                                </Text>
+                                <Text style={{
+                                    fontSize: 10,
+                                    marginBottom: 4,
+                                    color: '#000000',
+                                    textAlign: 'center',
+                                    fontFamily: 'Helvetica-Bold'
                                 }}>
                                     {userName}
                                 </Text>
-                                <View style={{ borderBottomWidth: 1, borderBottomColor: 'black', width: '100%', marginBottom: 5 }} />
-                                <Text style={{ fontSize: 8, textAlign: 'center', color: '#555' }}>
-                                    Firmado digitalmente el {getFullDateText(new Date(reservation.signed_at))}
+                                <Text style={{ fontSize: 7, textAlign: 'center', color: '#555' }}>
+                                    RUT: {userRut}
                                 </Text>
-                                <Text style={{ fontSize: 8, textAlign: 'center', color: '#555' }}>
-                                    IP: {reservation.signature_ip || 'N/A'}
+                                <Text style={{ fontSize: 7, textAlign: 'center', color: '#555' }}>
+                                    Fecha: {getFullDateText(new Date(reservation.signed_at))}
+                                </Text>
+                                <Text style={{ fontSize: 6, textAlign: 'center', color: '#777', marginTop: 2 }}>
+                                    Audit IP: {reservation.signature_ip || 'N/A'}
                                 </Text>
                             </View>
                         ) : (
