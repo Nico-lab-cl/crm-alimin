@@ -10,7 +10,7 @@ export function BackToSiteButton() {
                 <Button
                     variant="secondary"
                     size="icon"
-                    className="md:hidden shadow-lg border border-border bg-background/80 backdrop-blur rounded-full w-10 h-10 flex items-center justify-center p-0"
+                    className="md:hidden shadow-lg border border-[#E0B457] bg-[#36595F] hover:bg-[#2b464a] text-[#E0B457] rounded-full w-10 h-10 flex items-center justify-center p-0"
                     title="Volver al Sitio"
                 >
                     <ArrowLeft className="w-5 h-5" />
@@ -19,7 +19,7 @@ export function BackToSiteButton() {
                 {/* Desktop: Full Button */}
                 <Button
                     variant="secondary"
-                    className="hidden md:flex shadow-lg hover:shadow-xl transition-all border border-border bg-background/80 backdrop-blur gap-2"
+                    className="hidden md:flex shadow-lg hover:shadow-xl transition-all border border-[#E0B457] bg-[#36595F] hover:bg-[#2b464a] text-[#E0B457] hover:text-[#f0c467] gap-2"
                 >
                     <Home className="w-4 h-4" />
                     Volver al Sitio
