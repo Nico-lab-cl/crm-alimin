@@ -93,6 +93,7 @@ export const HowToBuy = () => {
                             <video
                                 className="w-full h-full object-cover"
                                 controls
+                                preload="metadata"
                                 poster="/video-poster.jpg" // Optional: Add a poster image if available, or remove
                             >
                                 <source src="/alimin-tutorial.mp4" type="video/mp4" />

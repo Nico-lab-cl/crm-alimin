@@ -31,6 +31,7 @@ export const Hero = ({ onExploreClick }: HeroProps) => {
                 loop
                 muted
                 playsInline
+                preload="metadata"
                 className="absolute inset-0 w-full h-full object-cover"
                 poster="/hero-poster.jpg"
             >

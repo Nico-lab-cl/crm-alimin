@@ -65,12 +65,14 @@ export const PurchaseTutorial = () => {
   };
 
   useEffect(() => {
-    try {
-      const seen = localStorage.getItem(STORAGE_KEY);
-      if (!seen) setOpen(true);
-    } catch {
-      setOpen(true);
-    }
+    // DISABLED: Modal no longer auto-opens on first visit
+    // User requested to remove auto-open behavior on mobile
+    // try {
+    //   const seen = localStorage.getItem(STORAGE_KEY);
+    //   if (!seen) setOpen(true);
+    // } catch {
+    //   setOpen(true);
+    // }
   }, []);
 
   useEffect(() => {
