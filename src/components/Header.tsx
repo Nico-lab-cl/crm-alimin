@@ -87,10 +87,10 @@ export const Header = ({ projectName }: HeaderProps) => {
             {session ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-                    <Avatar className="h-10 w-10 border border-border">
+                  <Button variant="ghost" className="relative h-10 w-10 rounded-full hover:bg-white/10 transition-colors">
+                    <Avatar className="h-10 w-10 border-2 border-white/40 hover:border-white transition-colors">
                       <AvatarImage src={session.user?.image || ''} alt={session.user?.name || ''} />
-                      <AvatarFallback className="bg-primary/10 text-primary font-bold">
+                      <AvatarFallback className="bg-white/10 text-white font-bold backdrop-blur-sm">
                         {getInitials(session.user?.name || 'Usuario')}
                       </AvatarFallback>
                     </Avatar>
