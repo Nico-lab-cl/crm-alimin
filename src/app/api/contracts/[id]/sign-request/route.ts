@@ -62,16 +62,28 @@ export async function POST(
             lot_stage: reservation.lot.stage
         };
 
-        // Fire and forget (or await if critical)
+        // Fire and await
         try {
-            await fetch(webhookUrl, {
+            const response = await fetch(webhookUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
-        } catch (webhookError) {
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`N8N Error: ${response.status} - ${errorText}`);
+            }
+        } catch (webhookError: any) {
             console.error("Failed to call n8n webhook:", webhookError);
-            // Don't fail the request, user can retry or contact support if email doesn't arrive
+            // Revert DB change if email fails (optional but good for consistency)
+            /* 
+            await prisma.reservation.update({
+                where: { id: reservationId },
+                data: { signature_otp: null, signature_otp_expires: null }
+            });
+            */
+            return NextResponse.json({ error: `Error enviando correo: ${webhookError.message}` }, { status: 502 });
         }
 
         return NextResponse.json({ success: true, message: "Código enviado a tu correo" });
