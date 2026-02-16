@@ -62,7 +62,7 @@ export const VideoGallery = ({ onCtaClick }: VideoGalleryProps) => {
                                 controls
                                 preload="metadata"
                             >
-                                <source src={video.src} type="video/mp4" />
+                                <source src={`${video.src}#t=0.1`} type="video/mp4" />
                                 Tu navegador no soporta el elemento de video.
                             </video>
 

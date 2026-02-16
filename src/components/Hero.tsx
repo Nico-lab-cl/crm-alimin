@@ -33,9 +33,8 @@ export const Hero = ({ onExploreClick }: HeroProps) => {
                 playsInline
                 preload="metadata"
                 className="absolute inset-0 w-full h-full object-cover"
-                poster="/hero-poster.jpg"
             >
-                <source src="/hero-drone.mp4" type="video/mp4" />
+                <source src="/hero-drone.mp4#t=0.1" type="video/mp4" />
             </video>
 
             {/* Overlay Gradient - Optimized for better scroll indicator visibility */}
