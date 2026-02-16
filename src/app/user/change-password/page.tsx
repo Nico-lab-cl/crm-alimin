@@ -7,11 +7,12 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/components/ui/use-toast";
 import Link from "next/link";
-import { Loader2 } from "lucide-react";
+import { Loader2, ArrowLeft } from "lucide-react";
+import Image from "next/image";
 
 const formSchema = z.object({
     currentPassword: z.string().min(1, "La contraseña actual es requerida"),
@@ -80,93 +81,142 @@ export default function ChangePasswordPage() {
 
     if (status === "loading") {
         return (
-            <div className="flex justify-center items-center min-h-screen">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <div className="flex justify-center items-center min-h-screen bg-black/95">
+                <Loader2 className="h-8 w-8 animate-spin text-[#36595F]" />
             </div>
         )
     }
 
     if (status === "unauthenticated") {
         return (
-            <div className="container mx-auto p-8 text-center bg-[#FDF9F3] text-[#36595F]">
-                <h1 className="text-3xl font-bold mb-4">Acceso Denegado</h1>
-                <p className="mb-4">Por favor inicia sesión para cambiar tu contraseña.</p>
-                <Link href="/login" className="text-blue-600 underline">Ir a Iniciar Sesión</Link>
+            <div className="flex min-h-screen items-center justify-center bg-black/95 px-4 py-12">
+                <div className="absolute inset-0 bg-[url('/terreno-bg.JPG')] bg-cover bg-center opacity-20 blur-sm" />
+
+                <Card className="z-10 w-full max-w-md border-white/10 bg-black/80 text-white backdrop-blur-md">
+                    <CardHeader className="space-y-4 text-center">
+                        <CardTitle className="text-2xl font-bold text-[#36595F]">Acceso Denegado</CardTitle>
+                        <CardDescription className="text-gray-400">
+                            Por favor inicia sesión para cambiar tu contraseña.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <Link href="/login">
+                            <Button className="w-full bg-[#36595F] hover:bg-[#2a454a] text-white">
+                                Ir a Iniciar Sesión
+                            </Button>
+                        </Link>
+                    </CardContent>
+                </Card>
             </div>
         )
     }
 
     return (
-        <div className="min-h-screen bg-[#FDF9F3] text-[#36595F] pt-32 pb-12">
-            <div className="container mx-auto px-4 max-w-md">
-                <Card className="shadow-lg border-[#36595F]/20">
-                    <CardHeader className="bg-[#36595F] text-white rounded-t-lg">
-                        <CardTitle>Cambiar Contraseña</CardTitle>
-                        <CardDescription className="text-white/80">
-                            Ingresa tu contraseña actual y la nueva contraseña.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent className="p-6">
-                        <Form {...form}>
-                            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                                <FormField
-                                    control={form.control}
-                                    name="currentPassword"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Contraseña Actual</FormLabel>
-                                            <FormControl>
-                                                <Input type="password" placeholder="******" {...field} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                <FormField
-                                    control={form.control}
-                                    name="newPassword"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Nueva Contraseña</FormLabel>
-                                            <FormControl>
-                                                <Input type="password" placeholder="******" {...field} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                <FormField
-                                    control={form.control}
-                                    name="confirmPassword"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Confirmar Nueva Contraseña</FormLabel>
-                                            <FormControl>
-                                                <Input type="password" placeholder="******" {...field} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                <Button
-                                    type="submit"
-                                    className="w-full bg-[#36595F] hover:bg-[#2A464B]"
-                                    disabled={isLoading}
-                                >
-                                    {isLoading ? (
-                                        <>
-                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                            Actualizando...
-                                        </>
-                                    ) : (
-                                        "Guardar Cambios"
-                                    )}
-                                </Button>
-                            </form>
-                        </Form>
-                    </CardContent>
-                </Card>
-            </div>
+        <div className="flex min-h-screen items-center justify-center bg-black/95 px-4 py-12">
+            <div className="absolute inset-0 bg-[url('/terreno-bg.JPG')] bg-cover bg-center opacity-20 blur-sm" />
+
+            <Card className="z-10 w-full max-w-md border-white/10 bg-black/80 text-white backdrop-blur-md">
+                <CardHeader className="space-y-4 text-center">
+                    <div className="flex justify-center">
+                        <div className="relative h-16 w-48">
+                            <Image
+                                src="/logo.png"
+                                alt="Lomas del Mar"
+                                fill
+                                className="object-contain invert"
+                                priority
+                            />
+                        </div>
+                    </div>
+                    <CardTitle className="text-2xl font-bold tracking-tight text-[#36595F]">
+                        Cambiar Contraseña
+                    </CardTitle>
+                    <CardDescription className="text-gray-400">
+                        Ingresa tu contraseña actual y la nueva contraseña.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="p-6">
+                    <Form {...form}>
+                        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                            <FormField
+                                control={form.control}
+                                name="currentPassword"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel className="text-white">Contraseña Actual</FormLabel>
+                                        <FormControl>
+                                            <PasswordInput
+                                                placeholder="******"
+                                                className="bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-[#36595F]"
+                                                {...field}
+                                            />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="newPassword"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel className="text-white">Nueva Contraseña</FormLabel>
+                                        <FormControl>
+                                            <PasswordInput
+                                                placeholder="******"
+                                                className="bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-[#36595F]"
+                                                {...field}
+                                            />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="confirmPassword"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel className="text-white">Confirmar Nueva Contraseña</FormLabel>
+                                        <FormControl>
+                                            <PasswordInput
+                                                placeholder="******"
+                                                className="bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-[#36595F]"
+                                                {...field}
+                                            />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <Button
+                                type="submit"
+                                className="w-full bg-[#36595F] hover:bg-[#2a454a] text-white"
+                                disabled={isLoading}
+                            >
+                                {isLoading ? (
+                                    <>
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        Actualizando...
+                                    </>
+                                ) : (
+                                    "Guardar Cambios"
+                                )}
+                            </Button>
+                        </form>
+                    </Form>
+
+                    <div className="mt-4 text-center">
+                        <Link
+                            href="/user/dashboard"
+                            className="inline-flex items-center gap-2 text-sm text-[#36595F] hover:text-[#2a454a] hover:underline"
+                        >
+                            <ArrowLeft className="w-4 h-4" />
+                            Volver al inicio
+                        </Link>
+                    </div>
+                </CardContent>
+            </Card>
         </div>
     );
 }
