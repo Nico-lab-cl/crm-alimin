@@ -49,15 +49,17 @@ export async function GET() {
             stage?: string;
         }> = [];
 
+
         reservations.forEach((reservation: any) => {
             // Check for pending contract signatures
-            if (reservation.status === 'PENDING_SIGNATURE' || reservation.otp_verified === false) {
+            // If payment is complete (status='paid') but contract not signed yet (signed_at is null)
+            if (reservation.status === 'paid' && !reservation.signed_at) {
                 notifications.push({
                     id: `contract-${reservation.id}`,
                     type: 'contract_pending',
                     message: 'Tienes un contrato pendiente de firma. Ingresa a tu panel para firmarlo digitalmente.',
-                    lotNumber: reservation.lot.number,
-                    stage: String(reservation.lot.stage),
+                    lotNumber: reservation.lot.number || '',
+                    stage: String(reservation.lot.stage || ''),
                 });
             }
 
@@ -65,13 +67,14 @@ export async function GET() {
             const purchaseDate = new Date(reservation.created_at);
             const daysSincePurchase = Math.floor((Date.now() - purchaseDate.getTime()) / (1000 * 60 * 60 * 24));
 
-            if (daysSincePurchase <= 7 && reservation.status === 'COMPLETED') {
+            // Show notification for any paid reservation in the last 7 days
+            if (daysSincePurchase <= 7 && reservation.status === 'paid') {
                 notifications.push({
                     id: `purchase-${reservation.id}`,
                     type: 'lot_purchased',
                     message: 'Tu compra se ha completado exitosamente. Revisa los detalles en tu panel.',
-                    lotNumber: reservation.lot.number,
-                    stage: String(reservation.lot.stage),
+                    lotNumber: reservation.lot.number || '',
+                    stage: String(reservation.lot.stage || ''),
                 });
             }
         });
