@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { NotificationBell } from '@/components/NotificationBell';
 import { useSession, signOut } from 'next-auth/react';
 import Link from 'next/link';
 import {
@@ -79,10 +80,12 @@ export const Header = ({ projectName }: HeaderProps) => {
           </div>
 
           <div className="flex items-center gap-2 md:gap-4">
-            {/* Mobile Theme Toggle */}
-            <div className="md:hidden flex mr-2">
-              <ThemeToggle />
-            </div>
+            {/* Notification Bell - visible for logged-in users */}
+            {session && (
+              <div className="flex mr-1">
+                <NotificationBell />
+              </div>
+            )}
 
             {session ? (
               <DropdownMenu>
