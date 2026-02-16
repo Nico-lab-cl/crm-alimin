@@ -77,8 +77,12 @@ export default function UserPlotsPage() {
 
             <div className="container mx-auto relative z-10">
                 <header className="mb-12 text-center">
-                    <h1 className="text-4xl font-bold mb-2 text-[#36595F]">Mis Terrenos</h1>
-                    <p className="text-lg opacity-80 text-gray-300">Gestiona tus inversiones en Lomas del Mar.</p>
+                    <h1 className="text-5xl font-extrabold mb-4 text-[#36595F] drop-shadow-[0_2px_4px_rgba(255,255,255,0.1)] tracking-tight">
+                        Mis Terrenos
+                    </h1>
+                    <p className="text-xl font-medium text-gray-200 drop-shadow-md">
+                        Gestiona tus inversiones en Lomas del Mar.
+                    </p>
                 </header>
 
                 <section>
@@ -120,10 +124,15 @@ export default function UserPlotsPage() {
                                             {/* Base Contract button removed as requested */}
 
                                             {res.signed_at ? (
-                                                <div className="w-full py-2 px-4 bg-green-900/30 text-green-400 border border-green-500/30 rounded text-center text-sm font-bold flex items-center justify-center gap-2">
+                                                <a
+                                                    href={`/api/contracts/${res.id}/pdf`}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="w-full py-2 px-4 bg-green-900/30 text-green-400 border border-green-500/30 rounded text-center text-sm font-bold flex items-center justify-center gap-2 hover:bg-green-900/50 transition-colors cursor-pointer"
+                                                >
                                                     <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                                                    Firmado Digitalmente
-                                                </div>
+                                                    Firmado Digitalmente (Ver)
+                                                </a>
                                             ) : (
                                                 <SignContractModal
                                                     reservationId={res.id}
@@ -139,6 +148,7 @@ export default function UserPlotsPage() {
                                             <button className="w-full py-2 px-4 bg-[#36595F] text-white rounded hover:bg-[#2A464B] transition-colors text-sm font-medium shadow-lg hover:shadow-[#36595F]/20">
                                                 Gestiona tus Pagos
                                             </button>
+
                                         </div>
                                     </CardContent>
                                 </Card>
