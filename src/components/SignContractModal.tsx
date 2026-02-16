@@ -105,15 +105,20 @@ export function SignContractModal({ reservationId, lotNumber, lotStage, onSucces
                     <DialogDescription>
                         {step === "success"
                             ? "El contrato ha sido firmado correctamente."
-                            : `Revisa el contrato y firma digitalmente. Lote ${lotNumber} (Etapa ${lotStage}).`
+                            : step === "initial"
+                                ? "Lee atentamente el contrato antes de proceder a la firma."
+                                : "Ingresa el código enviado a tu correo para finalizar la firma."
                         }
                     </DialogDescription>
                 </DialogHeader>
 
                 <div className="py-2 space-y-4">
-                    {/* Contract Preview (only if not success) */}
-                    {step !== "success" && (
-                        <div className="w-full h-[50vh] border rounded-md overflow-hidden bg-gray-100">
+                    {/* Contract Preview (Always visible in initial step, hidden in OTP/Success to focus user?) 
+                        User asked: "se visualice el contrato se pueda leer y AL FINAL salga un boton de firmar"
+                        Let's keep it visible in initial step.
+                    */}
+                    {step === "initial" && (
+                        <div className="w-full h-[60vh] border rounded-md overflow-hidden bg-gray-100 mb-4">
                             <iframe
                                 src={`/api/contracts/${reservationId}/pdf`}
                                 className="w-full h-full"
@@ -123,28 +128,28 @@ export function SignContractModal({ reservationId, lotNumber, lotStage, onSucces
                     )}
 
                     {step === "initial" && (
-                        <div className="flex flex-col items-center justify-center space-y-4 py-4 bg-muted/20 rounded-lg p-4">
-                            <div className="flex items-center gap-3">
-                                <Mail className="h-6 w-6 text-[#36595F]" />
-                                <span className="text-sm font-medium">Paso 1: Solicitar Código de Seguridad</span>
-                            </div>
-                            <p className="text-center text-xs text-muted-foreground max-w-sm">
-                                Al hacer clic en "Enviar Código", recibirás un PIN de 4 dígitos en tu correo para validar tu firma.
+                        <div className="flex flex-col items-center justify-center space-y-2 py-2">
+                            <p className="text-sm text-muted-foreground text-center">
+                                Al presionar "Firmar", recibirás un código de seguridad en tu correo.
                             </p>
                         </div>
                     )}
 
                     {step === "otp" && (
-                        <div className="flex flex-col space-y-4 bg-muted/20 rounded-lg p-4">
+                        <div className="flex flex-col space-y-4 bg-muted/20 rounded-lg p-6 animate-in fade-in slide-in-from-bottom-4">
+                            <div className="flex items-center justify-center mb-2">
+                                <Mail className="h-8 w-8 text-[#36595F]" />
+                            </div>
                             <div className="space-y-2 text-center">
-                                <label className="text-sm font-medium">Ingresa el código de 4 dígitos para firmar</label>
-                                <div className="flex justify-center">
+                                <h4 className="font-semibold text-[#36595F]">Código enviado correctamente</h4>
+                                <label className="text-sm text-muted-foreground">Ingresa el código de 4 dígitos para validar tu firma</label>
+                                <div className="flex justify-center mt-2">
                                     <Input
                                         value={otp}
                                         onChange={(e) => setOtp(e.target.value)}
                                         placeholder="0000"
                                         maxLength={4}
-                                        className="text-center text-3xl tracking-[1em] w-48 font-mono h-12 uppercase"
+                                        className="text-center text-3xl tracking-[1em] w-48 font-mono h-14 uppercase border-2 focus-visible:ring-[#36595F]"
                                         autoFocus
                                     />
                                 </div>
@@ -183,21 +188,26 @@ export function SignContractModal({ reservationId, lotNumber, lotStage, onSucces
 
                 <DialogFooter className="sm:justify-end gap-2">
                     {step === "initial" && (
-                        <Button onClick={handleRequestOtp} disabled={loading} className="w-full sm:w-auto bg-[#36595F] hover:bg-[#2b464a]">
-                            {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Mail className="mr-2 h-4 w-4" />}
-                            Enviar Código y Firmar
+                        <Button onClick={handleRequestOtp} disabled={loading} className="w-full bg-[#36595F] hover:bg-[#2b464a] text-lg py-6 shadow-md">
+                            {loading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : null}
+                            Firmar Contrato
                         </Button>
                     )}
 
                     {step === "otp" && (
-                        <Button onClick={handleVerifyOtp} disabled={loading} className="w-full sm:w-auto bg-[#36595F] hover:bg-[#2b464a]">
-                            {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle className="mr-2 h-4 w-4" />}
-                            Confirmar Firma
-                        </Button>
+                        <div className="flex flex-col sm:flex-row gap-2 w-full sm:justify-between">
+                            <Button variant="ghost" onClick={() => setStep("initial")} className="text-muted-foreground">
+                                Volver al Contrato
+                            </Button>
+                            <Button onClick={handleVerifyOtp} disabled={loading} className="w-full sm:w-auto bg-[#36595F] hover:bg-[#2b464a]">
+                                {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle className="mr-2 h-4 w-4" />}
+                                Confirmar Firma
+                            </Button>
+                        </div>
                     )}
 
                     {step === "success" && (
-                        <Button onClick={handleClose} className="w-full sm:w-auto bg-[#36595F] hover:bg-[#2b464a]">
+                        <Button onClick={handleClose} className="w-full bg-[#36595F] hover:bg-[#2b464a]">
                             Entendido
                         </Button>
                     )}

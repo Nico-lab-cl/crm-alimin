@@ -68,7 +68,7 @@ export async function GET(
         return new NextResponse(stream as unknown as BodyInit, {
             headers: {
                 'Content-Type': 'application/pdf',
-                'Content-Disposition': `attachment; filename="Contrato_Reserva_${reservation.folio || id}.pdf"`,
+                'Content-Disposition': `inline; filename="Contrato_Reserva_${reservation.folio || id}.pdf"`,
             },
         });
 
