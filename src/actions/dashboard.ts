@@ -136,3 +136,88 @@ export async function getSellers() {
         return { error: "Error al cargar vendedores" }
     }
 }
+
+// ADMIN: GESTIÓN DE LOTES
+export async function getAdminLots() {
+    const session = await auth()
+    if (session?.user?.role !== Role.ADMIN) return { error: "No autorizado" }
+
+    try {
+        const lots = await prisma.lot.findMany({
+            orderBy: { number: 'asc' }
+        })
+        return { success: true, data: lots }
+    } catch (error) {
+        console.error("Error getting lots:", error)
+        return { error: "Error al cargar lotes" }
+    }
+}
+
+export async function updateLotStatus(lotId: number, status: string) {
+    const session = await auth()
+    if (session?.user?.role !== Role.ADMIN) return { error: "No autorizado" }
+
+    try {
+        await prisma.lot.update({
+            where: { id: lotId },
+            data: { status }
+        })
+        revalidatePath('/admin/dashboard')
+        return { success: true }
+    } catch (error) {
+        console.error("Error updating lot status:", error)
+        return { error: "Error al actualizar estado del lote" }
+    }
+}
+
+// ADMIN: GESTIÓN DE USUARIOS
+export async function getAdminUsers() {
+    const session = await auth()
+    if (session?.user?.role !== Role.ADMIN) return { error: "No autorizado" }
+
+    try {
+        const users = await prisma.user.findMany({
+            orderBy: { createdAt: 'desc' },
+            include: {
+                purchases: {
+                    select: { id: true, status: true, folio: true }
+                }
+            }
+        })
+        return { success: true, data: users }
+    } catch (error) {
+        console.error("Error getting users:", error)
+        return { error: "Error al cargar usuarios" }
+    }
+}
+
+import { hash } from "bcryptjs"
+
+export async function createVerifiedUser(data: any) {
+    const session = await auth()
+    if (session?.user?.role !== Role.ADMIN) return { error: "No autorizado" }
+
+    const { name, email, password, role } = data
+
+    try {
+        const existingUser = await prisma.user.findUnique({ where: { email } })
+        if (existingUser) return { error: "El correo ya está registrado" }
+
+        const hashedPassword = await hash(password, 10)
+
+        await prisma.user.create({
+            data: {
+                name,
+                email,
+                password: hashedPassword,
+                role: role || Role.USER,
+                emailVerified: new Date(), // Auto-verify
+            }
+        })
+        revalidatePath('/admin/dashboard')
+        return { success: true }
+    } catch (error) {
+        console.error("Error creating user:", error)
+        return { error: "Error al crear usuario" }
+    }
+}
