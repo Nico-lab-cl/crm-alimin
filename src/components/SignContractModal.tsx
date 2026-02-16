@@ -120,7 +120,7 @@ export function SignContractModal({ reservationId, lotNumber, lotStage, onSucces
                     {step === "initial" && (
                         <div className="w-full h-[60vh] border rounded-md overflow-hidden bg-gray-100 mb-4">
                             <iframe
-                                src={`/api/contracts/${reservationId}/pdf`}
+                                src={`/api/contracts/${reservationId}/pdf#toolbar=0&navpanes=0&scrollbar=0`}
                                 className="w-full h-full"
                                 title="Contrato de Reserva"
                             />
