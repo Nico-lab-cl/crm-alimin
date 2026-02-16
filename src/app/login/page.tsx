@@ -127,7 +127,7 @@ export default function LoginPage() {
                             <Input
                                 id="email"
                                 type="email"
-                                placeholder="admin@lomasdelmar.cl"
+                                placeholder="tunombre@ejemplo.com"
                                 className="bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-[#36595F]"
                                 {...register('email')}
                             />
