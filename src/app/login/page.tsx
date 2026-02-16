@@ -8,6 +8,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { signIn } from 'next-auth/react';
+import { Home } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -99,6 +100,15 @@ export default function LoginPage() {
     return (
         <div className="flex min-h-screen items-center justify-center bg-black/95 px-4 py-12">
             <div className="absolute inset-0 bg-[url('/terreno-bg.JPG')] bg-cover bg-center opacity-20 blur-sm" />
+
+            {/* Back to Home */}
+            <Link
+                href="/"
+                className="absolute top-4 left-4 z-20 flex items-center gap-2 rounded-full bg-white/10 px-3 py-2 text-white/80 backdrop-blur-sm border border-white/10 hover:bg-white/20 hover:text-white transition-all"
+            >
+                <Home className="h-5 w-5" />
+                <span className="hidden md:inline text-sm font-medium">Volver al inicio</span>
+            </Link>
 
             <Card className="z-10 w-full max-w-md border-white/10 bg-black/80 text-white backdrop-blur-md">
                 <CardHeader className="space-y-4 text-center">
