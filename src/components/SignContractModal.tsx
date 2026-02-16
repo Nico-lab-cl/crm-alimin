@@ -115,6 +115,15 @@ export function SignContractModal({ reservationId, lotNumber, lotStage, onSucces
                             <p className="text-xs text-muted-foreground text-center">
                                 Revisa tu bandeja de entrada y spam.
                             </p>
+                            <Button
+                                variant="link"
+                                size="sm"
+                                onClick={handleRequestOtp}
+                                disabled={loading}
+                                className="text-[#36595F] text-xs h-auto p-0"
+                            >
+                                ¿No recibiste el código? Reenviar
+                            </Button>
                         </div>
                     )}
                 </div>
