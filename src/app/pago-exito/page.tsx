@@ -330,12 +330,8 @@ function PagoExitoContent() {
                                     Descargar Comprobante PDF
                                 </Button>
                                 {reservationId && (
-                                    <Button variant="default" asChild className="gap-2 bg-[#36595F] hover:bg-[#2A464B] text-white shadow-md hover:shadow-lg">
-                                        <a href={`/api/contracts/${reservationId}/pdf`} target="_blank" rel="noopener noreferrer">
-                                            <FileText className="w-4 h-4" />
-                                            Descargar Contrato de Reserva
-                                        </a>
-                                    </Button>
+                                    /* Download Contract button removed */
+                                    null
                                 )}
                             </div>
                         </div>

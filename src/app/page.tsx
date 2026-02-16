@@ -34,6 +34,7 @@ import { LotGrid } from '@/components/LotGrid';
 import { LotReservationPopup } from '@/components/LotReservationPopup';
 import { PlanoModal } from '@/components/PlanoModal';
 import { PurchaseTutorial } from '@/components/PurchaseTutorial';
+import { HowToBuy } from '@/components/HowToBuy';
 
 import { Hero } from '@/components/Hero';
 import { TrustBanner } from '@/components/TrustBanner';
@@ -536,6 +537,9 @@ export default function Home() {
 
           {/* Progress Bar */}
           <ProgressBar lots={lots} />
+
+          {/* How To Buy Section */}
+          <HowToBuy />
         </div>
 
 
