@@ -537,12 +537,10 @@ export default function Home() {
 
           {/* Progress Bar */}
           <ProgressBar lots={lots} />
-
-          {/* How To Buy Section */}
-          <HowToBuy />
         </div>
 
-
+        {/* How To Buy Section - Full Width */}
+        <HowToBuy />
 
         {/* 2. Vista Satelital (Secundaria) - Immersive Full Bleed - DESKTOP ONLY */}
         <section ref={mapSectionRef} className="w-full pt-16 pb-24 animate-in fade-in duration-1000 hidden md:block">
