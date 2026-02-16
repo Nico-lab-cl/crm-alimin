@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Bell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useSession } from 'next-auth/react';
@@ -14,6 +14,8 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+const DISMISSED_KEY = 'alimin_dismissed_notifications';
+
 type NotificationType = 'contract_pending' | 'lot_purchased';
 
 type Notification = {
@@ -24,38 +26,75 @@ type Notification = {
     stage?: string;
 };
 
+const getDismissed = (): string[] => {
+    try {
+        const raw = localStorage.getItem(DISMISSED_KEY);
+        return raw ? JSON.parse(raw) : [];
+    } catch {
+        return [];
+    }
+};
+
+const addDismissed = (id: string) => {
+    try {
+        const dismissed = getDismissed();
+        if (!dismissed.includes(id)) {
+            dismissed.push(id);
+            localStorage.setItem(DISMISSED_KEY, JSON.stringify(dismissed));
+        }
+    } catch {
+        // ignore
+    }
+};
+
 export const NotificationBell = () => {
     const { data: session } = useSession();
     const router = useRouter();
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [isLoading, setIsLoading] = useState(false);
 
+    const fetchNotifications = useCallback(async () => {
+        setIsLoading(true);
+        try {
+            const response = await fetch('/api/user/notifications');
+            if (response.ok) {
+                const data = await response.json();
+                const allNotifications: Notification[] = data.notifications || [];
+                // Filter out dismissed notifications
+                const dismissed = getDismissed();
+                const active = allNotifications.filter(n => !dismissed.includes(n.id));
+                setNotifications(active);
+            }
+        } catch (error) {
+            console.error('Error fetching notifications:', error);
+        } finally {
+            setIsLoading(false);
+        }
+    }, []);
+
     useEffect(() => {
         if (!session?.user) return;
-
-        const fetchNotifications = async () => {
-            setIsLoading(true);
-            try {
-                const response = await fetch('/api/user/notifications');
-                if (response.ok) {
-                    const data = await response.json();
-                    setNotifications(data.notifications || []);
-                }
-            } catch (error) {
-                console.error('Error fetching notifications:', error);
-            } finally {
-                setIsLoading(false);
-            }
-        };
 
         fetchNotifications();
 
         // Poll every 30 seconds for new notifications
         const interval = setInterval(fetchNotifications, 30000);
         return () => clearInterval(interval);
-    }, [session?.user]);
+    }, [session?.user, fetchNotifications]);
 
-    const handleNotificationClick = () => {
+    const handleNotificationClick = (notification: Notification) => {
+        // Dismiss the notification
+        addDismissed(notification.id);
+        // Remove from state immediately
+        setNotifications(prev => prev.filter(n => n.id !== notification.id));
+        // Navigate to plots
+        router.push('/user/plots');
+    };
+
+    const handleViewAll = () => {
+        // Dismiss all current notifications
+        notifications.forEach(n => addDismissed(n.id));
+        setNotifications([]);
         router.push('/user/plots');
     };
 
@@ -100,7 +139,7 @@ export const NotificationBell = () => {
                             <DropdownMenuItem
                                 key={notification.id}
                                 className="cursor-pointer p-4 flex flex-col items-start gap-1"
-                                onClick={handleNotificationClick}
+                                onClick={() => handleNotificationClick(notification)}
                             >
                                 <div className="flex items-start gap-2 w-full">
                                     <div className="flex h-2 w-2 rounded-full bg-[#E0B457] mt-1.5 flex-shrink-0" />
@@ -129,7 +168,7 @@ export const NotificationBell = () => {
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
                             className="cursor-pointer justify-center font-semibold text-primary"
-                            onClick={handleNotificationClick}
+                            onClick={handleViewAll}
                         >
                             Ver mis terrenos →
                         </DropdownMenuItem>
