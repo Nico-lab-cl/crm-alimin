@@ -182,113 +182,126 @@ function PagoExitoContent() {
           .print-area a[href]:after { content: "" !important; }
         }
       `}</style>
-            <div className="relative z-10 w-full">
+
+            {/* Header with high Z-index to ensure it sits on top */}
+            <div className="relative z-[100] w-full">
                 <Header projectName="Lomas Del Mar" />
             </div>
 
-            <main className="container mx-auto px-4 pt-32 pb-12 flex-grow relative z-10 text-white">
+            <main className="container mx-auto px-4 pt-32 pb-12 flex-grow relative z-10">
                 <div className="max-w-3xl mx-auto print-container">
-                    <div className="bg-black/60 shadow-2xl border border-white/10 rounded-xl p-8 mb-8 print-area backdrop-blur-md">
-                        <div className="text-center mb-10 no-print">
-                            <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-[#36595F]/20 mb-6 animate-scale-in">
-                                <CheckCircle2 className="w-12 h-12 text-[#36595F]" />
-                            </div>
+                    {/* Card Container: White background, rounded, shadow */}
+                    <div className="bg-white rounded-2xl shadow-2xl overflow-hidden print-area">
 
-                            <h1 className="text-4xl font-bold text-white mb-4">
-                                {receipt ? '¡Pago Confirmado!' : 'Procesando...'}
-                            </h1>
-                            <p className="text-lg text-gray-300">
-                                {receipt
-                                    ? 'Tu reserva ha sido registrada con éxito.'
-                                    : 'Estamos validando tu pago, por favor espera un momento.'}
-                            </p>
+                        {/* Card Header: Green, Dark, White Text */}
+                        <div className="bg-[#36595F] p-8 text-center text-white relative overflow-hidden">
+                            <div className="absolute top-0 left-0 w-full h-full bg-[url('/pattern-opacity.png')] opacity-10" /> {/* Optional subtle pattern if available, else just solid */}
+
+                            <div className="relative z-10">
+                                <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-white/20 mb-6 animate-scale-in backdrop-blur-sm">
+                                    <CheckCircle2 className="w-10 h-10 text-white" />
+                                </div>
+
+                                <h1 className="text-3xl md:text-4xl font-bold mb-2">
+                                    {receipt ? '¡Pago Confirmado!' : 'Procesando...'}
+                                </h1>
+                                <p className="text-white/90 text-lg">
+                                    {receipt
+                                        ? 'Tu reserva ha sido registrada con éxito.'
+                                        : 'Estamos validando tu pago, por favor espera un momento.'}
+                                </p>
+                            </div>
                         </div>
 
-                        <div className="status-card mb-6">
-                            <h2 className="text-2xl font-bold text-white mb-6 border-b border-white/10 pb-2">Resumen de la Operación</h2>
+                        {/* Card Body: White, Black Text */}
+                        <div className="p-8 md:p-10">
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 no-print mb-8">
-                                <div className="p-5 bg-white/5 rounded-lg flex flex-col justify-center items-center text-center border border-white/5">
-                                    <p className="text-sm text-gray-400 uppercase tracking-wider mb-1">Estado</p>
-                                    <div className={`text-xl font-bold px-4 py-1 rounded-full ${receipt ? 'bg-green-900/50 text-green-400 border border-green-500/30' : 'bg-yellow-900/50 text-yellow-400 border border-yellow-500/30'}`}>
-                                        {receipt ? 'APROBADO' : isLoading ? 'Procesando...' : 'En Verificación'}
+                            {/* Summary Grid */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                                <div className="p-4 bg-gray-50 rounded-xl border border-gray-100 flex flex-col items-center text-center">
+                                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Estado</p>
+                                    <div className={`px-4 py-1.5 rounded-full text-sm font-bold shadow-sm ${receipt ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-yellow-100 text-yellow-700 border border-yellow-200'}`}>
+                                        {receipt ? 'APROBADO' : isLoading ? 'PROCESANDO...' : 'EN VERIFICACIÓN'}
                                     </div>
                                 </div>
 
-                                <div className="p-5 bg-white/5 rounded-lg flex flex-col justify-center items-center text-center border border-white/5">
-                                    <p className="text-sm text-gray-400 uppercase tracking-wider mb-1">Lote Reservado</p>
-                                    <p className="text-2xl font-bold text-white">{summaryLotLabel}</p>
+                                <div className="p-4 bg-gray-50 rounded-xl border border-gray-100 flex flex-col items-center text-center">
+                                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Lote Reservado</p>
+                                    <p className="text-2xl font-bold text-gray-900">{summaryLotLabel}</p>
                                     {summaryStageLabel && (
-                                        <p className="text-sm text-gray-400 font-medium">{summaryStageLabel}</p>
+                                        <p className="text-sm text-gray-500 font-medium">{summaryStageLabel}</p>
                                     )}
                                 </div>
                             </div>
 
                             <div className="space-y-6">
-                                <h3 className="text-xl font-semibold text-white">Detalles del Comprobante</h3>
+                                <h3 className="text-lg font-bold text-gray-900 border-b border-gray-100 pb-2">
+                                    Detalles del Comprobante
+                                </h3>
 
                                 {isLoading && (
-                                    <div className="p-4 bg-white/5 rounded-lg animate-pulse">
-                                        <div className="h-4 bg-white/10 rounded w-3/4 mb-2"></div>
-                                        <div className="h-4 bg-white/10 rounded w-1/2"></div>
+                                    <div className="space-y-3 animate-pulse">
+                                        <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                                        <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                                        <div className="h-4 bg-gray-200 rounded w-full"></div>
                                     </div>
                                 )}
 
                                 {!isLoading && receiptError === 'pending_confirmation' && (
-                                    <div className="p-4 bg-yellow-900/20 text-yellow-200 border border-yellow-500/30 rounded-lg">
+                                    <div className="p-4 bg-yellow-50 text-yellow-800 border border-yellow-200 rounded-lg">
                                         <p className="text-sm font-medium">
                                             Pago procesado, pero aún estamos confirmando la boleta.
                                         </p>
-                                        <p className="text-xs mt-1 text-yellow-200/70">Refresca la página en unos segundos.</p>
-                                        <p className="text-xs mt-2 font-mono bg-yellow-900/40 p-1 rounded inline-block">
+                                        <p className="text-xs mt-1 text-yellow-600">Refresca la página en unos segundos.</p>
+                                        <p className="text-xs mt-2 font-mono bg-yellow-100/50 p-1 rounded inline-block text-yellow-800">
                                             ID: {safeText(reservationId)}
                                         </p>
                                     </div>
                                 )}
 
                                 {!isLoading && !receiptError && receipt && (
-                                    <div className="rounded-xl border border-white/10 bg-white/5 overflow-hidden">
-                                        <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-white/10">
+                                    <div className="rounded-xl border border-gray-200 bg-gray-50/50 overflow-hidden">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-gray-200">
                                             {/* Comprador */}
                                             <div className="p-6 space-y-3">
-                                                <h4 className="text-sm font-semibold text-gray-400 uppercase tracking-wide">Comprador</h4>
-                                                <div>
-                                                    <p className="font-bold text-lg text-white">{safeText(receipt.reservation?.name)}</p>
-                                                    <p className="text-sm text-gray-300">{safeText(receipt.reservation?.email)}</p>
-                                                    <p className="text-sm text-gray-300">{safeText(receipt.reservation?.phone)}</p>
-                                                    <p className="text-sm text-gray-300">RUT: {safeText(receipt.reservation?.rut)}</p>
+                                                <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wide">Comprador</h4>
+                                                <div className="space-y-1">
+                                                    <p className="font-bold text-lg text-gray-900">{safeText(receipt.reservation?.name)}</p>
+                                                    <p className="text-sm text-gray-600">{safeText(receipt.reservation?.email)}</p>
+                                                    <p className="text-sm text-gray-600">{safeText(receipt.reservation?.phone)}</p>
+                                                    <p className="text-sm text-gray-600">RUT: {safeText(receipt.reservation?.rut)}</p>
                                                 </div>
                                             </div>
 
                                             {/* Lote Detalle */}
                                             <div className="p-6 space-y-3">
-                                                <h4 className="text-sm font-semibold text-gray-400 uppercase tracking-wide">Detalle Propiedad</h4>
-                                                <div>
-                                                    <p className="font-bold text-lg text-white">
+                                                <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wide">Propiedad</h4>
+                                                <div className="space-y-1">
+                                                    <p className="font-bold text-lg text-gray-900">
                                                         {receipt?.lot?.number != null ? `Lote ${safeText(receipt.lot.number)}` : lotId != null ? `Lote #${lotId}` : '—'}
                                                     </p>
                                                     {receiptStage != null && (
-                                                        <p className="text-sm text-gray-300">Etapa {receiptStage}</p>
+                                                        <p className="text-sm text-gray-600">Etapa {receiptStage}</p>
                                                     )}
                                                     {lotMetrajeToShow != null && (
-                                                        <p className="text-sm text-gray-300">Superficie: {lotMetrajeToShow} m²</p>
+                                                        <p className="text-sm text-gray-600">Superficie: {lotMetrajeToShow} m²</p>
                                                     )}
-                                                    <p className="text-xs text-gray-500 mt-2 font-mono">Folio: {safeText(receipt.reservation?.folio)}</p>
+                                                    <p className="text-xs text-gray-400 mt-2 font-mono">Folio: {safeText(receipt.reservation?.folio)}</p>
                                                 </div>
                                             </div>
                                         </div>
 
                                         {/* Webpay Detalle */}
-                                        <div className="border-t border-white/10 p-6 bg-white/5">
-                                            <h4 className="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-4">Transacción Webpay</h4>
-                                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                                        <div className="border-t border-gray-200 p-6 bg-gray-100/50">
+                                            <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-4">Información de Pago</h4>
+                                            <div className="grid grid-cols-2 md:grid-cols-4 gap-y-4 gap-x-2 text-sm">
                                                 <div>
-                                                    <p className="text-xs text-gray-500">Orden de Compra</p>
-                                                    <p className="font-medium font-mono text-white truncate" title={safeText(receipt.payment?.buy_order)}>{safeText(receipt.payment?.buy_order)}</p>
+                                                    <p className="text-xs text-gray-500 mb-1">Orden de Compra</p>
+                                                    <p className="font-medium font-mono text-gray-900 truncate" title={safeText(receipt.payment?.buy_order)}>{safeText(receipt.payment?.buy_order)}</p>
                                                 </div>
                                                 <div>
-                                                    <p className="text-xs text-gray-500">Monto Pagado</p>
-                                                    <p className="font-bold text-[#36595F]">
+                                                    <p className="text-xs text-gray-500 mb-1">Monto Pagado</p>
+                                                    <p className="font-bold text-[#36595F] text-base">
                                                         {(() => {
                                                             const amount = asRecord(receipt.payment)?.amount_clp;
                                                             return typeof amount === 'number' && Number.isFinite(amount) ? formatCurrency(amount) : '—';
@@ -296,12 +309,12 @@ function PagoExitoContent() {
                                                     </p>
                                                 </div>
                                                 <div>
-                                                    <p className="text-xs text-gray-500">Cod. Autorización</p>
-                                                    <p className="font-medium text-white">{safeText(receipt.payment?.authorization_code)}</p>
+                                                    <p className="text-xs text-gray-500 mb-1">Cod. Autorización</p>
+                                                    <p className="font-medium text-gray-900">{safeText(receipt.payment?.authorization_code)}</p>
                                                 </div>
                                                 <div>
-                                                    <p className="text-xs text-gray-500">Fecha</p>
-                                                    <p className="font-medium text-white">
+                                                    <p className="text-xs text-gray-500 mb-1">Fecha</p>
+                                                    <p className="font-medium text-gray-900">
                                                         {new Date().toLocaleDateString('es-CL')}
                                                     </p>
                                                 </div>
@@ -312,12 +325,12 @@ function PagoExitoContent() {
                             </div>
 
                             <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-end no-print">
-                                <Button variant="outline" onClick={() => window.print()} className="gap-2 border-white/20 hover:bg-white/10 text-white bg-transparent">
+                                <Button variant="outline" onClick={() => window.print()} className="gap-2 border-gray-300 text-gray-700 hover:bg-gray-50 hover:text-gray-900">
                                     <FileText className="w-4 h-4" />
                                     Descargar Comprobante PDF
                                 </Button>
                                 {reservationId && (
-                                    <Button variant="default" asChild className="gap-2 bg-[#36595F] hover:bg-[#2A464B] text-white border-0">
+                                    <Button variant="default" asChild className="gap-2 bg-[#36595F] hover:bg-[#2A464B] text-white shadow-md hover:shadow-lg">
                                         <a href={`/api/contracts/${reservationId}/pdf`} target="_blank" rel="noopener noreferrer">
                                             <FileText className="w-4 h-4" />
                                             Descargar Contrato de Reserva
@@ -326,25 +339,25 @@ function PagoExitoContent() {
                                 )}
                             </div>
                         </div>
+                    </div>
 
-                        <div className="mt-8 rounded-xl border border-blue-500/30 bg-blue-900/20 p-5 no-print">
-                            <div className="flex items-start gap-4">
-                                <div className="bg-blue-900/50 p-2 rounded-full mt-1">
-                                    <FileText className="w-5 h-5 text-blue-300" />
-                                </div>
-                                <div>
-                                    <p className="font-bold text-blue-200 text-lg">Próximos Pasos</p>
-                                    <p className="text-blue-300 mt-1">
-                                        Hemos enviado un correo con este comprobante y las instrucciones para la firma de escritura.
-                                        Nuestro equipo comercial te contactará a la brevedad.
-                                    </p>
-                                </div>
+                    <div className="mt-8 rounded-xl border border-blue-200 bg-white/95 p-6 no-print shadow-lg backdrop-blur-sm">
+                        <div className="flex items-start gap-4">
+                            <div className="bg-blue-100 p-3 rounded-full mt-1 shrink-0">
+                                <FileText className="w-6 h-6 text-blue-600" />
+                            </div>
+                            <div>
+                                <p className="font-bold text-gray-900 text-lg">Próximos Pasos</p>
+                                <p className="text-gray-600 mt-2 leading-relaxed">
+                                    ¡Gracias por tu reserva! Hemos enviado un correo electrónico con este comprobante y las instrucciones detalladas para la firma de escritura.
+                                    Nuestro equipo comercial se pondrá en contacto contigo a la brevedad para guiarte en el proceso.
+                                </p>
                             </div>
                         </div>
                     </div>
 
-                    <div className="flex flex-col sm:flex-row gap-4 justify-center no-print pb-8">
-                        <Button size="lg" onClick={() => router.push('/')} className="gap-2 px-8 shadow-lg hover:shadow-xl transition-all bg-[#36595F] hover:bg-[#2A464B] text-white">
+                    <div className="flex flex-col sm:flex-row gap-4 justify-center no-print mt-8">
+                        <Button size="lg" onClick={() => router.push('/')} className="gap-2 px-8 shadow-xl bg-[#36595F] hover:bg-[#2A464B] text-white font-bold h-14 rounded-full">
                             <Home className="w-5 h-5" />
                             Volver al Mapa
                         </Button>
