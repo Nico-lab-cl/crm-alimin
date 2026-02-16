@@ -6,7 +6,10 @@ import { Reservation, Lot as PrismaLot } from '@prisma/client';
 // Font.register({ family: 'Roboto', src: 'path/to/font' });
 
 interface ReservationContractProps {
-    reservation: Reservation;
+    reservation: Reservation & {
+        signed_at?: Date | null;
+        signature_ip?: string | null;
+    };
     lot: PrismaLot;
     logoPath: string; // Server-side path to logo
     signaturePath: string; // Server-side path to signature
@@ -177,7 +180,7 @@ export const ReservationContract = ({ reservation, lot, logoPath, signaturePath 
                         {/* Signature Image */}
                         <Image
                             src={signaturePath}
-                            style={{ width: 150, height: 80, marginBottom: 10 }} // Fixed height to prevent collapse
+                            style={{ width: 150, height: 80, marginBottom: 10 }}
                         />
                         <View style={{ borderBottomWidth: 1, borderBottomColor: 'black', width: '100%', marginBottom: 5 }} />
                         <Text style={{ fontSize: 10, textAlign: 'center' }}>Patricio Escobar representante legal Alimin</Text>
@@ -185,10 +188,32 @@ export const ReservationContract = ({ reservation, lot, logoPath, signaturePath 
                     </View>
 
                     <View style={{ width: '45%', alignItems: 'center', justifyContent: 'flex-end' }}>
-                        <View style={{ borderBottomWidth: 1, borderBottomColor: 'black', width: '100%', marginBottom: 5 }} />
-                        <Text style={{ fontSize: 10, textAlign: 'center' }}>POR CLIENTE</Text>
-                        <Text style={{ fontSize: 10, textAlign: 'center' }}>{userName}</Text>
-                        <Text style={{ fontSize: 8, textAlign: 'center' }}>{userRut}</Text>
+                        {reservation.signed_at ? (
+                            <View style={{ alignItems: 'center', width: '100%' }}>
+                                <Text style={{
+                                    fontFamily: 'Helvetica-Oblique',
+                                    fontSize: 18,
+                                    marginBottom: 5,
+                                    color: '#000000'
+                                }}>
+                                    {userName}
+                                </Text>
+                                <View style={{ borderBottomWidth: 1, borderBottomColor: 'black', width: '100%', marginBottom: 5 }} />
+                                <Text style={{ fontSize: 8, textAlign: 'center', color: '#555' }}>
+                                    Firmado digitalmente el {getFullDateText(new Date(reservation.signed_at))}
+                                </Text>
+                                <Text style={{ fontSize: 8, textAlign: 'center', color: '#555' }}>
+                                    IP: {reservation.signature_ip || 'N/A'}
+                                </Text>
+                            </View>
+                        ) : (
+                            <View style={{ width: '100%', alignItems: 'center' }}>
+                                <View style={{ borderBottomWidth: 1, borderBottomColor: 'black', width: '100%', marginBottom: 5, marginTop: 80 }} />
+                                <Text style={{ fontSize: 10, textAlign: 'center' }}>POR CLIENTE</Text>
+                                <Text style={{ fontSize: 10, textAlign: 'center' }}>{userName}</Text>
+                                <Text style={{ fontSize: 8, textAlign: 'center' }}>{userRut}</Text>
+                            </View>
+                        )}
                     </View>
                 </View>
             </Page>

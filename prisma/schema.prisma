@@ -58,6 +58,12 @@ model Reservation {
   address_commune String?
   address_region  String?
 
+  // Digital Signature
+  signature_otp       String?
+  signature_otp_expires DateTime?
+  signed_at           DateTime?
+  signature_ip        String?
+
   // Relations
   lot         Lot                 @relation(fields: [lot_id], references: [id])
   transactions WebpayTransaction[]

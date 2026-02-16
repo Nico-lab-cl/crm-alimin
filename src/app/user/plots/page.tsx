@@ -16,7 +16,10 @@ interface Reservation {
     };
     status: string;
     created_at: string;
+    signed_at?: string | null;
 }
+
+import { SignContractModal } from "@/components/SignContractModal";
 
 export default function UserPlotsPage() {
     const { data: session, status } = useSession();
@@ -111,15 +114,33 @@ export default function UserPlotsPage() {
                                             <span>${res.lot.price_total_clp?.toLocaleString('es-CL') || 'N/A'}</span>
                                         </div>
 
-                                        <div className="pt-4 space-y-2">
+                                        <div className="space-y-2">
                                             <a
                                                 href={`/api/contracts/${res.id}/pdf`}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
                                                 className="block w-full text-center py-2 px-4 bg-[#36595F] text-white rounded hover:bg-[#2A464B] transition-colors text-sm font-medium decoration-0"
                                             >
-                                                Ver Contrato
+                                                Ver Contrato Base
                                             </a>
+
+                                            {res.signed_at ? (
+                                                <div className="w-full py-2 px-4 bg-green-100 text-green-800 border border-green-200 rounded text-center text-sm font-bold flex items-center justify-center gap-2">
+                                                    <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                                                    Firmado Digitalmente
+                                                </div>
+                                            ) : (
+                                                <SignContractModal
+                                                    reservationId={res.id}
+                                                    lotNumber={res.lot.number}
+                                                    lotStage={res.lot.stage}
+                                                    onSuccess={() => {
+                                                        // Reload to update state
+                                                        window.location.reload();
+                                                    }}
+                                                />
+                                            )}
+
                                             <button className="w-full py-2 px-4 border border-[#36595F] text-[#36595F] rounded hover:bg-[#36595F]/10 transition-colors text-sm font-medium">
                                                 Ver Pagos
                                             </button>
