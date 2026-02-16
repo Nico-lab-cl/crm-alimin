@@ -82,13 +82,22 @@ const yearToText = (year: number) => {
 }
 
 const getFullDateText = (date: Date) => {
-    const day = date.getDate();
-    const month = date.toLocaleDateString('es-ES', { month: 'long' });
-    const year = date.getFullYear();
-    const yearText = yearToText(year);
-    // Capitalize month? Usually lowercase in Spanish unless start of sentence, but legal docs might cap.
-    // User example: "Enero" capitalized.
+    // Force Chile timezone
+    const timeZone = 'America/Santiago';
+
+    const day = date.toLocaleDateString('es-CL', { day: 'numeric', timeZone });
+    const month = date.toLocaleDateString('es-CL', { month: 'long', timeZone });
+    const year = date.toLocaleDateString('es-CL', { year: 'numeric', timeZone });
+
+    // Manual mapping for year to text if really needed, but sticking to digits is safer/easier unless strict requirement.
+    // The previous implementation used a helper. We can keep using the numeric year string for the yearToText if we want,
+    // or just use the number.
+    // Let's use the year string we got.
+    const yearNumber = parseInt(year);
+    const yearText = yearToText(yearNumber);
+
     const monthCap = month.charAt(0).toUpperCase() + month.slice(1);
+
     return `${day} de ${monthCap} del año ${yearText}`;
 }
 
