@@ -194,19 +194,31 @@ export async function GET(req: NextRequest) {
                 });
 
                 const payload = {
-                    event: 'payment_success',
-                    email: updatedReservation?.email,
-                    name: updatedReservation?.name,
+                    contact_name: updatedReservation?.name,
+                    contact_email: updatedReservation?.email,
+                    contact_phone: updatedReservation?.phone,
+                    contact_rut: updatedReservation?.rut,
+                    contact_address: updatedReservation?.address,
+                    lot_number: updatedReservation?.lot?.number,
+                    lot_id: updatedReservation?.lot?.id,
+                    lot_stage: updatedReservation?.lot?.stage,
+                    lot_area_m2: updatedReservation?.lot?.area_m2,
+                    lot_total_price: updatedReservation?.lot?.price_total_clp,
+                    amount_paid: commitResponse.amount,
+                    transbank_order_id: commitResponse.buy_order,
+                    authorization_code: commitResponse.authorization_code,
+                    payment_status: 'approved',
+                    timestamp: new Date().toISOString(),
+                    reservation_id: reservationId,
+                    folio: updatedReservation?.folio,
+                    token_ws: token,
+                    webpay_status: commitResponse.status,
+                    response_code: commitResponse.response_code,
+                    payment_type_code: commitResponse.payment_type_code,
+                    installments_number: commitResponse.installments_number,
+                    // Additional helpful fields
                     scope,
-                    transaction: {
-                        token,
-                        amount: commitResponse.amount,
-                        authorization_code: commitResponse.authorization_code,
-                        date: commitResponse.transaction_date
-                    },
-                    reservation: updatedReservation,
-                    user_id: userId,
-                    timestamp: new Date().toISOString()
+                    user_id: userId
                 };
 
                 fetch(paymentWebhookUrl, {

@@ -158,7 +158,7 @@ export function PaymentButtons({ reservationId, lot, reservation }: PaymentButto
             {!isCuotasPaid && totalCuotas > 0 && (
                 <Dialog open={isCuotasModalOpen} onOpenChange={setIsCuotasModalOpen}>
                     <DialogTrigger asChild>
-                        <Button variant="outline" className="w-full border-[#36595F] text-[#36595F] hover:bg-[#36595F]/10 font-bold">
+                        <Button className="w-full bg-[#36595F] hover:bg-[#2b464a] text-white font-bold">
                             <CreditCard className="mr-2 h-4 w-4" />
                             Pagar Cuotas
                         </Button>
@@ -219,10 +219,10 @@ export function PaymentButtons({ reservationId, lot, reservation }: PaymentButto
 
             {/* CUOTAS STATUS */}
             {totalCuotas > 0 && (
-                <div className="text-xs text-center text-gray-500">
+                <div className="text-center mt-2">
                     {isCuotasPaid
-                        ? <span className="text-green-600 font-bold">¡Crédito Pagado Completamente! 🎉</span>
-                        : <span>Avance: {paidCuotas} / {totalCuotas} cuotas pagadas</span>
+                        ? <span className="text-green-600 font-bold text-sm">¡Crédito Pagado Completamente! 🎉</span>
+                        : <span className="text-[#E0B457] font-bold text-sm uppercase tracking-wide">Avance: {paidCuotas} / {totalCuotas} cuotas pagadas</span>
                     }
                 </div>
             )}

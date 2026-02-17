@@ -2,10 +2,11 @@
 
 import { Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
+import { CheckCircle2, Home, Loader2, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { Footer } from '@/components/Footer';
 
 function PaymentSuccessContent() {
     const searchParams = useSearchParams();
@@ -23,7 +24,7 @@ function PaymentSuccessContent() {
 
     const getScopeLabel = (s: string | null) => {
         if (s === 'PIE') return 'Pago de Pie Inicial';
-        if (s === 'INSTALLMENT') return 'Pago de Cuota(s)';
+        if (s === 'INSTALLMENT') return 'Pago de Cuota Mensual';
         return 'Pago';
     };
 
@@ -43,33 +44,78 @@ function PaymentSuccessContent() {
     }, [router]);
 
     return (
-        <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
-            <div className="bg-white p-8 rounded-2xl shadow-xl max-w-md w-full text-center space-y-6 animate-in fade-in zoom-in duration-500">
-                <div className="mx-auto bg-green-100 w-20 h-20 rounded-full flex items-center justify-center mb-4">
-                    <CheckCircle2 className="w-10 h-10 text-green-600" />
-                </div>
+        <div className="min-h-screen bg-black/95 relative flex flex-col">
+            {/* Background with overlay */}
+            <div className="absolute inset-0 bg-[url('/terreno-bg.JPG')] bg-cover bg-center opacity-30 blur-sm fixed" />
 
-                <h1 className="text-3xl font-bold text-gray-900">¡Pago Exitoso!</h1>
+            {/* Main Content */}
+            <main className="container mx-auto px-4 py-12 flex-grow relative z-10 flex items-center justify-center">
+                <div className="w-full max-w-lg">
+                    {/* Success Card */}
+                    <div className="bg-white rounded-2xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-8 duration-700 ring-1 ring-white/20">
 
-                <div className="space-y-2 text-gray-600">
-                    <p className="text-lg">Has realizado correctamente el <span className="font-semibold text-gray-900">{getScopeLabel(scope)}</span>.</p>
-                    <div className="bg-gray-100 p-4 rounded-lg mt-4">
-                        <p className="text-sm text-gray-500 mb-1">Monto Pagado</p>
-                        <p className="text-2xl font-bold text-[#36595F]">{formatCurrency(amount)}</p>
+                        {/* Header: Brand Green */}
+                        <div className="bg-[#36595F] px-8 py-10 text-center relative overflow-hidden">
+                            <div className="absolute inset-0 bg-[url('/pattern-opacity.png')] opacity-10" />
+
+                            <div className="relative z-10">
+                                <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-white/20 backdrop-blur-md mb-6 animate-scale-in shadow-lg">
+                                    <CheckCircle2 className="w-10 h-10 text-white" strokeWidth={2.5} />
+                                </div>
+                                <h1 className="text-3xl font-bold text-white mb-2 tracking-tight">¡Pago Exitoso!</h1>
+                                <p className="text-white/80">La transacción se ha completado correctamente</p>
+                            </div>
+                        </div>
+
+                        {/* Body */}
+                        <div className="p-8 space-y-8">
+
+                            {/* Details Section */}
+                            <div className="space-y-4">
+                                <div className="bg-gray-50 rounded-xl p-5 border border-gray-100 shadow-sm">
+                                    <p className="text-sm text-gray-500 mb-1 uppercase tracking-wider font-semibold">Concepto</p>
+                                    <p className="text-lg font-medium text-gray-900">{getScopeLabel(scope)}</p>
+                                </div>
+
+                                <div className="bg-[#36595F]/5 rounded-xl p-5 border border-[#36595F]/10 shadow-sm">
+                                    <p className="text-sm text-[#36595F] mb-1 uppercase tracking-wider font-semibold">Monto Pagado</p>
+                                    <p className="text-3xl font-bold text-[#36595F]">{formatCurrency(amount)}</p>
+                                </div>
+                            </div>
+
+                            {/* Token Info */}
+                            <div className="text-center">
+                                <p className="text-xs text-gray-400 mb-1">Código de transacción</p>
+                                <code className="bg-gray-100 px-3 py-1 rounded text-xs font-mono text-gray-600 block w-full truncate">
+                                    {token}
+                                </code>
+                            </div>
+
+                            {/* Actions */}
+                            <div className="pt-2">
+                                <Link href="/user/plots" className="block">
+                                    <Button className="w-full h-14 text-lg bg-[#36595F] hover:bg-[#2b464a] text-white shadow-xl hover:shadow-2xl transition-all duration-300 rounded-xl group relative overflow-hidden">
+                                        <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
+                                        <span className="relative z-10 flex items-center justify-center gap-2">
+                                            Volver a Mis Terrenos
+                                            <span className="bg-white/20 px-2 py-0.5 rounded text-sm font-semibold">
+                                                {countdown}s
+                                            </span>
+                                            <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                                        </span>
+                                    </Button>
+                                </Link>
+                                <p className="text-center text-xs text-gray-400 mt-4">
+                                    Serás redirigido automáticamente
+                                </p>
+                            </div>
+                        </div>
                     </div>
                 </div>
+            </main>
 
-                <div className="text-sm text-gray-500">
-                    Código de transacción: <span className="font-mono text-xs bg-gray-100 px-2 py-1 rounded">{token?.slice(0, 10)}...</span>
-                </div>
-
-                <div className="pt-4 space-y-3">
-                    <Link href="/user/plots">
-                        <Button className="w-full bg-[#36595F] hover:bg-[#2A464B] text-white">
-                            Volver a Mis Terrenos ({countdown}s)
-                        </Button>
-                    </Link>
-                </div>
+            <div className="relative z-10">
+                <Footer />
             </div>
         </div>
     );
@@ -77,7 +123,11 @@ function PaymentSuccessContent() {
 
 export default function PaymentSuccessPage() {
     return (
-        <Suspense fallback={<div className="flex h-screen items-center justify-center"><Loader2 className="animate-spin h-8 w-8 text-[#36595F]" /></div>}>
+        <Suspense fallback={
+            <div className="min-h-screen bg-black/95 flex items-center justify-center">
+                <Loader2 className="animate-spin h-10 w-10 text-[#36595F]" />
+            </div>
+        }>
             <PaymentSuccessContent />
         </Suspense>
     );
