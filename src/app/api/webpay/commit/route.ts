@@ -111,9 +111,19 @@ export async function GET(req: NextRequest) {
             }
 
             // Standard Reservation Success
-            return NextResponse.redirect(`${baseUrl}/pago-exito?token=${token}`);
+            const successUrl = new URL(`${baseUrl}/pago-exito`);
+            successUrl.searchParams.set('token', token);
+            if (transaction.reservation_id) successUrl.searchParams.set('reservationId', transaction.reservation_id);
+            if (transaction.lot_id) successUrl.searchParams.set('lotId', String(transaction.lot_id));
+
+            return NextResponse.redirect(successUrl.toString());
         } else {
-            return NextResponse.redirect(`${baseUrl}/pago-fallo?token=${token}&code=${commitResponse.response_code}`);
+            const failureUrl = new URL(`${baseUrl}/pago-fallo`);
+            failureUrl.searchParams.set('token', token);
+            failureUrl.searchParams.set('code', String(commitResponse.response_code));
+            if (transaction.lot_id) failureUrl.searchParams.set('lotId', String(transaction.lot_id));
+
+            return NextResponse.redirect(failureUrl.toString());
         }
 
     } catch (error) {
