@@ -195,6 +195,8 @@ export async function GET(req: NextRequest) {
 
                 const payload = {
                     event: 'payment_success',
+                    email: updatedReservation?.email,
+                    name: updatedReservation?.name,
                     scope,
                     transaction: {
                         token,
