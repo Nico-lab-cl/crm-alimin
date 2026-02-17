@@ -2,6 +2,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { webpayCommit } from '@/lib/transbank';
+import bcrypt from 'bcryptjs';
+import { SignJWT } from 'jose';
+import { Role } from '@prisma/client';
 
 export const dynamic = 'force-dynamic';
 
@@ -56,9 +59,84 @@ export async function GET(req: NextRequest) {
         });
 
         if (status === 'AUTHORIZED') {
-            // Update Reservation/Lot based on Scope
             const reservationId = transaction.reservation_id;
+            let userId = transaction.reservation.buyer_id;
 
+            // --- USER CREATION / LINKING LOGIC ---
+            if (!userId && transaction.reservation.email) {
+                const email = transaction.reservation.email;
+                const name = transaction.reservation.name || 'Usuario';
+
+                // Check if user exists
+                let user = await prisma.user.findUnique({ where: { email } });
+                let isNewUser = false;
+
+                if (!user) {
+                    isNewUser = true;
+                    // Create new user
+                    const randomPassword = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8);
+                    const hashedPassword = await bcrypt.hash(randomPassword, 10);
+
+                    user = await prisma.user.create({
+                        data: {
+                            name,
+                            email,
+                            password: hashedPassword,
+                            role: Role.USER
+                        }
+                    });
+
+                    // Trigger Registration Webhook (New User)
+                    // URL from register/route.ts
+                    const registerWebhookUrl = "https://n8n-n8n.yszha2.easypanel.host/webhook/6014ee07-0470-4a07-aa94-2e5266bd9a03";
+
+                    try {
+                        // Generate Verification Token
+                        const secret = new TextEncoder().encode(process.env.AUTH_SECRET || "fallback_secret");
+                        const verifToken = await new SignJWT({ email: user.email, sub: user.id, type: 'email-verification' })
+                            .setProtectedHeader({ alg: "HS256" })
+                            .setIssuedAt()
+                            .setExpirationTime("24h")
+                            .sign(secret);
+
+                        const protocol = req.headers.get("x-forwarded-proto") || "http";
+                        const host = req.headers.get("host");
+                        // Use NEXTAUTH_URL or derive from request, but usually env is safer for webhooks
+                        const appUrl = process.env.NEXTAUTH_URL || `${protocol}://${host}`;
+                        const verificationLink = `${appUrl}/verify-email?token=${verifToken}`;
+
+                        // Fire and forget
+                        fetch(registerWebhookUrl, {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                                email: user.email,
+                                name: user.name,
+                                verificationLink,
+                                password: randomPassword, // Optional: send temporary password? Maybe security risk, but creating explicit account via payment usually implies sending creds.
+                                // If not sending password, user uses Forgot Password.
+                                source: 'payment_auto_register',
+                                timestamp: new Date().toISOString(),
+                            }),
+                        }).catch(e => console.error("Failed to trigger register webhook", e));
+
+                    } catch (e) {
+                        console.error("Error preparing new user webhook", e);
+                    }
+                }
+
+                if (user) {
+                    userId = user.id;
+                    // Link user to reservation
+                    await prisma.reservation.update({
+                        where: { id: reservationId },
+                        data: { buyer_id: userId }
+                    });
+                }
+            }
+            // -------------------------------------
+
+            // --- UPDATE RESERVATION/LOT STATUS ---
             if (scope === 'PIE') {
                 await prisma.reservation.update({
                     where: { id: reservationId },
@@ -69,7 +147,6 @@ export async function GET(req: NextRequest) {
                     }
                 });
             } else if (scope === 'INSTALLMENT') {
-                // Increment installments paid
                 await prisma.reservation.update({
                     where: { id: reservationId },
                     data: {
@@ -87,11 +164,12 @@ export async function GET(req: NextRequest) {
                     where: { id: reservationId },
                     data: {
                         status: 'paid',
-                        pipeline_stage: 'RESERVA_PAGADA'
+                        pipeline_stage: 'RESERVA_PAGADA',
+                        // Ensure buyer_id is set if we found/created user
+                        ...(userId ? { buyer_id: userId } : {})
                     }
                 });
 
-                // Also update Lot status for standard reservations
                 if (transaction.lot_id) {
                     await prisma.lot.update({
                         where: { id: transaction.lot_id },
@@ -102,6 +180,39 @@ export async function GET(req: NextRequest) {
                     });
                 }
             }
+            // -------------------------------------
+
+            // --- TRIGGER PAYMENT WEBHOOK ---
+            const paymentWebhookUrl = process.env.N8N_WEBHOOK_URL;
+            if (paymentWebhookUrl) {
+                // Fetch latest data to send complete info
+                const updatedReservation = await prisma.reservation.findUnique({
+                    where: { id: reservationId },
+                    include: { lot: true }
+                });
+
+                const payload = {
+                    event: 'payment_success',
+                    scope,
+                    transaction: {
+                        token,
+                        amount: commitResponse.amount,
+                        authorization_code: commitResponse.authorization_code,
+                        date: commitResponse.transaction_date
+                    },
+                    reservation: updatedReservation,
+                    user_id: userId,
+                    timestamp: new Date().toISOString()
+                };
+
+                fetch(paymentWebhookUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                }).catch(e => console.error("Failed to trigger payment webhook", e));
+            }
+            // -------------------------------------
+
 
             // Redirect to Success Page
             if (scope === 'PIE' || scope === 'INSTALLMENT') {
