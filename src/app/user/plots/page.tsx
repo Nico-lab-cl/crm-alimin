@@ -163,9 +163,7 @@ export default function UserPlotsPage() {
                                                 />
                                             )}
 
-                                            <button className="w-full py-2 px-4 bg-[#36595F] text-white rounded hover:bg-[#2A464B] transition-colors text-sm font-medium shadow-lg hover:shadow-[#36595F]/20">
-                                                Gestiona tus Pagos
-                                            </button>
+
 
                                             <PaymentButtons
                                                 reservationId={res.id}

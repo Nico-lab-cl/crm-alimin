@@ -178,7 +178,7 @@ export function PaymentButtons({ reservationId, lot, reservation }: PaymentButto
                                         <SelectValue placeholder="Seleccionar cantidad" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        {Array.from({ length: Math.min(12, remainingCuotas) }, (_, i) => i + 1).map((num) => (
+                                        {Array.from({ length: remainingCuotas }, (_, i) => i + 1).map((num) => (
                                             <SelectItem key={num} value={String(num)}>
                                                 {num} {num === 1 ? 'Cuota' : 'Cuotas'}
                                             </SelectItem>
