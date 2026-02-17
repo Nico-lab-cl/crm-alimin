@@ -1,0 +1,109 @@
+
+import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
+// @ts-ignore
+import WebpayPlus from 'transbank-sdk/dist/es5/transbank/webpay/webpay_plus';
+// @ts-ignore
+import { Options, IntegrationApiKeys, Environment, IntegrationCommerceCodes } from 'transbank-sdk';
+
+// Configure Transbank for Production
+const tx = new WebpayPlus.Transaction(new Options(
+    IntegrationCommerceCodes.WEBPAY_PLUS,
+    IntegrationApiKeys.WEBPAY_PLUS,
+    Environment.Integration
+));
+
+export async function POST(request: Request) {
+    try {
+        const body = await request.json();
+        const { reservationId, scope, installments } = body; // scope: 'PIE' | 'INSTALLMENT'
+
+        if (!reservationId || !scope) {
+            return NextResponse.json({ error: 'Faltan datos requeridos' }, { status: 400 });
+        }
+
+        const reservation = await prisma.reservation.findUnique({
+            where: { id: reservationId },
+            include: { lot: true }
+        });
+
+        if (!reservation || !reservation.lot) {
+            return NextResponse.json({ error: 'Reserva o lote no encontrado' }, { status: 404 });
+        }
+
+        let amount = 0;
+        let buyOrderScope = '';
+        let installmentsCount = 0;
+
+        if (scope === 'PIE') {
+            const pieTotal = reservation.lot.pie || 0;
+            const reservationPaid = reservation.lot.reservation_amount_clp || 0;
+            // The user wants to subtract reservation amount from Pie
+            amount = Math.max(0, pieTotal - reservationPaid);
+            buyOrderScope = 'PIE';
+            installmentsCount = 0;
+
+            if (amount <= 0) {
+                return NextResponse.json({ error: 'El monto del pie es 0 o menor' }, { status: 400 });
+            }
+        } else if (scope === 'INSTALLMENT') {
+            if (!installments || installments <= 0) {
+                return NextResponse.json({ error: 'Cantidad de cuotas inválida' }, { status: 400 });
+            }
+
+            const currentPaid = reservation.installments_paid || 0;
+            const totalCuotas = reservation.lot.cuotas || 0;
+            const valorCuota = reservation.lot.valor_cuota || 0;
+
+            if (currentPaid + installments > totalCuotas) {
+                return NextResponse.json({ error: 'La cantidad de cuotas excede el total restante' }, { status: 400 });
+            }
+
+            amount = installments * valorCuota;
+            buyOrderScope = 'CUOTA';
+            installmentsCount = installments;
+
+            if (amount <= 0) {
+                return NextResponse.json({ error: 'El monto de la cuota es 0' }, { status: 400 });
+            }
+        } else {
+            return NextResponse.json({ error: 'Scope inválido' }, { status: 400 });
+        }
+
+        const buyOrder = `${buyOrderScope}-${Date.now()}`;
+        const sessionId = reservationId;
+        // Correct return URL for success page handling
+        const returnUrl = `${process.env.NEXT_PUBLIC_APP_URL}/api/webpay/commit?scope=${scope}`;
+
+        const createResponse = await tx.create(
+            buyOrder,
+            sessionId,
+            amount,
+            returnUrl
+        );
+
+        // Store transaction intent
+        await prisma.webpayTransaction.create({
+            data: {
+                token: createResponse.token,
+                buy_order: buyOrder,
+                amount_clp: amount,
+                status: 'INITIALIZED',
+                reservation_id: reservationId,
+                lot_id: reservation.lot.id,
+                scope: scope,
+                installments_count: installmentsCount
+            }
+        });
+
+        return NextResponse.json({
+            token: createResponse.token,
+            url: createResponse.url,
+            amount: amount
+        });
+
+    } catch (error) {
+        console.error('Webpay init error:', error);
+        return NextResponse.json({ error: 'Error al iniciar pago' }, { status: 500 });
+    }
+}

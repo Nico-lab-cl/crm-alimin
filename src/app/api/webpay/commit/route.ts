@@ -1,284 +1,107 @@
+
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { webpayCommit, WEBPAY_CONFIG } from '@/lib/transbank';
-import { computeLotDetailsFromId } from '@/lib/logic';
-
-// N8N Webhook Configuration handled inside request to ensure runtime access
+import { webpayCommit } from '@/lib/transbank';
 
 export const dynamic = 'force-dynamic';
 
-async function handleCommitRequest(req: NextRequest) {
+export async function GET(req: NextRequest) {
     const searchParams = req.nextUrl.searchParams;
-    let token = searchParams.get('token_ws') || searchParams.get('TBK_TOKEN');
+    const token = searchParams.get('token_ws'); // Success
+    const tbkToken = searchParams.get('TBK_TOKEN'); // Aborted
+    const scope = searchParams.get('scope') || 'RESERVATION'; // Default to RESERVATION if missing (e.g. old flow)
 
-    // Read env vars at runtime to prevent build-time inlining
-    // Read env vars or fallback to HARDCODED URL provided by user
-    const N8N_WEBHOOK_URL = process.env.N8N_WEBHOOK_URL || 'https://n8n-n8n.yszha2.easypanel.host/webhook/7b928d3b-2850-462d-87df-f6a87fe4108a';
-    const N8N_WEBHOOK_SECRET = process.env.N8N_WEBHOOK_SECRET;
-
-    // Handle POST body if needed (Transbank sometimes posts)
-    if (!token && req.method === 'POST') {
-        try {
-            const formData = await req.formData();
-            token = formData.get('token_ws') as string || formData.get('TBK_TOKEN') as string;
-        } catch (e) {
-            // ignore
-        }
-    }
-
-    // If user hit "Anular" on Webpay form
-    const tbkOrdine = searchParams.get('TBK_ORDEN_COMPRA');
-    if (!token && tbkOrdine) {
-        // Aborted by user
-        return NextResponse.redirect(`${WEBPAY_CONFIG.finalFailUrl}?reason=aborted_by_user`);
+    // Handle aborted payment
+    if (tbkToken && !token) {
+        return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/pago-fallo?token=${tbkToken}`);
     }
 
     if (!token) {
-        return NextResponse.json({ ok: false, error: 'missing_token' }, { status: 400 });
+        return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/pago-fallo?error=missing_token`);
     }
 
     try {
-        // 1. Commit with Transbank
-        const commitRes = await webpayCommit(token) as any;
+        // 1. Commit transaction with Transbank
+        const commitResponse = await webpayCommit(token);
 
-        // 2. Find Transaction
-        const txRow = await prisma.webpayTransaction.findUnique({
+        // 2. Find transaction in DB
+        const transaction = await prisma.webpayTransaction.findUnique({
             where: { token },
-            include: { reservation: true, lot: true }
+            include: { reservation: true }
         });
 
-        if (!txRow) {
-            return NextResponse.redirect(`${WEBPAY_CONFIG.finalFailUrl}?reason=tx_not_found`);
+        if (!transaction) {
+            console.error("Transaction not found for token:", token);
+            return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/pago-fallo?error=transaction_not_found`);
         }
 
-        const now = new Date();
-        // Update Transaction
+        // 3. Update Transaction Record
+        const status = commitResponse.status === 'AUTHORIZED' && commitResponse.response_code === 0 ? 'AUTHORIZED' : 'FAILED';
+
         await prisma.webpayTransaction.update({
-            where: { id: txRow.id },
+            where: { token },
             data: {
-                status: commitRes.status,
-                response_code: commitRes.response_code,
-                authorization_code: commitRes.authorization_code,
-                payment_type_code: commitRes.payment_type_code,
-                installments_number: commitRes.installments_number,
-                transaction_date: commitRes.transaction_date ? new Date(commitRes.transaction_date) : now,
-                processed_at: now
+                status: status,
+                response_code: commitResponse.response_code,
+                authorization_code: commitResponse.authorization_code,
+                payment_type_code: commitResponse.payment_type_code,
+                installments_number: commitResponse.installments_number,
+                transaction_date: new Date(commitResponse.transaction_date),
+                processed_at: new Date()
             }
         });
 
-        const isAuthorized = commitRes.response_code === 0 && (commitRes.status === 'AUTHORIZED' || commitRes.status === 'AUTHORIZED');
+        if (status === 'AUTHORIZED') {
+            // Update Reservation/Lot based on Scope
+            const reservationId = transaction.reservation_id;
 
-        if (isAuthorized) {
-            // SUCCESS
-            await prisma.reservation.update({
-                where: { id: txRow.reservation_id },
-                data: { status: 'paid' }
-            });
-
-            await prisma.lot.update({
-                where: { id: txRow.lot_id },
-                data: {
-                    status: 'sold',
-                    updated_at: now
-                }
-            });
-
-            // Delete other locks for this lot? (Assuming locks are handled by key, but logic says delete all locks for this lot)
-            await prisma.lotLock.deleteMany({
-                where: { lot_id: txRow.lot_id }
-            });
-
-            // ------------------------------------------------------------------
-            // AUTO-REGISTRATION / LINKING LOGIC
-            // ------------------------------------------------------------------
-            let generatedPassword: string | null = null;
-            let isNewUser = false;
-
-            try {
-                const buyerEmail = txRow.reservation.email;
-                const buyerName = txRow.reservation.name;
-
-                let user = await prisma.user.findUnique({
-                    where: { email: buyerEmail }
-                });
-
-                if (!user) {
-                    // Create new user
-                    const temporaryPassword = Math.random().toString(36).slice(-8);
-                    generatedPassword = temporaryPassword;
-                    const hashedPassword = await import('bcryptjs').then(bcrypt => bcrypt.hash(temporaryPassword, 10));
-
-                    console.log(`[AutoRegister] Creating new user for: ${buyerEmail}`);
-
-                    user = await prisma.user.create({
-                        data: {
-                            email: buyerEmail,
-                            name: buyerName,
-                            password: hashedPassword,
-                            role: 'USER',
-                            emailVerified: new Date(), // Auto-verify email for buyers
-                            mustChangePassword: true, // Force password change on first login
-                        }
-                    });
-
-                    isNewUser = true;
-                    console.log(`[AutoRegister] CREDENTIALS FOR ${buyerEmail}: Password: ${generatedPassword}`);
-                } else {
-                    console.log(`[AutoRegister] Linking purchase to existing user: ${buyerEmail}`);
-                }
-
-                // Link Reservation to User
+            if (scope === 'PIE') {
                 await prisma.reservation.update({
-                    where: { id: txRow.reservation_id },
-                    data: { buyer_id: user.id }
+                    where: { id: reservationId },
+                    data: {
+                        pie_status: 'PAID',
+                        // Logic: if Pie is paid, maybe move pipeline stage?
+                        pipeline_stage: 'PIE_PAGADO'
+                    }
                 });
-
-            } catch (regError) {
-                console.error('[AutoRegister] Failed to link/create user:', regError);
-            }
-            // ------------------------------------------------------------------
-
-            // Construct detailed payload for N8N using REAL DB data
-            // We avoid computeLotDetailsFromId because DB IDs might not match hardcoded ranges
-            const lot = txRow.lot;
-
-            const payload = {
-                contact_name: txRow.reservation.name,
-                contact_email: txRow.reservation.email,
-                contact_phone: txRow.reservation.phone,
-                contact_rut: txRow.reservation.rut,
-                contact_address: txRow.reservation.address,
-
-                lot_number: lot.number,
-                lot_id: String(lot.id),
-                lot_stage: lot.stage,
-                lot_area_m2: lot.area_m2,
-                lot_total_price: lot.price_total_clp,
-
-                amount_paid: String(txRow.amount_clp),
-                transbank_order_id: txRow.buy_order,
-                authorization_code: String(commitRes.authorization_code),
-                payment_status: 'approved',
-                timestamp: now.toISOString(),
-
-                reservation_id: txRow.reservation_id,
-                folio: txRow.reservation.folio,
-                token_ws: token,
-                webpay_status: String(commitRes.status),
-                response_code: String(commitRes.response_code),
-                payment_type_code: String(commitRes.payment_type_code),
-                installments_number: String(commitRes.installments_number),
-
-                lot_price_label: lot.price_total_clp ? '' : 'Consultar',
-
-                // New User Credentials for Email (Handled by n8n)
-                user_is_new: isNewUser,
-                user_temp_password: generatedPassword || '',
-                login_url: `${process.env.NEXTAUTH_URL}/login`,
-
-                // PDF Download Link for Email
-                contract_pdf_url: `${process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXTAUTH_URL}/api/contracts/${txRow.reservation_id}/pdf`
-            };
-
-            // Trigger N8N (Non-blocking)
-            if (N8N_WEBHOOK_URL) {
-                if (!N8N_WEBHOOK_SECRET) {
-                    console.warn('[n8n] N8N_WEBHOOK_SECRET not configured, sending webhook without signature', { reservationId: txRow.reservation_id });
-                }
-
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
-
-                fetch(N8N_WEBHOOK_URL, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        ...(N8N_WEBHOOK_SECRET ? { 'X-Webhook-Secret': N8N_WEBHOOK_SECRET } : {})
-                    },
-                    body: JSON.stringify(payload),
-                    signal: controller.signal
-                })
-                    .then(response => {
-                        clearTimeout(timeoutId);
-                        if (response.ok) {
-                            console.log('[n8n] Webhook sent successfully', { reservationId: txRow.reservation_id, status: response.status });
-                        } else {
-                            console.warn('[n8n] Webhook returned non-OK status', { reservationId: txRow.reservation_id, status: response.status });
-                        }
-                    })
-                    .catch(err => {
-                        clearTimeout(timeoutId);
-                        console.error('[n8n] Webhook failed', { reservationId: txRow.reservation_id, error: err instanceof Error ? err.message : String(err) });
-                    });
+            } else if (scope === 'INSTALLMENT') {
+                // Increment installments paid
+                await prisma.reservation.update({
+                    where: { id: reservationId },
+                    data: {
+                        installments_paid: {
+                            increment: transaction.installments_count || 0
+                        },
+                        pipeline_stage: 'PAGO_CUOTAS'
+                    }
+                });
             } else {
-                console.warn('[n8n] N8N_WEBHOOK_URL not configured, skipping webhook', { reservationId: txRow.reservation_id });
+                // RESERVATION (Standard flow)
+                await prisma.reservation.update({
+                    where: { id: reservationId },
+                    data: {
+                        status: 'paid',
+                        pipeline_stage: 'RESERVA_PAGADA'
+                    }
+                });
             }
 
-            // ------------------------------------------------------------------
-            // NEW USER WEBHOOK TRIGGER (Guest Purchase -> Welcome Email)
-            // ------------------------------------------------------------------
-            if (isNewUser && generatedPassword) {
-                const NEW_USER_WEBHOOK_URL = 'https://n8n-n8n.yszha2.easypanel.host/webhook/7febf5b8-27dd-4988-b137-364480bcba58';
-
-                const newUserPayload = {
-                    email: txRow.reservation.email,
-                    name: txRow.reservation.name,
-                    temp_password: generatedPassword,
-                    login_url: `${process.env.NEXTAUTH_URL}/login`,
-                    dashboard_url: `${process.env.NEXTAUTH_URL}/user/plots`,
-                    rut: txRow.reservation.rut,
-                    phone: txRow.reservation.phone
-                };
-
-                console.log('[AutoRegister] Triggering New User Webhook', { email: txRow.reservation.email });
-
-                // Fire and forget (non-blocking) within reasonable timeout
-                const controllerNu = new AbortController();
-                const timeoutNu = setTimeout(() => controllerNu.abort(), 10000);
-
-                fetch(NEW_USER_WEBHOOK_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(newUserPayload),
-                    signal: controllerNu.signal
-                })
-                    .then(res => {
-                        clearTimeout(timeoutNu);
-                        console.log('[AutoRegister] New User Webhook sent', { status: res.status });
-                    })
-                    .catch(err => {
-                        clearTimeout(timeoutNu);
-                        console.error('[AutoRegister] New User Webhook failed', err);
-                    });
+            // Redirect to Success Page
+            // If it's PIE or INSTALLMENT, redirect to specific payment success page
+            if (scope === 'PIE' || scope === 'INSTALLMENT') {
+                return NextResponse.redirect(
+                    `${process.env.NEXT_PUBLIC_APP_URL}/pago-exito/payment?token=${token}&amount=${commitResponse.amount}&scope=${scope}`
+                );
             }
-            // ------------------------------------------------------------------
 
-            return NextResponse.redirect(`${WEBPAY_CONFIG.finalOkUrl}?lotId=${txRow.lot_id}&reservationId=${txRow.reservation_id}`);
-
+            // Standard Reservation Success
+            return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/pago-exito?token=${token}`);
         } else {
-            // FAILED
-            await prisma.reservation.update({
-                where: { id: txRow.reservation_id },
-                data: { status: 'canceled' }
-            });
-
-            await prisma.lotLock.deleteMany({
-                where: { lot_id: txRow.lot_id, locked_by: txRow.reservation.session_id || '' }
-            });
-
-            return NextResponse.redirect(`${WEBPAY_CONFIG.finalFailUrl}?reason=start_error`); // 'start_error' mimics original code logic for general failure
+            return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/pago-fallo?token=${token}&code=${commitResponse.response_code}`);
         }
 
     } catch (error) {
-        console.error('Commit Error', error);
-        return NextResponse.redirect(`${WEBPAY_CONFIG.finalFailUrl}?reason=exception`);
+        console.error('Commit Error:', error);
+        return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/pago-fallo?error=commit_error`);
     }
-}
-
-export async function GET(req: NextRequest) {
-    return handleCommitRequest(req);
-}
-
-export async function POST(req: NextRequest) {
-    return handleCommitRequest(req);
 }

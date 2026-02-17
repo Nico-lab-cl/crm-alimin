@@ -9,17 +9,25 @@ import Link from "next/link";
 interface Reservation {
     id: string;
     lot: {
+        id: number;
         number: string;
         stage: number;
         area_m2: number;
         price_total_clp: number;
+        pie: number | null;
+        reservation_amount_clp: number | null;
+        cuotas: number | null;
+        valor_cuota: number | null;
     };
     status: string;
+    pie_status: string | null;
+    installments_paid: number | null;
     created_at: string;
     signed_at?: string | null;
 }
 
 import { SignContractModal } from "@/components/SignContractModal";
+import { PaymentButtons } from "@/components/user/PaymentButtons";
 
 export default function UserPlotsPage() {
     const { data: session, status } = useSession();
@@ -158,6 +166,15 @@ export default function UserPlotsPage() {
                                             <button className="w-full py-2 px-4 bg-[#36595F] text-white rounded hover:bg-[#2A464B] transition-colors text-sm font-medium shadow-lg hover:shadow-[#36595F]/20">
                                                 Gestiona tus Pagos
                                             </button>
+
+                                            <PaymentButtons
+                                                reservationId={res.id}
+                                                lot={res.lot}
+                                                reservation={{
+                                                    pie_status: res.pie_status,
+                                                    installments_paid: res.installments_paid
+                                                }}
+                                            />
 
                                         </div>
                                     </CardContent>

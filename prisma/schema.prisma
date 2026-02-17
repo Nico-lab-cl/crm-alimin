@@ -58,6 +58,10 @@ model Reservation {
   address_commune String?
   address_region  String?
 
+  // Payment Tracking
+  pie_status      String?   @default("PENDING") // PENDING, PAID
+  installments_paid Int?    @default(0)
+
   // Digital Signature
   signature_otp       String?
   signature_otp_expires DateTime?
@@ -96,6 +100,11 @@ model WebpayTransaction {
   payment_type_code   String?
   installments_number Int?
   processed_at        DateTime?
+  
+  // Custom Payment Scope
+  scope               String?   @default("RESERVATION") // RESERVATION, PIE, INSTALLMENT
+  installments_count  Int?      @default(0) // How many installments are being paid in this tx
+
   created_at          DateTime  @default(now())
   
   // Relations

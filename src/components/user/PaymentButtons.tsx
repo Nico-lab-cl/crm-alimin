@@ -1,0 +1,231 @@
+'use client';
+
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogDescription,
+    DialogFooter,
+    DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import { Loader2, CreditCard } from 'lucide-react';
+import { toast } from 'sonner';
+
+interface PaymentButtonsProps {
+    reservationId: string;
+    lot: {
+        id: number;
+        pie: number | null;
+        reservation_amount_clp: number | null;
+        cuotas: number | null;
+        valor_cuota: number | null;
+    };
+    reservation: {
+        pie_status: string | null;
+        installments_paid: number | null;
+    };
+}
+
+export function PaymentButtons({ reservationId, lot, reservation }: PaymentButtonsProps) {
+    const [isLoading, setIsLoading] = useState(false);
+    const [selectedCuotas, setSelectedCuotas] = useState<string>("1");
+    const [isPieModalOpen, setIsPieModalOpen] = useState(false);
+    const [isCuotasModalOpen, setIsCuotasModalOpen] = useState(false);
+
+    // PIE LOGIC
+    const pieTotal = lot.pie || 0;
+    const reservationPaid = lot.reservation_amount_clp || 0;
+    const pieToPay = Math.max(0, pieTotal - reservationPaid);
+    const isPiePaid = reservation.pie_status === 'PAID';
+
+    // CUOTAS LOGIC
+    const totalCuotas = lot.cuotas || 0;
+    const paidCuotas = reservation.installments_paid || 0;
+    const valorCuota = lot.valor_cuota || 0;
+    const remainingCuotas = Math.max(0, totalCuotas - paidCuotas);
+    const isCuotasPaid = remainingCuotas === 0;
+
+    const handlePayment = async (scope: 'PIE' | 'INSTALLMENT') => {
+        setIsLoading(true);
+        try {
+            const body = {
+                reservationId,
+                scope,
+                installments: scope === 'INSTALLMENT' ? parseInt(selectedCuotas) : undefined
+            };
+
+            const res = await fetch('/api/webpay/init-payment', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+
+            if (!res.ok) {
+                const err = await res.json();
+                throw new Error(err.error || 'Error al iniciar pago');
+            }
+
+            const data = await res.json();
+
+            // Redirect to Webpay
+            const form = document.createElement('form');
+            form.action = data.url;
+            form.method = 'POST';
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'token_ws';
+            input.value = data.token;
+            form.appendChild(input);
+            document.body.appendChild(form);
+            form.submit();
+
+        } catch (error) {
+            console.error('Payment Error:', error);
+            toast.error(error instanceof Error ? error.message : 'Error al iniciar el pago');
+            setIsLoading(false);
+        }
+    };
+
+    const formatCurrency = (amount: number) => {
+        return new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(amount);
+    };
+
+    return (
+        <div className="flex flex-col gap-3 mt-4">
+            {/* PIE PAYMENT */}
+            {!isPiePaid && pieToPay > 0 && (
+                <Dialog open={isPieModalOpen} onOpenChange={setIsPieModalOpen}>
+                    <DialogTrigger asChild>
+                        <Button className="w-full bg-[#36595F] hover:bg-[#2b464a] text-white font-bold">
+                            <CreditCard className="mr-2 h-4 w-4" />
+                            Pagar Pie ({formatCurrency(pieToPay)})
+                        </Button>
+                    </DialogTrigger>
+                    <DialogContent className="bg-white text-black">
+                        <DialogHeader>
+                            <DialogTitle>Pagar Pie del Terreno</DialogTitle>
+                            <DialogDescription>
+                                El valor de la reserva ({formatCurrency(reservationPaid)}) se descontará del pie total.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <div className="py-4 space-y-2">
+                            <div className="flex justify-between text-sm">
+                                <span>Total Pie:</span>
+                                <span>{formatCurrency(pieTotal)}</span>
+                            </div>
+                            <div className="flex justify-between text-sm text-green-600">
+                                <span>- Reserva pagada:</span>
+                                <span>{formatCurrency(reservationPaid)}</span>
+                            </div>
+                            <div className="flex justify-between font-bold text-lg border-t pt-2 mt-2">
+                                <span>Total a pagar:</span>
+                                <span>{formatCurrency(pieToPay)}</span>
+                            </div>
+                        </div>
+                        <DialogFooter>
+                            <Button variant="outline" onClick={() => setIsPieModalOpen(false)}>Cancelar</Button>
+                            <Button
+                                onClick={() => handlePayment('PIE')}
+                                disabled={isLoading}
+                                className="bg-[#36595F] text-white"
+                            >
+                                {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                                Ir a Pagar
+                            </Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
+            )}
+
+            {/* PIE STATUS BADGE */}
+            {isPiePaid && (
+                <div className="p-2 bg-green-100 text-green-800 rounded-md text-center text-sm font-medium border border-green-200">
+                    ✅ Pie Pagado
+                </div>
+            )}
+
+            {/* CUOTAS PAYMENT */}
+            {!isCuotasPaid && totalCuotas > 0 && (
+                <Dialog open={isCuotasModalOpen} onOpenChange={setIsCuotasModalOpen}>
+                    <DialogTrigger asChild>
+                        <Button variant="outline" className="w-full border-[#36595F] text-[#36595F] hover:bg-[#36595F]/10 font-bold">
+                            <CreditCard className="mr-2 h-4 w-4" />
+                            Pagar Cuotas
+                        </Button>
+                    </DialogTrigger>
+                    <DialogContent className="bg-white text-black">
+                        <DialogHeader>
+                            <DialogTitle>Pagar Cuotas Mensuales</DialogTitle>
+                            <DialogDescription>
+                                Selecciona cuántas cuotas deseas pagar.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <div className="py-4 space-y-4">
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium">Cantidad de cuotas:</label>
+                                <Select value={selectedCuotas} onValueChange={setSelectedCuotas}>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Seleccionar cantidad" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {Array.from({ length: Math.min(12, remainingCuotas) }, (_, i) => i + 1).map((num) => (
+                                            <SelectItem key={num} value={String(num)}>
+                                                {num} {num === 1 ? 'Cuota' : 'Cuotas'}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                            <div className="bg-gray-50 p-3 rounded-lg space-y-1 text-sm">
+                                <div className="flex justify-between">
+                                    <span>Valor Cuota:</span>
+                                    <span>{formatCurrency(valorCuota)}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span>Cuotas restantes:</span>
+                                    <span>{remainingCuotas} de {totalCuotas}</span>
+                                </div>
+                                <div className="flex justify-between font-bold text-lg pt-2 border-t border-gray-200 mt-2 text-[#36595F]">
+                                    <span>Total a pagar:</span>
+                                    <span>{formatCurrency(valorCuota * parseInt(selectedCuotas))}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <DialogFooter>
+                            <Button variant="outline" onClick={() => setIsCuotasModalOpen(false)}>Cancelar</Button>
+                            <Button
+                                onClick={() => handlePayment('INSTALLMENT')}
+                                disabled={isLoading}
+                                className="bg-[#36595F] text-white"
+                            >
+                                {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                                Ir a Pagar
+                            </Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
+            )}
+
+            {/* CUOTAS STATUS */}
+            {totalCuotas > 0 && (
+                <div className="text-xs text-center text-gray-500">
+                    {isCuotasPaid
+                        ? <span className="text-green-600 font-bold">¡Crédito Pagado Completamente! 🎉</span>
+                        : <span>Avance: {paidCuotas} / {totalCuotas} cuotas pagadas</span>
+                    }
+                </div>
+            )}
+        </div>
+    );
+}
