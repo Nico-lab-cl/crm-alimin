@@ -63,7 +63,8 @@ export async function POST(request: Request) {
         const buyOrder = `${buyOrderScope}-${Date.now()}`;
         const sessionId = reservationId;
         // Correct return URL for success page handling
-        const returnUrl = `${process.env.NEXT_PUBLIC_APP_URL}/api/webpay/commit?scope=${scope}`;
+        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://aliminlomasdelmar.com';
+        const returnUrl = `${baseUrl}/api/webpay/commit?scope=${scope}`;
 
         const createResponse = await webpayCreate({
             buyOrder,

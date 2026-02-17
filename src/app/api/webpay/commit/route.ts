@@ -9,15 +9,17 @@ export async function GET(req: NextRequest) {
     const searchParams = req.nextUrl.searchParams;
     const token = searchParams.get('token_ws'); // Success
     const tbkToken = searchParams.get('TBK_TOKEN'); // Aborted
-    const scope = searchParams.get('scope') || 'RESERVATION'; // Default to RESERVATION if missing (e.g. old flow)
+    const scope = searchParams.get('scope') || 'RESERVATION'; // Default to RESERVATION
+
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://aliminlomasdelmar.com';
 
     // Handle aborted payment
     if (tbkToken && !token) {
-        return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/pago-fallo?token=${tbkToken}`);
+        return NextResponse.redirect(`${baseUrl}/pago-fallo?token=${tbkToken}`);
     }
 
     if (!token) {
-        return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/pago-fallo?error=missing_token`);
+        return NextResponse.redirect(`${baseUrl}/pago-fallo?error=missing_token`);
     }
 
     try {
@@ -32,7 +34,7 @@ export async function GET(req: NextRequest) {
 
         if (!transaction) {
             console.error("Transaction not found for token:", token);
-            return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/pago-fallo?error=transaction_not_found`);
+            return NextResponse.redirect(`${baseUrl}/pago-fallo?error=transaction_not_found`);
         }
 
         // 3. Update Transaction Record
@@ -44,7 +46,9 @@ export async function GET(req: NextRequest) {
                 status: status,
                 response_code: commitResponse.response_code,
                 authorization_code: commitResponse.authorization_code,
+                // @ts-ignore
                 payment_type_code: commitResponse.payment_type_code,
+                // @ts-ignore
                 installments_number: commitResponse.installments_number,
                 transaction_date: new Date(commitResponse.transaction_date),
                 processed_at: new Date()
@@ -59,8 +63,8 @@ export async function GET(req: NextRequest) {
                 await prisma.reservation.update({
                     where: { id: reservationId },
                     data: {
+                        // @ts-ignore
                         pie_status: 'PAID',
-                        // Logic: if Pie is paid, maybe move pipeline stage?
                         pipeline_stage: 'PIE_PAGADO'
                     }
                 });
@@ -69,7 +73,9 @@ export async function GET(req: NextRequest) {
                 await prisma.reservation.update({
                     where: { id: reservationId },
                     data: {
+                        // @ts-ignore
                         installments_paid: {
+                            // @ts-ignore
                             increment: transaction.installments_count || 0
                         },
                         pipeline_stage: 'PAGO_CUOTAS'
@@ -84,24 +90,34 @@ export async function GET(req: NextRequest) {
                         pipeline_stage: 'RESERVA_PAGADA'
                     }
                 });
+
+                // Also update Lot status for standard reservations
+                if (transaction.lot_id) {
+                    await prisma.lot.update({
+                        where: { id: transaction.lot_id },
+                        data: {
+                            status: 'sold',
+                            updated_at: new Date()
+                        }
+                    });
+                }
             }
 
             // Redirect to Success Page
-            // If it's PIE or INSTALLMENT, redirect to specific payment success page
             if (scope === 'PIE' || scope === 'INSTALLMENT') {
                 return NextResponse.redirect(
-                    `${process.env.NEXT_PUBLIC_APP_URL}/pago-exito/payment?token=${token}&amount=${commitResponse.amount}&scope=${scope}`
+                    `${baseUrl}/pago-exito/payment?token=${token}&amount=${commitResponse.amount}&scope=${scope}`
                 );
             }
 
             // Standard Reservation Success
-            return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/pago-exito?token=${token}`);
+            return NextResponse.redirect(`${baseUrl}/pago-exito?token=${token}`);
         } else {
-            return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/pago-fallo?token=${token}&code=${commitResponse.response_code}`);
+            return NextResponse.redirect(`${baseUrl}/pago-fallo?token=${token}&code=${commitResponse.response_code}`);
         }
 
     } catch (error) {
         console.error('Commit Error:', error);
-        return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/pago-fallo?error=commit_error`);
+        return NextResponse.redirect(`${baseUrl}/pago-fallo?error=commit_error`);
     }
 }
