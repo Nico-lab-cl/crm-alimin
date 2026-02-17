@@ -82,7 +82,9 @@ export async function GET(req: NextRequest) {
                             name,
                             email,
                             password: hashedPassword,
-                            role: Role.USER
+                            role: Role.USER,
+                            emailVerified: new Date(), // Auto-verify since they paid
+                            mustChangePassword: true   // Force them to change the temp password
                         }
                     });
 
