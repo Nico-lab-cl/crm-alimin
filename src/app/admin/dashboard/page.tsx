@@ -2,6 +2,7 @@ import { getAdminPipeline, getSellers, getAdminLots, getAdminUsers } from "@/act
 import { AdminPipeline } from "@/components/dashboard/AdminPipeline"
 import { AdminLotList } from "@/components/dashboard/AdminLotList"
 import { AdminUserList } from "@/components/dashboard/AdminUserList"
+import { AdminLogs } from "@/components/dashboard/AdminLogs"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 export default async function AdminDashboard() {
@@ -28,7 +29,7 @@ export default async function AdminDashboard() {
                 </div>
 
                 <Tabs defaultValue="pipeline" className="w-full">
-                    <TabsList className="grid w-full grid-cols-3 bg-white/10 p-1 rounded-xl border border-white/5">
+                    <TabsList className="grid w-full grid-cols-4 bg-white/10 p-1 rounded-xl border border-white/5">
                         <TabsTrigger value="pipeline" className="data-[state=active]:bg-[#36595F] data-[state=active]:text-white text-gray-300 font-bold">
                             Ventas y Pipeline
                         </TabsTrigger>
@@ -37,6 +38,9 @@ export default async function AdminDashboard() {
                         </TabsTrigger>
                         <TabsTrigger value="users" className="data-[state=active]:bg-[#36595F] data-[state=active]:text-white text-gray-300 font-bold">
                             Usuarios
+                        </TabsTrigger>
+                        <TabsTrigger value="logs" className="data-[state=active]:bg-[#36595F] data-[state=active]:text-white text-gray-300 font-bold">
+                            Registros
                         </TabsTrigger>
                     </TabsList>
 
@@ -61,6 +65,10 @@ export default async function AdminDashboard() {
                             <h3 className="text-xl font-bold text-white mb-4">Gestión de Usuarios</h3>
                             <AdminUserList users={usersResult.data || []} />
                         </div>
+                    </TabsContent>
+
+                    <TabsContent value="logs" className="mt-6">
+                        <AdminLogs />
                     </TabsContent>
                 </Tabs>
             </div>

@@ -124,4 +124,30 @@ model User {
   // Relations
   sales     Reservation[] @relation("SellerReservations")
   purchases Reservation[] @relation("BuyerReservations")
+  auditLogs AuditLog[]
+}
+
+enum ActionType {
+  CREATE
+  UPDATE
+  DELETE
+  LOGIN
+  LOGOUT
+  OTHER
+}
+
+model AuditLog {
+  id          String     @id @default(uuid())
+  action      ActionType
+  entity      String
+  entity_id   String?
+  details     String?
+  pk          String?    // Primary key reference if needed
+  user_id     String?
+  user_email  String?
+  ip_address  String?
+  user_agent  String?
+  created_at  DateTime   @default(now())
+
+  user        User?      @relation(fields: [user_id], references: [id])
 }

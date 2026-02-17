@@ -4,6 +4,7 @@ import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import { revalidatePath } from "next/cache"
 import { Role } from "@prisma/client"
+import { logAdminAction } from "@/lib/logger"
 
 export async function getSellerPipeline() {
     const session = await auth()
@@ -66,6 +67,15 @@ export async function updatePipelineStage(reservationId: string, stage: string) 
             where: { id: reservationId },
             data: { pipeline_stage: stage }
         })
+
+        await logAdminAction({
+            action: 'UPDATE',
+            entity: 'Reservation',
+            entityId: reservationId,
+            details: `Cambio de etapa a: ${stage}`,
+            pk: reservationId
+        });
+
         revalidatePath('/seller/dashboard')
         revalidatePath('/admin/dashboard')
         return { success: true }
@@ -96,6 +106,15 @@ export async function updateReservationNotes(reservationId: string, notes: strin
             where: { id: reservationId },
             data: { notes }
         })
+
+        await logAdminAction({
+            action: 'UPDATE',
+            entity: 'Reservation',
+            entityId: reservationId,
+            details: `Actualización de notas privades`,
+            pk: reservationId
+        });
+
         revalidatePath('/seller/dashboard')
         revalidatePath('/admin/dashboard')
         return { success: true }
@@ -114,6 +133,15 @@ export async function assignSeller(reservationId: string, sellerId: string) {
             where: { id: reservationId },
             data: { seller_id: sellerId }
         })
+
+        await logAdminAction({
+            action: 'UPDATE',
+            entity: 'Reservation',
+            entityId: reservationId,
+            details: `Reasignación de vendedor a ID: ${sellerId}`,
+            pk: reservationId
+        });
+
         revalidatePath('/admin/dashboard')
         return { success: true }
     } catch (error) {
@@ -162,6 +190,15 @@ export async function updateLotStatus(lotId: number, status: string) {
             where: { id: lotId },
             data: { status }
         })
+
+        await logAdminAction({
+            action: 'UPDATE',
+            entity: 'Lot',
+            entityId: String(lotId),
+            details: `Cambio de estado de lote a: ${status}`,
+            pk: String(lotId)
+        });
+
         revalidatePath('/admin/dashboard')
         return { success: true }
     } catch (error) {
@@ -212,8 +249,18 @@ export async function createVerifiedUser(data: any) {
                 password: hashedPassword,
                 role: role || Role.USER,
                 emailVerified: new Date(), // Auto-verify
+                mustChangePassword: false
             }
         })
+
+        await logAdminAction({
+            action: 'CREATE',
+            entity: 'User',
+            entityId: email,
+            details: `Creación de usuario verificado con rol: ${role || Role.USER}`,
+            pk: email
+        });
+
         revalidatePath('/admin/dashboard')
         return { success: true }
     } catch (error) {
