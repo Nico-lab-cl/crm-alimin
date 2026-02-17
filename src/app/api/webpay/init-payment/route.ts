@@ -1,17 +1,7 @@
 
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-// @ts-ignore
-import WebpayPlus from 'transbank-sdk/dist/es5/transbank/webpay/webpay_plus';
-// @ts-ignore
-import { Options, IntegrationApiKeys, Environment, IntegrationCommerceCodes } from 'transbank-sdk';
-
-// Configure Transbank for Production
-const tx = new WebpayPlus.Transaction(new Options(
-    IntegrationCommerceCodes.WEBPAY_PLUS,
-    IntegrationApiKeys.WEBPAY_PLUS,
-    Environment.Integration
-));
+import { webpayCreate } from '@/lib/transbank'; // Use shared utility
 
 export async function POST(request: Request) {
     try {
@@ -75,17 +65,22 @@ export async function POST(request: Request) {
         // Correct return URL for success page handling
         const returnUrl = `${process.env.NEXT_PUBLIC_APP_URL}/api/webpay/commit?scope=${scope}`;
 
-        const createResponse = await tx.create(
+        const createResponse = await webpayCreate({
             buyOrder,
             sessionId,
             amount,
             returnUrl
-        );
+        });
+
+        // @ts-ignore
+        const token = createResponse.token;
+        // @ts-ignore
+        const url = createResponse.url;
 
         // Store transaction intent
         await prisma.webpayTransaction.create({
             data: {
-                token: createResponse.token,
+                token: token,
                 buy_order: buyOrder,
                 amount_clp: amount,
                 status: 'INITIALIZED',
@@ -97,8 +92,8 @@ export async function POST(request: Request) {
         });
 
         return NextResponse.json({
-            token: createResponse.token,
-            url: createResponse.url,
+            token: token,
+            url: url,
             amount: amount
         });
 
