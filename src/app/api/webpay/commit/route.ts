@@ -87,24 +87,10 @@ export async function GET(req: NextRequest) {
                     });
 
                     // Trigger Registration Webhook (New User)
-                    // URL from register/route.ts
-                    const registerWebhookUrl = "https://n8n-n8n.yszha2.easypanel.host/webhook/6014ee07-0470-4a07-aa94-2e5266bd9a03";
+                    // URL provided by user for Temp Password email:
+                    const registerWebhookUrl = "https://n8n-n8n.yszha2.easypanel.host/webhook/7febf5b8-27dd-4988-b137-364480bcba58";
 
                     try {
-                        // Generate Verification Token
-                        const secret = new TextEncoder().encode(process.env.AUTH_SECRET || "fallback_secret");
-                        const verifToken = await new SignJWT({ email: user.email, sub: user.id, type: 'email-verification' })
-                            .setProtectedHeader({ alg: "HS256" })
-                            .setIssuedAt()
-                            .setExpirationTime("24h")
-                            .sign(secret);
-
-                        const protocol = req.headers.get("x-forwarded-proto") || "http";
-                        const host = req.headers.get("host");
-                        // Use NEXTAUTH_URL or derive from request, but usually env is safer for webhooks
-                        const appUrl = process.env.NEXTAUTH_URL || `${protocol}://${host}`;
-                        const verificationLink = `${appUrl}/verify-email?token=${verifToken}`;
-
                         // Fire and forget
                         fetch(registerWebhookUrl, {
                             method: "POST",
@@ -112,11 +98,11 @@ export async function GET(req: NextRequest) {
                             body: JSON.stringify({
                                 email: user.email,
                                 name: user.name,
-                                verificationLink,
-                                password: randomPassword, // Optional: send temporary password? Maybe security risk, but creating explicit account via payment usually implies sending creds.
-                                // If not sending password, user uses Forgot Password.
-                                source: 'payment_auto_register',
-                                timestamp: new Date().toISOString(),
+                                temp_password: randomPassword,
+                                login_url: `${baseUrl}/login`,
+                                dashboard_url: `${baseUrl}/user/plots`,
+                                rut: transaction.reservation.rut,
+                                phone: transaction.reservation.phone
                             }),
                         }).catch(e => console.error("Failed to trigger register webhook", e));
 
