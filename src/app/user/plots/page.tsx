@@ -18,6 +18,7 @@ interface Reservation {
         reservation_amount_clp: number | null;
         cuotas: number | null;
         valor_cuota: number | null;
+        last_installment_amount: number | null;
     };
     status: string;
     pie_status: string | null;

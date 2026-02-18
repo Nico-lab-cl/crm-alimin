@@ -29,6 +29,7 @@ interface PaymentButtonsProps {
         reservation_amount_clp: number | null;
         cuotas: number | null;
         valor_cuota: number | null;
+        last_installment_amount: number | null;
     };
     reservation: {
         pie_status: string | null;
@@ -54,6 +55,22 @@ export function PaymentButtons({ reservationId, lot, reservation }: PaymentButto
     const valorCuota = lot.valor_cuota || 0;
     const remainingCuotas = Math.max(0, totalCuotas - paidCuotas);
     const isCuotasPaid = remainingCuotas === 0;
+
+    // Custom Logic for Last Installment
+    const count = parseInt(selectedCuotas);
+    const startInstallment = paidCuotas + 1;
+    const endInstallment = startInstallment + count - 1;
+    const includesLastInstallment = endInstallment === totalCuotas;
+    const lastInstallmentPrice = lot.last_installment_amount || valorCuota;
+
+    let totalToPay = 0;
+    if (includesLastInstallment) {
+        // (Normal installments * price) + (1 * Last Price)
+        // Note: If count is 1 and it IS the last installment, then (0 * normal) + last.
+        totalToPay = ((count - 1) * valorCuota) + lastInstallmentPrice;
+    } else {
+        totalToPay = count * valorCuota;
+    }
 
     const handlePayment = async (scope: 'PIE' | 'INSTALLMENT') => {
         setIsLoading(true);
@@ -189,16 +206,22 @@ export function PaymentButtons({ reservationId, lot, reservation }: PaymentButto
 
                             <div className="bg-gray-50 p-3 rounded-lg space-y-1 text-sm">
                                 <div className="flex justify-between">
-                                    <span>Valor Cuota:</span>
+                                    <span>Valor Cuota Normal:</span>
                                     <span>{formatCurrency(valorCuota)}</span>
                                 </div>
+                                {includesLastInstallment && (
+                                    <div className="flex justify-between text-amber-600 font-medium">
+                                        <span>Valor Última Cuota:</span>
+                                        <span>{formatCurrency(lastInstallmentPrice)}</span>
+                                    </div>
+                                )}
                                 <div className="flex justify-between">
                                     <span>Cuotas restantes:</span>
                                     <span>{remainingCuotas} de {totalCuotas}</span>
                                 </div>
                                 <div className="flex justify-between font-bold text-lg pt-2 border-t border-gray-200 mt-2 text-[#36595F]">
                                     <span>Total a pagar:</span>
-                                    <span>{formatCurrency(valorCuota * parseInt(selectedCuotas))}</span>
+                                    <span>{formatCurrency(totalToPay)}</span>
                                 </div>
                             </div>
                         </div>

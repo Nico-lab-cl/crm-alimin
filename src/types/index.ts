@@ -22,6 +22,7 @@ export interface Lot {
   cuotas?: number | null; // Número de cuotas (desde DB)
   pie?: number | null; // Pie (desde DB o calculado)
   valorCuota?: number | null; // Valor cuota (desde DB)
+  last_installment_amount?: number | null; // Valor cuota final (desde DB)
   stage?: number; // Etapa 1..4
   stageLotNumber?: number; // Lote dentro de su etapa
   displayStage?: number; // Etapa visible en UI (considera overrides)

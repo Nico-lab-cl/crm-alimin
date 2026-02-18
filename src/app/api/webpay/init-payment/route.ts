@@ -44,12 +44,24 @@ export async function POST(request: Request) {
             const currentPaid = reservation.installments_paid || 0;
             const totalCuotas = reservation.lot.cuotas || 0;
             const valorCuota = reservation.lot.valor_cuota || 0;
+            // @ts-ignore
+            const lastInstallmentAmount = reservation.lot.last_installment_amount || valorCuota;
 
             if (currentPaid + installments > totalCuotas) {
                 return NextResponse.json({ error: 'La cantidad de cuotas excede el total restante' }, { status: 400 });
             }
 
-            amount = installments * valorCuota;
+            // Calculate Amount with Custom Last Installment Logic
+            const startInstallment = currentPaid + 1;
+            const endInstallment = startInstallment + installments - 1;
+            const includesLastInstallment = endInstallment === totalCuotas;
+
+            if (includesLastInstallment) {
+                amount = ((installments - 1) * valorCuota) + lastInstallmentAmount;
+            } else {
+                amount = installments * valorCuota;
+            }
+
             buyOrderScope = 'CUOTA';
             installmentsCount = installments;
 

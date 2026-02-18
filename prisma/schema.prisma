@@ -19,6 +19,7 @@ model Lot {
   cuotas                 Int?
   pie                    Int?
   valor_cuota            Int?
+  last_installment_amount Int?
   reserved_until         DateTime?
   reserved_at            DateTime?
   reserved_by            String?
