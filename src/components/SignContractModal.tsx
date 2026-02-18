@@ -94,7 +94,7 @@ export function SignContractModal({ reservationId, lotNumber, lotStage, onSucces
         }}>
             <DialogTrigger asChild>
                 <Button className="w-full bg-[#36595F] hover:bg-[#2A464B] text-white shadow-lg hover:shadow-[#36595F]/20 transition-all animate-pulse hover:animate-none font-bold text-lg ring-2 ring-[#36595F]/50 ring-offset-2 ring-offset-black/20">
-                    Firmar Contrato Digital
+                    Firma contrato de reserva
                 </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
