@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { webpayCreate } from '@/lib/transbank'; // Use shared utility
 
 export async function POST(request: Request) {
+    console.log("Processing init-payment request...");
     try {
         const body = await request.json();
         const { reservationId, scope, installments } = body; // scope: 'PIE' | 'INSTALLMENT'
@@ -104,11 +105,13 @@ export async function POST(request: Request) {
             }
         });
 
-        return NextResponse.json({
+        const result = {
             token: token,
             url: url,
             amount: amount
-        });
+        };
+        console.log("Webpay initialized successfully:", result);
+        return NextResponse.json(result);
 
     } catch (error) {
         console.error('Webpay init error:', error);

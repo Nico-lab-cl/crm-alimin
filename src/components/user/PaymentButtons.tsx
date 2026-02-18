@@ -80,6 +80,7 @@ export function PaymentButtons({ reservationId, lot, reservation }: PaymentButto
                 scope,
                 installments: scope === 'INSTALLMENT' ? parseInt(selectedCuotas) : undefined
             };
+            console.log("Initiating payment with body:", body);
 
             const res = await fetch('/api/webpay/init-payment', {
                 method: 'POST',
@@ -93,6 +94,12 @@ export function PaymentButtons({ reservationId, lot, reservation }: PaymentButto
             }
 
             const data = await res.json();
+            console.log("Payment initialized, data:", data);
+
+            if (!data.url || !data.token) {
+                console.error("Missing URL or Token from Webpay");
+                throw new Error("Respuesta inválida de Webpay (Falta URL o Token)");
+            }
 
             // Redirect to Webpay
             const form = document.createElement('form');
