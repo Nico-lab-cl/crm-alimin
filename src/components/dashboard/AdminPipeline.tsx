@@ -14,12 +14,27 @@ type ReservationWithDetails = Reservation & {
 }
 
 const STAGES = [
-    { id: "RESERVA_PAGADA", label: "Reserva Pagada", color: "bg-blue-100 text-blue-800" },
-    { id: "ESPERANDO_PIE", label: "Esperando Pie", color: "bg-yellow-100 text-yellow-800" },
-    { id: "PIE_PAGADO", label: "Pie Pagado", color: "bg-purple-100 text-purple-800" },
-    { id: "PAGO_CUOTAS", label: "Pago de Cuotas", color: "bg-indigo-100 text-indigo-800" },
-    { id: "VENTA_CERRADA", label: "Venta Cerrada", color: "bg-green-100 text-green-800" }
+    { id: "RESERVA_PAGADA", label: "Reserva", color: "bg-blue-100 text-blue-800 border-blue-200" },
+    { id: "CONTRATO_FIRMADO", label: "Contrato de Reserva Firmado", color: "bg-amber-100 text-amber-800 border-amber-200" },
+    { id: "PIE_PAGADO", label: "Pie Pagado", color: "bg-purple-100 text-purple-800 border-purple-200" },
+    { id: "PAGO_CUOTAS", label: "Pago de Cuotas", color: "bg-indigo-100 text-indigo-800 border-indigo-200" },
+    { id: "VENTA_CERRADA", label: "Venta Cerrada", color: "bg-green-100 text-green-800 border-green-200" },
 ]
+
+/**
+ * Determines the effective pipeline stage based on reservation data.
+ * Auto-placement rules:
+ * - If installments_paid > 0 → PAGO_CUOTAS
+ * - If pie_status === 'PAID' → PIE_PAGADO
+ * - If signed_at is set → CONTRATO_FIRMADO
+ * - Otherwise → use the stored pipeline_stage (default: RESERVA_PAGADA)
+ */
+function getEffectiveStage(r: ReservationWithDetails & { signed_at?: Date | null }): string {
+    if ((r.installments_paid ?? 0) > 0) return "PAGO_CUOTAS"
+    if (r.pie_status === "PAID") return "PIE_PAGADO"
+    if (r.signed_at) return "CONTRATO_FIRMADO"
+    return r.pipeline_stage || "RESERVA_PAGADA"
+}
 
 export function AdminPipeline({ initialData, sellers }: { initialData: ReservationWithDetails[], sellers: any[] }) {
     const [reservations, setReservations] = useState(initialData)
@@ -30,7 +45,7 @@ export function AdminPipeline({ initialData, sellers }: { initialData: Reservati
         const result = await updatePipelineStage(id, newStage)
         if (result.error) {
             toast.error(result.error)
-            setReservations(initialData) // Revert or refetch ideally
+            setReservations(initialData)
         } else {
             toast.success("Etapa actualizada")
         }
@@ -42,7 +57,6 @@ export function AdminPipeline({ initialData, sellers }: { initialData: Reservati
             toast.error(result.error)
         } else {
             toast.success("Vendedor reasignado")
-            // Update local state to reflect new seller
             setReservations(prev => prev.map(r => r.id === id ? { ...r, seller_id: sellerId, seller: sellers.find(s => s.id === sellerId) } : r))
         }
     }
@@ -55,7 +69,7 @@ export function AdminPipeline({ initialData, sellers }: { initialData: Reservati
         <div className="h-full flex flex-col gap-4">
             <div className="flex justify-end bg-white p-2 rounded shadow-sm">
                 <Select value={selectedSeller} onValueChange={setSelectedSeller}>
-                    <SelectTrigger className="w-[200px]">
+                    <SelectTrigger className="w-[220px]">
                         <SelectValue placeholder="Filtrar por vendedor" />
                     </SelectTrigger>
                     <SelectContent>
@@ -67,18 +81,19 @@ export function AdminPipeline({ initialData, sellers }: { initialData: Reservati
                 </Select>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 h-full">
+            {/* 5-column grid optimized for large screens */}
+            <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-5 gap-3 h-full">
                 {STAGES.map(stage => {
-                    const items = filteredReservations.filter(r => r.pipeline_stage === stage.id)
+                    const items = filteredReservations.filter(r => getEffectiveStage(r as any) === stage.id)
                     return (
-                        <div key={stage.id} className="flex flex-col gap-4 bg-gray-50/50 rounded-lg p-2 min-h-[500px] border border-gray-100">
-                            <div className={`p-3 rounded-md font-medium text-sm flex justify-between items-center ${stage.color}`}>
-                                {stage.label}
-                                <span className="bg-white/50 px-2 py-0.5 rounded-full text-xs">
+                        <div key={stage.id} className="flex flex-col gap-3 bg-gray-50/70 rounded-xl p-3 min-h-[600px] border border-gray-100 shadow-sm">
+                            <div className={`p-3 rounded-lg font-semibold text-sm flex justify-between items-center border ${stage.color}`}>
+                                <span className="leading-tight">{stage.label}</span>
+                                <span className="bg-white/60 px-2 py-0.5 rounded-full text-xs font-bold ml-2 shrink-0">
                                     {items.length}
                                 </span>
                             </div>
-                            <div className="flex flex-col gap-3 overflow-y-auto flex-1">
+                            <div className="flex flex-col gap-3 overflow-y-auto flex-1 pr-0.5">
                                 {items.map(item => (
                                     <AdminPipelineCard
                                         key={item.id}
@@ -88,6 +103,11 @@ export function AdminPipeline({ initialData, sellers }: { initialData: Reservati
                                         onAssign={(sellerId) => handleAssign(item.id, sellerId)}
                                     />
                                 ))}
+                                {items.length === 0 && (
+                                    <div className="flex-1 flex items-center justify-center text-xs text-gray-400 italic py-8">
+                                        Sin registros
+                                    </div>
+                                )}
                             </div>
                         </div>
                     )

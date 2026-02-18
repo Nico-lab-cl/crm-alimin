@@ -21,7 +21,7 @@ export default async function AdminDashboard() {
         <div className="min-h-screen bg-black/95 relative w-full pt-8 px-4 pb-12">
             <div className="absolute inset-0 bg-[url('/terreno-bg.JPG')] bg-cover bg-center opacity-20 blur-sm fixed" />
 
-            <div className="relative z-10 container mx-auto space-y-8">
+            <div className="relative z-10 max-w-[1800px] mx-auto space-y-8">
                 <div className="flex items-center justify-between">
                     <h2 className="text-3xl font-black text-white bg-white/5 backdrop-blur-md px-6 py-3 rounded-xl border border-white/10 shadow-xl">
                         Panel de Administración

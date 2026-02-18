@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { differenceInDays, format } from "date-fns"
 import { es } from "date-fns/locale"
-import { Phone, Calendar, MapPin, User as UserIcon, ArrowRight, ArrowLeft } from "lucide-react"
+import { Phone, Calendar, MapPin, User as UserIcon, ArrowRight, ArrowLeft, FileDown } from "lucide-react"
 import { updateReservationNotes } from "@/actions/dashboard"
 import { useState } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
@@ -20,7 +20,7 @@ type ReservationWithDetails = Reservation & {
     seller: User | null
 }
 
-const STAGE_ORDER = ["RESERVA_PAGADA", "ESPERANDO_PIE", "PIE_PAGADO", "PAGO_CUOTAS", "VENTA_CERRADA"]
+const STAGE_ORDER = ["RESERVA_PAGADA", "CONTRATO_FIRMADO", "PIE_PAGADO", "PAGO_CUOTAS", "VENTA_CERRADA"]
 
 export function AdminPipelineCard({
     reservation,
@@ -34,7 +34,6 @@ export function AdminPipelineCard({
     onAssign: (sellerId: string) => void
 }) {
     const daysSince = differenceInDays(new Date(), new Date(reservation.created_at))
-    const isLate = reservation.pipeline_stage === "ESPERANDO_PIE" && daysSince > 10
     const [notesOpen, setNotesOpen] = useState(false)
     const [notes, setNotes] = useState(reservation.notes || "")
 
@@ -48,13 +47,11 @@ export function AdminPipelineCard({
         setNotesOpen(false)
     }
 
+    const isContractSigned = (reservation as any).signed_at != null
+    const contractPdfUrl = `/api/contracts/${reservation.id}/pdf`
+
     return (
-        <Card className={`text-sm shadow-sm hover:shadow-md transition-shadow relative ${isLate ? "border-red-500 border-2" : ""}`}>
-            {isLate && (
-                <Badge variant="destructive" className="absolute -top-2 -right-2 z-10">
-                    Atrasado
-                </Badge>
-            )}
+        <Card className="text-sm shadow-sm hover:shadow-md transition-shadow relative">
             <CardHeader className="p-3 pb-0">
                 <CardTitle className="text-base font-semibold flex justify-between items-start">
                     <span>{reservation.name}</span>
@@ -80,10 +77,16 @@ export function AdminPipelineCard({
                     <span>{format(new Date(reservation.created_at), "dd MMM", { locale: es })}</span>
                 </div>
 
-                {reservation.pipeline_stage === "ESPERANDO_PIE" && (
-                    <div className="text-xs font-medium text-orange-600">
-                        {Math.max(0, 10 - daysSince)} días restantes
-                    </div>
+                {isContractSigned && (
+                    <a
+                        href={contractPdfUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1 text-xs font-medium text-[#36595F] hover:underline"
+                    >
+                        <FileDown className="w-3 h-3" />
+                        Descargar Contrato
+                    </a>
                 )}
 
                 <div className="flex gap-2 pt-2">
