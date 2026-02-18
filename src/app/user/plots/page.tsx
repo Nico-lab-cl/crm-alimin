@@ -173,6 +173,7 @@ export default function UserPlotsPage() {
                                                     pie_status: res.pie_status,
                                                     installments_paid: res.installments_paid
                                                 }}
+                                                acquisitionDate={res.created_at}
                                             />
 
                                         </div>

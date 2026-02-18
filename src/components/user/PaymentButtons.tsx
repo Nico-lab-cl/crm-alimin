@@ -35,9 +35,28 @@ interface PaymentButtonsProps {
         pie_status: string | null;
         installments_paid: number | null;
     };
+    acquisitionDate?: string | null;
 }
 
-export function PaymentButtons({ reservationId, lot, reservation }: PaymentButtonsProps) {
+// Helper: get the due date for installment N (1-indexed) from acquisition date, in Chile timezone
+function getInstallmentDueDate(acquisitionDate: string, installmentNumber: number): Date {
+    const base = new Date(acquisitionDate);
+    // Use the same day of month, N months after acquisition
+    const due = new Date(base);
+    due.setMonth(due.getMonth() + installmentNumber);
+    return due;
+}
+
+function formatDateChile(date: Date): string {
+    return date.toLocaleDateString('es-CL', {
+        timeZone: 'America/Santiago',
+        day: '2-digit',
+        month: 'long',
+        year: 'numeric',
+    });
+}
+
+export function PaymentButtons({ reservationId, lot, reservation, acquisitionDate }: PaymentButtonsProps) {
     const [isLoading, setIsLoading] = useState(false);
     const [selectedCuotas, setSelectedCuotas] = useState<string>("1");
     const [isPieModalOpen, setIsPieModalOpen] = useState(false);
@@ -226,6 +245,24 @@ export function PaymentButtons({ reservationId, lot, reservation }: PaymentButto
                                     <span>Cuotas restantes:</span>
                                     <span>{remainingCuotas} de {totalCuotas}</span>
                                 </div>
+                                {acquisitionDate && count > 0 && (() => {
+                                    const firstDue = getInstallmentDueDate(acquisitionDate, paidCuotas + 1);
+                                    const lastDue = getInstallmentDueDate(acquisitionDate, paidCuotas + count);
+                                    return (
+                                        <div className="border-t border-gray-200 mt-2 pt-2 space-y-1">
+                                            <div className="flex justify-between text-blue-700 font-medium">
+                                                <span>Cuota {paidCuotas + 1} vence:</span>
+                                                <span>{formatDateChile(firstDue)}</span>
+                                            </div>
+                                            {count > 1 && (
+                                                <div className="flex justify-between text-blue-700 font-medium">
+                                                    <span>Cuota {paidCuotas + count} vence:</span>
+                                                    <span>{formatDateChile(lastDue)}</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                })()}
                                 <div className="flex justify-between font-bold text-lg pt-2 border-t border-gray-200 mt-2 text-[#36595F]">
                                     <span>Total a pagar:</span>
                                     <span>{formatCurrency(totalToPay)}</span>
