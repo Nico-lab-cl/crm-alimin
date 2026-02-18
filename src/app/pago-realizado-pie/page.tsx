@@ -22,8 +22,7 @@ function PaymentPieSuccessContent() {
     };
 
     const reservationId = searchParams.get('reservationId');
-    const [webhookSent, setWebhookSent] = useState(false);
-    const [webhookStatus, setWebhookStatus] = useState<{ success: boolean; message?: string; error?: string } | null>(null);
+
 
     useEffect(() => {
         const timer = setInterval(() => {
@@ -37,24 +36,10 @@ function PaymentPieSuccessContent() {
             });
         }, 1000);
 
-        // Trigger Webhook from Client (Backup)
-        if (reservationId && !webhookSent) {
-            console.log("Triggering client-side webhook backup...");
-            fetch(`/api/test-webhook?id=${reservationId}&type=PIE&amount=${amount || 0}`)
-                .then(res => res.json())
-                .then(data => {
-                    console.log("Client-side webhook result:", data);
-                    setWebhookStatus(data);
-                })
-                .catch(err => {
-                    console.error("Client-side webhook failed:", err);
-                    setWebhookStatus({ success: false, error: String(err) });
-                })
-                .finally(() => setWebhookSent(true));
-        }
+
 
         return () => clearInterval(timer);
-    }, [router, reservationId, amount, webhookSent]);
+    }, [router, reservationId, amount]);
 
     return (
         <div className="min-h-screen bg-black/95 relative flex flex-col">
@@ -78,13 +63,7 @@ function PaymentPieSuccessContent() {
 
                         {/* Body */}
                         <div className="p-8 space-y-8">
-                            {/* Webhook Status Display */}
-                            {webhookStatus && (
-                                <div className={`p-4 rounded-lg text-sm border ${webhookStatus.success ? 'bg-green-50 border-green-200 text-green-700' : 'bg-red-50 border-red-200 text-red-700'}`}>
-                                    <p className="font-semibold">{webhookStatus.success ? 'Notificación enviada' : 'Error de notificación'}</p>
-                                    <p className="text-xs mt-1 font-mono break-all">{webhookStatus.error || webhookStatus.message}</p>
-                                </div>
-                            )}
+
 
                             <div className="space-y-4">
                                 <div className="bg-[#36595F]/5 rounded-xl p-5 border border-[#36595F]/10 shadow-sm">
