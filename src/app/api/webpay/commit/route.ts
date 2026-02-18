@@ -174,7 +174,8 @@ export async function GET(req: NextRequest) {
             // URL provided by user for Lot Info email:
             const paymentWebhookUrl = process.env.N8N_WEBHOOK_URL || "https://n8n-n8n.yszha2.easypanel.host/webhook/7b928d3b-2850-462d-87df-f6a87fe4108a";
 
-            if (paymentWebhookUrl) {
+            // Only trigger generic "New Purchase" webhook for Reservations (not Pie or Installments)
+            if (paymentWebhookUrl && (!scope || scope === 'RESERVATION')) {
                 // Fetch latest data to send complete info
                 const updatedReservation = await prisma.reservation.findUnique({
                     where: { id: reservationId },
