@@ -130,9 +130,9 @@ export function PaymentButtons({ reservationId, lot, reservation }: PaymentButto
             {!isPiePaid && pieToPay > 0 && (
                 <Dialog open={isPieModalOpen} onOpenChange={setIsPieModalOpen}>
                     <DialogTrigger asChild>
-                        <Button className="w-full bg-[#36595F] hover:bg-[#2b464a] text-white font-bold">
+                        <Button className="w-full bg-[#36595F] hover:bg-[#2b464a] text-white font-bold opacity-70" disabled>
                             <CreditCard className="mr-2 h-4 w-4" />
-                            Pagar Pie ({formatCurrency(pieToPay)})
+                            Pagar Pie (Próximamente)
                         </Button>
                     </DialogTrigger>
                     <DialogContent className="bg-white text-black">
@@ -182,9 +182,9 @@ export function PaymentButtons({ reservationId, lot, reservation }: PaymentButto
             {!isCuotasPaid && totalCuotas > 0 && (
                 <Dialog open={isCuotasModalOpen} onOpenChange={setIsCuotasModalOpen}>
                     <DialogTrigger asChild>
-                        <Button className="w-full bg-[#36595F] hover:bg-[#2b464a] text-white font-bold">
+                        <Button className="w-full bg-[#36595F] hover:bg-[#2b464a] text-white font-bold opacity-70" disabled>
                             <CreditCard className="mr-2 h-4 w-4" />
-                            Pagar Cuotas
+                            Pagar Cuotas (Próximamente)
                         </Button>
                     </DialogTrigger>
                     <DialogContent className="bg-white text-black">
