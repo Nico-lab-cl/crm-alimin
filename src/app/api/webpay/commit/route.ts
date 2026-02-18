@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { webpayCommit } from '@/lib/transbank';
+import { sendPieWebhook, sendInstallmentWebhook } from '@/lib/webhooks';
 import bcrypt from 'bcryptjs';
 import { SignJWT } from 'jose';
 import { Role } from '@prisma/client';
@@ -227,80 +228,18 @@ export async function GET(req: NextRequest) {
 
             // --- TRIGGER SPECIFIC INSTALLMENT WEBHOOK ---
             if (scope === 'INSTALLMENT') {
-                const installmentWebhookUrl = "https://n8n-n8n.yszha2.easypanel.host/webhook/85da35c7-7d03-4564-94d1-5eeb88414b95";
-
-                // Fetch fresh data if not already fetched (though we fetched it for generic webhook, we can reuse or fetch again safely)
-                // We'll reuse logic or fetch to be safe and clear
-                const updatedReservationForWebhook = await prisma.reservation.findUnique({
-                    where: { id: reservationId },
-                    include: { lot: true }
-                });
-
-                if (updatedReservationForWebhook && updatedReservationForWebhook.lot) {
-                    const totalCuotas = updatedReservationForWebhook.lot.cuotas || 0;
-                    const paidCuotas = updatedReservationForWebhook.installments_paid || 0;
-                    const remainingCuotas = Math.max(0, totalCuotas - paidCuotas);
-                    const valorCuota = updatedReservationForWebhook.lot.valor_cuota || 0;
-
-                    const payload = {
-                        monto_pagado: commitResponse.amount,
-                        cantidad_cuotas_pagadas: transaction.installments_count || 1, // Default to 1 if missing
-                        valor_cuota: valorCuota,
-                        cuotas_restantes: remainingCuotas,
-                        link_gestion_terreno: `${baseUrl}/user/plots`,
-                        // Context info
-                        contact_name: updatedReservationForWebhook.name,
-                        contact_email: updatedReservationForWebhook.email,
-                        lot_number: updatedReservationForWebhook.lot.number,
-                        reservation_id: reservationId
-                    };
-
-                    await fetch(installmentWebhookUrl, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    }).then(res => {
-                        if (!res.ok) console.error("Installment Webhook failed:", res.status, res.statusText);
-                        else console.log("Installment Webhook sent successfully");
-                    }).catch(e => console.error("Failed to trigger installment webhook", e));
-                }
+                // Use shared library function
+                await sendInstallmentWebhook(
+                    reservationId,
+                    commitResponse.amount,
+                    transaction.installments_count || 1
+                );
             }
             // -------------------------------------
 
             // --- TRIGGER SPECIFIC PIE WEBHOOK ---
             if (scope === 'PIE') {
-                const pieWebhookUrl = "https://n8n-n8n.yszha2.easypanel.host/webhook/97088a1c-742f-4d8b-a98f-d7aa29452c30";
-
-                const updatedReservationForWebhook = await prisma.reservation.findUnique({
-                    where: { id: reservationId },
-                    include: { lot: true }
-                });
-
-                if (updatedReservationForWebhook && updatedReservationForWebhook.lot) {
-                    const pieTotal = updatedReservationForWebhook.lot.pie || 0;
-                    const reservationAmount = updatedReservationForWebhook.lot.reservation_amount_clp || 0;
-
-                    const payload = {
-                        monto_pagado: commitResponse.amount,
-                        pie_total: pieTotal,
-                        reserva_descontada: reservationAmount,
-                        link_gestion_terreno: `${baseUrl}/user/plots`,
-                        // Context info
-                        contact_name: updatedReservationForWebhook.name,
-                        contact_email: updatedReservationForWebhook.email,
-                        lot_number: updatedReservationForWebhook.lot.number,
-                        reservation_id: reservationId
-                    };
-
-                    await fetch(pieWebhookUrl, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    }).then(res => {
-                        if (!res.ok) console.error("Pie Webhook failed:", res.status, res.statusText);
-                        else console.log("Pie Webhook sent successfully");
-                    }).catch(e => console.error("Failed to trigger pie webhook", e));
-                }
+                await sendPieWebhook(reservationId, commitResponse.amount);
             }
             // -------------------------------------
 
