@@ -209,10 +209,13 @@ export async function GET(req: NextRequest) {
                     user_id: userId
                 };
 
-                fetch(paymentWebhookUrl, {
+                await fetch(paymentWebhookUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
+                }).then(res => {
+                    if (!res.ok) console.error("Payment Webhook failed:", res.status, res.statusText);
+                    else console.log("Payment Webhook sent successfully");
                 }).catch(e => console.error("Failed to trigger payment webhook", e));
             }
             // -------------------------------------
@@ -247,10 +250,13 @@ export async function GET(req: NextRequest) {
                         reservation_id: reservationId
                     };
 
-                    fetch(installmentWebhookUrl, {
+                    await fetch(installmentWebhookUrl, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)
+                    }).then(res => {
+                        if (!res.ok) console.error("Installment Webhook failed:", res.status, res.statusText);
+                        else console.log("Installment Webhook sent successfully");
                     }).catch(e => console.error("Failed to trigger installment webhook", e));
                 }
             }
@@ -281,10 +287,13 @@ export async function GET(req: NextRequest) {
                         reservation_id: reservationId
                     };
 
-                    fetch(pieWebhookUrl, {
+                    await fetch(pieWebhookUrl, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)
+                    }).then(res => {
+                        if (!res.ok) console.error("Pie Webhook failed:", res.status, res.statusText);
+                        else console.log("Pie Webhook sent successfully");
                     }).catch(e => console.error("Failed to trigger pie webhook", e));
                 }
             }
