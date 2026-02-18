@@ -62,6 +62,10 @@ export async function GET(req: NextRequest) {
             const reservationId = transaction.reservation_id;
             let userId = transaction.reservation.buyer_id;
 
+            // Determine Scope from DB (more reliable) or fallback to URL
+            const scope = transaction.scope || searchParams.get('scope') || 'RESERVATION';
+            console.log(`[Webpay Commit] Token: ${token}, Scope: ${scope}, Status: ${status}`);
+
             // --- USER CREATION / LINKING LOGIC ---
             if (!userId && transaction.reservation.email) {
                 const email = transaction.reservation.email;
