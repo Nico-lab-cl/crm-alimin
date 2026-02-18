@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { createVerifiedUser } from '@/actions/dashboard'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Search, Loader2, Plus, UserCheck, FileSignature, AlertCircle } from 'lucide-react'
+import { Search, Loader2, Plus, FileSignature, AlertCircle, CheckCircle2, Clock, FileDown, CreditCard } from 'lucide-react'
 import { toast } from 'sonner'
 import {
     Dialog,
@@ -155,13 +155,33 @@ export const AdminUserList = ({ users: initialUsers }: AdminUserListProps) => {
                         <tr>
                             <th className="p-4">Usuario</th>
                             <th className="p-4">Rol</th>
+                            <th className="p-4">Lote</th>
                             <th className="p-4">Estado Contrato</th>
                             <th className="p-4">Fecha Registro</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-white/5">
                         {filteredUsers.map(user => {
-                            const hasSignedContract = user.purchases && user.purchases.length > 0;
+                            // Most recent reservation
+                            const res = user.purchases?.[0] ?? null
+
+                            const STAGE_LABELS: Record<string, string> = {
+                                RESERVA_PAGADA: 'Reserva',
+                                CONTRATO_FIRMADO: 'Contrato Firmado',
+                                ESPERANDO_PIE: 'Contrato Firmado',
+                                PIE_PAGADO: 'Pie Pagado',
+                                PAGO_CUOTAS: 'Pago de Cuotas',
+                                VENTA_CERRADA: 'Venta Cerrada',
+                            }
+
+                            const STAGE_COLORS: Record<string, string> = {
+                                RESERVA_PAGADA: 'bg-blue-900/30 text-blue-300',
+                                CONTRATO_FIRMADO: 'bg-amber-900/30 text-amber-300',
+                                ESPERANDO_PIE: 'bg-amber-900/30 text-amber-300',
+                                PIE_PAGADO: 'bg-purple-900/30 text-purple-300',
+                                PAGO_CUOTAS: 'bg-indigo-900/30 text-indigo-300',
+                                VENTA_CERRADA: 'bg-green-900/30 text-green-300',
+                            }
 
                             return (
                                 <tr key={user.id} className="hover:bg-white/5 transition-colors">
@@ -178,22 +198,69 @@ export const AdminUserList = ({ users: initialUsers }: AdminUserListProps) => {
                                     </td>
                                     <td className="p-4">
                                         <span className={`px-2 py-1 rounded text-xs font-bold ${user.role === 'ADMIN' ? 'bg-purple-500/20 text-purple-400' :
-                                                user.role === 'SELLER' ? 'bg-blue-500/20 text-blue-400' :
-                                                    'bg-gray-500/20 text-gray-400'
+                                            user.role === 'SELLER' ? 'bg-blue-500/20 text-blue-400' :
+                                                'bg-gray-500/20 text-gray-400'
                                             }`}>
                                             {user.role}
                                         </span>
                                     </td>
+                                    {/* Lote */}
                                     <td className="p-4">
-                                        {hasSignedContract ? (
-                                            <div className="flex items-center gap-2 text-green-400 font-bold bg-green-900/20 px-3 py-1.5 rounded-full w-fit">
-                                                <FileSignature className="w-4 h-4" />
-                                                <span>Con Reserva</span>
+                                        {res?.lot ? (
+                                            <span className="text-white font-medium text-sm">
+                                                Lote {res.lot.number} – Etapa {res.lot.stage}
+                                            </span>
+                                        ) : (
+                                            <span className="text-gray-600 text-xs">Sin lote</span>
+                                        )}
+                                    </td>
+                                    {/* Estado Contrato */}
+                                    <td className="p-4">
+                                        {res ? (
+                                            <div className="flex flex-col gap-1.5">
+                                                {/* Pipeline stage badge */}
+                                                <span className={`px-2 py-1 rounded-full text-xs font-bold w-fit ${STAGE_COLORS[res.pipeline_stage] ?? 'bg-gray-700 text-gray-300'}`}>
+                                                    {STAGE_LABELS[res.pipeline_stage] ?? res.pipeline_stage}
+                                                </span>
+                                                {/* Signed contract */}
+                                                {res.signed_at ? (
+                                                    <div className="flex items-center gap-1.5">
+                                                        <CheckCircle2 className="w-3.5 h-3.5 text-green-400" />
+                                                        <span className="text-green-400 text-xs font-medium">Contrato firmado</span>
+                                                        <a
+                                                            href={`/api/contracts/${res.id}/pdf`}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="ml-1 text-[#E0B457] hover:underline text-xs flex items-center gap-0.5"
+                                                        >
+                                                            <FileDown className="w-3 h-3" /> PDF
+                                                        </a>
+                                                    </div>
+                                                ) : (
+                                                    <div className="flex items-center gap-1.5">
+                                                        <Clock className="w-3.5 h-3.5 text-gray-500" />
+                                                        <span className="text-gray-500 text-xs">Sin firma</span>
+                                                    </div>
+                                                )}
+                                                {/* Pie status */}
+                                                {res.pie_status === 'PAID' && (
+                                                    <div className="flex items-center gap-1.5">
+                                                        <CheckCircle2 className="w-3.5 h-3.5 text-purple-400" />
+                                                        <span className="text-purple-400 text-xs">Pie pagado</span>
+                                                    </div>
+                                                )}
+                                                {/* Installments */}
+                                                {(res.installments_paid ?? 0) > 0 && (
+                                                    <div className="flex items-center gap-1.5">
+                                                        <CreditCard className="w-3.5 h-3.5 text-indigo-400" />
+                                                        <span className="text-indigo-400 text-xs">{res.installments_paid} cuota(s) pagada(s)</span>
+                                                    </div>
+                                                )}
                                             </div>
                                         ) : (
-                                            <div className="flex items-center gap-2 text-gray-500">
+                                            <div className="flex items-center gap-2 text-gray-600">
                                                 <AlertCircle className="w-4 h-4" />
-                                                <span>Sin Contratos</span>
+                                                <span className="text-xs">Sin reserva</span>
                                             </div>
                                         )}
                                     </td>

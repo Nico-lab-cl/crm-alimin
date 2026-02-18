@@ -217,7 +217,17 @@ export async function getAdminUsers() {
             orderBy: { createdAt: 'desc' },
             include: {
                 purchases: {
-                    select: { id: true, status: true, folio: true }
+                    select: {
+                        id: true,
+                        pipeline_stage: true,
+                        signed_at: true,
+                        pie_status: true,
+                        installments_paid: true,
+                        lot: {
+                            select: { number: true, stage: true }
+                        }
+                    },
+                    orderBy: { created_at: 'desc' }
                 }
             }
         })
