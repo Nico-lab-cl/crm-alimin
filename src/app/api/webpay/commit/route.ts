@@ -256,6 +256,40 @@ export async function GET(req: NextRequest) {
             }
             // -------------------------------------
 
+            // --- TRIGGER SPECIFIC PIE WEBHOOK ---
+            if (scope === 'PIE') {
+                const pieWebhookUrl = "https://n8n-n8n.yszha2.easypanel.host/webhook/97088a1c-742f-4d8b-a98f-d7aa29452c30";
+
+                const updatedReservationForWebhook = await prisma.reservation.findUnique({
+                    where: { id: reservationId },
+                    include: { lot: true }
+                });
+
+                if (updatedReservationForWebhook && updatedReservationForWebhook.lot) {
+                    const pieTotal = updatedReservationForWebhook.lot.pie || 0;
+                    const reservationAmount = updatedReservationForWebhook.lot.reservation_amount_clp || 0;
+
+                    const payload = {
+                        monto_pagado: commitResponse.amount,
+                        pie_total: pieTotal,
+                        reserva_descontada: reservationAmount,
+                        link_gestion_terreno: `${baseUrl}/user/plots`,
+                        // Context info
+                        contact_name: updatedReservationForWebhook.name,
+                        contact_email: updatedReservationForWebhook.email,
+                        lot_number: updatedReservationForWebhook.lot.number,
+                        reservation_id: reservationId
+                    };
+
+                    fetch(pieWebhookUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    }).catch(e => console.error("Failed to trigger pie webhook", e));
+                }
+            }
+            // -------------------------------------
+
 
             // Redirect to Success Page
             if (scope === 'PIE' || scope === 'INSTALLMENT') {
