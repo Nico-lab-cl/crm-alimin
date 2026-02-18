@@ -39,13 +39,13 @@ export async function sendPieWebhook(reservationId: string, amountPaid: number) 
         });
 
         if (!res.ok) {
-            console.error(`[Webhook] Pie Webhook failed: ${res.status} ${res.statusText}`);
-            return { success: false, status: res.status };
+            const text = await res.text();
+            console.error(`[Webhook] Failed: ${res.status} ${res.statusText} - ${text}`);
+            return { success: false, error: `N8N Error: ${res.status} ${res.statusText} - ${text}` };
         }
 
         console.log(`[Webhook] Pie Webhook sent successfully for Reservation ${reservationId}`);
-        return { success: true };
-
+        return { success: true, message: "Webhook accepted by N8N" };
     } catch (e) {
         console.error(`[Webhook] Failed to trigger pie webhook`, e);
         return { success: false, error: String(e) };
