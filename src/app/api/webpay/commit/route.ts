@@ -245,9 +245,15 @@ export async function GET(req: NextRequest) {
 
 
             // Redirect to Success Page
-            if (scope === 'PIE' || scope === 'INSTALLMENT') {
+            // Redirect to Specific payment pages
+            if (scope === 'PIE') {
                 return NextResponse.redirect(
-                    `${baseUrl}/pago-exito/payment?token=${token}&amount=${commitResponse.amount}&scope=${scope}`
+                    `${baseUrl}/pago-realizado-pie?token=${token}&amount=${commitResponse.amount}`
+                );
+            }
+            if (scope === 'INSTALLMENT') {
+                return NextResponse.redirect(
+                    `${baseUrl}/pago-realizado-cuota?token=${token}&amount=${commitResponse.amount}`
                 );
             }
 
