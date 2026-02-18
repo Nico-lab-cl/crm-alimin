@@ -217,6 +217,45 @@ export async function GET(req: NextRequest) {
             }
             // -------------------------------------
 
+            // --- TRIGGER SPECIFIC INSTALLMENT WEBHOOK ---
+            if (scope === 'INSTALLMENT') {
+                const installmentWebhookUrl = "https://n8n-n8n.yszha2.easypanel.host/webhook/85da35c7-7d03-4564-94d1-5eeb88414b95";
+
+                // Fetch fresh data if not already fetched (though we fetched it for generic webhook, we can reuse or fetch again safely)
+                // We'll reuse logic or fetch to be safe and clear
+                const updatedReservationForWebhook = await prisma.reservation.findUnique({
+                    where: { id: reservationId },
+                    include: { lot: true }
+                });
+
+                if (updatedReservationForWebhook && updatedReservationForWebhook.lot) {
+                    const totalCuotas = updatedReservationForWebhook.lot.cuotas || 0;
+                    const paidCuotas = updatedReservationForWebhook.installments_paid || 0;
+                    const remainingCuotas = Math.max(0, totalCuotas - paidCuotas);
+                    const valorCuota = updatedReservationForWebhook.lot.valor_cuota || 0;
+
+                    const payload = {
+                        monto_pagado: commitResponse.amount,
+                        cantidad_cuotas_pagadas: transaction.installments_count || 1, // Default to 1 if missing
+                        valor_cuota: valorCuota,
+                        cuotas_restantes: remainingCuotas,
+                        link_gestion_terreno: `${baseUrl}/user/plots`,
+                        // Context info
+                        contact_name: updatedReservationForWebhook.name,
+                        contact_email: updatedReservationForWebhook.email,
+                        lot_number: updatedReservationForWebhook.lot.number,
+                        reservation_id: reservationId
+                    };
+
+                    fetch(installmentWebhookUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    }).catch(e => console.error("Failed to trigger installment webhook", e));
+                }
+            }
+            // -------------------------------------
+
 
             // Redirect to Success Page
             if (scope === 'PIE' || scope === 'INSTALLMENT') {
