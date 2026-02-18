@@ -248,12 +248,12 @@ export async function GET(req: NextRequest) {
             // Redirect to Specific payment pages
             if (scope === 'PIE') {
                 return NextResponse.redirect(
-                    `${baseUrl}/pago-realizado-pie?token=${token}&amount=${commitResponse.amount}`
+                    `${baseUrl}/pago-realizado-pie?token=${token}&amount=${commitResponse.amount}&reservationId=${reservationId}`
                 );
             }
             if (scope === 'INSTALLMENT') {
                 return NextResponse.redirect(
-                    `${baseUrl}/pago-realizado-cuota?token=${token}&amount=${commitResponse.amount}`
+                    `${baseUrl}/pago-realizado-cuota?token=${token}&amount=${commitResponse.amount}&reservationId=${reservationId}`
                 );
             }
 

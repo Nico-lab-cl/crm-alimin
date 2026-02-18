@@ -21,6 +21,9 @@ function PaymentInstallmentSuccessContent() {
         return new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(Number(val));
     };
 
+    const reservationId = searchParams.get('reservationId');
+    const [webhookSent, setWebhookSent] = useState(false);
+
     useEffect(() => {
         const timer = setInterval(() => {
             setCountdown((prev) => {
@@ -33,8 +36,18 @@ function PaymentInstallmentSuccessContent() {
             });
         }, 1000);
 
+        // Trigger Webhook from Client (Backup)
+        if (reservationId && !webhookSent) {
+            console.log("Triggering client-side webhook backup...");
+            fetch(`/api/test-webhook?id=${reservationId}&type=INSTALLMENT&amount=${amount || 0}`)
+                .then(res => res.json())
+                .then(data => console.log("Client-side webhook result:", data))
+                .catch(err => console.error("Client-side webhook failed:", err))
+                .finally(() => setWebhookSent(true));
+        }
+
         return () => clearInterval(timer);
-    }, [router]);
+    }, [router, reservationId, amount, webhookSent]);
 
     return (
         <div className="min-h-screen bg-black/95 relative flex flex-col">
