@@ -42,9 +42,12 @@ interface PaymentButtonsProps {
 // Helper: get the due date for installment N (1-indexed) from acquisition date, in Chile timezone
 function getInstallmentDueDate(acquisitionDate: string, installmentNumber: number): Date {
     const base = new Date(acquisitionDate);
-    // Use the same day of month, N months after acquisition
+    // Use the 5th day of the month, N months after acquisition
+    // logic: Add months first, then fix day to 5.
+    // e.g. Jan 20 + 1 month = Feb 20 -> Feb 5.
     const due = new Date(base);
     due.setMonth(due.getMonth() + installmentNumber);
+    due.setDate(5);
     return due;
 }
 
