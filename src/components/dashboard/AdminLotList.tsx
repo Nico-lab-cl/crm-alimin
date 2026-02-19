@@ -31,12 +31,16 @@ type AdminLotListProps = {
 export const AdminLotList = ({ lots: initialLots }: AdminLotListProps) => {
     const [lots, setLots] = useState(initialLots)
     const [filter, setFilter] = useState('')
+    const [selectedStage, setSelectedStage] = useState<string>('all')
     const [loadingIds, setLoadingIds] = useState<Set<number>>(new Set())
     const [assignModal, setAssignModal] = useState<{ open: boolean, lotId: number | null, lotNumber: string | null }>({
         open: false,
         lotId: null,
         lotNumber: null
     })
+
+    // Get unique stages for the filter dropdown
+    const stages = Array.from(new Set(lots.map(l => l.stage).filter(Boolean))).sort((a, b) => (a as number) - (b as number))
 
     const handleStatusChange = async (lotId: number, newStatus: string) => {
         setLoadingIds(prev => new Set(prev).add(lotId))
@@ -57,21 +61,50 @@ export const AdminLotList = ({ lots: initialLots }: AdminLotListProps) => {
         })
     }
 
-    const filteredLots = lots.filter(lot =>
-        lot.number?.toString().toLowerCase().includes(filter.toLowerCase()) ||
-        lot.stage?.toString().includes(filter)
-    )
+    const filteredLots = lots.filter(lot => {
+        const matchesText = lot.number?.toString().toLowerCase().includes(filter.toLowerCase()) ||
+            lot.stage?.toString().includes(filter)
+        const matchesStage = selectedStage === 'all' || lot.stage?.toString() === selectedStage
+        return matchesText && matchesStage
+    }).sort((a, b) => {
+        // Sort by Stage first (Low to High)
+        if ((a.stage || 0) !== (b.stage || 0)) {
+            return (a.stage || 0) - (b.stage || 0)
+        }
+        // Then by Lot Number (Low to High), handling string numbers
+        const numA = parseInt(a.number || '0')
+        const numB = parseInt(b.number || '0')
+        return numA - numB
+    })
 
     return (
         <div className="space-y-4">
-            <div className="flex items-center gap-2 bg-white/5 p-2 rounded-lg border border-white/10">
-                <Search className="w-5 h-5 text-gray-400" />
-                <Input
-                    placeholder="Buscar por número o etapa..."
-                    value={filter}
-                    onChange={(e) => setFilter(e.target.value)}
-                    className="bg-transparent border-none text-white focus-visible:ring-0 placeholder:text-gray-500"
-                />
+            <div className="flex flex-col md:flex-row gap-4 items-center bg-white/5 p-4 rounded-xl border border-white/10">
+                <div className="flex items-center gap-2 w-full md:w-auto flex-1">
+                    <Search className="w-5 h-5 text-gray-400" />
+                    <Input
+                        placeholder="Buscar por número..."
+                        value={filter}
+                        onChange={(e) => setFilter(e.target.value)}
+                        className="bg-transparent border-none text-white focus-visible:ring-0 placeholder:text-gray-500 w-full"
+                    />
+                </div>
+
+                <div className="w-full md:w-48">
+                    <Select value={selectedStage} onValueChange={setSelectedStage}>
+                        <SelectTrigger className="bg-white/10 border-white/20 text-white">
+                            <SelectValue placeholder="Filtrar por Etapa" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-gray-900 border-white/10 text-white">
+                            <SelectItem value="all">Todas las Etapas</SelectItem>
+                            {stages.map(stage => (
+                                <SelectItem key={stage} value={String(stage)}>
+                                    Etapa {stage}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
