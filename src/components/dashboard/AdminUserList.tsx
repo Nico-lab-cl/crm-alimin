@@ -3,9 +3,10 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createVerifiedUser } from '@/actions/dashboard'
+import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Search, Loader2, Plus, FileSignature, AlertCircle, CheckCircle2, Clock, FileDown, CreditCard } from 'lucide-react'
+import { Search, Loader2, Plus, FileSignature, AlertCircle, CheckCircle2, Clock, FileDown, CreditCard, ExternalLink } from 'lucide-react'
 import { toast } from 'sonner'
 import {
     Dialog,
@@ -158,6 +159,7 @@ export const AdminUserList = ({ users: initialUsers }: AdminUserListProps) => {
                             <th className="p-4">Lote</th>
                             <th className="p-4">Estado Contrato</th>
                             <th className="p-4">Fecha Registro</th>
+                            <th className="p-4">Acciones</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-white/5">
@@ -171,7 +173,7 @@ export const AdminUserList = ({ users: initialUsers }: AdminUserListProps) => {
                                 ESPERANDO_PIE: 'Contrato Firmado',
                                 PIE_PAGADO: 'Pie Pagado',
                                 PAGO_CUOTAS: 'Pago de Cuotas',
-                                VENTA_CERRADA: 'Venta Cerrada',
+                                Venta_CERRADA: 'Venta Cerrada',
                             }
 
                             const STAGE_COLORS: Record<string, string> = {
@@ -275,6 +277,14 @@ export const AdminUserList = ({ users: initialUsers }: AdminUserListProps) => {
                                     </td>
                                     <td className="p-4">
                                         {new Date(user.createdAt).toLocaleDateString()}
+                                    </td>
+                                    <td className="p-4">
+                                        <Link href={`/admin/users/${user.id}/plots`}>
+                                            <Button variant="ghost" size="sm" className="text-blue-400 hover:text-blue-300 hover:bg-blue-900/20">
+                                                <ExternalLink className="w-4 h-4 mr-2" />
+                                                Ver Gestión
+                                            </Button>
+                                        </Link>
                                     </td>
                                 </tr>
                             )

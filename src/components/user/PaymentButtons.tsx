@@ -36,6 +36,7 @@ interface PaymentButtonsProps {
         installments_paid: number | null;
     };
     acquisitionDate?: string | null;
+    isAdminView?: boolean;
 }
 
 // Helper: get the due date for installment N (1-indexed) from acquisition date, in Chile timezone
@@ -56,7 +57,7 @@ function formatDateChile(date: Date): string {
     });
 }
 
-export function PaymentButtons({ reservationId, lot, reservation, acquisitionDate }: PaymentButtonsProps) {
+export function PaymentButtons({ reservationId, lot, reservation, acquisitionDate, isAdminView }: PaymentButtonsProps) {
     const [isLoading, setIsLoading] = useState(false);
     const [selectedCuotas, setSelectedCuotas] = useState<string>("1");
     const [isPieModalOpen, setIsPieModalOpen] = useState(false);
@@ -149,9 +150,12 @@ export function PaymentButtons({ reservationId, lot, reservation, acquisitionDat
             {!isPiePaid && pieToPay > 0 && (
                 <Dialog open={isPieModalOpen} onOpenChange={setIsPieModalOpen}>
                     <DialogTrigger asChild>
-                        <Button className="w-full bg-[#36595F] hover:bg-[#2b464a] text-white font-bold opacity-70" disabled>
+                        <Button
+                            className="w-full bg-[#36595F] hover:bg-[#2b464a] text-white font-bold opacity-70"
+                            disabled={!isAdminView}
+                        >
                             <CreditCard className="mr-2 h-4 w-4" />
-                            Pagar Pie (Próximamente)
+                            {isAdminView ? "Pagar Pie" : "Pagar Pie (Próximamente)"}
                         </Button>
                     </DialogTrigger>
                     <DialogContent className="bg-white text-black">
@@ -201,9 +205,12 @@ export function PaymentButtons({ reservationId, lot, reservation, acquisitionDat
             {!isCuotasPaid && totalCuotas > 0 && (
                 <Dialog open={isCuotasModalOpen} onOpenChange={setIsCuotasModalOpen}>
                     <DialogTrigger asChild>
-                        <Button className="w-full bg-[#36595F] hover:bg-[#2b464a] text-white font-bold opacity-70" disabled>
+                        <Button
+                            className="w-full bg-[#36595F] hover:bg-[#2b464a] text-white font-bold opacity-70"
+                            disabled={!isAdminView}
+                        >
                             <CreditCard className="mr-2 h-4 w-4" />
-                            Pagar Cuotas (Próximamente)
+                            {isAdminView ? "Pagar Cuotas" : "Pagar Cuotas (Próximamente)"}
                         </Button>
                     </DialogTrigger>
                     <DialogContent className="bg-white text-black">

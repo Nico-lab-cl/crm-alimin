@@ -393,3 +393,20 @@ export async function assignLegacyLotOwner(data: {
         return { error: "Error al asignar dueño al lote" }
     }
 }
+
+export async function getUserReservations(userId: string) {
+    const session = await auth()
+    if (session?.user?.role !== Role.ADMIN) return []
+
+    try {
+        const reservations = await prisma.reservation.findMany({
+            where: { buyer_id: userId },
+            include: { lot: true },
+            orderBy: { created_at: 'desc' }
+        })
+        return reservations
+    } catch (error) {
+        console.error("Error fetching user reservations:", error)
+        return []
+    }
+}
