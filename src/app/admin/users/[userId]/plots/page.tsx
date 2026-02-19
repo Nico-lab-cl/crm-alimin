@@ -81,15 +81,16 @@ export default async function AdminUserPlotsPage({ params }: { params: { userId:
                                                     Firmado Digitalmente (Ver)
                                                 </a>
                                             ) : (
-                                                <div className="w-full py-2 px-4 bg-gray-800/50 text-gray-400 border border-gray-700/50 rounded text-center text-sm flex items-center justify-center gap-2">
+                                                <a
+                                                    href={`/api/contracts/${res.id}/pdf`}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="w-full py-2 px-4 bg-gray-800/50 text-gray-400 border border-gray-700/50 rounded text-center text-sm flex items-center justify-center gap-2 hover:bg-gray-800 hover:text-gray-300 transition-colors cursor-pointer"
+                                                    title="Descargar contrato pendiente"
+                                                >
                                                     <FileDown className="w-4 h-4" />
-                                                    Contrato Pendiente (Admin View)
-                                                </div>
-                                                /* 
-                                                // We hide the actual SignContractModal for Admin to avoid confusion/errors 
-                                                // or strictly we could enable it if they want to see it, but it wont work.
-                                                // User asked only for payment buttons to be unlocked.
-                                                */
+                                                    Contrato Pendiente (Descargar)
+                                                </a>
                                             )}
 
                                             <PaymentButtons
