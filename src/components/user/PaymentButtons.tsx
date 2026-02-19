@@ -37,6 +37,7 @@ interface PaymentButtonsProps {
     };
     acquisitionDate?: string | null;
     isAdminView?: boolean;
+    simulatedDate?: Date;
 }
 
 // Helper: get the due date for installment N (1-indexed) from acquisition date, in Chile timezone
@@ -60,11 +61,14 @@ function formatDateChile(date: Date): string {
     });
 }
 
-export function PaymentButtons({ reservationId, lot, reservation, acquisitionDate, isAdminView }: PaymentButtonsProps) {
+export function PaymentButtons({ reservationId, lot, reservation, acquisitionDate, isAdminView, simulatedDate }: PaymentButtonsProps) {
     const [isLoading, setIsLoading] = useState(false);
     const [selectedCuotas, setSelectedCuotas] = useState<string>("1");
     const [isPieModalOpen, setIsPieModalOpen] = useState(false);
     const [isCuotasModalOpen, setIsCuotasModalOpen] = useState(false);
+
+    // Use simulatedDate if provided (Admin Mode), otherwise Now
+    const currentDate = simulatedDate ? new Date(simulatedDate) : new Date();
 
     // PIE LOGIC
     const pieTotal = lot.pie || 0;
@@ -101,7 +105,8 @@ export function PaymentButtons({ reservationId, lot, reservation, acquisitionDat
             const body = {
                 reservationId,
                 scope,
-                installments: scope === 'INSTALLMENT' ? parseInt(selectedCuotas) : undefined
+                installments: scope === 'INSTALLMENT' ? parseInt(selectedCuotas) : undefined,
+                simulatedDate: simulatedDate ? simulatedDate.toISOString() : undefined // Send simulation!
             };
             console.log("Initiating payment with body:", body);
 
@@ -273,9 +278,9 @@ export function PaymentButtons({ reservationId, lot, reservation, acquisitionDat
                                         graceEnd.setDate(10);
                                         graceEnd.setHours(23, 59, 59, 999);
 
-                                        const now = new Date();
-                                        if (now > graceEnd) {
-                                            const diff = now.getTime() - graceEnd.getTime();
+                                        // Use currentDate (Simulated or Real)
+                                        if (currentDate > graceEnd) {
+                                            const diff = currentDate.getTime() - graceEnd.getTime();
                                             const late = Math.ceil(diff / (1000 * 60 * 60 * 24));
                                             if (late > 0) {
                                                 let factor = 0.027785496;
@@ -326,6 +331,7 @@ export function PaymentButtons({ reservationId, lot, reservation, acquisitionDat
                                         </div>
                                     );
                                 })()}
+
                             </div>
                         </div>
                         <DialogFooter>

@@ -7,7 +7,7 @@ export async function POST(request: Request) {
     console.log("Processing init-payment request...");
     try {
         const body = await request.json();
-        const { reservationId, scope, installments } = body; // scope: 'PIE' | 'INSTALLMENT'
+        const { reservationId, scope, installments, simulatedDate } = body; // scope: 'PIE' | 'INSTALLMENT'
 
         if (!reservationId || !scope) {
             return NextResponse.json({ error: 'Faltan datos requeridos' }, { status: 400 });
@@ -90,7 +90,9 @@ export async function POST(request: Request) {
                 gracePeriodEnd.setDate(10);
                 gracePeriodEnd.setHours(23, 59, 59, 999);
 
-                const now = new Date(); // Chile Time basically handled by server time usually, but better to be explicit or relative
+                // Use simulatedDate if provided, otherwise server time
+                const now = simulatedDate ? new Date(simulatedDate) : new Date();
+
                 // Ideally use Chile time
                 const chileNow = new Date(now.toLocaleString("en-US", { timeZone: "America/Santiago" }));
 
