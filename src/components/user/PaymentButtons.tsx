@@ -308,18 +308,15 @@ export function PaymentButtons({ reservationId, lot, reservation, acquisitionDat
                                     // Calculate Interest for Display
                                     let calculatedInterest = 0;
                                     let daysLateForDisplay = 0;
+                                    let lateRangeDisplay = "";
 
                                     for (let i = 0; i < count; i++) {
                                         const instNum = paidCuotas + 1 + i;
                                         const iDue = getInstallmentDueDate(acquisitionDate, instNum);
                                         const iAmount = (includesLastInstallment && instNum === totalCuotas) ? lastInstallmentPrice : valorCuota;
 
-                                        // SMART SIMULATION LOGIC
-                                        // We treat comparisonDate (or simulatedDate) as the "Target Payment Date".
-                                        // We calculate interest for THIS specific installment based on its OWN due date.
-
+                                        // SMART SIMULATION LOGIC: Calculate interest per quota based on "Target Payment Date"
                                         const effectiveDate = comparisonDate || simulatedDate || new Date();
-                                        // Reset hours for fair comparison
                                         const targetDate = new Date(effectiveDate);
                                         targetDate.setHours(0, 0, 0, 0);
 
@@ -329,31 +326,29 @@ export function PaymentButtons({ reservationId, lot, reservation, acquisitionDat
                                         graceEnd.setHours(23, 59, 59, 999);
 
                                         // Check if Target Date is past Grace Period
-                                        // Ideally we compare timestamps or use a library, simplified here:
-                                        const targetChile = new Date(targetDate.toLocaleString("en-US", { timeZone: "America/Santiago" }));
-                                        // Note: formatDateChile is just for string, we need object comparison.
-
-                                        // Simple comparison:
                                         if (targetDate > graceEnd) {
                                             const diffTime = targetDate.getTime() - graceEnd.getTime();
                                             const lateDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-                                            // If Manual Start Date ("Inicio Mora") is provided, does it override?
-                                            // User requested "Desde X Hasta Y". 
-                                            // If we strictly follow "Simulated Payment Date", we just use targetDate.
-                                            // If we want to support "Forgiveness until StartDate", we could do:
-                                            // const effectiveLateStart = simulatedDate ? new Date(simulatedDate) : graceEnd;
-                                            // But standard logic is usually "As of Today".
-                                            // Let's stick to "As of TargetDate" because that solves the "Future Quota" issue naturally.
-                                            // Future Quota Due Date > TargetDate => Not Late.
 
                                             if (lateDays > 0) {
                                                 let factor = 0.027785496;
                                                 if (totalCuotas >= 77) factor = 0.0227324392;
 
                                                 calculatedInterest += Math.round(iAmount * factor) * lateDays;
-                                                // We only track max days for display, or maybe showing "Various" is better if mixed?
                                                 daysLateForDisplay = Math.max(daysLateForDisplay, lateDays);
+
+                                                // Calculate Late Start Date (Day 11)
+                                                // If we want "From when to when":
+                                                // From: Grace End + 1
+                                                // To: Target Date
+                                                if (!lateRangeDisplay) {
+                                                    const lateStart = new Date(graceEnd);
+                                                    lateStart.setDate(lateStart.getDate() + 1);
+
+                                                    const startStr = lateStart.toLocaleDateString('es-CL', { day: '2-digit', month: '2-digit' });
+                                                    const endStr = targetDate.toLocaleDateString('es-CL', { day: '2-digit', month: '2-digit' });
+                                                    lateRangeDisplay = `${startStr} - ${endStr}`;
+                                                }
                                             }
                                         }
                                     }
@@ -384,9 +379,16 @@ export function PaymentButtons({ reservationId, lot, reservation, acquisitionDat
                                             )}
 
                                             {calculatedInterest > 0 && (
-                                                <div className="flex justify-between text-red-600 font-bold text-sm mt-2 border-t border-red-100 pt-1">
-                                                    <span>Interés por mora (aprox. {daysLateForDisplay} días):</span>
-                                                    <span>{formatCurrency(calculatedInterest)}</span>
+                                                <div className="flex flex-col text-red-600 font-bold text-sm mt-2 border-t border-red-100 pt-1">
+                                                    <div className="flex justify-between">
+                                                        <span>Interés por mora:</span>
+                                                        <span>{formatCurrency(calculatedInterest)}</span>
+                                                    </div>
+                                                    {lateRangeDisplay && (
+                                                        <div className="text-xs font-normal text-red-500 text-right">
+                                                            ({lateRangeDisplay}: {daysLateForDisplay} días)
+                                                        </div>
+                                                    )}
                                                 </div>
                                             )}
 

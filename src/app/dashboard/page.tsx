@@ -13,9 +13,11 @@ interface Reservation {
         stage: number;
         area_m2: number;
         price_total_clp: number;
+        cuotas: number;
     };
     status: string;
     created_at: string;
+    installments_paid: number;
 }
 
 export default function UserDashboard() {
@@ -114,6 +116,38 @@ export default function UserDashboard() {
                                             <span>${res.lot.price_total_clp?.toLocaleString('es-CL') || 'N/A'}</span>
                                         </div>
 
+                                        {/* Next Payment Info */}
+                                        {res.status !== 'paid' && res.lot.cuotas > 0 && res.installments_paid < res.lot.cuotas && (() => {
+                                            // Calculate Next Due Date (5th of current or next month)
+                                            // Logic: If today <= 10th, show 5th of this month (if not paid?). 
+                                            // Actually simpler: 5th of Month (Paid + 1).
+                                            // We need acquisition date to be precise, ensuring we align with `getInstallmentDueDate`.
+                                            // `res.created_at` is acquisition date.
+
+                                            const acquisitionDate = new Date(res.created_at);
+                                            const nextInstNum = (res.installments_paid || 0) + 1;
+                                            const nextDueDate = new Date(acquisitionDate);
+                                            nextDueDate.setMonth(nextDueDate.getMonth() + nextInstNum);
+                                            nextDueDate.setDate(5);
+
+                                            const isUrgent = new Date() > nextDueDate; // If past due
+
+                                            return (
+                                                <div className="bg-blue-50 p-3 rounded-lg border border-blue-100 space-y-2 mt-2">
+                                                    <div className="flex justify-between items-center text-sm font-semibold text-[#36595F]">
+                                                        <span>Próximo Vencimiento:</span>
+                                                        <span className={isUrgent ? "text-red-600" : ""}>
+                                                            5 de {nextDueDate.toLocaleDateString('es-CL', { month: 'long' })}
+                                                        </span>
+                                                    </div>
+                                                    <div className="text-[10px] text-gray-600 leading-tight">
+                                                        <span className="font-bold">Recuerda:</span> Tienes del día 5 al 10 para pagar sin intereses.
+                                                        Posterior a eso se aplicará una multa por mora.
+                                                    </div>
+                                                </div>
+                                            );
+                                        })()}
+
                                         <div className="pt-4 space-y-2">
                                             <button className="w-full py-2 px-4 bg-[#36595F] text-white rounded hover:bg-[#2A464B] transition-colors text-sm font-medium">
                                                 Ver Contrato
@@ -128,7 +162,7 @@ export default function UserDashboard() {
                         </div>
                     )}
                 </section>
-            </div>
-        </div>
+            </div >
+        </div >
     );
 }
