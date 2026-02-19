@@ -240,6 +240,15 @@ export const AdminUserList = ({ users: initialUsers }: AdminUserListProps) => {
                                                     <div className="flex items-center gap-1.5">
                                                         <Clock className="w-3.5 h-3.5 text-gray-500" />
                                                         <span className="text-gray-500 text-xs">Sin firma</span>
+                                                        <a
+                                                            href={`/api/contracts/${res.id}/pdf`}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="ml-1 text-gray-400 hover:text-gray-300 hover:underline text-xs flex items-center gap-0.5"
+                                                            title="Ver contrato pendiente"
+                                                        >
+                                                            <FileDown className="w-3 h-3" /> PDF
+                                                        </a>
                                                     </div>
                                                 )}
                                                 {/* Pie status */}
