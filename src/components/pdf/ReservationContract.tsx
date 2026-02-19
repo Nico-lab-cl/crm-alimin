@@ -103,8 +103,9 @@ const getFullDateText = (date: Date) => {
 
 
 export const ReservationContract = ({ reservation, lot, logoPath, signaturePath }: ReservationContractProps) => {
-    const currentDate = new Date();
-    const fechaActualTexto = getFullDateText(currentDate);
+    // Use reservation creation date as the contract date
+    const contractDate = new Date(reservation.created_at);
+    const fechaActualTexto = getFullDateText(contractDate);
 
     const userName = reservation.name.toUpperCase();
     const estadoCivil = reservation.marital_status || 'SOLTERO/A';
