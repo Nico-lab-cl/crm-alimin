@@ -7,7 +7,7 @@ export async function POST(request: Request) {
     console.log("Processing init-payment request...");
     try {
         const body = await request.json();
-        const { reservationId, scope, installments, simulatedDate } = body; // scope: 'PIE' | 'INSTALLMENT'
+        const { reservationId, scope, installments, simulatedDate, comparisonDate } = body; // scope: 'PIE' | 'INSTALLMENT'
 
         if (!reservationId || !scope) {
             return NextResponse.json({ error: 'Faltan datos requeridos' }, { status: 400 });
@@ -68,6 +68,7 @@ export async function POST(request: Request) {
             // Calculate Interest
             let totalInterest = 0;
             const acquisitionDate = reservation.created_at;
+
             // Iterate over each installment being paid
             for (let i = 0; i < installments; i++) {
                 const installmentNum = startInstallment + i;
@@ -82,37 +83,48 @@ export async function POST(request: Request) {
                     instAmount = lastInstallmentAmount;
                 }
 
-                // Verify logic with shared util if possible, or replicate here for now
-                // Replicating simplified shared logic to avoid import issues in edge runtime if any (though safe here)
+                let daysLate = 0;
 
-                // 1. Grace Period End: 10th of the month
-                const gracePeriodEnd = new Date(dueDate);
-                gracePeriodEnd.setDate(10);
-                gracePeriodEnd.setHours(23, 59, 59, 999);
+                // MANUAL SIMULATION OVERRIDE
+                if (simulatedDate && comparisonDate) {
+                    const startSim = new Date(simulatedDate);
+                    const endSim = new Date(comparisonDate);
+                    startSim.setHours(0, 0, 0, 0);
+                    endSim.setHours(0, 0, 0, 0);
 
-                // Use simulatedDate if provided, otherwise server time
-                const now = simulatedDate ? new Date(simulatedDate) : new Date();
+                    const diffTime = endSim.getTime() - startSim.getTime();
+                    const daysLateSim = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-                // Ideally use Chile time
-                const chileNow = new Date(now.toLocaleString("en-US", { timeZone: "America/Santiago" }));
-
-                if (chileNow > gracePeriodEnd) {
-                    // Calculate days late
-                    // "se cobra multa por 1 dia el dia 11" -> Day 11 is 1 day late.
-                    // 11 - 10 = 1.
-                    const diffTime = chileNow.getTime() - gracePeriodEnd.getTime();
-                    const daysLate = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-                    if (daysLate > 0) {
-                        let factor = 0.027785496; // Default / Low tier (>= 64)
-                        if (totalCuotas >= 77) {
-                            factor = 0.0227324392; // High tier
-                        }
-                        const dailyInterest = Math.round(instAmount * factor);
-                        const interest = dailyInterest * daysLate;
-                        totalInterest += interest;
-                        console.log(`Installment ${installmentNum}: Late by ${daysLate} days. Interest: ${interest}`);
+                    if (daysLateSim > 0) {
+                        daysLate = daysLateSim + 1; // Inclusive
                     }
+                }
+                // DEFAULT LOGIC
+                else {
+                    const gracePeriodEnd = new Date(dueDate);
+                    gracePeriodEnd.setDate(10);
+                    gracePeriodEnd.setHours(23, 59, 59, 999);
+
+                    // Use simulatedDate if provided alone, otherwise server time
+                    const now = simulatedDate ? new Date(simulatedDate) : new Date();
+                    const chileNow = new Date(now.toLocaleString("en-US", { timeZone: "America/Santiago" }));
+
+                    if (chileNow > gracePeriodEnd) {
+                        const diffTime = chileNow.getTime() - gracePeriodEnd.getTime();
+                        daysLate = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    }
+                }
+
+                if (daysLate > 0) {
+                    let factor = 0.027785496; // Default / Low tier (>= 64)
+                    if (totalCuotas >= 77) {
+                        factor = 0.0227324392; // High tier
+                    }
+                    const dailyInterest = Math.round(instAmount * factor);
+                    const interest = dailyInterest * daysLate;
+
+                    totalInterest += interest;
+                    console.log(`Installment ${installmentNum}: Late by ${daysLate} days. Interest: ${interest}`);
                 }
             }
 

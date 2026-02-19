@@ -26,10 +26,12 @@ interface AdminPlotManagerProps {
 }
 
 export function AdminPlotManager({ reservations, allClients, userId, initialUserName }: AdminPlotManagerProps) {
-    const [simulatedDate, setSimulatedDate] = useState<Date | undefined>(undefined);
+    const [simulatedDate, setSimulatedDate] = useState<Date | undefined>(undefined); // Start Date (Inicio Mora)
+    const [comparisonDate, setComparisonDate] = useState<Date | undefined>(undefined); // End Date (Fin Mora)
 
     const handleClearSimulation = () => {
         setSimulatedDate(undefined);
+        setComparisonDate(undefined);
     };
 
     return (
@@ -45,43 +47,77 @@ export function AdminPlotManager({ reservations, allClients, userId, initialUser
                         </h1>
 
                         {/* Simulation Logic */}
-                        <div className="mt-4 flex items-center gap-4">
-                            <div className="flex items-center gap-2 bg-black/40 p-2 rounded-lg border border-white/10">
-                                <span className="text-sm text-gray-300">Simular Fecha Actual:</span>
-                                <Popover>
-                                    <PopoverTrigger asChild>
-                                        <Button
-                                            variant={"outline"}
-                                            className={cn(
-                                                "w-[240px] justify-start text-left font-normal bg-black/20 border-white/10 text-white hover:bg-white/5 hover:text-white h-8",
-                                                !simulatedDate && "text-muted-foreground"
-                                            )}
-                                        >
-                                            <CalendarIcon className="mr-2 h-4 w-4" />
-                                            {simulatedDate ? format(simulatedDate, "PPP", { locale: es }) : <span>Fecha Real (Hoy)</span>}
-                                        </Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-auto p-0 bg-gray-900 border-white/10 text-white">
-                                        <Calendar
-                                            mode="single"
-                                            selected={simulatedDate}
-                                            onSelect={setSimulatedDate}
-                                            initialFocus
-                                            className="bg-gray-900 text-white"
-                                        />
-                                    </PopoverContent>
-                                </Popover>
-                                {simulatedDate && (
+                        <div className="mt-4 flex flex-col gap-2">
+                            <div className="flex items-center gap-2">
+                                <span className="text-sm text-gray-300 font-bold bg-[#36595F] px-2 py-1 rounded">Simulador de Intereses Manual</span>
+                                {(simulatedDate || comparisonDate) && (
                                     <Button
                                         variant="ghost"
                                         onClick={handleClearSimulation}
                                         className="h-8 text-xs text-red-400 hover:text-red-300 hover:bg-red-900/20"
                                     >
-                                        Limpiar
+                                        Limpiar Filtros
                                     </Button>
                                 )}
                             </div>
-                            {/* <InterestSimulator /> Maybe keep this nearby if needed? User implied this replaces it. Limiting clutter. */}
+
+                            <div className="flex items-center gap-4 bg-black/40 p-3 rounded-lg border border-white/10">
+                                <div className="space-y-1">
+                                    <label className="text-xs text-gray-400 block">Inicio Mora (Desde)</label>
+                                    <Popover>
+                                        <PopoverTrigger asChild>
+                                            <Button
+                                                variant={"outline"}
+                                                className={cn(
+                                                    "w-[200px] justify-start text-left font-normal bg-black/20 border-white/10 text-white hover:bg-white/5 hover:text-white h-9",
+                                                    !simulatedDate && "text-muted-foreground"
+                                                )}
+                                            >
+                                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                                {simulatedDate ? format(simulatedDate, "PPP", { locale: es }) : <span>Seleccionar Inicio</span>}
+                                            </Button>
+                                        </PopoverTrigger>
+                                        <PopoverContent className="w-auto p-0 bg-gray-900 border-white/10 text-white">
+                                            <Calendar
+                                                mode="single"
+                                                selected={simulatedDate}
+                                                onSelect={setSimulatedDate}
+                                                initialFocus
+                                                className="bg-gray-900 text-white"
+                                            />
+                                        </PopoverContent>
+                                    </Popover>
+                                </div>
+
+                                <span className="text-gray-500 mt-4">➜</span>
+
+                                <div className="space-y-1">
+                                    <label className="text-xs text-gray-400 block">Fin Mora (Hasta/Pago)</label>
+                                    <Popover>
+                                        <PopoverTrigger asChild>
+                                            <Button
+                                                variant={"outline"}
+                                                className={cn(
+                                                    "w-[200px] justify-start text-left font-normal bg-black/20 border-white/10 text-white hover:bg-white/5 hover:text-white h-9",
+                                                    !comparisonDate && "text-muted-foreground"
+                                                )}
+                                            >
+                                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                                {comparisonDate ? format(comparisonDate, "PPP", { locale: es }) : <span>Seleccionar Fin</span>}
+                                            </Button>
+                                        </PopoverTrigger>
+                                        <PopoverContent className="w-auto p-0 bg-gray-900 border-white/10 text-white">
+                                            <Calendar
+                                                mode="single"
+                                                selected={comparisonDate}
+                                                onSelect={setComparisonDate}
+                                                initialFocus
+                                                className="bg-gray-900 text-white"
+                                            />
+                                        </PopoverContent>
+                                    </Popover>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -168,7 +204,8 @@ export function AdminPlotManager({ reservations, allClients, userId, initialUser
                                             }}
                                             acquisitionDate={res.created_at}
                                             isAdminView={true}
-                                            simulatedDate={simulatedDate} // Pass the simulation!
+                                            simulatedDate={simulatedDate}
+                                            comparisonDate={comparisonDate} // Pass End Date
                                         />
 
                                     </div>

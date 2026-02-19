@@ -38,6 +38,7 @@ interface PaymentButtonsProps {
     acquisitionDate?: string | null;
     isAdminView?: boolean;
     simulatedDate?: Date;
+    comparisonDate?: Date;
 }
 
 // Helper: get the due date for installment N (1-indexed) from acquisition date, in Chile timezone
@@ -61,7 +62,7 @@ function formatDateChile(date: Date): string {
     });
 }
 
-export function PaymentButtons({ reservationId, lot, reservation, acquisitionDate, isAdminView, simulatedDate }: PaymentButtonsProps) {
+export function PaymentButtons({ reservationId, lot, reservation, acquisitionDate, isAdminView, simulatedDate, comparisonDate }: PaymentButtonsProps) {
     const [isLoading, setIsLoading] = useState(false);
     const [selectedCuotas, setSelectedCuotas] = useState<string>("1");
     const [isPieModalOpen, setIsPieModalOpen] = useState(false);
@@ -106,7 +107,8 @@ export function PaymentButtons({ reservationId, lot, reservation, acquisitionDat
                 reservationId,
                 scope,
                 installments: scope === 'INSTALLMENT' ? parseInt(selectedCuotas) : undefined,
-                simulatedDate: simulatedDate ? simulatedDate.toISOString() : undefined // Send simulation!
+                simulatedDate: simulatedDate ? simulatedDate.toISOString() : undefined, // Start Date for manual range
+                comparisonDate: comparisonDate ? comparisonDate.toISOString() : undefined // End Date for manual range
             };
             console.log("Initiating payment with body:", body);
 
@@ -273,21 +275,55 @@ export function PaymentButtons({ reservationId, lot, reservation, acquisitionDat
                                         const iDue = getInstallmentDueDate(acquisitionDate, instNum);
                                         const iAmount = (includesLastInstallment && instNum === totalCuotas) ? lastInstallmentPrice : valorCuota;
 
-                                        // Grace Period Logic Replicated
-                                        const graceEnd = new Date(iDue);
-                                        graceEnd.setDate(10);
-                                        graceEnd.setHours(23, 59, 59, 999);
+                                        // MANUAL SIMULATION OVERRIDE
+                                        if (simulatedDate && comparisonDate) {
+                                            const startSim = new Date(simulatedDate);
+                                            const endSim = new Date(comparisonDate);
+                                            // Reset hours
+                                            startSim.setHours(0, 0, 0, 0);
+                                            endSim.setHours(0, 0, 0, 0);
 
-                                        // Use currentDate (Simulated or Real)
-                                        if (currentDate > graceEnd) {
-                                            const diff = currentDate.getTime() - graceEnd.getTime();
-                                            const late = Math.ceil(diff / (1000 * 60 * 60 * 24));
-                                            if (late > 0) {
+                                            // Calculate days between start and end
+                                            const diffTime = endSim.getTime() - startSim.getTime();
+                                            const daysLateSim = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                                            // If end is after start, we have positive days. 
+                                            // User request: "monto de la deuda por los dias que especifique"
+                                            // So if they pick Start=1st, End=5th. That's 4 days difference? Or 5 inclusive?
+                                            // Let's assume inclusive of the start date as "Day 1 of Fine".
+                                            // So 5 - 1 = 4. +1 = 5 days.
+
+                                            if (daysLateSim > 0) {
+                                                const effectiveDays = daysLateSim + 1; // Inclusive
+
                                                 let factor = 0.027785496;
                                                 if (totalCuotas >= 77) factor = 0.0227324392;
 
-                                                calculatedInterest += Math.round(iAmount * factor) * late;
-                                                daysLateForDisplay = Math.max(daysLateForDisplay, late);
+                                                calculatedInterest += Math.round(iAmount * factor) * effectiveDays;
+                                                daysLateForDisplay = Math.max(daysLateForDisplay, effectiveDays);
+                                            }
+                                        }
+                                        // DEFAULT LOGIC (If no manual simulation)
+                                        else {
+                                            // Grace Period Logic Replicated
+                                            const graceEnd = new Date(iDue);
+                                            graceEnd.setDate(10);
+                                            graceEnd.setHours(23, 59, 59, 999);
+
+                                            // Use simulatedDate as "Now" if provided alone (Backward compatibility or simple simulation)
+                                            // But if both provided, we used the block above.
+                                            // If only simulatedDate is provided, treating it as "Today" for standard calculation:
+                                            const nowReference = simulatedDate ? new Date(simulatedDate) : new Date();
+
+                                            if (nowReference > graceEnd) {
+                                                const diff = nowReference.getTime() - graceEnd.getTime();
+                                                const late = Math.ceil(diff / (1000 * 60 * 60 * 24));
+                                                if (late > 0) {
+                                                    let factor = 0.027785496;
+                                                    if (totalCuotas >= 77) factor = 0.0227324392;
+
+                                                    calculatedInterest += Math.round(iAmount * factor) * late;
+                                                    daysLateForDisplay = Math.max(daysLateForDisplay, late);
+                                                }
                                             }
                                         }
                                     }
