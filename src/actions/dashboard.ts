@@ -230,6 +230,7 @@ export async function getAdminUsers() {
             orderBy: { createdAt: 'desc' },
             include: {
                 purchases: {
+                    where: { status: { in: ['paid', 'confirmed'] } },
                     select: {
                         id: true,
                         pipeline_stage: true,
@@ -418,7 +419,10 @@ export async function getUserReservations(userId: string) {
 
     try {
         const reservations = await prisma.reservation.findMany({
-            where: { buyer_id: userId },
+            where: {
+                buyer_id: userId,
+                status: { in: ['paid', 'confirmed'] }
+            },
             include: { lot: true },
             orderBy: { created_at: 'desc' }
         })
