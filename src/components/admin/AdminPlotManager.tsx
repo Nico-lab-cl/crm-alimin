@@ -29,6 +29,8 @@ export function AdminPlotManager({ reservations, allClients, userId, initialUser
     const [simulatedDate, setSimulatedDate] = useState<Date | undefined>(undefined); // Start Date (Inicio Mora)
     const [comparisonDate, setComparisonDate] = useState<Date | undefined>(undefined); // End Date (Fin Mora)
 
+    const [isUserView, setIsUserView] = useState(false);
+
     const handleClearSimulation = () => {
         setSimulatedDate(undefined);
         setComparisonDate(undefined);
@@ -39,166 +41,186 @@ export function AdminPlotManager({ reservations, allClients, userId, initialUser
             <header className="mb-12">
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8">
                     <div>
-                        <div className="inline-block px-3 py-1 mb-2 rounded-full bg-yellow-500/20 text-yellow-500 border border-yellow-500/50 text-sm font-bold">
-                            MODO VISTA ADMIN
+                        <div className="flex gap-2 mb-2">
+                            {!isUserView && (
+                                <div className="inline-block px-3 py-1 rounded-full bg-yellow-500/20 text-yellow-500 border border-yellow-500/50 text-sm font-bold">
+                                    MODO VISTA ADMIN
+                                </div>
+                            )}
+                            <Button
+                                variant="outline"
+                                onClick={() => setIsUserView(!isUserView)}
+                                className={cn(
+                                    "h-7 text-xs font-bold border-white/20",
+                                    isUserView
+                                        ? "bg-yellow-500 text-black hover:bg-yellow-400 border-yellow-500 shadow-[0_0_15px_rgba(234,179,8,0.5)]" // Active Style
+                                        : "bg-white/5 text-white hover:bg-white/10"
+                                )}
+                            >
+                                {isUserView ? "👁️ VOLVER A VISTA ADMIN" : "👤 VER COMO USUARIO"}
+                            </Button>
                         </div>
+
                         <h1 className="text-4xl font-extrabold text-[#36595F] drop-shadow-[0_2px_4px_rgba(255,255,255,0.1)] tracking-tight">
-                            Gestión de: {initialUserName}
+                            {isUserView ? `Bienvenido, ${initialUserName}` : `Gestión de: ${initialUserName}`}
                         </h1>
 
-                        {/* Simulation Logic */}
-                        <div className="mt-4 flex flex-col gap-2">
-                            <div className="flex items-center gap-2">
-                                <span className="text-sm text-gray-300 font-bold bg-[#36595F] px-2 py-1 rounded">Simulador de Intereses Manual</span>
-                                {(simulatedDate || comparisonDate) && (
-                                    <Button
-                                        variant="ghost"
-                                        onClick={handleClearSimulation}
-                                        className="h-8 text-xs text-red-400 hover:text-red-300 hover:bg-red-900/20"
-                                    >
-                                        Limpiar Filtros
-                                    </Button>
-                                )}
-                            </div>
-
-                            <div className="flex items-center gap-4 bg-black/40 p-3 rounded-lg border border-white/10">
-                                <div className="space-y-1">
-                                    <label className="text-xs text-gray-400 block">Inicio Mora (Desde)</label>
-                                    <Popover>
-                                        <PopoverTrigger asChild>
-                                            <Button
-                                                variant={"outline"}
-                                                className={cn(
-                                                    "w-[200px] justify-start text-left font-normal bg-black/20 border-white/10 text-white hover:bg-white/5 hover:text-white h-9",
-                                                    !simulatedDate && "text-muted-foreground"
-                                                )}
-                                            >
-                                                <CalendarIcon className="mr-2 h-4 w-4" />
-                                                {simulatedDate ? format(simulatedDate, "PPP", { locale: es }) : <span>Seleccionar Inicio</span>}
-                                            </Button>
-                                        </PopoverTrigger>
-                                        <PopoverContent className="w-auto p-0 bg-gray-900 border-white/10 text-white">
-                                            <Calendar
-                                                mode="single"
-                                                selected={simulatedDate}
-                                                onSelect={setSimulatedDate}
-                                                initialFocus
-                                                className="bg-gray-900 text-white"
-                                            />
-                                        </PopoverContent>
-                                    </Popover>
+                        {/* Simulation Logic - HIDDEN IN USER VIEW */}
+                        {!isUserView && (
+                            <div className="mt-4 flex flex-col gap-2">
+                                <div className="flex items-center gap-2">
+                                    <span className="text-sm text-gray-300 font-bold bg-[#36595F] px-2 py-1 rounded">Simulador de Intereses Manual</span>
+                                    {(simulatedDate || comparisonDate) && (
+                                        <Button
+                                            variant="ghost"
+                                            onClick={handleClearSimulation}
+                                            className="h-8 text-xs text-red-400 hover:text-red-300 hover:bg-red-900/20"
+                                        >
+                                            Limpiar Filtros
+                                        </Button>
+                                    )}
                                 </div>
 
-                                <span className="text-gray-500 mt-4">➜</span>
+                                <div className="flex items-center gap-4 bg-black/40 p-3 rounded-lg border border-white/10">
+                                    <div className="space-y-1">
+                                        <label className="text-xs text-gray-400 block">Inicio Mora (Desde)</label>
+                                        <Popover>
+                                            <PopoverTrigger asChild>
+                                                <Button
+                                                    variant={"outline"}
+                                                    className={cn(
+                                                        "w-[200px] justify-start text-left font-normal bg-black/20 border-white/10 text-white hover:bg-white/5 hover:text-white h-9",
+                                                        !simulatedDate && "text-muted-foreground"
+                                                    )}
+                                                >
+                                                    <CalendarIcon className="mr-2 h-4 w-4" />
+                                                    {simulatedDate ? format(simulatedDate, "PPP", { locale: es }) : <span>Seleccionar Inicio</span>}
+                                                </Button>
+                                            </PopoverTrigger>
+                                            <PopoverContent className="w-auto p-0 bg-gray-900 border-white/10 text-white">
+                                                <Calendar
+                                                    mode="single"
+                                                    selected={simulatedDate}
+                                                    onSelect={setSimulatedDate}
+                                                    initialFocus
+                                                    className="bg-gray-900 text-white"
+                                                />
+                                            </PopoverContent>
+                                        </Popover>
+                                    </div>
 
-                                <div className="space-y-1">
-                                    <label className="text-xs text-gray-400 block">Fin Mora (Hasta/Pago)</label>
-                                    <Popover>
-                                        <PopoverTrigger asChild>
-                                            <Button
-                                                variant={"outline"}
-                                                className={cn(
-                                                    "w-[200px] justify-start text-left font-normal bg-black/20 border-white/10 text-white hover:bg-white/5 hover:text-white h-9",
-                                                    !comparisonDate && "text-muted-foreground"
-                                                )}
-                                            >
-                                                <CalendarIcon className="mr-2 h-4 w-4" />
-                                                {comparisonDate ? format(comparisonDate, "PPP", { locale: es }) : <span>Seleccionar Fin</span>}
-                                            </Button>
-                                        </PopoverTrigger>
-                                        <PopoverContent className="w-auto p-0 bg-gray-900 border-white/10 text-white">
-                                            <Calendar
-                                                mode="single"
-                                                selected={comparisonDate}
-                                                onSelect={setComparisonDate}
-                                                initialFocus
-                                                className="bg-gray-900 text-white"
-                                            />
-                                        </PopoverContent>
-                                    </Popover>
+                                    <span className="text-gray-500 mt-4">➜</span>
+
+                                    <div className="space-y-1">
+                                        <label className="text-xs text-gray-400 block">Fin Mora (Hasta/Pago)</label>
+                                        <Popover>
+                                            <PopoverTrigger asChild>
+                                                <Button
+                                                    variant={"outline"}
+                                                    className={cn(
+                                                        "w-[200px] justify-start text-left font-normal bg-black/20 border-white/10 text-white hover:bg-white/5 hover:text-white h-9",
+                                                        !comparisonDate && "text-muted-foreground"
+                                                    )}
+                                                >
+                                                    <CalendarIcon className="mr-2 h-4 w-4" />
+                                                    {comparisonDate ? format(comparisonDate, "PPP", { locale: es }) : <span>Seleccionar Fin</span>}
+                                                </Button>
+                                            </PopoverTrigger>
+                                            <PopoverContent className="w-auto p-0 bg-gray-900 border-white/10 text-white">
+                                                <Calendar
+                                                    mode="single"
+                                                    selected={comparisonDate}
+                                                    onSelect={setComparisonDate}
+                                                    initialFocus
+                                                    className="bg-gray-900 text-white"
+                                                />
+                                            </PopoverContent>
+                                        </Popover>
+                                    </div>
                                 </div>
-                            </div>
 
-                            {(simulatedDate && comparisonDate) && (() => {
-                                const start = new Date(simulatedDate);
-                                const end = new Date(comparisonDate);
-                                start.setHours(0, 0, 0, 0);
-                                end.setHours(0, 0, 0, 0);
-                                const diff = end.getTime() - start.getTime();
-                                const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
-                                // Calculate Total Interest Accrued for ALL unpaid installments
-                                let totalInterestAccrued = 0;
-                                let lateInstallmentsCount = 0;
+                                {(simulatedDate && comparisonDate) && (() => {
+                                    const start = new Date(simulatedDate);
+                                    const end = new Date(comparisonDate);
+                                    start.setHours(0, 0, 0, 0);
+                                    end.setHours(0, 0, 0, 0);
 
-                                reservations.forEach(res => {
-                                    if (res.status === 'paid') return;
+                                    // Calculate Total Interest Accrued for ALL unpaid installments
+                                    let totalInterestAccrued = 0;
+                                    let lateInstallmentsCount = 0;
 
-                                    const totalCuotas = res.lot.cuotas || 0;
-                                    const paidCuotas = res.installments_paid || 0;
-                                    if (paidCuotas >= totalCuotas) return;
+                                    reservations.forEach(res => {
+                                        if (res.status === 'paid') return;
 
-                                    const valorCuota = res.lot.valor_cuota || 0;
-                                    const lastInstallmentPrice = res.lot.last_installment_amount || valorCuota;
-                                    const acquisitionDate = new Date(res.created_at);
+                                        const totalCuotas = res.lot.cuotas || 0;
+                                        const paidCuotas = res.installments_paid || 0;
+                                        if (paidCuotas >= totalCuotas) return;
 
-                                    for (let i = paidCuotas + 1; i <= totalCuotas; i++) {
-                                        // Calculate Due Date
-                                        const dueDate = new Date(acquisitionDate);
-                                        dueDate.setMonth(dueDate.getMonth() + i);
-                                        dueDate.setDate(5);
-                                        dueDate.setHours(0, 0, 0, 0);
+                                        const valorCuota = res.lot.valor_cuota || 0;
+                                        const lastInstallmentPrice = res.lot.last_installment_amount || valorCuota;
+                                        const acquisitionDate = new Date(res.created_at);
 
-                                        // Grace Period
-                                        const graceEnd = new Date(dueDate);
-                                        graceEnd.setDate(10);
-                                        graceEnd.setHours(23, 59, 59, 999);
+                                        for (let i = paidCuotas + 1; i <= totalCuotas; i++) {
+                                            // Calculate Due Date
+                                            const dueDate = new Date(acquisitionDate);
+                                            dueDate.setMonth(dueDate.getMonth() + i);
+                                            dueDate.setDate(5);
+                                            dueDate.setHours(0, 0, 0, 0);
 
-                                        if (end > graceEnd) {
-                                            const diffTime = end.getTime() - graceEnd.getTime();
-                                            const lateDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                                            // Grace Period
+                                            const graceEnd = new Date(dueDate);
+                                            graceEnd.setDate(10);
+                                            graceEnd.setHours(23, 59, 59, 999);
 
-                                            if (lateDays > 0) {
-                                                let amount = valorCuota;
-                                                if (i === totalCuotas) amount = lastInstallmentPrice;
+                                            if (end > graceEnd) {
+                                                const diffTime = end.getTime() - graceEnd.getTime();
+                                                const lateDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-                                                let factor = 0.027785496;
-                                                if (totalCuotas >= 77) factor = 0.0227324392;
+                                                if (lateDays > 0) {
+                                                    let amount = valorCuota;
+                                                    if (i === totalCuotas) amount = lastInstallmentPrice;
 
-                                                totalInterestAccrued += Math.round(amount * factor) * lateDays;
-                                                lateInstallmentsCount++;
+                                                    let factor = 0.027785496;
+                                                    if (totalCuotas >= 77) factor = 0.0227324392;
+
+                                                    totalInterestAccrued += Math.round(amount * factor) * lateDays;
+                                                    lateInstallmentsCount++;
+                                                }
                                             }
                                         }
-                                    }
-                                });
+                                    });
 
-                                if (totalInterestAccrued === 0) return null;
+                                    if (totalInterestAccrued === 0) return null;
 
-                                return (
-                                    <div className="bg-[#36595F]/20 border border-[#36595F] rounded p-3 text-center min-w-[200px]">
-                                        <p className="text-[#36595F] font-bold text-xs uppercase mb-1">
-                                            Deuda Total Morosa
-                                            <span className="block text-[10px] opacity-70 font-normal normal-case">
-                                                (Calculada al {end.toLocaleDateString('es-CL')})
-                                            </span>
-                                        </p>
-                                        <p className="text-2xl font-black text-red-500">
-                                            {new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(totalInterestAccrued)}
-                                        </p>
-                                        <p className="text-[10px] text-gray-500 mt-1">
-                                            {lateInstallmentsCount > 0
-                                                ? `Acumulada en ${lateInstallmentsCount} cuotas vencidas`
-                                                : "Sin cuotas vencidas a la fecha"}
-                                        </p>
-                                    </div>
-                                );
-                            })()}
+                                    return (
+                                        <div className="bg-[#36595F]/20 border border-[#36595F] rounded p-3 text-center min-w-[200px]">
+                                            <p className="text-[#36595F] font-bold text-xs uppercase mb-1">
+                                                Deuda Total Morosa
+                                                <span className="block text-[10px] opacity-70 font-normal normal-case">
+                                                    (Calculada al {end.toLocaleDateString('es-CL')})
+                                                </span>
+                                            </p>
+                                            <p className="text-2xl font-black text-red-500">
+                                                {new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(totalInterestAccrued)}
+                                            </p>
+                                            <p className="text-[10px] text-gray-500 mt-1">
+                                                {lateInstallmentsCount > 0
+                                                    ? `Acumulada en ${lateInstallmentsCount} cuotas vencidas`
+                                                    : "Sin cuotas vencidas a la fecha"}
+                                            </p>
+                                        </div>
+                                    );
+                                })()}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* User Navigator / Search - HIDDEN IN USER VIEW */}
+                    {!isUserView && (
+                        <div className="w-full md:w-auto">
+                            <UserNavigator users={allClients} />
                         </div>
-                    </div>
-
-                    {/* User Navigator / Search */}
-                    <div className="w-full md:w-auto">
-                        <UserNavigator users={allClients} />
-                    </div>
+                    )}
                 </div>
             </header>
 
@@ -277,7 +299,7 @@ export function AdminPlotManager({ reservations, allClients, userId, initialUser
                                                 installments_paid: res.installments_paid
                                             }}
                                             acquisitionDate={res.created_at}
-                                            isAdminView={true}
+                                            isAdminView={!isUserView}
                                             simulatedDate={simulatedDate}
                                             comparisonDate={comparisonDate} // Pass End Date
                                         />
