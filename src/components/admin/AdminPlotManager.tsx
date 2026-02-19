@@ -126,15 +126,66 @@ export function AdminPlotManager({ reservations, allClients, userId, initialUser
                                 end.setHours(0, 0, 0, 0);
                                 const diff = end.getTime() - start.getTime();
                                 const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
-                                const daysDisplay = days > 0 ? days + 1 : 0; // Inclusive logic matches PaymentButtons
+                                // Calculate Total Interest Accrued for ALL unpaid installments
+                                let totalInterestAccrued = 0;
+                                let lateInstallmentsCount = 0;
+
+                                reservations.forEach(res => {
+                                    if (res.status === 'paid') return;
+
+                                    const totalCuotas = res.lot.cuotas || 0;
+                                    const paidCuotas = res.installments_paid || 0;
+                                    if (paidCuotas >= totalCuotas) return;
+
+                                    const valorCuota = res.lot.valor_cuota || 0;
+                                    const lastInstallmentPrice = res.lot.last_installment_amount || valorCuota;
+                                    const acquisitionDate = new Date(res.created_at);
+
+                                    for (let i = paidCuotas + 1; i <= totalCuotas; i++) {
+                                        // Calculate Due Date
+                                        const dueDate = new Date(acquisitionDate);
+                                        dueDate.setMonth(dueDate.getMonth() + i);
+                                        dueDate.setDate(5);
+                                        dueDate.setHours(0, 0, 0, 0);
+
+                                        // Grace Period
+                                        const graceEnd = new Date(dueDate);
+                                        graceEnd.setDate(10);
+                                        graceEnd.setHours(23, 59, 59, 999);
+
+                                        if (end > graceEnd) {
+                                            const diffTime = end.getTime() - graceEnd.getTime();
+                                            const lateDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                                            if (lateDays > 0) {
+                                                let amount = valorCuota;
+                                                if (i === totalCuotas) amount = lastInstallmentPrice;
+
+                                                let factor = 0.027785496;
+                                                if (totalCuotas >= 77) factor = 0.0227324392;
+
+                                                totalInterestAccrued += Math.round(amount * factor) * lateDays;
+                                                lateInstallmentsCount++;
+                                            }
+                                        }
+                                    }
+                                });
 
                                 return (
-                                    <div className="bg-[#36595F]/20 border border-[#36595F] rounded p-2 text-center">
-                                        <p className="text-[#36595F] font-bold text-sm">
-                                            {daysDisplay} Días de Mora calculados
+                                    <div className="bg-[#36595F]/20 border border-[#36595F] rounded p-3 text-center min-w-[200px]">
+                                        <p className="text-[#36595F] font-bold text-xs uppercase mb-1">
+                                            Deuda Total Morosa
+                                            <span className="block text-[10px] opacity-70 font-normal normal-case">
+                                                (Calculada al {end.toLocaleDateString('es-CL')})
+                                            </span>
                                         </p>
-                                        <p className="text-xs text-gray-400">
-                                            (Se aplicará a cada cuota seleccionada)
+                                        <p className="text-2xl font-black text-red-500">
+                                            {new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(totalInterestAccrued)}
+                                        </p>
+                                        <p className="text-[10px] text-gray-500 mt-1">
+                                            {lateInstallmentsCount > 0
+                                                ? `Acumulada en ${lateInstallmentsCount} cuotas vencidas`
+                                                : "Sin cuotas vencidas a la fecha"}
                                         </p>
                                     </div>
                                 );
