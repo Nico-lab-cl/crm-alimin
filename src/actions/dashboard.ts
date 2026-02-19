@@ -5,6 +5,8 @@ import { prisma } from "@/lib/prisma"
 import { revalidatePath } from "next/cache"
 import { Role } from "@prisma/client"
 import { logAdminAction } from "@/lib/logger"
+import { SignJWT } from "jose"
+import { sendPieWebhook } from "@/lib/webhooks"
 
 export async function getSellerPipeline() {
     const session = await auth()
@@ -172,7 +174,18 @@ export async function getAdminLots() {
 
     try {
         const lots = await prisma.lot.findMany({
-            orderBy: { number: 'asc' }
+            orderBy: { number: 'asc' },
+            include: {
+                reservations: {
+                    where: { status: { in: ['paid', 'confirmed'] } },
+                    take: 1,
+                    select: {
+                        id: true,
+                        buyer: { select: { name: true, email: true } },
+                        signed_at: true
+                    }
+                }
+            }
         })
         return { success: true, data: lots }
     } catch (error) {
@@ -276,5 +289,105 @@ export async function createVerifiedUser(data: any) {
     } catch (error) {
         console.error("Error creating user:", error)
         return { error: "Error al crear usuario" }
+    }
+}
+
+export async function assignLegacyLotOwner(data: {
+    lotId: number;
+    name: string;
+    email: string;
+    phone: string;
+    rut?: string;
+}) {
+    const session = await auth()
+    if (session?.user?.role !== Role.ADMIN) return { error: "No autorizado" }
+
+    const { lotId, name, email, phone, rut } = data
+
+    try {
+        let user = await prisma.user.findUnique({ where: { email } })
+        let isNewUser = false
+        let resetLink = null
+
+        // If user doesn't exist, create one with temp password
+        if (!user) {
+            isNewUser = true
+            const tempPassword = Math.random().toString(36).slice(-8)
+            const hashedPassword = await hash(tempPassword, 10)
+
+            user = await prisma.user.create({
+                data: {
+                    name,
+                    email,
+                    password: hashedPassword,
+                    role: Role.USER,
+                    emailVerified: new Date(), // Auto-verify legacy owners?
+                    mustChangePassword: true
+                }
+            })
+
+            // Generate Reset Token for "Welcome" email
+            const secret = new TextEncoder().encode(process.env.AUTH_SECRET || "fallback_secret")
+            const token = await new SignJWT({ email: user.email, sub: user.id })
+                .setProtectedHeader({ alg: "HS256" })
+                .setIssuedAt()
+                .setExpirationTime("24h")
+                .sign(secret)
+
+            const baseUrl = process.env.NEXTAUTH_URL || "https://aliminlomasdelmar.com"
+            resetLink = `${baseUrl}/reset-password?token=${token}`
+
+            // Send to Password Reset Webhook (as Welcome Email)
+            const webhookUrl = process.env.N8N_PASSWORD_RESET_WEBHOOK_URL
+            if (webhookUrl) {
+                await fetch(webhookUrl, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        email: user.email,
+                        name: user.name,
+                        resetLink, // Using reset link as "set password"
+                        isNewLegacyUser: true, // Flag for n8n if needed
+                        timestamp: new Date().toISOString(),
+                    }),
+                }).catch(e => console.error("Failed to trigger password webhook", e))
+            }
+        }
+
+        // Create a "Completed" reservation linking user and lot
+        const reservation = await prisma.reservation.create({
+            data: {
+                lot_id: lotId,
+                buyer_id: user.id,
+                name,
+                email,
+                phone,
+                rut,
+                status: 'paid',
+                pipeline_stage: 'VENTA_CERRADA',
+                pie_status: 'PAID',
+                installments_paid: 0,
+                address: 'Dirección no especificada (Venta Legacy)',
+            }
+        })
+
+        // Log action
+        await logAdminAction({
+            action: 'UPDATE',
+            entity: 'Lot',
+            entityId: String(lotId),
+            details: `Asignación manual de dueño a lote ${lotId}. Usuario: ${email} (${isNewUser ? 'NUEVO' : 'EXISTENTE'})`,
+            pk: String(lotId)
+        })
+
+        // Confirm Lot / Legacy Sale Webhook
+        await sendPieWebhook(reservation.id, 0).catch(e => console.error("Failed to trigger pie webhook for legacy", e))
+
+        revalidatePath('/admin/dashboard')
+        return { success: true, message: isNewUser ? "Usuario creado y asignado. Se envió correo de bienvenida." : "Usuario asignado correctamente." }
+
+    } catch (error) {
+        console.error("Error linking legacy owner:", error)
+        return { error: "Error al asignar dueño al lote" }
     }
 }

@@ -5,8 +5,9 @@ import { Lot } from '@prisma/client'
 import { updateLotStatus } from '@/actions/dashboard'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Search, Loader2 } from 'lucide-react'
+import { Search, Loader2, UserPlus, User } from 'lucide-react'
 import { toast } from 'sonner'
+import { AssignOwnerModal } from './AssignOwnerModal'
 import {
     Select,
     SelectContent,
@@ -15,14 +16,27 @@ import {
     SelectValue,
 } from "@/components/ui/select"
 
+type LotWithReservation = Lot & {
+    reservations?: {
+        id: string;
+        buyer: { name: string; email: string } | null;
+        signed_at: Date | null;
+    }[]
+}
+
 type AdminLotListProps = {
-    lots: Lot[]
+    lots: LotWithReservation[]
 }
 
 export const AdminLotList = ({ lots: initialLots }: AdminLotListProps) => {
     const [lots, setLots] = useState(initialLots)
     const [filter, setFilter] = useState('')
     const [loadingIds, setLoadingIds] = useState<Set<number>>(new Set())
+    const [assignModal, setAssignModal] = useState<{ open: boolean, lotId: number | null, lotNumber: string | null }>({
+        open: false,
+        lotId: null,
+        lotNumber: null
+    })
 
     const handleStatusChange = async (lotId: number, newStatus: string) => {
         setLoadingIds(prev => new Set(prev).add(lotId))
@@ -66,6 +80,10 @@ export const AdminLotList = ({ lots: initialLots }: AdminLotListProps) => {
                     const isReserved = lot.status === 'reserved'
                     const isLoading = loadingIds.has(lot.id)
 
+                    // Check if sold/reserved lot has an owner
+                    const owner = lot.reservations?.[0]?.buyer
+                    const hasOwner = !!owner
+
                     return (
                         <div
                             key={lot.id}
@@ -107,11 +125,44 @@ export const AdminLotList = ({ lots: initialLots }: AdminLotListProps) => {
                                         <SelectItem value="reserved">Reservado</SelectItem>
                                     </SelectContent>
                                 </Select>
+
+                                {/* Show Owner if exists, or Assign Button if Sold/Reserved but no owner */}
+                                {hasOwner ? (
+                                    <div className="flex items-center gap-1 text-[10px] text-gray-400 mt-1 justify-center" title={owner?.email}>
+                                        <User className="w-3 h-3" />
+                                        <span className="truncate max-w-[120px]">{owner?.name?.split(' ')[0]}</span>
+                                    </div>
+                                ) : (isSold || isReserved) ? (
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="w-full mt-1 h-6 text-[10px] text-[#E0B457] hover:text-[#d4aa52] hover:bg-white/5"
+                                        onClick={() => setAssignModal({ open: true, lotId: lot.id, lotNumber: lot.number })}
+                                    >
+                                        <UserPlus className="w-3 h-3 mr-1" />
+                                        Asignar Dueño
+                                    </Button>
+                                ) : null}
                             </div>
                         </div>
                     )
                 })}
             </div>
+
+            <AssignOwnerModal
+                lotId={assignModal.lotId}
+                lotNumber={assignModal.lotNumber}
+                open={assignModal.open}
+                onOpenChange={(open) => setAssignModal(prev => ({ ...prev, open }))}
+                onSuccess={() => {
+                    // Ideally refresh data, for now we rely on revalidatePath from action and maybe router.refresh() 
+                    // typically triggers a re-render if using server components, but here we have local state `lots`.
+                    // We should really force a refresh or update local state...
+                    // For simplicity, we can reload the page or just accept that revalidatePath handles the next visit.
+                    // A better UX would be to emit an event or router.refresh()
+                    window.location.reload()
+                }}
+            />
             <style jsx global>{`
                 .custom-scrollbar::-webkit-scrollbar {
                     width: 6px;
