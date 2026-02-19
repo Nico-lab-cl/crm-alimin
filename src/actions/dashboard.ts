@@ -423,12 +423,37 @@ export async function getUserReservations(userId: string) {
                 buyer_id: userId,
                 status: { in: ['paid', 'confirmed'] }
             },
-            include: { lot: true },
+            include: {
+                lot: true,
+                buyer: {
+                    select: {
+                        name: true,
+                        email: true
+                    }
+                }
+            },
             orderBy: { created_at: 'desc' }
         })
         return reservations
     } catch (error) {
         console.error("Error fetching user reservations:", error)
+        return []
+    }
+}
+
+export async function getAllClients() {
+    const session = await auth()
+    if (session?.user?.role !== Role.ADMIN) return []
+
+    try {
+        const users = await prisma.user.findMany({
+            where: { role: Role.USER },
+            select: { id: true, name: true, email: true },
+            orderBy: { name: 'asc' }
+        })
+        return users
+    } catch (error) {
+        console.error("Error fetching clients:", error)
         return []
     }
 }
