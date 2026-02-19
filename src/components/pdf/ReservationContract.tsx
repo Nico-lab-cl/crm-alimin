@@ -132,7 +132,14 @@ export const ReservationContract = ({ reservation, lot, logoPath, signaturePath 
     let textoCuotas = '';
     if (lotAny.cuotas && lotAny.cuotas > 0) {
         const valorCuotaFormatted = formatCurrency(lotAny.valor_cuota);
-        textoCuotas = `${lotAny.cuotas} cuotas mensuales de ${valorCuotaFormatted}, comenzando la primera cuota a partir del 5 de Marzo`;
+
+        if (lotAny.last_installment_amount && lotAny.last_installment_amount > 0) {
+            const regularCuotas = lotAny.cuotas - 1;
+            const lastInstallmentFormatted = formatCurrency(lotAny.last_installment_amount);
+            textoCuotas = `${regularCuotas} cuotas mensuales de ${valorCuotaFormatted} y una última cuota de ${lastInstallmentFormatted}, comenzando la primera cuota a partir del 5 de Marzo`;
+        } else {
+            textoCuotas = `${lotAny.cuotas} cuotas mensuales de ${valorCuotaFormatted}, comenzando la primera cuota a partir del 5 de Marzo`;
+        }
     }
 
     // Fecha Promesa: Fecha Reserva (created_at) + 10 dias
