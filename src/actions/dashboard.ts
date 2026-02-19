@@ -6,7 +6,7 @@ import { revalidatePath } from "next/cache"
 import { Role } from "@prisma/client"
 import { logAdminAction } from "@/lib/logger"
 import { SignJWT } from "jose"
-import { sendPieWebhook } from "@/lib/webhooks"
+import { sendPieWebhook, sendContractSignedWebhook } from "@/lib/webhooks"
 
 export async function getSellerPipeline() {
     const session = await auth()
