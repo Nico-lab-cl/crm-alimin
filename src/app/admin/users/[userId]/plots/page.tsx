@@ -6,6 +6,7 @@ import { SignContractModal } from "@/components/SignContractModal";
 import Link from "next/link";
 import { ArrowLeft, FileDown, ExternalLink, User } from "lucide-react";
 import { UserNavigator } from "@/components/admin/UserNavigator";
+import { InterestSimulator } from "@/components/admin/InterestSimulator";
 
 export default async function AdminUserPlotsPage({ params }: { params: { userId: string } }) {
     const reservations = await getUserReservations(params.userId);
@@ -42,6 +43,9 @@ export default async function AdminUserPlotsPage({ params }: { params: { userId:
                             <h1 className="text-4xl font-extrabold text-[#36595F] drop-shadow-[0_2px_4px_rgba(255,255,255,0.1)] tracking-tight">
                                 Gestión de: {userName}
                             </h1>
+                            <div className="mt-4">
+                                <InterestSimulator />
+                            </div>
                         </div>
 
                         {/* User Navigator / Search */}
