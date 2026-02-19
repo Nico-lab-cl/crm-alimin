@@ -62,6 +62,9 @@ export async function POST(
             }
         });
 
+        // Trigger Webhook (Fire and forget to avoid blocking UI)
+        sendContractSignedWebhook(reservationId).catch(console.error);
+
         return NextResponse.json({ success: true, message: "Contrato firmado exitosamente" });
 
     } catch (error: any) {

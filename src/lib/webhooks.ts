@@ -101,3 +101,71 @@ export async function sendInstallmentWebhook(reservationId: string, amountPaid: 
         return { success: false, error: String(e) };
     }
 }
+
+export async function sendContractSignedWebhook(reservationId: string) {
+    const webhookUrl = "https://n8n-n8n.yszha2.easypanel.host/webhook/dd409dcd-adb6-4b8a-9d8a-6734156c7f08";
+
+    const reservation = await prisma.reservation.findUnique({
+        where: { id: reservationId },
+        include: { lot: true }
+    });
+
+    if (!reservation || !reservation.lot) {
+        return { success: false, error: 'Reservation or Lot not found' };
+    }
+
+    const payload = {
+        // Client Data (All fields from form/db)
+        nombre_cliente: reservation.name,
+        email_cliente: reservation.email,
+        telefono_cliente: reservation.phone,
+        rut_cliente: reservation.rut,
+        direccion_cliente: reservation.address,
+        estado_civil: reservation.marital_status,
+        profesion: reservation.profession,
+        nacionalidad: reservation.nationality,
+
+        // Address Breakout
+        calle: reservation.address_street,
+        numero: reservation.address_number,
+        comuna: reservation.address_commune,
+        region: reservation.address_region,
+
+        // Lot Info
+        numero_lote: reservation.lot.number,
+        etapa_lote: reservation.lot.stage,
+        m2_lote: reservation.lot.area_m2,
+        precio_lista: reservation.lot.price_total_clp,
+        pie_total: reservation.lot.pie,
+        valor_cuota: reservation.lot.valor_cuota,
+        cantidad_cuotas: reservation.lot.cuotas,
+
+        // Contract Info
+        fecha_firma: reservation.signed_at?.toISOString() || new Date().toISOString(),
+        url_descarga_contrato: `${baseUrl}/api/contracts/${reservationId}/pdf`,
+        dashboard_url: `${baseUrl}/user/plots`,
+
+        // System Info
+        reservation_id: reservationId,
+        pipeline_stage: "CONTRATO_FIRMADO"
+    };
+
+    try {
+        const res = await fetch(webhookUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) {
+            console.error(`[Webhook] Contract Signed Webhook failed: ${res.status}`);
+            return { success: false, status: res.status };
+        }
+
+        console.log(`[Webhook] Contract Signed Webhook sent successfully`);
+        return { success: true };
+    } catch (e) {
+        console.error(`[Webhook] Failed to trigger contract signed webhook`, e);
+        return { success: false, error: String(e) };
+    }
+}
