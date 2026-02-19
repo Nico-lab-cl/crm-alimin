@@ -12,8 +12,13 @@ export default async function AdminUserPlotsPage({ params }: { params: { userId:
     const allClients = await getAllClients();
 
     // Get current user name from the first reservation (if any) or find in list
-    const currentUser = allClients.find(u => u.id === params.userId);
-    const userName = currentUser?.name || reservations[0]?.buyer?.name || "Usuario Desconocido";
+    let userName = "Usuario Desconocido";
+    if (params.userId === 'all') {
+        userName = "Todos los Usuarios";
+    } else {
+        const currentUser = allClients.find(u => u.id === params.userId);
+        userName = currentUser?.name || reservations[0]?.buyer?.name || "Usuario Desconocido";
+    }
 
     return (
         <div className="min-h-screen relative flex flex-col items-center pt-24 pb-12 px-4 bg-black/95">

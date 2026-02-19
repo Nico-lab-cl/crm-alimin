@@ -418,11 +418,17 @@ export async function getUserReservations(userId: string) {
     if (session?.user?.role !== Role.ADMIN) return []
 
     try {
+        const whereClause: any = {
+            status: { in: ['paid', 'confirmed'] }
+        }
+
+        // If specific user, add buyer_id filter. If 'all', fetch everything.
+        if (userId !== 'all') {
+            whereClause.buyer_id = userId
+        }
+
         const reservations = await prisma.reservation.findMany({
-            where: {
-                buyer_id: userId,
-                status: { in: ['paid', 'confirmed'] }
-            },
+            where: whereClause,
             include: {
                 lot: true,
                 buyer: {

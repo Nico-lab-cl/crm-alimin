@@ -69,6 +69,23 @@ export function UserNavigator({ users }: UserNavigatorProps) {
                         <CommandList>
                             <CommandEmpty>No se encontraron usuarios.</CommandEmpty>
                             <CommandGroup className="text-white">
+                                <CommandItem
+                                    value="all todos los usuarios"
+                                    onSelect={() => {
+                                        setValue("all")
+                                        setOpen(false)
+                                        router.push(`/admin/users/all/plots`)
+                                    }}
+                                    className="text-white hover:bg-white/10 aria-selected:bg-white/10 font-bold border-b border-white/10"
+                                >
+                                    <Check
+                                        className={cn(
+                                            "mr-2 h-4 w-4",
+                                            value === "all" ? "opacity-100" : "opacity-0"
+                                        )}
+                                    />
+                                    <span>Todos los usuarios</span>
+                                </CommandItem>
                                 {users.map((user) => (
                                     <CommandItem
                                         key={user.id}
