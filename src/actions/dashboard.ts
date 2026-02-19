@@ -298,11 +298,18 @@ export async function assignLegacyLotOwner(data: {
     email: string;
     phone: string;
     rut?: string;
+    marital_status?: string;
+    profession?: string;
+    nationality?: string;
+    address_street?: string;
+    address_number?: string;
+    address_commune?: string;
+    address_region?: string;
 }) {
     const session = await auth()
     if (session?.user?.role !== Role.ADMIN) return { error: "No autorizado" }
 
-    const { lotId, name, email, phone, rut } = data
+    const { lotId, name, email, phone, rut, marital_status, profession, nationality, address_street, address_number, address_commune, address_region } = data
 
     try {
         let user = await prisma.user.findUnique({ where: { email } })
@@ -355,6 +362,8 @@ export async function assignLegacyLotOwner(data: {
         }
 
         // Create a "Completed" reservation linking user and lot
+        const fullAddress = [address_street, address_number, address_commune, address_region].filter(Boolean).join(", ");
+
         const reservation = await prisma.reservation.create({
             data: {
                 lot_id: lotId,
@@ -367,7 +376,16 @@ export async function assignLegacyLotOwner(data: {
                 pipeline_stage: 'VENTA_CERRADA',
                 pie_status: 'PAID',
                 installments_paid: 0,
-                address: 'Dirección no especificada (Venta Legacy)',
+                address: fullAddress || 'Dirección no especificada (Venta Legacy)',
+
+                // New legal fields
+                marital_status: marital_status || 'SOLTERO/A', // Default fallback
+                profession: profession || 'Oficio no informado',
+                nationality: nationality || 'Chilena',
+                address_street,
+                address_number,
+                address_commune,
+                address_region
             }
         })
 
