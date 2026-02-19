@@ -154,6 +154,26 @@ export function PaymentButtons({ reservationId, lot, reservation, acquisitionDat
         return new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(amount);
     };
 
+    // Calculate Preview Interest (Single Quota)
+    let previewInterest = 0;
+    let previewDays = 0;
+    if (simulatedDate && comparisonDate && totalCuotas > 0) {
+        const startSim = new Date(simulatedDate);
+        const endSim = new Date(comparisonDate);
+        startSim.setHours(0, 0, 0, 0);
+        endSim.setHours(0, 0, 0, 0);
+        const diffTime = endSim.getTime() - startSim.getTime();
+        const daysLateSim = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        if (daysLateSim > 0) {
+            const effectiveDays = daysLateSim + 1; // Inclusive
+            let factor = 0.027785496;
+            if (totalCuotas >= 77) factor = 0.0227324392;
+            previewInterest = Math.round(valorCuota * factor) * effectiveDays;
+            previewDays = effectiveDays;
+        }
+    }
+
     return (
         <div className="flex flex-col gap-3 mt-4">
             {/* PIE PAYMENT */}
@@ -223,6 +243,11 @@ export function PaymentButtons({ reservationId, lot, reservation, acquisitionDat
                             {isAdminView ? "Pagar Cuotas" : "Pagar Cuotas (Próximamente)"}
                         </Button>
                     </DialogTrigger>
+                    {previewInterest > 0 && isAdminView && (
+                        <div className="mt-2 text-[10px] text-center text-red-400 bg-red-900/10 border border-red-500/20 rounded p-1">
+                            Simulación: +{formatCurrency(previewInterest)}/cuota ({previewDays} días)
+                        </div>
+                    )}
                     <DialogContent className="bg-white text-black">
                         <DialogHeader>
                             <DialogTitle>Pagar Cuotas Mensuales</DialogTitle>

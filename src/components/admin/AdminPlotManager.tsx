@@ -118,6 +118,27 @@ export function AdminPlotManager({ reservations, allClients, userId, initialUser
                                     </Popover>
                                 </div>
                             </div>
+
+                            {(simulatedDate && comparisonDate) && (() => {
+                                const start = new Date(simulatedDate);
+                                const end = new Date(comparisonDate);
+                                start.setHours(0, 0, 0, 0);
+                                end.setHours(0, 0, 0, 0);
+                                const diff = end.getTime() - start.getTime();
+                                const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
+                                const daysDisplay = days > 0 ? days + 1 : 0; // Inclusive logic matches PaymentButtons
+
+                                return (
+                                    <div className="bg-[#36595F]/20 border border-[#36595F] rounded p-2 text-center">
+                                        <p className="text-[#36595F] font-bold text-sm">
+                                            {daysDisplay} Días de Mora calculados
+                                        </p>
+                                        <p className="text-xs text-gray-400">
+                                            (Se aplicará a cada cuota seleccionada)
+                                        </p>
+                                    </div>
+                                );
+                            })()}
                         </div>
                     </div>
 
