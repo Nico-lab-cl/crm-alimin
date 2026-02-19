@@ -57,7 +57,8 @@ export async function POST(
                 signed_at: new Date(),
                 signature_ip: ip,
                 signature_otp: null, // Clear OTP after use
-                signature_otp_expires: null
+                signature_otp_expires: null,
+                pipeline_stage: 'CONTRATO_FIRMADO'
             }
         });
 

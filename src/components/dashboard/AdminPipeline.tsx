@@ -30,9 +30,8 @@ const STAGES = [
  * - Otherwise → use the stored pipeline_stage (default: RESERVA_PAGADA)
  */
 function getEffectiveStage(r: ReservationWithDetails & { signed_at?: Date | null }): string {
-    if ((r.installments_paid ?? 0) > 0) return "PAGO_CUOTAS"
-    if (r.pie_status === "PAID") return "PIE_PAGADO"
-    if (r.signed_at) return "CONTRATO_FIRMADO"
+    // Return the database stage as source of truth to allow manual movement (back/forward)
+    // Auto-advancement now happens via webhooks and contract signing actions updating this field.
     return r.pipeline_stage || "RESERVA_PAGADA"
 }
 
