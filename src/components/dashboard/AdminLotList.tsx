@@ -124,10 +124,9 @@ export const AdminLotList = ({ lots: initialLots }: AdminLotListProps) => {
                                             <span>Total:</span>
                                             <span className="text-[#E0B457] font-medium">
                                                 {new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(
-                                                    ((lot.cuotas || 0) * (lot.valor_cuota || 0)) +
+                                                    (((lot.cuotas || 0) - 1) * (lot.valor_cuota || 0)) +
                                                     (lot.last_installment_amount || 0) +
-                                                    (lot.pie || 0) +
-                                                    (lot.reservation_amount_clp || 0)
+                                                    (lot.pie || 0)
                                                 )}
                                             </span>
                                         </div>
