@@ -423,9 +423,11 @@ export async function getUserReservations(userId: string) {
         }
 
         // If specific user, add buyer_id filter. If 'all', fetch everything.
-        if (userId !== 'all') {
+        if (userId && userId !== 'all') { // Ensure userId is valid
             whereClause.buyer_id = userId
         }
+
+        console.log(`[getUserReservations] userId: ${userId}, whereClause:`, JSON.stringify(whereClause));
 
         const reservations = await prisma.reservation.findMany({
             where: whereClause,

@@ -171,6 +171,8 @@ export function AdminPlotManager({ reservations, allClients, userId, initialUser
                                     }
                                 });
 
+                                if (totalInterestAccrued === 0) return null;
+
                                 return (
                                     <div className="bg-[#36595F]/20 border border-[#36595F] rounded p-3 text-center min-w-[200px]">
                                         <p className="text-[#36595F] font-bold text-xs uppercase mb-1">
