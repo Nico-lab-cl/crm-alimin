@@ -381,8 +381,9 @@ export async function assignLegacyLotOwner(data: {
         })
 
         // Confirm Lot / Legacy Sale Webhook
-        // User requested to ONLY use the password/access webhook, not the sale confirmation (Pie) webhook.
-        // await sendPieWebhook(reservation.id, 0).catch(e => console.error("Failed to trigger pie webhook for legacy", e))
+        // Sending Pie Webhook as "Confirmation of Acquired Lot"
+        // This handles "enviarle el lote que adquirio" (via n8n)
+        await sendPieWebhook(reservation.id, 0).catch(e => console.error("Failed to trigger pie webhook for legacy", e))
 
         revalidatePath('/admin/dashboard')
         return { success: true, message: isNewUser ? "Usuario creado y asignado. Se envió correo de bienvenida." : "Usuario asignado correctamente." }
