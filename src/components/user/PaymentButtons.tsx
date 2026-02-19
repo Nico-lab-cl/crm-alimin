@@ -155,22 +155,36 @@ export function PaymentButtons({ reservationId, lot, reservation, acquisitionDat
     };
 
     // Calculate Preview Interest (Single Quota)
+    // Calculate Preview Interest (Single Quota - Next Pending)
     let previewInterest = 0;
     let previewDays = 0;
-    if (simulatedDate && comparisonDate && totalCuotas > 0) {
-        const startSim = new Date(simulatedDate);
-        const endSim = new Date(comparisonDate);
-        startSim.setHours(0, 0, 0, 0);
-        endSim.setHours(0, 0, 0, 0);
-        const diffTime = endSim.getTime() - startSim.getTime();
-        const daysLateSim = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    if ((simulatedDate || comparisonDate) && totalCuotas > 0) {
+        const effectiveDate = comparisonDate || simulatedDate || new Date();
+        const targetDate = new Date(effectiveDate);
+        targetDate.setHours(0, 0, 0, 0);
 
-        if (daysLateSim > 0) {
-            const effectiveDays = daysLateSim + 1; // Inclusive
-            let factor = 0.027785496;
-            if (totalCuotas >= 77) factor = 0.0227324392;
-            previewInterest = Math.round(valorCuota * factor) * effectiveDays;
-            previewDays = effectiveDays;
+        // Check ONLY the first pending quota
+        const instNum = paidCuotas + 1;
+        if (instNum <= totalCuotas) {
+            // We need acquisitionDate to calculate DueDate. Assuming it's available or fallback.
+            if (acquisitionDate) {
+                const iDue = getInstallmentDueDate(acquisitionDate, instNum);
+                const graceEnd = new Date(iDue);
+                graceEnd.setDate(10);
+                graceEnd.setHours(23, 59, 59, 999);
+
+                if (targetDate > graceEnd) {
+                    const diffTime = targetDate.getTime() - graceEnd.getTime();
+                    const lateDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                    if (lateDays > 0) {
+                        let factor = 0.027785496;
+                        if (totalCuotas >= 77) factor = 0.0227324392;
+                        previewInterest = Math.round(valorCuota * factor) * lateDays;
+                        previewDays = lateDays;
+                    }
+                }
+            }
         }
     }
 
@@ -300,55 +314,46 @@ export function PaymentButtons({ reservationId, lot, reservation, acquisitionDat
                                         const iDue = getInstallmentDueDate(acquisitionDate, instNum);
                                         const iAmount = (includesLastInstallment && instNum === totalCuotas) ? lastInstallmentPrice : valorCuota;
 
-                                        // MANUAL SIMULATION OVERRIDE
-                                        if (simulatedDate && comparisonDate) {
-                                            const startSim = new Date(simulatedDate);
-                                            const endSim = new Date(comparisonDate);
-                                            // Reset hours
-                                            startSim.setHours(0, 0, 0, 0);
-                                            endSim.setHours(0, 0, 0, 0);
+                                        // SMART SIMULATION LOGIC
+                                        // We treat comparisonDate (or simulatedDate) as the "Target Payment Date".
+                                        // We calculate interest for THIS specific installment based on its OWN due date.
 
-                                            // Calculate days between start and end
-                                            const diffTime = endSim.getTime() - startSim.getTime();
-                                            const daysLateSim = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                                            // If end is after start, we have positive days. 
-                                            // User request: "monto de la deuda por los dias que especifique"
-                                            // So if they pick Start=1st, End=5th. That's 4 days difference? Or 5 inclusive?
-                                            // Let's assume inclusive of the start date as "Day 1 of Fine".
-                                            // So 5 - 1 = 4. +1 = 5 days.
+                                        const effectiveDate = comparisonDate || simulatedDate || new Date();
+                                        // Reset hours for fair comparison
+                                        const targetDate = new Date(effectiveDate);
+                                        targetDate.setHours(0, 0, 0, 0);
 
-                                            if (daysLateSim > 0) {
-                                                const effectiveDays = daysLateSim + 1; // Inclusive
+                                        // Grace Period: 10th of the month of the Due Date
+                                        const graceEnd = new Date(iDue);
+                                        graceEnd.setDate(10);
+                                        graceEnd.setHours(23, 59, 59, 999);
 
+                                        // Check if Target Date is past Grace Period
+                                        // Ideally we compare timestamps or use a library, simplified here:
+                                        const targetChile = new Date(targetDate.toLocaleString("en-US", { timeZone: "America/Santiago" }));
+                                        // Note: formatDateChile is just for string, we need object comparison.
+
+                                        // Simple comparison:
+                                        if (targetDate > graceEnd) {
+                                            const diffTime = targetDate.getTime() - graceEnd.getTime();
+                                            const lateDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                                            // If Manual Start Date ("Inicio Mora") is provided, does it override?
+                                            // User requested "Desde X Hasta Y". 
+                                            // If we strictly follow "Simulated Payment Date", we just use targetDate.
+                                            // If we want to support "Forgiveness until StartDate", we could do:
+                                            // const effectiveLateStart = simulatedDate ? new Date(simulatedDate) : graceEnd;
+                                            // But standard logic is usually "As of Today".
+                                            // Let's stick to "As of TargetDate" because that solves the "Future Quota" issue naturally.
+                                            // Future Quota Due Date > TargetDate => Not Late.
+
+                                            if (lateDays > 0) {
                                                 let factor = 0.027785496;
                                                 if (totalCuotas >= 77) factor = 0.0227324392;
 
-                                                calculatedInterest += Math.round(iAmount * factor) * effectiveDays;
-                                                daysLateForDisplay = Math.max(daysLateForDisplay, effectiveDays);
-                                            }
-                                        }
-                                        // DEFAULT LOGIC (If no manual simulation)
-                                        else {
-                                            // Grace Period Logic Replicated
-                                            const graceEnd = new Date(iDue);
-                                            graceEnd.setDate(10);
-                                            graceEnd.setHours(23, 59, 59, 999);
-
-                                            // Use simulatedDate as "Now" if provided alone (Backward compatibility or simple simulation)
-                                            // But if both provided, we used the block above.
-                                            // If only simulatedDate is provided, treating it as "Today" for standard calculation:
-                                            const nowReference = simulatedDate ? new Date(simulatedDate) : new Date();
-
-                                            if (nowReference > graceEnd) {
-                                                const diff = nowReference.getTime() - graceEnd.getTime();
-                                                const late = Math.ceil(diff / (1000 * 60 * 60 * 24));
-                                                if (late > 0) {
-                                                    let factor = 0.027785496;
-                                                    if (totalCuotas >= 77) factor = 0.0227324392;
-
-                                                    calculatedInterest += Math.round(iAmount * factor) * late;
-                                                    daysLateForDisplay = Math.max(daysLateForDisplay, late);
-                                                }
+                                                calculatedInterest += Math.round(iAmount * factor) * lateDays;
+                                                // We only track max days for display, or maybe showing "Various" is better if mixed?
+                                                daysLateForDisplay = Math.max(daysLateForDisplay, lateDays);
                                             }
                                         }
                                     }
