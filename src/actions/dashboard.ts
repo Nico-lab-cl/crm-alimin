@@ -470,3 +470,39 @@ export async function getAllClients() {
         return []
     }
 }
+
+// ADMIN: RESET PASSWORD FOR USER
+export async function adminResetUserPassword(userId: string, newPassword: string) {
+    const session = await auth();
+    if (session?.user?.role !== Role.ADMIN) return { error: "No autorizado" };
+
+    if (!newPassword || newPassword.length < 6) {
+        return { error: "La contraseña debe tener al menos 6 caracteres" };
+    }
+
+    try {
+        const hashedPassword = await hash(newPassword, 10);
+
+        await prisma.user.update({
+            where: { id: userId },
+            data: {
+                password: hashedPassword,
+                mustChangePassword: true // Force them to change it again on next login for security
+            }
+        });
+
+        await logAdminAction({
+            action: 'UPDATE',
+            entity: 'User',
+            entityId: userId,
+            details: `Admin restableció la contraseña del usuario`,
+            pk: userId
+        });
+
+        revalidatePath('/admin/dashboard')
+        return { success: true, message: "Contraseña actualizada correctamente" };
+    } catch (error) {
+        console.error("Error resetting password:", error);
+        return { error: "Error al actualizar la contraseña" };
+    }
+}
