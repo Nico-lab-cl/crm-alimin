@@ -3,16 +3,17 @@ import { AdminPlotManager } from "@/components/admin/AdminPlotManager";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
-export default async function AdminUserPlotsPage({ params }: { params: { userId: string } }) {
-    const reservations = await getUserReservations(params.userId);
+export default async function AdminUserPlotsPage({ params }: { params: Promise<{ userId: string }> }) {
+    const { userId } = await params;
+    const reservations = await getUserReservations(userId);
     const allClients = await getAllClients();
 
     // Get current user name
     let userName = "Usuario Desconocido";
-    if (params.userId === 'all') {
+    if (userId === 'all') {
         userName = "Todos los Usuarios";
     } else {
-        const currentUser = allClients.find(u => u.id === params.userId);
+        const currentUser = allClients.find(u => u.id === userId);
         userName = currentUser?.name || reservations[0]?.buyer?.name || "Usuario Desconocido";
     }
 
@@ -31,7 +32,7 @@ export default async function AdminUserPlotsPage({ params }: { params: { userId:
             <AdminPlotManager
                 reservations={reservations}
                 allClients={allClients}
-                userId={params.userId}
+                userId={userId}
                 initialUserName={userName}
             />
         </div>
