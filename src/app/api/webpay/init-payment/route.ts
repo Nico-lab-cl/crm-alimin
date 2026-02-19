@@ -58,10 +58,64 @@ export async function POST(request: Request) {
             const includesLastInstallment = endInstallment === totalCuotas;
 
             if (includesLastInstallment) {
-                amount = ((installments - 1) * valorCuota) + lastInstallmentAmount;
+                // Determine base amount
+                const baseAmount = ((installments - 1) * valorCuota) + lastInstallmentAmount;
+                amount = baseAmount;
             } else {
                 amount = installments * valorCuota;
             }
+
+            // Calculate Interest
+            let totalInterest = 0;
+            const acquisitionDate = reservation.created_at;
+            // Iterate over each installment being paid
+            for (let i = 0; i < installments; i++) {
+                const installmentNum = startInstallment + i;
+                const dueDate = new Date(acquisitionDate);
+                dueDate.setMonth(dueDate.getMonth() + installmentNum);
+                dueDate.setDate(5);
+                dueDate.setHours(0, 0, 0, 0);
+
+                // Determine amount for THIS specific installment
+                let instAmount = valorCuota;
+                if (installmentNum === totalCuotas) {
+                    instAmount = lastInstallmentAmount;
+                }
+
+                // Verify logic with shared util if possible, or replicate here for now
+                // Replicating simplified shared logic to avoid import issues in edge runtime if any (though safe here)
+
+                // 1. Grace Period End: 10th of the month
+                const gracePeriodEnd = new Date(dueDate);
+                gracePeriodEnd.setDate(10);
+                gracePeriodEnd.setHours(23, 59, 59, 999);
+
+                const now = new Date(); // Chile Time basically handled by server time usually, but better to be explicit or relative
+                // Ideally use Chile time
+                const chileNow = new Date(now.toLocaleString("en-US", { timeZone: "America/Santiago" }));
+
+                if (chileNow > gracePeriodEnd) {
+                    // Calculate days late
+                    // "se cobra multa por 1 dia el dia 11" -> Day 11 is 1 day late.
+                    // 11 - 10 = 1.
+                    const diffTime = chileNow.getTime() - gracePeriodEnd.getTime();
+                    const daysLate = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                    if (daysLate > 0) {
+                        let factor = 0.027785496; // Default / Low tier (>= 64)
+                        if (totalCuotas >= 77) {
+                            factor = 0.0227324392; // High tier
+                        }
+                        const dailyInterest = Math.round(instAmount * factor);
+                        const interest = dailyInterest * daysLate;
+                        totalInterest += interest;
+                        console.log(`Installment ${installmentNum}: Late by ${daysLate} days. Interest: ${interest}`);
+                    }
+                }
+            }
+
+            amount += totalInterest;
+            console.log(`Total Amount: ${amount} (Includes Interest: ${totalInterest})`);
 
             buyOrderScope = 'CUOTA';
             installmentsCount = installments;

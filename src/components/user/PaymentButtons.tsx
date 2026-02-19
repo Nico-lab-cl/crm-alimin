@@ -258,6 +258,37 @@ export function PaymentButtons({ reservationId, lot, reservation, acquisitionDat
                                 {acquisitionDate && count > 0 && (() => {
                                     const firstDue = getInstallmentDueDate(acquisitionDate, paidCuotas + 1);
                                     const lastDue = getInstallmentDueDate(acquisitionDate, paidCuotas + count);
+
+                                    // Calculate Interest for Display
+                                    let calculatedInterest = 0;
+                                    let daysLateForDisplay = 0;
+
+                                    for (let i = 0; i < count; i++) {
+                                        const instNum = paidCuotas + 1 + i;
+                                        const iDue = getInstallmentDueDate(acquisitionDate, instNum);
+                                        const iAmount = (includesLastInstallment && instNum === totalCuotas) ? lastInstallmentPrice : valorCuota;
+
+                                        // Grace Period Logic Replicated
+                                        const graceEnd = new Date(iDue);
+                                        graceEnd.setDate(10);
+                                        graceEnd.setHours(23, 59, 59, 999);
+
+                                        const now = new Date();
+                                        if (now > graceEnd) {
+                                            const diff = now.getTime() - graceEnd.getTime();
+                                            const late = Math.ceil(diff / (1000 * 60 * 60 * 24));
+                                            if (late > 0) {
+                                                let factor = 0.027785496;
+                                                if (totalCuotas >= 77) factor = 0.0227324392;
+
+                                                calculatedInterest += Math.round(iAmount * factor) * late;
+                                                daysLateForDisplay = Math.max(daysLateForDisplay, late);
+                                            }
+                                        }
+                                    }
+
+                                    const finalTotal = totalToPay + calculatedInterest;
+
                                     return (
                                         <div className="border-t border-gray-200 mt-2 pt-2 space-y-1">
                                             <div className="text-sm font-bold text-[#36595F] mb-1">
@@ -280,13 +311,21 @@ export function PaymentButtons({ reservationId, lot, reservation, acquisitionDat
                                                     </div>
                                                 </div>
                                             )}
+
+                                            {calculatedInterest > 0 && (
+                                                <div className="flex justify-between text-red-600 font-bold text-sm mt-2 border-t border-red-100 pt-1">
+                                                    <span>Interés por mora (aprox. {daysLateForDisplay} días):</span>
+                                                    <span>{formatCurrency(calculatedInterest)}</span>
+                                                </div>
+                                            )}
+
+                                            <div className="flex justify-between font-bold text-lg pt-2 border-t border-gray-200 mt-2 text-[#36595F]">
+                                                <span>Total a pagar:</span>
+                                                <span>{formatCurrency(finalTotal)}</span>
+                                            </div>
                                         </div>
                                     );
                                 })()}
-                                <div className="flex justify-between font-bold text-lg pt-2 border-t border-gray-200 mt-2 text-[#36595F]">
-                                    <span>Total a pagar:</span>
-                                    <span>{formatCurrency(totalToPay)}</span>
-                                </div>
                             </div>
                         </div>
                         <DialogFooter>
