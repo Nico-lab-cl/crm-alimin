@@ -111,13 +111,27 @@ export const AdminLotList = ({ lots: initialLots }: AdminLotListProps) => {
                                 {(lot.cuotas && lot.cuotas > 0) ? (
                                     <div className="mt-2 text-[10px] text-gray-400 space-y-0.5">
                                         <div className="flex justify-between">
-                                            <span>Cuotas:</span>
-                                            <span className="text-white font-medium">{lot.cuotas}</span>
-                                        </div>
-                                        <div className="flex justify-between">
-                                            <span>Mensual:</span>
+                                            <span>Cuotas ({((lot.cuotas || 0) - 1)}):</span>
                                             <span className="text-white font-medium">
                                                 {new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(lot.valor_cuota || 0)}
+                                            </span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span>Última Cuota:</span>
+                                            <span className="text-white font-medium">
+                                                {new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(lot.last_installment_amount || 0)}
+                                            </span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span>Pie:</span>
+                                            <span className="text-white font-medium">
+                                                {new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(lot.pie || 0)}
+                                            </span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span>Reserva:</span>
+                                            <span className="text-white font-medium">
+                                                {new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(lot.reservation_amount_clp || 0)}
                                             </span>
                                         </div>
                                         <div className="flex justify-between pt-0.5 border-t border-white/10 mt-0.5">
