@@ -23,6 +23,8 @@ export async function GET(
             return NextResponse.json({ error: 'Reservation not found' }, { status: 404 });
         }
 
+        console.log("Generating PDF for reservation:", reservation.id, "Email:", reservation.email);
+
         // Authorization check
         // 1. If user is logged in: Must be Admin or the Buyer or have matching email.
         // 2. If user is NOT logged in (public access via link): Allow if reservation exists (UUID is the secret).

@@ -148,7 +148,7 @@ export const ReservationContract = ({ reservation, lot, logoPath, signaturePath 
     // "La promesa de compraventa deberá firmarse a más tardar con fecha 5 de Marzo del año dos mil veintiséis"
     let fechaPromesa = '';
 
-    if (reservation.email === 'mariajose.vd.25@gmail.com') {
+    if (reservation.email?.toLowerCase().trim() === 'mariajose.vd.25@gmail.com') {
         fechaPromesa = "5 de Marzo del año dos mil veintiséis";
     } else {
         const fechaReserva = new Date(reservation.created_at);
