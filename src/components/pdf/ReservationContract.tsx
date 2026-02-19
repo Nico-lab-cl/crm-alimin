@@ -144,11 +144,18 @@ export const ReservationContract = ({ reservation, lot, logoPath, signaturePath 
     }
 
     // Fecha Promesa: Fecha Reserva (created_at) + 10 dias
-    // If reservation.created_at is Date object from Prisma
-    const fechaReserva = new Date(reservation.created_at);
-    const fechaPromesaDate = new Date(fechaReserva);
-    fechaPromesaDate.setDate(fechaPromesaDate.getDate() + 10);
-    const fechaPromesa = getFullDateText(fechaPromesaDate);
+    // EXCEPTION: Maria Jose Vergara Diaz (request by admin)
+    // "La promesa de compraventa deberá firmarse a más tardar con fecha 5 de Marzo del año dos mil veintiséis"
+    let fechaPromesa = '';
+
+    if (reservation.email === 'mariajose.vd.25@gmail.com') {
+        fechaPromesa = "5 de Marzo del año dos mil veintiséis";
+    } else {
+        const fechaReserva = new Date(reservation.created_at);
+        const fechaPromesaDate = new Date(fechaReserva);
+        fechaPromesaDate.setDate(fechaPromesaDate.getDate() + 10);
+        fechaPromesa = getFullDateText(fechaPromesaDate);
+    }
 
 
     return (
