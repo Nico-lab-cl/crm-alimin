@@ -260,14 +260,24 @@ export function PaymentButtons({ reservationId, lot, reservation, acquisitionDat
                                     const lastDue = getInstallmentDueDate(acquisitionDate, paidCuotas + count);
                                     return (
                                         <div className="border-t border-gray-200 mt-2 pt-2 space-y-1">
-                                            <div className="flex justify-between text-blue-700 font-medium">
-                                                <span>Cuota {paidCuotas + 1} vence:</span>
-                                                <span>{formatDateChile(firstDue)}</span>
+                                            <div className="text-sm font-bold text-[#36595F] mb-1">
+                                                Estás pagando:
                                             </div>
-                                            {count > 1 && (
-                                                <div className="flex justify-between text-blue-700 font-medium">
-                                                    <span>Cuota {paidCuotas + count} vence:</span>
-                                                    <span>{formatDateChile(lastDue)}</span>
+                                            {count === 1 ? (
+                                                <div className="flex justify-between text-blue-700 font-medium bg-blue-50 p-2 rounded">
+                                                    <span>Cuota {paidCuotas + 1}</span>
+                                                    <span>Vence: {formatDateChile(firstDue)}</span>
+                                                </div>
+                                            ) : (
+                                                <div className="space-y-1">
+                                                    <div className="flex justify-between text-blue-700 font-medium text-xs">
+                                                        <span>Desde Cuota {paidCuotas + 1}</span>
+                                                        <span>{formatDateChile(firstDue)}</span>
+                                                    </div>
+                                                    <div className="flex justify-between text-blue-700 font-medium text-xs">
+                                                        <span>Hasta Cuota {paidCuotas + count}</span>
+                                                        <span>{formatDateChile(lastDue)}</span>
+                                                    </div>
                                                 </div>
                                             )}
                                         </div>
