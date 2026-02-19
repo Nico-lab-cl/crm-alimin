@@ -311,6 +311,10 @@ export function PaymentButtons({ reservationId, lot, reservation, acquisitionDat
                                     let lateRangeDisplay = "";
 
                                     for (let i = 0; i < count; i++) {
+                                        // User Request: Only apply interest to the FIRST installment in the batch (the oldest one).
+                                        // "si quiere pagar mas cuotas solo se debe agregar el valor a apgar de esas cuotas no agregarle mas interes"
+                                        if (i > 0) continue;
+
                                         const instNum = paidCuotas + 1 + i;
                                         const iDue = getInstallmentDueDate(acquisitionDate, instNum);
                                         const iAmount = (includesLastInstallment && instNum === totalCuotas) ? lastInstallmentPrice : valorCuota;

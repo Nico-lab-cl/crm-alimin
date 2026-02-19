@@ -71,6 +71,9 @@ export async function POST(request: Request) {
 
             // Iterate over each installment being paid
             for (let i = 0; i < installments; i++) {
+                // User Request: Only apply interest to the FIRST installment in the batch (the oldest one).
+                if (i > 0) continue;
+
                 const installmentNum = startInstallment + i;
                 const dueDate = new Date(acquisitionDate);
                 dueDate.setMonth(dueDate.getMonth() + installmentNum);
