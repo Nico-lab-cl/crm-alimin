@@ -108,6 +108,26 @@ export const AdminLotList = ({ lots: initialLots }: AdminLotListProps) => {
                                 <p className="text-white/50 text-xs">
                                     Etapa {lot.stage}
                                 </p>
+                                {(lot.cuotas && lot.cuotas > 0) ? (
+                                    <div className="mt-2 text-[10px] text-gray-400 space-y-0.5">
+                                        <div className="flex justify-between">
+                                            <span>Cuotas:</span>
+                                            <span className="text-white font-medium">{lot.cuotas}</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span>Mensual:</span>
+                                            <span className="text-white font-medium">
+                                                {new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(lot.valor_cuota || 0)}
+                                            </span>
+                                        </div>
+                                        <div className="flex justify-between pt-0.5 border-t border-white/10 mt-0.5">
+                                            <span>Total:</span>
+                                            <span className="text-[#E0B457] font-medium">
+                                                {new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format((lot.cuotas || 0) * (lot.valor_cuota || 0))}
+                                            </span>
+                                        </div>
+                                    </div>
+                                ) : null}
                             </div>
 
                             <div className="w-full pt-2 border-t border-white/5">
