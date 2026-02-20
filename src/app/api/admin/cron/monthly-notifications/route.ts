@@ -11,8 +11,22 @@ export async function POST(req: NextRequest) {
 
     try {
         const now = new Date();
-        const month = now.getMonth() + 1;
+        const month = now.getMonth() + 1; // 1-12
         const year = now.getFullYear();
+
+        // Payments start March 5, 2026 — don't send notifications before that
+        const PAYMENTS_START_YEAR = 2026;
+        const PAYMENTS_START_MONTH = 3;
+
+        if (
+            year < PAYMENTS_START_YEAR ||
+            (year === PAYMENTS_START_YEAR && month < PAYMENTS_START_MONTH)
+        ) {
+            return NextResponse.json({
+                ok: false,
+                message: `Notificaciones de cuotas empiezan en Marzo 2026. Mes actual: ${year}-${month}`,
+            }, { status: 200 });
+        }
 
         // Find all users with active reservations in 'PAGO_CUOTAS' or signed stage
         const reservations = await prisma.reservation.findMany({
