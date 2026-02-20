@@ -109,8 +109,9 @@ export const AdminLotList = ({ lots: initialLots }: AdminLotListProps) => {
 
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
                 {filteredLots.map(lot => {
+                    // Admin only distinguishes between sold and available.
+                    // 'reserved' is a transient state for the public map only — show as available here.
                     const isSold = lot.status === 'sold'
-                    const isReserved = lot.status === 'reserved'
                     const isLoading = loadingIds.has(lot.id)
 
                     // Check if sold/reserved lot has an owner
@@ -124,16 +125,13 @@ export const AdminLotList = ({ lots: initialLots }: AdminLotListProps) => {
                                 relative p-3 rounded-xl border transition-all duration-200 flex flex-col items-center gap-2
                                 ${isSold
                                     ? 'bg-red-900/20 border-red-500/30 hover:bg-red-900/30'
-                                    : isReserved
-                                        ? 'bg-yellow-900/20 border-yellow-500/30'
-                                        : 'bg-green-900/20 border-green-500/30 hover:bg-green-900/30'
+                                    : 'bg-green-900/20 border-green-500/30 hover:bg-green-900/30'
                                 }
                             `}
                         >
                             <div className="text-center">
-                                <span className={`text-xs uppercase font-bold tracking-wider ${isSold ? 'text-red-400' : isReserved ? 'text-yellow-400' : 'text-green-400'
-                                    }`}>
-                                    {isSold ? 'VENDIDO' : isReserved ? 'RESERVADO' : 'DISPONIBLE'}
+                                <span className={`text-xs uppercase font-bold tracking-wider ${isSold ? 'text-red-400' : 'text-green-400'}`}>
+                                    {isSold ? 'VENDIDO' : 'DISPONIBLE'}
                                 </span>
                                 <p className="text-white font-bold text-lg">
                                     Lote {lot.number}
@@ -193,7 +191,6 @@ export const AdminLotList = ({ lots: initialLots }: AdminLotListProps) => {
                                     <SelectContent>
                                         <SelectItem value="available">Disponible</SelectItem>
                                         <SelectItem value="sold">Vendido</SelectItem>
-                                        <SelectItem value="reserved">Reservado</SelectItem>
                                     </SelectContent>
                                 </Select>
 
@@ -203,7 +200,7 @@ export const AdminLotList = ({ lots: initialLots }: AdminLotListProps) => {
                                         <User className="w-3 h-3" />
                                         <span className="truncate max-w-[120px]">{owner?.name?.split(' ')[0]}</span>
                                     </div>
-                                ) : (isSold || isReserved) ? (
+                                ) : isSold ? (
                                     <Button
                                         variant="ghost"
                                         size="sm"
