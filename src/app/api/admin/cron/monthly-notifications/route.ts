@@ -28,18 +28,20 @@ export async function POST(req: NextRequest) {
             }, { status: 200 });
         }
 
-        // Find all users with active reservations in 'PAGO_CUOTAS' or signed stage
+        // Find all users with active reservations (signed contract)
         const reservations = await prisma.reservation.findMany({
             where: {
                 status: { in: ['paid', 'confirmed'] },
                 buyer_id: { not: null },
-                // They should have a signed contract at minimum to be in payment stage
                 signed_at: { not: null },
             },
             select: {
                 id: true,
                 buyer_id: true,
                 installments_paid: true,
+                buyer: {
+                    select: { name: true, email: true }
+                },
                 lot: {
                     select: {
                         number: true,
@@ -52,9 +54,18 @@ export async function POST(req: NextRequest) {
         });
 
         let created = 0;
+        const notifiedUsers: Array<{
+            name: string;
+            email: string;
+            lotNumber: string;
+            lotStage: number;
+            cuotaNumero: number;
+            totalCuotas: number;
+            valorCuota: string;
+        }> = [];
 
         for (const res of reservations) {
-            if (!res.buyer_id) continue;
+            if (!res.buyer_id || !res.buyer) continue;
 
             // Check if we already sent this notification this month (avoid duplicates)
             const existingNotification = await prisma.notification.findFirst({
@@ -67,18 +78,17 @@ export async function POST(req: NextRequest) {
                 }
             });
 
-            if (existingNotification) continue; // Already notified this month
+            if (existingNotification) continue;
 
             const cuotasPaid = res.installments_paid ?? 0;
             const totalCuotas = res.lot?.cuotas ?? 0;
 
-            // Only notify if there are still installments pending
             if (totalCuotas > 0 && cuotasPaid < totalCuotas) {
                 const nextCuota = cuotasPaid + 1;
                 const valorCuota = res.lot?.valor_cuota;
                 const valorStr = valorCuota
                     ? `$${valorCuota.toLocaleString('es-CL')}`
-                    : '';
+                    : 'Por confirmar';
 
                 await prisma.notification.create({
                     data: {
@@ -89,6 +99,16 @@ export async function POST(req: NextRequest) {
                     }
                 });
 
+                notifiedUsers.push({
+                    name: res.buyer.name,
+                    email: res.buyer.email,
+                    lotNumber: res.lot?.number ?? '',
+                    lotStage: res.lot?.stage ?? 0,
+                    cuotaNumero: nextCuota,
+                    totalCuotas,
+                    valorCuota: valorStr,
+                });
+
                 created++;
             }
         }
@@ -97,6 +117,7 @@ export async function POST(req: NextRequest) {
             ok: true,
             message: `Notificaciones creadas: ${created}`,
             month: `${year}-${month}`,
+            notifiedUsers, // n8n uses this to send emails
         });
     } catch (error) {
         console.error('[Cron] Error creating monthly notifications:', error);
