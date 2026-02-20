@@ -37,7 +37,7 @@ export default function UserPlotsPage() {
 
     useEffect(() => {
         if (status === "authenticated") {
-            fetch("/api/user/reservations")
+            fetch("/api/user/reservations", { cache: 'no-store' })
                 .then(async (res) => {
                     if (!res.ok) {
                         const errorData = await res.json().catch(() => ({}));

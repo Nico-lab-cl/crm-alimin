@@ -132,9 +132,10 @@ model User {
   createdAt DateTime @default(now())
 
   // Relations
-  sales     Reservation[] @relation("SellerReservations")
-  purchases Reservation[] @relation("BuyerReservations")
-  auditLogs AuditLog[]
+  sales         Reservation[]  @relation("SellerReservations")
+  purchases     Reservation[]  @relation("BuyerReservations")
+  auditLogs     AuditLog[]
+  notifications Notification[]
 }
 
 enum ActionType {
@@ -160,4 +161,16 @@ model AuditLog {
   created_at  DateTime   @default(now())
 
   user        User?      @relation(fields: [user_id], references: [id])
+}
+
+model Notification {
+  id          String   @id @default(uuid())
+  user_id     String
+  type        String   // e.g. 'payment_due', 'contract_pending', 'lot_purchased'
+  title       String
+  message     String
+  read        Boolean  @default(false)
+  created_at  DateTime @default(now())
+
+  user        User     @relation(fields: [user_id], references: [id])
 }
