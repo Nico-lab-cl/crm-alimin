@@ -68,6 +68,7 @@ export async function POST(req: NextRequest) {
             cuotaNumero: number;
             totalCuotas: number;
             valorCuota: string;
+            plotsUrl: string;
         }> = [];
 
         for (const res of reservations) {
@@ -117,6 +118,7 @@ export async function POST(req: NextRequest) {
                     cuotaNumero: nextCuota,
                     totalCuotas,
                     valorCuota: valorStr,
+                    plotsUrl: 'https://aliminlomasdelmar.com/user/plots',
                 });
 
                 created++;
