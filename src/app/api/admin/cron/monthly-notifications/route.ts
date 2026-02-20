@@ -9,6 +9,10 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // ?test=true → bypasses date check and skips DB writes (safe for testing in n8n)
+    const url = new URL(req.url);
+    const isTest = url.searchParams.get('test') === 'true';
+
     try {
         const now = new Date();
         const month = now.getMonth() + 1; // 1-12
@@ -19,8 +23,10 @@ export async function POST(req: NextRequest) {
         const PAYMENTS_START_MONTH = 3;
 
         if (
-            year < PAYMENTS_START_YEAR ||
-            (year === PAYMENTS_START_YEAR && month < PAYMENTS_START_MONTH)
+            !isTest && (
+                year < PAYMENTS_START_YEAR ||
+                (year === PAYMENTS_START_YEAR && month < PAYMENTS_START_MONTH)
+            )
         ) {
             return NextResponse.json({
                 ok: false,
@@ -67,18 +73,19 @@ export async function POST(req: NextRequest) {
         for (const res of reservations) {
             if (!res.buyer_id || !res.buyer) continue;
 
-            // Check if we already sent this notification this month (avoid duplicates)
-            const existingNotification = await prisma.notification.findFirst({
-                where: {
-                    user_id: res.buyer_id,
-                    type: 'payment_due',
-                    created_at: {
-                        gte: new Date(`${year}-${String(month).padStart(2, '0')}-01`),
+            // In test mode, skip duplicate check (no DB reads/writes)
+            if (!isTest) {
+                const existingNotification = await prisma.notification.findFirst({
+                    where: {
+                        user_id: res.buyer_id,
+                        type: 'payment_due',
+                        created_at: {
+                            gte: new Date(`${year}-${String(month).padStart(2, '0')}-01`),
+                        }
                     }
-                }
-            });
-
-            if (existingNotification) continue;
+                });
+                if (existingNotification) continue;
+            }
 
             const cuotasPaid = res.installments_paid ?? 0;
             const totalCuotas = res.lot?.cuotas ?? 0;
@@ -90,14 +97,17 @@ export async function POST(req: NextRequest) {
                     ? `$${valorCuota.toLocaleString('es-CL')}`
                     : 'Por confirmar';
 
-                await prisma.notification.create({
-                    data: {
-                        user_id: res.buyer_id,
-                        type: 'payment_due',
-                        title: '📅 Cuota mensual disponible',
-                        message: `Hoy comienza el período de pago de tu cuota ${nextCuota}/${totalCuotas}${valorStr ? ` (${valorStr})` : ''} — Lote ${res.lot?.number}, Etapa ${res.lot?.stage}. Tienes hasta el 10 de este mes para pagar sin interés.`,
-                    }
-                });
+                // Only write to DB in production mode
+                if (!isTest) {
+                    await prisma.notification.create({
+                        data: {
+                            user_id: res.buyer_id,
+                            type: 'payment_due',
+                            title: '📅 Cuota mensual disponible',
+                            message: `Hoy comienza el período de pago de tu cuota ${nextCuota}/${totalCuotas}${valorStr ? ` (${valorStr})` : ''} — Lote ${res.lot?.number}, Etapa ${res.lot?.stage}. Tienes hasta el 10 de este mes para pagar sin interés.`,
+                        }
+                    });
+                }
 
                 notifiedUsers.push({
                     name: res.buyer.name,
