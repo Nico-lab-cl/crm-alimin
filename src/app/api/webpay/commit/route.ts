@@ -63,7 +63,19 @@ export async function GET(req: NextRequest) {
             const reservationId = transaction.reservation_id;
             let userId = transaction.reservation.buyer_id;
 
-            // Determine Scope from DB (more reliable) or fallback to URL
+            // --- IDEMPOTENCY GUARD ---
+            // If the transaction was already AUTHORIZED (browser retry / double redirect),
+            // skip all processing and just redirect to the success page.
+            if (transaction.status === 'AUTHORIZED') {
+                console.warn(`[Webpay Commit] Token ${token} already processed. Skipping duplicate.`);
+                const successUrl = new URL(`${baseUrl}/pago-exito`);
+                successUrl.searchParams.set('token', token);
+                if (transaction.reservation_id) successUrl.searchParams.set('reservationId', transaction.reservation_id);
+                if (transaction.lot_id) successUrl.searchParams.set('lotId', String(transaction.lot_id));
+                return NextResponse.redirect(successUrl.toString());
+            }
+            // -------------------------
+
             const scope = transaction.scope || searchParams.get('scope') || 'RESERVATION';
             console.log(`[Webpay Commit] Token: ${token}, Scope: ${scope}, Status: ${status}`);
 
