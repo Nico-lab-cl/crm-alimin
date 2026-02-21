@@ -63,11 +63,26 @@ export async function GET(req: NextRequest) {
             const reservationId = transaction.reservation_id;
             let userId = transaction.reservation.buyer_id;
 
+            // Determine scope early so the guard can redirect correctly
+            const scope = transaction.scope || searchParams.get('scope') || 'RESERVATION';
+
             // --- IDEMPOTENCY GUARD ---
             // If the transaction was already AUTHORIZED (browser retry / double redirect),
-            // skip all processing and just redirect to the success page.
+            // skip all processing and redirect to the correct success page.
             if (transaction.status === 'AUTHORIZED') {
-                console.warn(`[Webpay Commit] Token ${token} already processed. Skipping duplicate.`);
+                console.warn(`[Webpay Commit] Token ${token} already processed (scope: ${scope}). Skipping duplicate.`);
+
+                if (scope === 'PIE') {
+                    return NextResponse.redirect(
+                        `${baseUrl}/pago-realizado-pie?token=${token}&amount=${commitResponse.amount}&reservationId=${reservationId}`
+                    );
+                }
+                if (scope === 'INSTALLMENT') {
+                    return NextResponse.redirect(
+                        `${baseUrl}/pago-realizado-cuota?token=${token}&amount=${commitResponse.amount}&reservationId=${reservationId}`
+                    );
+                }
+                // RESERVATION (default)
                 const successUrl = new URL(`${baseUrl}/pago-exito`);
                 successUrl.searchParams.set('token', token);
                 if (transaction.reservation_id) successUrl.searchParams.set('reservationId', transaction.reservation_id);
@@ -76,7 +91,6 @@ export async function GET(req: NextRequest) {
             }
             // -------------------------
 
-            const scope = transaction.scope || searchParams.get('scope') || 'RESERVATION';
             console.log(`[Webpay Commit] Token: ${token}, Scope: ${scope}, Status: ${status}`);
 
             // --- USER CREATION / LINKING LOGIC ---
