@@ -44,7 +44,7 @@ export function InterestSimulator() {
 
         const diffTime = end.getTime() - start.getTime();
         const days = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        const daysCount = days + 1; // Inclusive count
+        const daysCount = days; // Align with PaymentButtons.tsx which uses direct math without inclusive +1
         const dailyInterest = calculateDailyInterest(amount, totalCuotas);
         const totalInterest = dailyInterest * daysCount;
 
