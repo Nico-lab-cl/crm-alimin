@@ -58,9 +58,9 @@ export const InvestmentThesis = () => {
 
                 {/* Texto Principal */}
                 <h2 className="text-2xl md:text-4xl lg:text-5xl font-bold text-white max-w-4xl mx-auto leading-tight mb-16 font-outfit">
-                    "Somos una empresa productora de capital lo que nos permite generar
+                    Somos una empresa productora de capital lo que nos permite generar
                     <span className="text-alimin-gold"> retornos y rentabilidades de gran escala </span>
-                    en corto/medio plazo (1 a 2 años)"
+                    en corto/medio plazo (1 a 2 años)
                 </h2>
 
                 {/* Grid de Bullets */}
