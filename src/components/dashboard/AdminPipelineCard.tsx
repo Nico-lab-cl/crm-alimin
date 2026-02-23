@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Textarea } from "@/components/ui/textarea"
 import { toast } from "sonner"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { getEffectiveStage } from "@/lib/pipeline"
 
 type ReservationWithDetails = Reservation & {
     lot: Lot
@@ -39,7 +40,8 @@ export function AdminPipelineCard({
     const [promesaOpen, setPromesaOpen] = useState(false)
     const [promitente, setPromitente] = useState("")
 
-    const currentStageIndex = STAGE_ORDER.indexOf(reservation.pipeline_stage)
+    const effectiveStage = getEffectiveStage(reservation)
+    const currentStageIndex = STAGE_ORDER.indexOf(effectiveStage)
     const nextStage = STAGE_ORDER[currentStageIndex + 1]
     const prevStage = STAGE_ORDER[currentStageIndex - 1]
 
@@ -140,7 +142,7 @@ export function AdminPipelineCard({
                     </Dialog>
                 </div>
 
-                {reservation.pipeline_stage === "PROMESA_COMPRAVENTA" && (
+                {effectiveStage === "PROMESA_COMPRAVENTA" && (
                     <div className="pt-2">
                         <Dialog open={promesaOpen} onOpenChange={setPromesaOpen}>
                             <DialogTrigger asChild>

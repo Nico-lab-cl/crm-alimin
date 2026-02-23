@@ -12,6 +12,7 @@ import { useState } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { getEffectiveStage } from "@/lib/pipeline"
 import { toast } from "sonner"
 
 type ReservationWithDetails = Reservation & {
@@ -19,7 +20,7 @@ type ReservationWithDetails = Reservation & {
     buyer: User | null
 }
 
-const STAGE_ORDER = ["RESERVA_PAGADA", "PIE_POR_PAGAR", "PROMESA_COMPRAVENTA", "PAGO_CUOTAS", "VENTA_CERRADA"]
+const STAGE_ORDER = ["RESERVA_PAGADA", "RESERVA_POR_FIRMAR", "PIE_POR_PAGAR", "PROMESA_COMPRAVENTA", "PAGO_CUOTAS", "VENTA_CERRADA"]
 
 export function PipelineCard({ reservation, onMove }: { reservation: ReservationWithDetails, onMove: (stage: string) => void }) {
     const daysSince = differenceInDays(new Date(), new Date(reservation.created_at))
@@ -29,7 +30,8 @@ export function PipelineCard({ reservation, onMove }: { reservation: Reservation
     const [promesaOpen, setPromesaOpen] = useState(false)
     const [promitente, setPromitente] = useState("")
 
-    const currentStageIndex = STAGE_ORDER.indexOf(reservation.pipeline_stage)
+    const effectiveStage = getEffectiveStage(reservation)
+    const currentStageIndex = STAGE_ORDER.indexOf(effectiveStage)
     const nextStage = STAGE_ORDER[currentStageIndex + 1]
     const prevStage = STAGE_ORDER[currentStageIndex - 1]
 
@@ -65,7 +67,7 @@ export function PipelineCard({ reservation, onMove }: { reservation: Reservation
                     <span>{format(new Date(reservation.created_at), "dd MMM yyyy", { locale: es })}</span>
                 </div>
 
-                {reservation.pipeline_stage === "PIE_POR_PAGAR" && (
+                {effectiveStage === "PIE_POR_PAGAR" && (
                     <div className="text-xs font-medium text-orange-600">
                         {10 - daysSince > 0 ? `${10 - daysSince} días para el pie` : "Plazo vencido"}
                     </div>
@@ -95,7 +97,7 @@ export function PipelineCard({ reservation, onMove }: { reservation: Reservation
                     </Dialog>
                 </div>
 
-                {reservation.pipeline_stage === "PROMESA_COMPRAVENTA" && (
+                {effectiveStage === "PROMESA_COMPRAVENTA" && (
                     <div className="pt-2">
                         <Dialog open={promesaOpen} onOpenChange={setPromesaOpen}>
                             <DialogTrigger asChild>

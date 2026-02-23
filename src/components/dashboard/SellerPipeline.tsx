@@ -5,6 +5,7 @@ import { Reservation, Lot, User } from "@prisma/client"
 import { PipelineCard } from "./PipelineCard"
 import { updatePipelineStage } from "@/actions/dashboard"
 import { toast } from "sonner"
+import { getEffectiveStage } from "@/lib/pipeline"
 
 type ReservationWithDetails = Reservation & {
     lot: Lot
@@ -13,6 +14,7 @@ type ReservationWithDetails = Reservation & {
 
 const STAGES = [
     { id: "RESERVA_PAGADA", label: "Reserva Pagada", color: "bg-blue-100 text-blue-800" },
+    { id: "RESERVA_POR_FIRMAR", label: "Reserva por firmar", color: "bg-amber-100 text-amber-800" },
     { id: "PIE_POR_PAGAR", label: "Pie por Pagar", color: "bg-yellow-100 text-yellow-800" },
     { id: "PROMESA_COMPRAVENTA", label: "Promesa de Compra y Venta", color: "bg-orange-100 text-orange-800" },
     { id: "PAGO_CUOTAS", label: "Pago de Cuotas", color: "bg-indigo-100 text-indigo-800" },
@@ -39,7 +41,7 @@ export function SellerPipeline({ initialData }: { initialData: ReservationWithDe
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 h-full">
             {STAGES.map(stage => {
-                const items = reservations.filter(r => r.pipeline_stage === stage.id)
+                const items = reservations.filter(r => getEffectiveStage(r as any) === stage.id)
                 return (
                     <div key={stage.id} className="flex flex-col gap-4 bg-gray-50/50 rounded-lg p-2 min-h-[500px] border border-gray-100">
                         <div className={`p-3 rounded-md font-medium text-sm flex justify-between items-center ${stage.color}`}>

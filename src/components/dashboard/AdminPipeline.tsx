@@ -6,6 +6,7 @@ import { AdminPipelineCard } from "./AdminPipelineCard"
 import { updatePipelineStage, assignSeller } from "@/actions/dashboard"
 import { toast } from "sonner"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { getEffectiveStage } from "@/lib/pipeline"
 
 type ReservationWithDetails = Reservation & {
     lot: Lot
@@ -30,11 +31,6 @@ const STAGES = [
  * - If signed_at is set but still in earlier stages → moves to PIE_POR_PAGAR (handled by api)
  * - Otherwise → use the stored pipeline_stage (default: RESERVA_PAGADA)
  */
-function getEffectiveStage(r: ReservationWithDetails & { signed_at?: Date | null }): string {
-    // Return the database stage as source of truth to allow manual movement (back/forward)
-    // Auto-advancement now happens via webhooks and contract signing actions updating this field.
-    return r.pipeline_stage || "RESERVA_PAGADA"
-}
 
 export function AdminPipeline({ initialData, sellers }: { initialData: ReservationWithDetails[], sellers: any[] }) {
     const [reservations, setReservations] = useState(initialData)
