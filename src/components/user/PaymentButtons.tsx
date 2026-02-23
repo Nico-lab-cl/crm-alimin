@@ -222,7 +222,7 @@ export function PaymentButtons({ reservationId, lot, reservation, acquisitionDat
                             </div>
                         </div>
                         <DialogFooter>
-                            <Button variant="outline" onClick={() => setIsPieModalOpen(false)}>Cancelar</Button>
+                            <Button variant="outline" onClick={() => setIsPieModalOpen(false)} className="bg-white text-black border-gray-300 hover:bg-gray-100 hover:text-black">Cancelar</Button>
                             <Button
                                 onClick={() => handlePayment('PIE')}
                                 disabled={isLoading}
@@ -405,7 +405,7 @@ export function PaymentButtons({ reservationId, lot, reservation, acquisitionDat
                             </div>
                         </div>
                         <DialogFooter>
-                            <Button variant="outline" onClick={() => setIsCuotasModalOpen(false)}>Cancelar</Button>
+                            <Button variant="outline" onClick={() => setIsCuotasModalOpen(false)} className="bg-white text-black border-gray-300 hover:bg-gray-100 hover:text-black">Cancelar</Button>
                             <Button
                                 onClick={() => handlePayment('INSTALLMENT')}
                                 disabled={isLoading}
