@@ -3,6 +3,7 @@ import { Inter, Outfit } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
 import { StickyContactBar } from "@/components/StickyContactBar";
+import { CookieBanner } from "@/components/CookieBanner";
 
 // Body font - Clean and readable
 const inter = Inter({
@@ -41,6 +42,7 @@ export default function RootLayout({
       >
         <Providers>
           {children}
+          <CookieBanner />
           <StickyContactBar />
         </Providers>
       </body>
