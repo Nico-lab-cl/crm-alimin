@@ -271,12 +271,12 @@ export function PaymentButtons({ reservationId, lot, reservation, acquisitionDat
                             <div className="space-y-2">
                                 <label className="text-sm font-medium">Cantidad de cuotas:</label>
                                 <Select value={selectedCuotas} onValueChange={setSelectedCuotas}>
-                                    <SelectTrigger>
+                                    <SelectTrigger className="bg-white border-gray-300 text-black">
                                         <SelectValue placeholder="Seleccionar cantidad" />
                                     </SelectTrigger>
-                                    <SelectContent>
+                                    <SelectContent className="bg-white border-gray-200 text-black">
                                         {Array.from({ length: remainingCuotas }, (_, i) => i + 1).map((num) => (
-                                            <SelectItem key={num} value={String(num)}>
+                                            <SelectItem key={num} value={String(num)} className="hover:bg-gray-100 focus:bg-gray-100 focus:text-black">
                                                 {num} {num === 1 ? 'Cuota' : 'Cuotas'}
                                             </SelectItem>
                                         ))}
