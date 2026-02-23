@@ -147,7 +147,7 @@ export async function sendContractSignedWebhook(reservationId: string) {
 
         // System Info
         reservation_id: reservationId,
-        pipeline_stage: "CONTRATO_FIRMADO"
+        pipeline_stage: "PIE_POR_PAGAR"
     };
 
     try {

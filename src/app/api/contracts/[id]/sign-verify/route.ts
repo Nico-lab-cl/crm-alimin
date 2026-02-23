@@ -59,7 +59,7 @@ export async function POST(
                 signature_ip: ip,
                 signature_otp: null, // Clear OTP after use
                 signature_otp_expires: null,
-                pipeline_stage: 'CONTRATO_FIRMADO'
+                pipeline_stage: 'PIE_POR_PAGAR' // User requested move to Pie por pagar when signed
             }
         });
 
