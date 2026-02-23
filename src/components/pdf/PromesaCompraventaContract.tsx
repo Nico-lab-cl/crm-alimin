@@ -88,6 +88,7 @@ export const PromesaCompraventaContract: React.FC<PromesaContractProps> = ({
         year: 'numeric',
         month: 'long',
         day: 'numeric',
+        timeZone: 'America/Santiago'
     });
 
     const buyerName = reservation.name || "NO INFORMADO";
@@ -108,7 +109,7 @@ export const PromesaCompraventaContract: React.FC<PromesaContractProps> = ({
     };
 
     const totalCalculatedStr = formatCurrency(lot?.price_total_clp);
-    const reservaStr = formatCurrency(lot?.reserva || 550000);
+    const reservaStr = formatCurrency(lot?.reserva || 500000);
     const pieStr = formatCurrency(lot?.pie);
 
     const qtyCuotas = lot?.cuotas || 0;
@@ -126,7 +127,7 @@ export const PromesaCompraventaContract: React.FC<PromesaContractProps> = ({
                     <Text style={styles.title}>PROMESA DE COMPRAVENTA</Text>
 
                     <Text style={styles.paragraph}>
-                        En Santiago, Región Metropolitana, a {currentDate}, comparecen: Por una parte: <Text style={styles.bold}>{repName}</Text>, chileno/a, cédula nacional de identidad número <Text style={styles.bold}>{repRut}</Text>, domiciliado/a en Hijuela 3 camino antiguo algarrobo El Tabo, Región Valparaíso, y en representación de Alimin Lomas del Mar SpA con mandato especial, fecha 18 de diciembre del 2025 del giro de su denominación, Rut setenta y ocho millones ciento setenta y cuatro mil seiscientos trece guión cuatro, todos domiciliados para estos efectos en Hijuela 3 camino antiguo algarrobo El Tabo, Región Valparaíso, cuya personería se acreditará más adelante, en adelante también indistintamente denominada como 'el promitente vendedor', y por la parte compradora, <Text style={styles.bold}>{buyerName}</Text>, {buyerMaritalStatus}, {buyerProfession}, cédula de identidad número <Text style={styles.bold}>{buyerRut}</Text>, domiciliado/a en {buyerAddress}, en adelante también indistintamente denominado como 'El Promitente Comprador', todos mayores de edad, quienes acreditaron sus identidades con las cédulas ya citadas y exponen que han convenido en la siguiente promesa de compraventa:
+                        En Santiago, Región Metropolitana, a {currentDate}, comparecen: Por una parte: <Text style={styles.bold}>{repName}</Text>, chileno/a, cédula nacional de identidad número <Text style={styles.bold}>{repRut}</Text>, domiciliado/a en Hijuela 3 camino antiguo algarrobo El Tabo, Región Valparaíso, y en representación de Alimin Lomas del Mar SpA con mandato especial, fecha {currentDate} del giro de su denominación, Rut setenta y ocho millones ciento setenta y cuatro mil seiscientos trece guión cuatro, todos domiciliados para estos efectos en Hijuela 3 camino antiguo algarrobo El Tabo, Región Valparaíso, cuya personería se acreditará más adelante, en adelante también indistintamente denominada como 'el promitente vendedor', y por la parte compradora, <Text style={styles.bold}>{buyerName}</Text>, {buyerMaritalStatus}, {buyerProfession}, cédula de identidad número <Text style={styles.bold}>{buyerRut}</Text>, domiciliado/a en {buyerAddress}, en adelante también indistintamente denominado como 'El Promitente Comprador', todos mayores de edad, quienes acreditaron sus identidades con las cédulas ya citadas y exponen que han convenido en la siguiente promesa de compraventa:
                     </Text>
 
                     <Text style={styles.paragraph}>
