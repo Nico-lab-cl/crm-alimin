@@ -63,7 +63,7 @@ export function CookieBanner() {
                             onClick={handleDecline}
                             className="w-full lg:w-auto text-xs md:text-sm h-9 md:h-10 bg-transparent border-[#E0B457] text-[#E0B457] hover:bg-[#E0B457]/10 hover:text-[#E0B457]"
                         >
-                            Solo necesarias
+                            Cancelar
                         </Button>
                         <Button
                             onClick={handleAccept}
