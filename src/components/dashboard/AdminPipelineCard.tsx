@@ -20,7 +20,7 @@ type ReservationWithDetails = Reservation & {
     seller: User | null
 }
 
-const STAGE_ORDER = ["RESERVA_PAGADA", "CONTRATO_RESERVA", "CONTRATO_FIRMADO", "PIE_PAGADO", "PAGO_CUOTAS", "VENTA_CERRADA"]
+const STAGE_ORDER = ["RESERVA_PAGADA", "CONTRATO_FIRMADO", "PIE_POR_PAGAR", "PROMESA_COMPRAVENTA", "PAGO_CUOTAS", "VENTA_CERRADA"]
 
 export function AdminPipelineCard({
     reservation,
@@ -140,7 +140,7 @@ export function AdminPipelineCard({
                     </Dialog>
                 </div>
 
-                {reservation.pipeline_stage === "CONTRATO_RESERVA" && (
+                {reservation.pipeline_stage === "PROMESA_COMPRAVENTA" && (
                     <div className="pt-2">
                         <Dialog open={promesaOpen} onOpenChange={setPromesaOpen}>
                             <DialogTrigger asChild>

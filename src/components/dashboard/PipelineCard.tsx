@@ -19,11 +19,11 @@ type ReservationWithDetails = Reservation & {
     buyer: User | null
 }
 
-const STAGE_ORDER = ["RESERVA_PAGADA", "CONTRATO_RESERVA", "ESPERANDO_PIE", "PIE_PAGADO", "PAGO_CUOTAS", "VENTA_CERRADA"]
+const STAGE_ORDER = ["RESERVA_PAGADA", "PIE_POR_PAGAR", "PROMESA_COMPRAVENTA", "PAGO_CUOTAS", "VENTA_CERRADA"]
 
 export function PipelineCard({ reservation, onMove }: { reservation: ReservationWithDetails, onMove: (stage: string) => void }) {
     const daysSince = differenceInDays(new Date(), new Date(reservation.created_at))
-    const isLate = reservation.pipeline_stage === "ESPERANDO_PIE" && daysSince > 10
+    const isLate = reservation.pipeline_stage === "PIE_POR_PAGAR" && daysSince > 10
     const [notesOpen, setNotesOpen] = useState(false)
     const [notes, setNotes] = useState(reservation.notes || "")
     const [promesaOpen, setPromesaOpen] = useState(false)
@@ -65,7 +65,7 @@ export function PipelineCard({ reservation, onMove }: { reservation: Reservation
                     <span>{format(new Date(reservation.created_at), "dd MMM yyyy", { locale: es })}</span>
                 </div>
 
-                {reservation.pipeline_stage === "ESPERANDO_PIE" && (
+                {reservation.pipeline_stage === "PIE_POR_PAGAR" && (
                     <div className="text-xs font-medium text-orange-600">
                         {10 - daysSince > 0 ? `${10 - daysSince} días para el pie` : "Plazo vencido"}
                     </div>
@@ -95,7 +95,7 @@ export function PipelineCard({ reservation, onMove }: { reservation: Reservation
                     </Dialog>
                 </div>
 
-                {reservation.pipeline_stage === "CONTRATO_RESERVA" && (
+                {reservation.pipeline_stage === "PROMESA_COMPRAVENTA" && (
                     <div className="pt-2">
                         <Dialog open={promesaOpen} onOpenChange={setPromesaOpen}>
                             <DialogTrigger asChild>

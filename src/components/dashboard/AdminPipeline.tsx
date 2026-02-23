@@ -15,9 +15,9 @@ type ReservationWithDetails = Reservation & {
 
 const STAGES = [
     { id: "RESERVA_PAGADA", label: "Reserva", color: "bg-blue-100 text-blue-800 border-blue-200" },
-    { id: "CONTRATO_RESERVA", label: "Contrato de Reserva", color: "bg-orange-100 text-orange-800 border-orange-200" },
     { id: "CONTRATO_FIRMADO", label: "Contrato de Reserva Firmado", color: "bg-amber-100 text-amber-800 border-amber-200" },
-    { id: "PIE_PAGADO", label: "Pie Pagado", color: "bg-purple-100 text-purple-800 border-purple-200" },
+    { id: "PIE_POR_PAGAR", label: "Pie por Pagar", color: "bg-yellow-100 text-yellow-800 border-yellow-200" },
+    { id: "PROMESA_COMPRAVENTA", label: "Promesa de Compra y Venta", color: "bg-orange-100 text-orange-800 border-orange-200" },
     { id: "PAGO_CUOTAS", label: "Pago de Cuotas", color: "bg-indigo-100 text-indigo-800 border-indigo-200" },
     { id: "VENTA_CERRADA", label: "Venta Cerrada", color: "bg-green-100 text-green-800 border-green-200" },
 ]
