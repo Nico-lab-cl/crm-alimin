@@ -14,6 +14,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { getEffectiveStage } from "@/lib/pipeline"
 import { toast } from "sonner"
+import { PromesaGeneratorAction } from "@/components/admin/PromesaGeneratorAction"
 
 type ReservationWithDetails = Reservation & {
     lot: Lot
@@ -27,8 +28,6 @@ export function PipelineCard({ reservation, onMove }: { reservation: Reservation
     const isLate = reservation.pipeline_stage === "PIE_POR_PAGAR" && daysSince > 10
     const [notesOpen, setNotesOpen] = useState(false)
     const [notes, setNotes] = useState(reservation.notes || "")
-    const [promesaOpen, setPromesaOpen] = useState(false)
-    const [promitente, setPromitente] = useState("")
 
     const effectiveStage = getEffectiveStage(reservation)
     const currentStageIndex = STAGE_ORDER.indexOf(effectiveStage)
@@ -99,39 +98,7 @@ export function PipelineCard({ reservation, onMove }: { reservation: Reservation
 
                 {(effectiveStage === "PROMESA_COMPRAVENTA" || effectiveStage === "PIE_POR_PAGAR") && (
                     <div className="pt-2">
-                        <Dialog open={promesaOpen} onOpenChange={setPromesaOpen}>
-                            <DialogTrigger asChild>
-                                <Button className="w-full text-xs h-8 bg-[#36595F] hover:bg-[#2b4aa9] text-white">
-                                    Promesa de compra venta
-                                </Button>
-                            </DialogTrigger>
-                            <DialogContent>
-                                <DialogHeader>
-                                    <DialogTitle>Generar Promesa: {reservation.name}</DialogTitle>
-                                </DialogHeader>
-                                <div className="py-4 space-y-4">
-                                    <div className="space-y-2">
-                                        <label className="text-sm font-medium">Promitente vendedor:</label>
-                                        <Select value={promitente} onValueChange={setPromitente}>
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Seleccione un promitente vendedor" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="vendedor_1">Nombre Vendedor 1</SelectItem>
-                                                <SelectItem value="vendedor_2">Nombre Vendedor 2</SelectItem>
-                                                <SelectItem value="vendedor_3">Nombre Vendedor 3</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-                                </div>
-                                <Button onClick={() => {
-                                    toast.success("Vendedor seleccionado (simulación)")
-                                    setPromesaOpen(false)
-                                }} disabled={!promitente}>
-                                    Continuar
-                                </Button>
-                            </DialogContent>
-                        </Dialog>
+                        <PromesaGeneratorAction reservationId={reservation.id} reservationName={reservation.name} />
                     </div>
                 )}
 
