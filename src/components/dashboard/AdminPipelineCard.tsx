@@ -142,7 +142,7 @@ export function AdminPipelineCard({
                     </Dialog>
                 </div>
 
-                {effectiveStage === "PROMESA_COMPRAVENTA" && (
+                {(effectiveStage === "PROMESA_COMPRAVENTA" || effectiveStage === "PIE_POR_PAGAR") && (
                     <div className="pt-2">
                         <Dialog open={promesaOpen} onOpenChange={setPromesaOpen}>
                             <DialogTrigger asChild>
