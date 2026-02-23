@@ -79,7 +79,7 @@ export async function updatePipelineStage(reservationId: string, stage: string) 
         });
 
         // Trigger Contract Signed Webhook if stage matches
-        if (stage === 'CONTRATO_FIRMADO') {
+        if (stage === 'PIE_POR_PAGAR') {
             sendContractSignedWebhook(reservationId).catch(console.error);
         }
 
