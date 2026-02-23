@@ -13,6 +13,7 @@ type ReservationWithDetails = Reservation & {
 
 const STAGES = [
     { id: "RESERVA_PAGADA", label: "Reserva Pagada", color: "bg-blue-100 text-blue-800" },
+    { id: "CONTRATO_RESERVA", label: "Contrato de Reserva", color: "bg-orange-100 text-orange-800" },
     { id: "ESPERANDO_PIE", label: "Esperando Pie", color: "bg-yellow-100 text-yellow-800" },
     { id: "PIE_PAGADO", label: "Pie Pagado", color: "bg-purple-100 text-purple-800" },
     { id: "PAGO_CUOTAS", label: "Pago de Cuotas", color: "bg-indigo-100 text-indigo-800" },
@@ -37,7 +38,7 @@ export function SellerPipeline({ initialData }: { initialData: ReservationWithDe
     }
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 h-full">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 h-full">
             {STAGES.map(stage => {
                 const items = reservations.filter(r => r.pipeline_stage === stage.id)
                 return (

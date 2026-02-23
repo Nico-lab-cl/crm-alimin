@@ -15,6 +15,7 @@ type ReservationWithDetails = Reservation & {
 
 const STAGES = [
     { id: "RESERVA_PAGADA", label: "Reserva", color: "bg-blue-100 text-blue-800 border-blue-200" },
+    { id: "CONTRATO_RESERVA", label: "Contrato de Reserva", color: "bg-orange-100 text-orange-800 border-orange-200" },
     { id: "CONTRATO_FIRMADO", label: "Contrato de Reserva Firmado", color: "bg-amber-100 text-amber-800 border-amber-200" },
     { id: "PIE_PAGADO", label: "Pie Pagado", color: "bg-purple-100 text-purple-800 border-purple-200" },
     { id: "PAGO_CUOTAS", label: "Pago de Cuotas", color: "bg-indigo-100 text-indigo-800 border-indigo-200" },
@@ -80,8 +81,8 @@ export function AdminPipeline({ initialData, sellers }: { initialData: Reservati
                 </Select>
             </div>
 
-            {/* 5-column grid optimized for large screens */}
-            <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-5 gap-3 h-full">
+            {/* 6-column grid optimized for large screens */}
+            <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-6 gap-3 h-full">
                 {STAGES.map(stage => {
                     const items = filteredReservations.filter(r => getEffectiveStage(r as any) === stage.id)
                     return (

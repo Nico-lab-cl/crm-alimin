@@ -11,6 +11,7 @@ import { updateReservationNotes } from "@/actions/dashboard"
 import { useState } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Textarea } from "@/components/ui/textarea"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { toast } from "sonner"
 
 type ReservationWithDetails = Reservation & {
@@ -18,13 +19,15 @@ type ReservationWithDetails = Reservation & {
     buyer: User | null
 }
 
-const STAGE_ORDER = ["RESERVA_PAGADA", "ESPERANDO_PIE", "PIE_PAGADO", "PAGO_CUOTAS", "VENTA_CERRADA"]
+const STAGE_ORDER = ["RESERVA_PAGADA", "CONTRATO_RESERVA", "ESPERANDO_PIE", "PIE_PAGADO", "PAGO_CUOTAS", "VENTA_CERRADA"]
 
 export function PipelineCard({ reservation, onMove }: { reservation: ReservationWithDetails, onMove: (stage: string) => void }) {
     const daysSince = differenceInDays(new Date(), new Date(reservation.created_at))
     const isLate = reservation.pipeline_stage === "ESPERANDO_PIE" && daysSince > 10
     const [notesOpen, setNotesOpen] = useState(false)
     const [notes, setNotes] = useState(reservation.notes || "")
+    const [promesaOpen, setPromesaOpen] = useState(false)
+    const [promitente, setPromitente] = useState("")
 
     const currentStageIndex = STAGE_ORDER.indexOf(reservation.pipeline_stage)
     const nextStage = STAGE_ORDER[currentStageIndex + 1]
@@ -91,6 +94,44 @@ export function PipelineCard({ reservation, onMove }: { reservation: Reservation
                         </DialogContent>
                     </Dialog>
                 </div>
+
+                {reservation.pipeline_stage === "CONTRATO_RESERVA" && (
+                    <div className="pt-2">
+                        <Dialog open={promesaOpen} onOpenChange={setPromesaOpen}>
+                            <DialogTrigger asChild>
+                                <Button className="w-full text-xs h-8 bg-[#36595F] hover:bg-[#2b4aa9] text-white">
+                                    Promesa de compra venta
+                                </Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                                <DialogHeader>
+                                    <DialogTitle>Generar Promesa: {reservation.name}</DialogTitle>
+                                </DialogHeader>
+                                <div className="py-4 space-y-4">
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium">Promitente vendedor:</label>
+                                        <Select value={promitente} onValueChange={setPromitente}>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Seleccione un promitente vendedor" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="vendedor_1">Nombre Vendedor 1</SelectItem>
+                                                <SelectItem value="vendedor_2">Nombre Vendedor 2</SelectItem>
+                                                <SelectItem value="vendedor_3">Nombre Vendedor 3</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                </div>
+                                <Button onClick={() => {
+                                    toast.success("Vendedor seleccionado (simulación)")
+                                    setPromesaOpen(false)
+                                }} disabled={!promitente}>
+                                    Continuar
+                                </Button>
+                            </DialogContent>
+                        </Dialog>
+                    </div>
+                )}
 
                 <div className="flex justify-between items-center pt-2 border-t mt-2">
                     <Button

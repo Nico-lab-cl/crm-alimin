@@ -20,7 +20,7 @@ type ReservationWithDetails = Reservation & {
     seller: User | null
 }
 
-const STAGE_ORDER = ["RESERVA_PAGADA", "CONTRATO_FIRMADO", "PIE_PAGADO", "PAGO_CUOTAS", "VENTA_CERRADA"]
+const STAGE_ORDER = ["RESERVA_PAGADA", "CONTRATO_RESERVA", "CONTRATO_FIRMADO", "PIE_PAGADO", "PAGO_CUOTAS", "VENTA_CERRADA"]
 
 export function AdminPipelineCard({
     reservation,
@@ -36,6 +36,8 @@ export function AdminPipelineCard({
     const daysSince = differenceInDays(new Date(), new Date(reservation.created_at))
     const [notesOpen, setNotesOpen] = useState(false)
     const [notes, setNotes] = useState(reservation.notes || "")
+    const [promesaOpen, setPromesaOpen] = useState(false)
+    const [promitente, setPromitente] = useState("")
 
     const currentStageIndex = STAGE_ORDER.indexOf(reservation.pipeline_stage)
     const nextStage = STAGE_ORDER[currentStageIndex + 1]
@@ -137,6 +139,44 @@ export function AdminPipelineCard({
                         </DialogContent>
                     </Dialog>
                 </div>
+
+                {reservation.pipeline_stage === "CONTRATO_RESERVA" && (
+                    <div className="pt-2">
+                        <Dialog open={promesaOpen} onOpenChange={setPromesaOpen}>
+                            <DialogTrigger asChild>
+                                <Button className="w-full text-xs h-8 bg-[#36595F] hover:bg-[#2b464a] text-white font-medium">
+                                    Promesa de compra venta
+                                </Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                                <DialogHeader>
+                                    <DialogTitle>Generar Promesa: {reservation.name}</DialogTitle>
+                                </DialogHeader>
+                                <div className="py-4 space-y-4">
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium">Promitente vendedor:</label>
+                                        <Select value={promitente} onValueChange={setPromitente}>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Seleccione un promitente vendedor" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="vendedor_1">Nombre Vendedor 1</SelectItem>
+                                                <SelectItem value="vendedor_2">Nombre Vendedor 2</SelectItem>
+                                                <SelectItem value="vendedor_3">Nombre Vendedor 3</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                </div>
+                                <Button onClick={() => {
+                                    toast.success("Vendedor seleccionado (En desarrollo)")
+                                    setPromesaOpen(false)
+                                }} disabled={!promitente}>
+                                    Continuar
+                                </Button>
+                            </DialogContent>
+                        </Dialog>
+                    </div>
+                )}
 
                 <div className="flex justify-between items-center pt-2 border-t mt-2">
                     <Button
