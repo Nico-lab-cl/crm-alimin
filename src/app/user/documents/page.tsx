@@ -47,7 +47,7 @@ export default function UserDocumentsPage() {
 
     if (status === "loading" || loading) {
         return (
-            <div className="container mx-auto pt-24 pb-12 px-4 space-y-4">
+            <div className="container mx-auto pt-10 pb-12 px-4 space-y-4">
                 <Skeleton className="h-12 w-1/3 mb-8" />
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <Skeleton className="h-48" />
@@ -68,7 +68,7 @@ export default function UserDocumentsPage() {
     }
 
     return (
-        <div className="min-h-screen relative flex flex-col items-center pt-24 pb-12 px-4 bg-black/95">
+        <div className="min-h-screen relative flex flex-col items-center pt-10 pb-12 px-4 bg-black/95">
             <div className="absolute inset-0 bg-[url('/terreno-bg.JPG')] bg-cover bg-center opacity-20 blur-sm fixed" />
 
             <div className="container mx-auto relative z-10 max-w-5xl">

@@ -81,7 +81,7 @@ export default function UserPlotsPage() {
     }
 
     return (
-        <div className="min-h-screen relative flex flex-col items-center pt-24 pb-12 px-4 bg-black/95">
+        <div className="min-h-screen relative flex flex-col items-center pt-10 pb-12 px-4 bg-black/95">
             <div className="absolute inset-0 bg-[url('/terreno-bg.JPG')] bg-cover bg-center opacity-20 blur-sm fixed" />
 
             <div className="container mx-auto relative z-10">
