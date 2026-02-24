@@ -25,6 +25,7 @@ interface Reservation {
     installments_paid: number | null;
     created_at: string;
     signed_at?: string | null;
+    uploaded_contract_url?: string | null;
 }
 
 import { SignContractModal } from "@/components/SignContractModal";
@@ -103,6 +104,20 @@ export default function UserPlotsPage() {
                         </div>
                     </div>
                 </header>
+
+                {/* Post-signature banner: signed but compraventa not yet uploaded */}
+                {reservations.some(r => r.signed_at && !r.uploaded_contract_url) && (
+                    <div className="mb-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                        <div className="bg-gradient-to-r from-[#36595F]/60 via-[#2b464a]/60 to-[#36595F]/60 border border-[#36595F]/60 text-white px-6 py-4 rounded-2xl shadow-[0_0_20px_rgba(54,89,95,0.2)] backdrop-blur-md flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                            <span className="text-2xl shrink-0">⚖️</span>
+                            <p className="text-sm sm:text-base font-medium leading-snug">
+                                <span className="font-bold text-[#E0B457]">Nuestros abogados están trabajando en tu contrato de promesa de compra y venta.</span>{" "}
+                                En un plazo de <span className="font-bold">48 horas</span> lo verás en la sección de{" "}
+                                <a href="/user/documents" className="underline underline-offset-2 hover:text-[#E0B457] transition-colors">Documentos</a>.
+                            </p>
+                        </div>
+                    </div>
+                )}
 
                 <section>
                     {reservations.length === 0 ? (

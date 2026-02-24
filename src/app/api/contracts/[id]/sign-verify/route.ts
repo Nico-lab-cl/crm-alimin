@@ -66,6 +66,20 @@ export async function POST(
         // Trigger Webhook (Fire and forget to avoid blocking UI)
         sendContractSignedWebhook(reservationId).catch(console.error);
 
+        // Create in-app notification for buyer
+        const buyerId = reservation.buyer_id;
+        if (buyerId) {
+            await prisma.notification.create({
+                data: {
+                    user_id: buyerId,
+                    type: 'contract_pending',
+                    title: '✍️ Contrato de reserva firmado',
+                    message: 'Nuestros abogados están trabajando en tu contrato de promesa de compra y venta. En un plazo de 48 horas lo verás en la sección de Documentos.',
+                    read: false,
+                }
+            }).catch(console.error);
+        }
+
         return NextResponse.json({ success: true, message: "Contrato firmado exitosamente" });
 
     } catch (error: any) {
