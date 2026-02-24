@@ -167,16 +167,6 @@ export default function UserDocumentsPage() {
 
                                                 {hasCompraventa && (
                                                     <>
-                                                        {/* Download */}
-                                                        <a
-                                                            href={res.uploaded_contract_url!}
-                                                            download={`Promesa_Compraventa_Lote${res.lot.number}.pdf`}
-                                                            className="inline-flex items-center gap-2 px-4 py-2 bg-amber-600/20 hover:bg-amber-600/40 border border-amber-500/30 text-amber-300 rounded text-sm transition-colors"
-                                                        >
-                                                            <Download className="h-4 w-4" />
-                                                            Descargar Promesa
-                                                        </a>
-
                                                         {/* Sign button (only if not signed yet) */}
                                                         {!promesaSigned && (
                                                             <SignPromesaModal
