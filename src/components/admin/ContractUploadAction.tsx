@@ -12,7 +12,7 @@ import {
     DialogTrigger,
 } from "@/components/ui/dialog";
 
-export function ContractUploadAction({ reservationId, reservationName, onUploadComplete }: { reservationId: string, reservationName: string, onUploadComplete?: () => void }) {
+export function ContractUploadAction({ reservationId, reservationName, onUploadComplete, label }: { reservationId: string, reservationName: string, onUploadComplete?: () => void, label?: string }) {
     const [open, setOpen] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -75,7 +75,7 @@ export function ContractUploadAction({ reservationId, reservationName, onUploadC
             <DialogTrigger asChild>
                 <Button variant="outline" size="sm" className="w-full mt-2 bg-blue-500/10 hover:bg-blue-500/20 text-blue-300 border-blue-500/30">
                     <UploadCloud className="w-4 h-4 mr-2" />
-                    Subir Contrato Firmado
+                    {label || "Subir Contrato Firmado"}
                 </Button>
             </DialogTrigger>
             <DialogContent className="bg-gray-900 text-white border-gray-800">

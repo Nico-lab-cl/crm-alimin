@@ -145,7 +145,16 @@ export function AdminPipelineCard({
                 {(effectiveStage === "PROMESA_COMPRAVENTA" || effectiveStage === "PIE_POR_PAGAR") && (
                     <div className="pt-2">
                         <PromesaGeneratorAction reservationId={reservation.id} reservationName={reservation.name} />
-                        <ContractUploadAction reservationId={reservation.id} reservationName={reservation.name} />
+                    </div>
+                )}
+
+                {effectiveStage === "PROMESA_COMPRAVENTA" && (
+                    <div className="pt-1">
+                        <ContractUploadAction
+                            reservationId={reservation.id}
+                            reservationName={reservation.name}
+                            label="Subir Promesa de Compraventa"
+                        />
                     </div>
                 )}
 
