@@ -2,6 +2,7 @@ export function getEffectiveStage(r: any): string {
     let stage = r.pipeline_stage || "RESERVA_PAGADA"
 
     // Legacy DB mappings to new UI Columns
+    if (stage === "RESERVA_PAGADA") return "RESERVA_POR_FIRMAR"  // paid = pending signature
     if (stage === "CONTRATO_FIRMADO") return "PIE_POR_PAGAR"
     if (stage === "CONTRATO_RESERVA") return "RESERVA_POR_FIRMAR"
     if (stage === "ESPERANDO_PIE") return "PIE_POR_PAGAR"
