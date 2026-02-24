@@ -54,6 +54,7 @@ model Reservation {
   // Pipeline Data
   pipeline_stage  String    @default("RESERVA_PAGADA") // RESERVA_PAGADA, ESPERANDO_PIE, PIE_PAGADO, PAGO_CUOTAS, VENTA_CERRADA
   notes           String?
+  uploaded_contract_url String?
   address_street  String?
   address_number  String?
   address_commune String?

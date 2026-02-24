@@ -15,6 +15,7 @@ import { toast } from "sonner"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { getEffectiveStage } from "@/lib/pipeline"
 import { PromesaGeneratorAction } from "@/components/admin/PromesaGeneratorAction"
+import { ContractUploadAction } from "@/components/admin/ContractUploadAction"
 
 type ReservationWithDetails = Reservation & {
     lot: Lot
@@ -144,6 +145,7 @@ export function AdminPipelineCard({
                 {(effectiveStage === "PROMESA_COMPRAVENTA" || effectiveStage === "PIE_POR_PAGAR") && (
                     <div className="pt-2">
                         <PromesaGeneratorAction reservationId={reservation.id} reservationName={reservation.name} />
+                        <ContractUploadAction reservationId={reservation.id} reservationName={reservation.name} />
                     </div>
                 )}
 

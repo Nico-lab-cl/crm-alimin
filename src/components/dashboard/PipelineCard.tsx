@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { differenceInDays, format } from "date-fns"
 import { es } from "date-fns/locale"
-import { Phone, Calendar, MapPin, DollarSign, ArrowRight, ArrowLeft } from "lucide-react"
+import { Phone, Calendar, MapPin, DollarSign, ArrowRight, ArrowLeft, FileText } from "lucide-react"
 import { updateReservationNotes } from "@/actions/dashboard"
 import { useState } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
@@ -15,6 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { getEffectiveStage } from "@/lib/pipeline"
 import { toast } from "sonner"
 import { PromesaGeneratorAction } from "@/components/admin/PromesaGeneratorAction"
+import { ContractUploadAction } from "@/components/admin/ContractUploadAction"
 
 type ReservationWithDetails = Reservation & {
     lot: Lot
@@ -99,6 +100,7 @@ export function PipelineCard({ reservation, onMove }: { reservation: Reservation
                 {(effectiveStage === "PROMESA_COMPRAVENTA" || effectiveStage === "PIE_POR_PAGAR") && (
                     <div className="pt-2">
                         <PromesaGeneratorAction reservationId={reservation.id} reservationName={reservation.name} />
+                        <ContractUploadAction reservationId={reservation.id} reservationName={reservation.name} />
                     </div>
                 )}
 

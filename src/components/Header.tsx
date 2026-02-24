@@ -120,7 +120,13 @@ export const Header = ({ projectName }: HeaderProps) => {
                       <DropdownMenuItem asChild>
                         <Link href="/user/plots" className="cursor-pointer">
                           <MapIcon className="mr-2 h-4 w-4" />
-                          <span>Mis Terrenos</span>
+                          <span>Terrenos</span>
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link href="/user/documents" className="cursor-pointer">
+                          <FileText className="mr-2 h-4 w-4" />
+                          <span>Documentos</span>
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild>
