@@ -177,6 +177,18 @@ export default function UserDocumentsPage() {
                                                                 onSuccess={fetchReservations}
                                                             />
                                                         )}
+
+                                                        {/* Download — only available after signing */}
+                                                        {promesaSigned && (
+                                                            <a
+                                                                href={res.uploaded_contract_url!}
+                                                                download={`Contrato_Compraventa_Lote${res.lot.number}.pdf`}
+                                                                className="mt-2 inline-flex items-center gap-2 px-4 py-2 bg-green-600/20 hover:bg-green-600/40 border border-green-500/30 text-green-300 rounded text-sm transition-colors w-full justify-center"
+                                                            >
+                                                                <Download className="h-4 w-4" />
+                                                                Descargar Contrato de Compraventa Firmado
+                                                            </a>
+                                                        )}
                                                     </>
                                                 )}
                                             </div>
