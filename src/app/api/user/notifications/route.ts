@@ -72,6 +72,20 @@ export async function GET() {
                     db: false,
                 });
             }
+
+            // Signed but compraventa not yet uploaded (lawyers working on it)
+            if (reservation.signed_at && !reservation.uploaded_contract_url) {
+                dynamicNotifications.push({
+                    id: `compraventa-pending-${reservation.id}`,
+                    type: 'contract_pending',
+                    title: '⚖️ Promesa de compraventa en proceso',
+                    message: 'Nuestros abogados están trabajando en tu contrato de promesa de compra y venta. En un plazo de 48 horas lo verás en la sección de Documentos.',
+                    lotNumber: reservation.lot.number || '',
+                    stage: String(reservation.lot.stage || ''),
+                    read: false,
+                    db: false,
+                });
+            }
         });
 
         // Fetch DB notifications (unread only)
