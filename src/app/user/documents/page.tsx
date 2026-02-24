@@ -2,10 +2,11 @@
 
 import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
 import { FileText, Download, CheckCircle, Clock } from "lucide-react";
+import { SignPromesaModal } from "@/components/SignPromesaModal";
 
 interface Reservation {
     id: string;
@@ -14,6 +15,7 @@ interface Reservation {
     created_at: string;
     signed_at: string | null;
     uploaded_contract_url: string | null;
+    promesa_signed_at?: string | null;
     lot: {
         number: string;
         stage: number;
@@ -25,24 +27,19 @@ export default function UserDocumentsPage() {
     const [reservations, setReservations] = useState<Reservation[]>([]);
     const [loading, setLoading] = useState(true);
 
+    const fetchReservations = () => {
+        fetch("/api/user/reservations", { cache: 'no-store' })
+            .then(async (res) => {
+                if (!res.ok) throw new Error("Error fetching reservations");
+                return res.json();
+            })
+            .then((data) => { setReservations(data); setLoading(false); })
+            .catch((err) => { console.error("Failed to fetch documents", err); setLoading(false); });
+    };
+
     useEffect(() => {
-        if (status === "authenticated") {
-            fetch("/api/user/reservations", { cache: 'no-store' })
-                .then(async (res) => {
-                    if (!res.ok) throw new Error("Error fetching reservations");
-                    return res.json();
-                })
-                .then((data) => {
-                    setReservations(data);
-                    setLoading(false);
-                })
-                .catch((err) => {
-                    console.error("Failed to fetch documents", err);
-                    setLoading(false);
-                });
-        } else if (status === "unauthenticated") {
-            setLoading(false);
-        }
+        if (status === "authenticated") fetchReservations();
+        else if (status === "unauthenticated") setLoading(false);
     }, [status]);
 
     if (status === "loading" || loading) {
@@ -59,12 +56,12 @@ export default function UserDocumentsPage() {
 
     if (status === "unauthenticated") {
         return (
-            <div className="container mx-auto p-8 text-center pt-32">
+            <div className="container mx-auto p-8 text-center pt-10">
                 <h1 className="text-3xl font-bold mb-4">Acceso Denegado</h1>
                 <p className="mb-4">Por favor inicia sesión para ver tus documentos.</p>
                 <Link href="/login" className="text-blue-600 underline">Ir a Iniciar Sesión</Link>
             </div>
-        )
+        );
     }
 
     return (
@@ -72,16 +69,16 @@ export default function UserDocumentsPage() {
             <div className="absolute inset-0 bg-[url('/terreno-bg.JPG')] bg-cover bg-center opacity-20 blur-sm fixed" />
 
             <div className="container mx-auto relative z-10 max-w-5xl">
-                <header className="mb-12 text-center">
-                    <h1 className="text-5xl font-extrabold mb-4 text-[#36595F] drop-shadow-[0_2px_4px_rgba(255,255,255,0.1)] tracking-tight">
+                <header className="mb-8 text-center">
+                    <h1 className="text-4xl sm:text-5xl font-extrabold mb-3 text-[#36595F] drop-shadow-[0_2px_4px_rgba(255,255,255,0.1)] tracking-tight">
                         Mis Documentos
                     </h1>
-                    <p className="text-xl font-medium text-gray-200 drop-shadow-md">
+                    <p className="text-lg sm:text-xl font-medium text-gray-200 drop-shadow-md">
                         Contratos y documentos legales de tus inversiones.
                     </p>
                 </header>
 
-                {/* Post-signature banner: signed but compraventa not yet uploaded */}
+                {/* 48h banner */}
                 {reservations.some(r => r.signed_at && !r.uploaded_contract_url) && (
                     <div className="mb-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
                         <div className="bg-gradient-to-r from-[#36595F]/60 via-[#2b464a]/60 to-[#36595F]/60 border border-[#36595F]/60 text-white px-6 py-4 rounded-2xl shadow-[0_0_20px_rgba(54,89,95,0.2)] backdrop-blur-md flex flex-col sm:flex-row items-start sm:items-center gap-3">
@@ -106,21 +103,22 @@ export default function UserDocumentsPage() {
                             {reservations.map((res) => {
                                 const hasReserva = !!res.signed_at;
                                 const hasCompraventa = !!res.uploaded_contract_url;
+                                const promesaSigned = !!(res as any).promesa_signed_at;
 
                                 return (
                                     <Card key={res.id} className="border-white/10 shadow-lg bg-black/60 text-white backdrop-blur-md">
                                         <CardHeader className="bg-[#36595F]/90 text-white rounded-t-lg border-b border-white/10">
                                             <CardTitle className="flex items-center gap-2">
                                                 <FileText className="h-5 w-5" />
-                                                Lote {res.lot.number} - Etapa {res.lot.stage}
+                                                Lote {res.lot.number} — Etapa {res.lot.stage}
                                             </CardTitle>
                                         </CardHeader>
                                         <CardContent className="p-6 space-y-6">
 
-                                            {/* Contrato de Reserva */}
+                                            {/* ── Contrato de Reserva ── */}
                                             <div className="space-y-2">
                                                 <div className="flex justify-between items-center">
-                                                    <h3 className="font-semibold text-gray-200 text-lg">Contrato de Reserva</h3>
+                                                    <h3 className="font-semibold text-gray-200 text-base">Contrato de Reserva</h3>
                                                     {hasReserva ? (
                                                         <span className="flex items-center text-green-400 text-xs gap-1 bg-green-900/40 px-2 py-1 rounded">
                                                             <CheckCircle className="h-3 w-3" /> Firmado
@@ -131,7 +129,7 @@ export default function UserDocumentsPage() {
                                                         </span>
                                                     )}
                                                 </div>
-                                                <p className="text-sm text-gray-400">Documento inicial de reserva de lote firmado digitalmente.</p>
+                                                <p className="text-xs text-gray-400">Documento inicial de reserva firmado digitalmente.</p>
                                                 {hasReserva && (
                                                     <a
                                                         href={`/api/contracts/${res.id}/pdf`}
@@ -140,38 +138,56 @@ export default function UserDocumentsPage() {
                                                         className="mt-2 inline-flex items-center gap-2 px-4 py-2 bg-blue-600/20 hover:bg-blue-600/40 border border-blue-500/30 text-blue-300 rounded text-sm transition-colors"
                                                     >
                                                         <Download className="h-4 w-4" />
-                                                        Descargar Copia
+                                                        Descargar Contrato de Reserva
                                                     </a>
                                                 )}
                                             </div>
 
                                             <div className="h-px w-full bg-white/10" />
 
-                                            {/* Promesa de Compra Venta */}
-                                            <div className="space-y-2">
+                                            {/* ── Promesa de Compraventa ── */}
+                                            <div className="space-y-3">
                                                 <div className="flex justify-between items-center">
-                                                    <h3 className="font-semibold text-gray-200 text-lg">Contrato de Compraventa</h3>
-                                                    {hasCompraventa ? (
-                                                        <span className="flex items-center text-green-400 text-xs gap-1 bg-green-900/40 px-2 py-1 rounded">
-                                                            <CheckCircle className="h-3 w-3" /> Disponible
-                                                        </span>
-                                                    ) : (
+                                                    <h3 className="font-semibold text-gray-200 text-base">Promesa de Compraventa</h3>
+                                                    {!hasCompraventa ? (
                                                         <span className="flex items-center text-gray-500 text-xs gap-1 bg-gray-800/40 px-2 py-1 rounded">
                                                             <Clock className="h-3 w-3" /> No disponible aún
                                                         </span>
+                                                    ) : promesaSigned ? (
+                                                        <span className="flex items-center text-green-400 text-xs gap-1 bg-green-900/40 px-2 py-1 rounded">
+                                                            <CheckCircle className="h-3 w-3" /> Firmada
+                                                        </span>
+                                                    ) : (
+                                                        <span className="flex items-center text-amber-400 text-xs gap-1 bg-amber-900/40 px-2 py-1 rounded">
+                                                            <Clock className="h-3 w-3" /> Pendiente de firma
+                                                        </span>
                                                     )}
                                                 </div>
-                                                <p className="text-sm text-gray-400">Promesa de compraventa final firmada legalmente.</p>
+                                                <p className="text-xs text-gray-400">Promesa de compraventa elaborada por nuestros abogados.</p>
+
                                                 {hasCompraventa && (
-                                                    <a
-                                                        href={res.uploaded_contract_url!}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        className="mt-2 inline-flex items-center gap-2 px-4 py-2 bg-amber-600/20 hover:bg-amber-600/40 border border-amber-500/30 text-amber-300 rounded text-sm transition-colors"
-                                                    >
-                                                        <Download className="h-4 w-4" />
-                                                        Descargar Contrato
-                                                    </a>
+                                                    <>
+                                                        {/* Download */}
+                                                        <a
+                                                            href={res.uploaded_contract_url!}
+                                                            download={`Promesa_Compraventa_Lote${res.lot.number}.pdf`}
+                                                            className="inline-flex items-center gap-2 px-4 py-2 bg-amber-600/20 hover:bg-amber-600/40 border border-amber-500/30 text-amber-300 rounded text-sm transition-colors"
+                                                        >
+                                                            <Download className="h-4 w-4" />
+                                                            Descargar Promesa
+                                                        </a>
+
+                                                        {/* Sign button (only if not signed yet) */}
+                                                        {!promesaSigned && (
+                                                            <SignPromesaModal
+                                                                reservationId={res.id}
+                                                                lotNumber={res.lot.number}
+                                                                lotStage={res.lot.stage}
+                                                                contractBase64={res.uploaded_contract_url!}
+                                                                onSuccess={fetchReservations}
+                                                            />
+                                                        )}
+                                                    </>
                                                 )}
                                             </div>
 

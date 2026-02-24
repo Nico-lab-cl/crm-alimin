@@ -64,11 +64,17 @@ model Reservation {
   pie_status      String?   @default("PENDING") // PENDING, PAID
   installments_paid Int?    @default(0)
 
-  // Digital Signature
+  // Digital Signature — Contrato Reserva
   signature_otp       String?
   signature_otp_expires DateTime?
   signed_at           DateTime?
   signature_ip        String?
+
+  // Digital Signature — Promesa de Compraventa
+  promesa_signature_otp       String?
+  promesa_signature_otp_expires DateTime?
+  promesa_signed_at           DateTime?
+  promesa_signature_ip        String?
 
   // Relations
   lot         Lot                 @relation(fields: [lot_id], references: [id])
