@@ -1,9 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 import { Instagram, Mail, MessageCircle, Youtube, Facebook } from 'lucide-react';
 
 export const StickyContactBar = () => {
+    const pathname = usePathname();
     const [isVisible, setIsVisible] = useState(true);
     const [isConsentPending, setIsConsentPending] = useState(false);
 
@@ -32,6 +34,9 @@ export const StickyContactBar = () => {
             window.removeEventListener('cookie-consent-resolved', handleCookieResolved);
         };
     }, []);
+
+    // Hide on admin and seller routes
+    if (pathname?.startsWith('/admin') || pathname?.startsWith('/seller')) return null;
 
     if (!isVisible || isConsentPending) return null;
 
