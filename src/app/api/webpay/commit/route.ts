@@ -183,7 +183,7 @@ export async function GET(req: NextRequest) {
                     where: { id: reservationId },
                     data: {
                         status: 'paid',
-                        pipeline_stage: 'RESERVA_PAGADA',
+                        pipeline_stage: 'RESERVA_POR_FIRMAR',
                         // Ensure buyer_id is set if we found/created user
                         ...(userId ? { buyer_id: userId } : {})
                     }
