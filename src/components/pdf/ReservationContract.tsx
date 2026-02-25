@@ -151,10 +151,7 @@ export const ReservationContract = ({ reservation, lot, logoPath, signaturePath 
     if (reservation.email?.toLowerCase().trim() === 'mariajose.vd.25@gmail.com') {
         fechaPromesa = "5 de Marzo del año dos mil veintiséis";
     } else {
-        const fechaReserva = new Date(reservation.created_at);
-        const fechaPromesaDate = new Date(fechaReserva);
-        fechaPromesaDate.setDate(fechaPromesaDate.getDate() + 10);
-        fechaPromesa = getFullDateText(fechaPromesaDate);
+        fechaPromesa = "4 de Marzo del año dos mil veintiséis";
     }
 
 

@@ -31,6 +31,8 @@ interface Reservation {
 import { SignContractModal } from "@/components/SignContractModal";
 import { PaymentButtons } from "@/components/user/PaymentButtons";
 
+const PROMESA_ENABLED = false;
+
 export default function UserPlotsPage() {
     const { data: session, status } = useSession();
     const [reservations, setReservations] = useState<Reservation[]>([]);
@@ -106,7 +108,7 @@ export default function UserPlotsPage() {
                 </header>
 
                 {/* Post-signature banner: signed but compraventa not yet uploaded */}
-                {reservations.some(r => r.signed_at && !r.uploaded_contract_url) && (
+                {PROMESA_ENABLED && reservations.some(r => r.signed_at && !r.uploaded_contract_url) && (
                     <div className="mb-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
                         <div className="bg-gradient-to-r from-[#36595F]/60 via-[#2b464a]/60 to-[#36595F]/60 border border-[#36595F]/60 text-white px-6 py-4 rounded-2xl shadow-[0_0_20px_rgba(54,89,95,0.2)] backdrop-blur-md flex flex-col sm:flex-row items-start sm:items-center gap-3">
                             <span className="text-2xl shrink-0">⚖️</span>

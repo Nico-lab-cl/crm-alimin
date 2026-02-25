@@ -22,6 +22,8 @@ interface Reservation {
     };
 }
 
+const PROMESA_ENABLED = false; // Desactivado temporalmente
+
 export default function UserDocumentsPage() {
     const { data: session, status } = useSession();
     const [reservations, setReservations] = useState<Reservation[]>([]);
@@ -79,7 +81,7 @@ export default function UserDocumentsPage() {
                 </header>
 
                 {/* 48h banner */}
-                {reservations.some(r => r.signed_at && !r.uploaded_contract_url) && (
+                {PROMESA_ENABLED && reservations.some(r => r.signed_at && !r.uploaded_contract_url) && (
                     <div className="mb-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
                         <div className="bg-gradient-to-r from-[#36595F]/60 via-[#2b464a]/60 to-[#36595F]/60 border border-[#36595F]/60 text-white px-6 py-4 rounded-2xl shadow-[0_0_20px_rgba(54,89,95,0.2)] backdrop-blur-md flex flex-col sm:flex-row items-start sm:items-center gap-3">
                             <span className="text-2xl shrink-0">⚖️</span>
@@ -146,52 +148,54 @@ export default function UserDocumentsPage() {
                                             <div className="h-px w-full bg-white/10" />
 
                                             {/* ── Promesa de Compraventa ── */}
-                                            <div className="space-y-3">
-                                                <div className="flex justify-between items-center">
-                                                    <h3 className="font-semibold text-gray-200 text-base">Promesa de Compraventa</h3>
-                                                    {!hasCompraventa ? (
-                                                        <span className="flex items-center text-gray-500 text-xs gap-1 bg-gray-800/40 px-2 py-1 rounded">
-                                                            <Clock className="h-3 w-3" /> No disponible aún
-                                                        </span>
-                                                    ) : promesaSigned ? (
-                                                        <span className="flex items-center text-green-400 text-xs gap-1 bg-green-900/40 px-2 py-1 rounded">
-                                                            <CheckCircle className="h-3 w-3" /> Firmada
-                                                        </span>
-                                                    ) : (
-                                                        <span className="flex items-center text-amber-400 text-xs gap-1 bg-amber-900/40 px-2 py-1 rounded">
-                                                            <Clock className="h-3 w-3" /> Pendiente de firma
-                                                        </span>
+                                            {PROMESA_ENABLED && (
+                                                <div className="space-y-3">
+                                                    <div className="flex justify-between items-center">
+                                                        <h3 className="font-semibold text-gray-200 text-base">Promesa de Compraventa</h3>
+                                                        {!hasCompraventa ? (
+                                                            <span className="flex items-center text-gray-500 text-xs gap-1 bg-gray-800/40 px-2 py-1 rounded">
+                                                                <Clock className="h-3 w-3" /> No disponible aún
+                                                            </span>
+                                                        ) : promesaSigned ? (
+                                                            <span className="flex items-center text-green-400 text-xs gap-1 bg-green-900/40 px-2 py-1 rounded">
+                                                                <CheckCircle className="h-3 w-3" /> Firmada
+                                                            </span>
+                                                        ) : (
+                                                            <span className="flex items-center text-amber-400 text-xs gap-1 bg-amber-900/40 px-2 py-1 rounded">
+                                                                <Clock className="h-3 w-3" /> Pendiente de firma
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    <p className="text-xs text-gray-400">Promesa de compraventa elaborada por nuestros abogados.</p>
+
+                                                    {hasCompraventa && (
+                                                        <>
+                                                            {/* Sign button (only if not signed yet) */}
+                                                            {!promesaSigned && (
+                                                                <SignPromesaModal
+                                                                    reservationId={res.id}
+                                                                    lotNumber={res.lot.number}
+                                                                    lotStage={res.lot.stage}
+                                                                    contractBase64={res.uploaded_contract_url!}
+                                                                    onSuccess={fetchReservations}
+                                                                />
+                                                            )}
+
+                                                            {/* Download — only available after signing */}
+                                                            {promesaSigned && (
+                                                                <a
+                                                                    href={res.uploaded_contract_url!}
+                                                                    download={`Contrato_Compraventa_Lote${res.lot.number}.pdf`}
+                                                                    className="mt-2 inline-flex items-center gap-2 px-4 py-2 bg-green-600/20 hover:bg-green-600/40 border border-green-500/30 text-green-300 rounded text-sm transition-colors w-full justify-center"
+                                                                >
+                                                                    <Download className="h-4 w-4" />
+                                                                    Descargar Contrato de Compraventa Firmado
+                                                                </a>
+                                                            )}
+                                                        </>
                                                     )}
                                                 </div>
-                                                <p className="text-xs text-gray-400">Promesa de compraventa elaborada por nuestros abogados.</p>
-
-                                                {hasCompraventa && (
-                                                    <>
-                                                        {/* Sign button (only if not signed yet) */}
-                                                        {!promesaSigned && (
-                                                            <SignPromesaModal
-                                                                reservationId={res.id}
-                                                                lotNumber={res.lot.number}
-                                                                lotStage={res.lot.stage}
-                                                                contractBase64={res.uploaded_contract_url!}
-                                                                onSuccess={fetchReservations}
-                                                            />
-                                                        )}
-
-                                                        {/* Download — only available after signing */}
-                                                        {promesaSigned && (
-                                                            <a
-                                                                href={res.uploaded_contract_url!}
-                                                                download={`Contrato_Compraventa_Lote${res.lot.number}.pdf`}
-                                                                className="mt-2 inline-flex items-center gap-2 px-4 py-2 bg-green-600/20 hover:bg-green-600/40 border border-green-500/30 text-green-300 rounded text-sm transition-colors w-full justify-center"
-                                                            >
-                                                                <Download className="h-4 w-4" />
-                                                                Descargar Contrato de Compraventa Firmado
-                                                            </a>
-                                                        )}
-                                                    </>
-                                                )}
-                                            </div>
+                                            )}
 
                                         </CardContent>
                                     </Card>
