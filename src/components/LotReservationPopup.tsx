@@ -223,6 +223,26 @@ export const LotReservationPopup = ({ lot, isOpen, onClose, onConfirm, isTempora
         description: 'Redirigiendo al pago...',
       });
 
+      // Track InitiateCheckout on Pixel
+      import("@/lib/metaTracking").then(({ trackPixelEvent, hashData, normalizeAndHashPhone }) => {
+        trackPixelEvent('InitiateCheckout', {
+          content_type: 'product',
+          content_ids: [lot.id.toString()],
+          content_name: `Reserva Lote ${lot.number} Etapa ${lot.stage}`,
+          value: offerPrice, // 500000
+          currency: 'CLP',
+        }, sessionId); // Pass sessionId to match with CAPI later if possible
+
+        // Also fire a manual user data push if possible (though better handled by CAPI, good for Advanced Matching)
+        if (typeof window !== 'undefined' && (window as any).fbq) {
+          (window as any).fbq('set', 'userData', {
+            em: hashData(contactEmail),
+            ph: normalizeAndHashPhone(contactPhone),
+            fn: hashData(contactName.split(' ')[0]),
+          });
+        }
+      });
+
       onConfirm();
       handleClose();
       submitToWebpay(json.url, json.token);

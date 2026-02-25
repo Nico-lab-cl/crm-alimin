@@ -45,6 +45,34 @@ export async function sendPieWebhook(reservationId: string, amountPaid: number) 
         }
 
         console.log(`[Webhook] Pie Webhook sent successfully for Reservation ${reservationId}`);
+
+        // Trigger Meta CAPI Offline Conversion (Pie)
+        try {
+            const { sendMetaCAPIEvent, prepareCAPIUserData } = await import('./metaCAPI');
+            const userData = prepareCAPIUserData(
+                reservation.email,
+                reservation.phone,
+                reservation.name
+            );
+
+            await sendMetaCAPIEvent({
+                eventName: 'Purchase', // Using standard Purchase for ROAS as requested by user
+                eventId: `pie_${reservationId}_${Date.now()}`,
+                actionSource: 'system_generated',
+                userData,
+                customData: {
+                    currency: 'CLP',
+                    value: amountPaid,
+                    content_category: 'Pago Pie',
+                    content_ids: reservation.lot?.id ? [reservation.lot.id.toString()] : undefined,
+                    content_name: reservation.lot ? `Pago Pie Lote ${reservation.lot.number}` : 'Pago Pie',
+                    order_id: `pie_${reservationId}`
+                }
+            });
+        } catch (metaErr) {
+            console.error("[Meta CAPI Error] Failed in sendPieWebhook", metaErr);
+        }
+
         return { success: true, message: "Webhook accepted by N8N" };
     } catch (e) {
         console.error(`[Webhook] Failed to trigger pie webhook`, e);
@@ -95,6 +123,34 @@ export async function sendInstallmentWebhook(reservationId: string, amountPaid: 
         }
 
         console.log(`[Webhook] Installment Webhook sent successfully`);
+
+        // Trigger Meta CAPI Offline Conversion (Installment)
+        try {
+            const { sendMetaCAPIEvent, prepareCAPIUserData } = await import('./metaCAPI');
+            const userData = prepareCAPIUserData(
+                reservation.email,
+                reservation.phone,
+                reservation.name
+            );
+
+            await sendMetaCAPIEvent({
+                eventName: 'Purchase', // Using standard Purchase for LTV ROAS calculation
+                eventId: `cuota_${reservationId}_${Date.now()}`,
+                actionSource: 'system_generated',
+                userData,
+                customData: {
+                    currency: 'CLP',
+                    value: amountPaid,
+                    content_category: 'Pago Cuota',
+                    content_ids: reservation.lot?.id ? [reservation.lot.id.toString()] : undefined,
+                    content_name: reservation.lot ? `Pago de ${installmentsCount} Cuota(s) Lote ${reservation.lot.number}` : 'Pago Cuota',
+                    order_id: `cuota_${reservationId}_x${installmentsCount}`
+                }
+            });
+        } catch (metaErr) {
+            console.error("[Meta CAPI Error] Failed in sendInstallmentWebhook", metaErr);
+        }
+
         return { success: true };
     } catch (e) {
         console.error(`[Webhook] Failed to trigger installment webhook`, e);

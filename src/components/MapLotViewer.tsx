@@ -126,7 +126,20 @@ export default function MapLotViewer({ lots, onSelectLot, selectedLotId }: MapLo
                                     return (
                                         <button
                                             key={lot.id}
-                                            onClick={() => isClickable && onSelectLot && onSelectLot(lot)}
+                                            onClick={() => {
+                                                if (isClickable && onSelectLot) {
+                                                    import("@/lib/metaTracking").then(({ trackPixelEvent }) => {
+                                                        trackPixelEvent('ViewContent', {
+                                                            content_type: 'product',
+                                                            content_ids: [lot.id.toString()],
+                                                            content_name: `Lote ${lot.number} Etapa ${lot.stage}`,
+                                                            value: lot.totalPrice || 0,
+                                                            currency: 'CLP'
+                                                        });
+                                                    });
+                                                    onSelectLot(lot);
+                                                }
+                                            }}
                                             disabled={!isClickable}
                                             style={{
                                                 left: `${lot.x}%`,

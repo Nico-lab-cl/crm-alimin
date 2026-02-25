@@ -249,6 +249,37 @@ export async function GET(req: NextRequest) {
                     if (!res.ok) console.error("Payment Webhook failed:", res.status, res.statusText);
                     else console.log("Payment Webhook sent successfully");
                 }).catch(e => console.error("Failed to trigger payment webhook", e));
+
+                // Fire Meta CAPI Purchase for Reservation
+                try {
+                    const { sendMetaCAPIEvent, prepareCAPIUserData } = await import('@/lib/metaCAPI');
+                    const ipMatch = req.headers.get('x-forwarded-for') || '';
+                    const uaMatch = req.headers.get('user-agent') || '';
+
+                    const userData = prepareCAPIUserData(
+                        updatedReservation?.email,
+                        updatedReservation?.phone,
+                        updatedReservation?.name,
+                        ipMatch,
+                        uaMatch
+                    );
+
+                    await sendMetaCAPIEvent({
+                        eventName: 'Purchase',
+                        eventId: `reserva_${reservationId}_${commitResponse.buy_order}`,
+                        userData,
+                        customData: {
+                            currency: 'CLP',
+                            value: commitResponse.amount,
+                            content_ids: updatedReservation?.lot?.id ? [updatedReservation.lot.id.toString()] : undefined,
+                            content_type: 'product',
+                            content_name: updatedReservation?.lot ? `Reserva Lote ${updatedReservation.lot.number} Etapa ${updatedReservation.lot.stage}` : 'Reserva Lote',
+                            order_id: commitResponse.buy_order
+                        }
+                    });
+                } catch (metaErr) {
+                    console.error("Failed to trigger Meta CAPI", metaErr);
+                }
             }
             // -------------------------------------
 
