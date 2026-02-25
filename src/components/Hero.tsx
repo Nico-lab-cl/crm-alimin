@@ -82,7 +82,19 @@ export const Hero = ({ onExploreClick }: HeroProps) => {
                             variant="outline"
                             className="w-full sm:w-auto h-14 px-8 text-lg font-bold bg-white/10 backdrop-blur-md border-2 border-white/30 text-white hover:bg-white/20 hover:border-white/50 transition-all duration-300 hover:scale-105"
                         >
-                            <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
+                            <a
+                                href={whatsappUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={() => {
+                                    import('@/lib/metaTracking').then(({ trackPixelEvent }) => {
+                                        trackPixelEvent('Contact', {
+                                            content_name: 'WhatsApp Contact',
+                                            content_category: 'Hero'
+                                        });
+                                    });
+                                }}
+                            >
                                 Hablar con Asesor
                             </a>
                         </Button>

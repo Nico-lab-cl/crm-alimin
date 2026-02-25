@@ -85,7 +85,19 @@ export const InvestmentDetails = ({ selectedLot, onReserve, isSessionActive }: I
 
       <div className="mt-4 grid grid-cols-1 gap-3">
         <Button asChild size="lg" className="w-full bg-alimin-green hover:bg-alimin-green/90">
-          <a href={whatsappHref} target="_blank" rel="noreferrer">
+          <a
+            href={whatsappHref}
+            target="_blank"
+            rel="noreferrer"
+            onClick={() => {
+              import('@/lib/metaTracking').then(({ trackPixelEvent }) => {
+                trackPixelEvent('Contact', {
+                  content_name: 'WhatsApp Contact',
+                  content_category: 'Investment Details'
+                });
+              });
+            }}
+          >
             <MessageCircle className="w-4 h-4" />
             Consultar por WhatsApp
           </a>
