@@ -193,11 +193,10 @@ export function PaymentButtons({ reservationId, lot, reservation, acquisitionDat
                 <Dialog open={isPieModalOpen} onOpenChange={setIsPieModalOpen}>
                     <DialogTrigger asChild>
                         <Button
-                            className="w-full bg-[#36595F] hover:bg-[#2b464a] text-white font-bold opacity-70"
-                            disabled={!isAdminView}
+                            className="w-full bg-[#36595F] hover:bg-[#2b464a] text-white font-bold opacity-100"
                         >
                             <CreditCard className="mr-2 h-4 w-4" />
-                            {isAdminView ? "Pagar Pie" : "Pagar Pie (Próximamente)"}
+                            Pagar Pie
                         </Button>
                     </DialogTrigger>
                     <DialogContent className="bg-white text-black">
@@ -248,11 +247,10 @@ export function PaymentButtons({ reservationId, lot, reservation, acquisitionDat
                 <Dialog open={isCuotasModalOpen} onOpenChange={setIsCuotasModalOpen}>
                     <DialogTrigger asChild>
                         <Button
-                            className="w-full bg-[#36595F] hover:bg-[#2b464a] text-white font-bold opacity-70"
-                            disabled={!isAdminView}
+                            className="w-full bg-[#36595F] hover:bg-[#2b464a] text-white font-bold opacity-100"
                         >
                             <CreditCard className="mr-2 h-4 w-4" />
-                            {isAdminView ? "Pagar Cuotas" : "Pagar Cuotas (Próximamente)"}
+                            Pagar Cuotas
                         </Button>
                     </DialogTrigger>
                     {previewInterest > 0 && isAdminView && (

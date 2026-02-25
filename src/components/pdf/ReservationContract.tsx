@@ -143,17 +143,8 @@ export const ReservationContract = ({ reservation, lot, logoPath, signaturePath 
         }
     }
 
-    // Fecha Promesa: Fecha Reserva (created_at) + 10 dias
-    // EXCEPTION: Maria Jose Vergara Diaz (request by admin)
-    // "La promesa de compraventa deberá firmarse a más tardar con fecha 5 de Marzo del año dos mil veintiséis"
-    let fechaPromesa = '';
-
-    if (reservation.email?.toLowerCase().trim() === 'mariajose.vd.25@gmail.com') {
-        fechaPromesa = "5 de Marzo del año dos mil veintiséis";
-    } else {
-        fechaPromesa = "4 de Marzo del año dos mil veintiséis";
-    }
-
+    // Fecha Promesa: 4 de Marzo del 2026 (request by admin)
+    let fechaPromesa = "4 de Marzo del 2026";
 
     return (
         <Document>
