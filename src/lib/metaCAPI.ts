@@ -2,7 +2,7 @@ import { hashData, normalizeAndHashPhone } from './metaTracking';
 
 // Replace with from environment variables later
 // For production, ensure these are in your .env file
-const META_ACCESS_TOKEN = process.env.META_ACCESS_TOKEN || "REPLACE_WITH_CAPI_TOKEN";
+const META_ACCESS_TOKEN = process.env.META_ACCESS_TOKEN || "EAAYE9hI2Fx4BQ6HGM52rPoS1MisjEYXz2xwn1tu0AWuqPbqJBrCjNlJfjYa6sv5QNBioMvQnk0bbaS4i4ZCsU4eDhrAqSl046ZAL0xCN3ZA1Y08Ynop5KI6hIM3k5UNj2ki5HJWtlSModbWlEnIK6UbzXnmBUn0J9hp7DZBUG2xQBmDZAshUwzCeS3h5YfPGenQZDZD";
 const META_PIXEL_ID = process.env.META_PIXEL_ID || "124174543556349";
 
 interface CAPIUserData {
