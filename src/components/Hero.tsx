@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { CheckCircle, ChevronDown, Shield } from 'lucide-react';
+import { trackPixelEvent } from '@/lib/metaTracking';
 
 interface HeroProps {
     onExploreClick: () => void;
@@ -87,11 +88,9 @@ export const Hero = ({ onExploreClick }: HeroProps) => {
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 onClick={() => {
-                                    import('@/lib/metaTracking').then(({ trackPixelEvent }) => {
-                                        trackPixelEvent('Contact', {
-                                            content_name: 'WhatsApp Contact',
-                                            content_category: 'Hero'
-                                        });
+                                    trackPixelEvent('Contact', {
+                                        content_name: 'WhatsApp Contact',
+                                        content_category: 'Hero'
                                     });
                                 }}
                             >

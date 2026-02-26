@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { Instagram, Mail, MessageCircle, Youtube, Facebook } from 'lucide-react';
+import Link from 'next/link';
+import { trackPixelEvent } from '@/lib/metaTracking';
 
 export const StickyContactBar = () => {
     const pathname = usePathname();
@@ -128,11 +130,9 @@ export const StickyContactBar = () => {
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={() => {
-                        import('@/lib/metaTracking').then(({ trackPixelEvent }) => {
-                            trackPixelEvent('Contact', {
-                                content_name: 'WhatsApp Contact',
-                                content_category: 'Sticky Bar'
-                            });
+                        trackPixelEvent('Contact', {
+                            content_name: 'WhatsApp Contact',
+                            content_category: 'Sticky Bar'
                         });
                     }}
                     className="bg-alimin-green hover:bg-[#2b464a] text-white rounded-full px-4 py-2 flex items-center gap-2 transition-all hover:scale-105 whitespace-nowrap shadow-lg"

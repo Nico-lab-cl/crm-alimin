@@ -223,17 +223,18 @@ export const LotReservationPopup = ({ lot, isOpen, onClose, onConfirm, isTempora
         description: 'Redirigiendo al pago...',
       });
 
-      // Track InitiateCheckout on Pixel
-      import("@/lib/metaTracking").then(({ trackPixelEvent, hashData, normalizeAndHashPhone }) => {
+      // Track InitiateCheckout on Pixel synchronously
+      try {
+        const { trackPixelEvent, hashData, normalizeAndHashPhone } = await import("@/lib/metaTracking");
+
         trackPixelEvent('InitiateCheckout', {
           content_type: 'product',
           content_ids: [lot.id.toString()],
           content_name: `Reserva Lote ${lot.number} Etapa ${lot.stage}`,
           value: offerPrice, // 500000
           currency: 'CLP',
-        }, sessionId); // Pass sessionId to match with CAPI later if possible
+        }, sessionId);
 
-        // Also fire a manual user data push if possible (though better handled by CAPI, good for Advanced Matching)
         if (typeof window !== 'undefined' && (window as any).fbq) {
           (window as any).fbq('set', 'userData', {
             em: hashData(contactEmail),
@@ -241,7 +242,13 @@ export const LotReservationPopup = ({ lot, isOpen, onClose, onConfirm, isTempora
             fn: hashData(contactName.split(' ')[0]),
           });
         }
-      });
+      } catch (err) {
+        console.error("Meta tracking failed:", err);
+      }
+
+      // Small delay to ensure the network request for the Pixel has time to dispatch
+      // before the browser unloads the page for the Transbank redirect.
+      await new Promise(resolve => setTimeout(resolve, 400));
 
       onConfirm();
       handleClose();

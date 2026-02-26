@@ -2,6 +2,7 @@ import { Lot } from '@/types';
 import { MapPin, Ruler, DollarSign, Calculator, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { OFFER_PRICE } from '@/services/mockData';
+import { trackPixelEvent } from '@/lib/metaTracking';
 
 interface InvestmentDetailsProps {
   selectedLot: Lot | null;
@@ -89,12 +90,11 @@ export const InvestmentDetails = ({ selectedLot, onReserve, isSessionActive }: I
             href={whatsappHref}
             target="_blank"
             rel="noreferrer"
+            className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-primary text-white rounded-full font-semibold hover:bg-primary/90 transition-all shadow-[0_4px_14px_0_rgb(34_197_94_/_39%)] hover:shadow-[0_6px_20px_rgba(34,197,94,0.4)]"
             onClick={() => {
-              import('@/lib/metaTracking').then(({ trackPixelEvent }) => {
-                trackPixelEvent('Contact', {
-                  content_name: 'WhatsApp Contact',
-                  content_category: 'Investment Details'
-                });
+              trackPixelEvent('Contact', {
+                content_name: 'WhatsApp Contact',
+                content_category: 'Investment Details'
               });
             }}
           >
