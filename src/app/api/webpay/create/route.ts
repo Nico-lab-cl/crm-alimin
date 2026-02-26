@@ -5,6 +5,8 @@ import { webpayCreate, WEBPAY_CONFIG } from '@/lib/transbank';
 import { buildBuyOrder, isValidRut } from '@/lib/logic';
 import { z } from 'zod';
 import crypto from 'node:crypto';
+import { sendMetaCAPIEvent } from '@/lib/metaCAPI';
+import { hashData, normalizeAndHashPhone } from '@/lib/metaTracking';
 
 export const dynamic = 'force-dynamic';
 
@@ -154,6 +156,28 @@ export async function POST(req: NextRequest) {
                 reservation_id: reservationId,
                 lot_id: lotId,
                 status: 'INITIALIZED'
+            }
+        });
+
+        // 8. Fire Meta CAPI InitiateCheckout Event
+        // We do this SERVER-SIDE to guarantee it's not lost by browser navigation or AdBlockers
+        await sendMetaCAPIEvent({
+            eventName: 'InitiateCheckout',
+            eventId: sessionId, // Use sessionId to potentially deduplicate if frontend also fires
+            actionSource: 'website',
+            userData: {
+                em: hashData(email) ? [hashData(email)!] : undefined,
+                ph: normalizeAndHashPhone(phone) ? [normalizeAndHashPhone(phone)!] : undefined,
+                fn: hashData(name.split(' ')[0]) ? [hashData(name.split(' ')[0])!] : undefined,
+                client_ip_address: req.headers.get('x-forwarded-for') || undefined,
+                client_user_agent: req.headers.get('user-agent') || undefined,
+            },
+            customData: {
+                currency: 'CLP',
+                value: amount,
+                content_ids: [lotId.toString()],
+                content_type: 'product',
+                content_name: `Reserva Lote ${lot?.number || lotId}`,
             }
         });
 
