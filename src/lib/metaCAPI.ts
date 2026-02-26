@@ -41,6 +41,7 @@ interface CAPIEventParams {
 export async function sendMetaCAPIEvent(params: CAPIEventParams) {
     try {
         const payload = {
+            test_event_code: 'TEST82282',
             data: [
                 {
                     event_name: params.eventName,
