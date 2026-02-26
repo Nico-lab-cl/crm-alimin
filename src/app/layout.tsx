@@ -4,6 +4,7 @@ import "./globals.css";
 import { Providers } from "./providers";
 import { StickyContactBar } from "@/components/StickyContactBar";
 import { CookieBanner } from "@/components/CookieBanner";
+import Script from "next/script";
 
 // Body font - Clean and readable
 const inter = Inter({
@@ -41,22 +42,20 @@ export default function RootLayout({
         suppressHydrationWarning
       >
         {/* Meta Pixel Code */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              !function(f,b,e,v,n,t,s)
-              {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-              n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-              if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-              n.queue=[];t=b.createElement(e);t.async=!0;
-              t.src=v;s=b.getElementsByTagName(e)[0];
-              s.parentNode.insertBefore(t,s)}(window, document,'script',
-              'https://connect.facebook.net/en_US/fbevents.js');
-              fbq('init', '1599982444486132', { test_event_code: 'TEST82282' }); // Real Pixel ID with Test Code
-              fbq('track', 'PageView');
-            `,
-          }}
-        />
+        <Script id="meta-pixel" strategy="afterInteractive">
+          {`
+            !function(f,b,e,v,n,t,s)
+            {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+            n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+            if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+            n.queue=[];t=b.createElement(e);t.async=!0;
+            t.src=v;s=b.getElementsByTagName(e)[0];
+            s.parentNode.insertBefore(t,s)}(window, document,'script',
+            'https://connect.facebook.net/en_US/fbevents.js');
+            fbq('init', '1599982444486132', { test_event_code: 'TEST82282' }); // Real Pixel ID with Test Code
+            fbq('track', 'PageView');
+          `}
+        </Script>
         <noscript>
           <img
             height="1"
