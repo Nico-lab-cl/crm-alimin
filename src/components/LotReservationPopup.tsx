@@ -197,6 +197,16 @@ export const LotReservationPopup = ({ lot, isOpen, onClose, onConfirm, isTempora
     await new Promise(resolve => setTimeout(resolve, 300));
 
     try {
+      let utmData = {};
+      try {
+        const utmDataStr = sessionStorage.getItem('lomas_utm_data');
+        if (utmDataStr) {
+          utmData = JSON.parse(utmDataStr);
+        }
+      } catch (e) {
+        console.warn("Could not parse UTM data");
+      }
+
       const res = await fetch('/api/webpay/create', {
         method: 'POST',
         headers: {
@@ -216,6 +226,7 @@ export const LotReservationPopup = ({ lot, isOpen, onClose, onConfirm, isTempora
           address_number: formData.address_number,
           address_commune: formData.address_commune,
           address_region: formData.address_region,
+          ...utmData
         }),
       });
 

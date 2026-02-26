@@ -60,6 +60,13 @@ model Reservation {
   address_commune String?
   address_region  String?
 
+  // Ad Tracking / Attributions
+  utm_source      String?
+  utm_medium      String?
+  utm_campaign    String?
+  utm_content     String?
+  utm_term        String?
+
   // Payment Tracking
   pie_status      String?   @default("PENDING") // PENDING, PAID
   installments_paid Int?    @default(0)

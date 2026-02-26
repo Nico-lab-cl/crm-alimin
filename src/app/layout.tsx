@@ -4,6 +4,7 @@ import "./globals.css";
 import { Providers } from "./providers";
 import { StickyContactBar } from "@/components/StickyContactBar";
 import { CookieBanner } from "@/components/CookieBanner";
+import { UtmTracker } from "@/components/UtmTracker";
 import Script from "next/script";
 
 // Body font - Clean and readable
@@ -41,6 +42,7 @@ export default function RootLayout({
         className={`${inter.variable} ${outfit.variable} font-sans antialiased`}
         suppressHydrationWarning
       >
+        <UtmTracker />
         {/* Meta Pixel Code */}
         <Script id="meta-pixel" strategy="afterInteractive">
           {`

@@ -27,6 +27,11 @@ const createSchema = z.object({
     address_number: z.string().optional(),
     address_commune: z.string().optional(),
     address_region: z.string().optional(),
+    utm_source: z.string().optional(),
+    utm_medium: z.string().optional(),
+    utm_campaign: z.string().optional(),
+    utm_content: z.string().optional(),
+    utm_term: z.string().optional(),
 });
 
 // Constants moved inside handler to ensure runtime env vars are read correctly
@@ -47,7 +52,8 @@ export async function POST(req: NextRequest) {
         const {
             lotId, sessionId, name, email, phone, rut,
             marital_status, profession, nationality,
-            address_street, address_number, address_commune, address_region
+            address_street, address_number, address_commune, address_region,
+            utm_source, utm_medium, utm_campaign, utm_content, utm_term
         } = parsed.data;
 
         const now = new Date();
@@ -109,7 +115,12 @@ export async function POST(req: NextRequest) {
                     folio,
                     status: 'pending_payment',
                     expires_at: expiresAt,
-                    session_id: sessionId
+                    session_id: sessionId,
+                    utm_source,
+                    utm_medium,
+                    utm_campaign,
+                    utm_content,
+                    utm_term
                 }
             });
 
@@ -188,6 +199,11 @@ export async function POST(req: NextRequest) {
                 content_ids: [lotId.toString()],
                 content_type: 'product',
                 content_name: `Reserva Lote ${lot?.number || lotId}`,
+                utm_source,
+                utm_medium,
+                utm_campaign,
+                utm_content,
+                utm_term
             }
         });
 
