@@ -52,7 +52,7 @@ export default function RootLayout({
               t.src=v;s=b.getElementsByTagName(e)[0];
               s.parentNode.insertBefore(t,s)}(window, document,'script',
               'https://connect.facebook.net/en_US/fbevents.js');
-              fbq('init', '124174543556349'); // TODO: Replace with Real Pixel ID later
+              fbq('init', '1599982444486132'); // Real Pixel ID
               fbq('track', 'PageView');
             `,
           }}
