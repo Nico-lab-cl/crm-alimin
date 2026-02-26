@@ -25,6 +25,7 @@ import { RutInput } from '@/components/RutInput';
 import { z } from 'zod';
 import { validateRutRaw } from '@/lib/rut';
 import { REGIONES_Y_COMUNAS } from '@/data/chile-data';
+import { trackPixelEvent, hashData, normalizeAndHashPhone } from '@/lib/metaTracking';
 
 
 
@@ -176,7 +177,32 @@ export const LotReservationPopup = ({ lot, isOpen, onClose, onConfirm, isTempora
     const contactEmail = formData.email.trim();
     const contactPhone = formData.phone.trim();
     const contactRut = formData.rut.trim();
+    const offerPrice = lot.totalPrice || OFFER_PRICE;
 
+    // Fire the InitiateCheckout pixel immediately before reaching out to the backend
+    try {
+      trackPixelEvent('InitiateCheckout', {
+        content_type: 'product',
+        content_ids: [lot.id.toString()],
+        content_name: `Reserva Lote ${lot.number} Etapa ${lot.stage}`,
+        value: offerPrice,
+        currency: 'CLP',
+      }, sessionId);
+
+      if (typeof window !== 'undefined' && (window as any).fbq) {
+        (window as any).fbq('set', 'userData', {
+          em: hashData(contactEmail),
+          ph: normalizeAndHashPhone(contactPhone),
+          fn: hashData(contactName.split(' ')[0]),
+        });
+      }
+    } catch (err) {
+      console.error("Meta tracking failed:", err);
+    }
+
+    // Tiny delay to ensure the pixel network request has time to get dispatched 
+    // before the main thread starts the API fetch and potential navigation
+    await new Promise(resolve => setTimeout(resolve, 300));
 
     try {
       const res = await fetch('/api/webpay/create', {
