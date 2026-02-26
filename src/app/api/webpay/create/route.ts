@@ -134,12 +134,20 @@ export async function POST(req: NextRequest) {
             });
         });
 
-        // 6. Create Webpay Transaction (AFTER successful DB transaction)
+        const returnUrl = WEBPAY_CONFIG.returnUrl;
+
+        // Extract Meta cookies for CAPI Match Quality
+        const cookiesHeader = req.headers.get('cookie') || '';
+        const fbpMatch = cookiesHeader.match(/_fbp=([^;]+)/);
+        const fbcMatch = cookiesHeader.match(/_fbc=([^;]+)/);
+        const fbp = fbpMatch ? fbpMatch[1] : undefined;
+        const fbc = fbcMatch ? fbcMatch[1] : undefined;
+
         const webpayRes = await webpayCreate({
             buyOrder,
             sessionId,
             amount,
-            returnUrl: WEBPAY_CONFIG.returnUrl,
+            returnUrl,
         });
 
         // @ts-ignore
@@ -171,6 +179,8 @@ export async function POST(req: NextRequest) {
                 fn: hashData(name.split(' ')[0]) ? [hashData(name.split(' ')[0])!] : undefined,
                 client_ip_address: req.headers.get('x-forwarded-for') || undefined,
                 client_user_agent: req.headers.get('user-agent') || undefined,
+                fbp,
+                fbc,
             },
             customData: {
                 currency: 'CLP',
