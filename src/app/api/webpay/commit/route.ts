@@ -253,8 +253,8 @@ export async function GET(req: NextRequest) {
                 // Fire Meta CAPI Purchase for Reservation
                 try {
                     const { sendMetaCAPIEvent, prepareCAPIUserData } = await import('@/lib/metaCAPI');
-                    const ipMatch = req.headers.get('x-forwarded-for') || '';
-                    const uaMatch = req.headers.get('user-agent') || '';
+                    const ipMatch = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || req.headers.get('x-real-ip') || '127.0.0.1';
+                    const uaMatch = req.headers.get('user-agent') || 'Mozilla/5.0 (Unknown; Node.js)';
 
                     const userData = prepareCAPIUserData(
                         updatedReservation?.email,

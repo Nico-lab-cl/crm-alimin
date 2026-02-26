@@ -65,7 +65,14 @@ export async function sendMetaCAPIEvent(params: CAPIEventParams) {
         });
 
         const result = await response.json();
-        console.log(`[Meta CAPI] Event ${params.eventName} sent. Result:`, result);
+
+        if (!response.ok) {
+            console.error(`[Meta CAPI] API Rejected Event ${params.eventName}:`, JSON.stringify(result, null, 2));
+            console.error(`[Meta CAPI] Sent Payload:`, JSON.stringify(payload, null, 2));
+        } else {
+            console.log(`[Meta CAPI] Event ${params.eventName} sent successfully.`, result);
+        }
+
         return result;
     } catch (error) {
         console.error(`[Meta CAPI Error] Failed to send event ${params.eventName}:`, error);
