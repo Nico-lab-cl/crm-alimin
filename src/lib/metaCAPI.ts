@@ -3,7 +3,7 @@ import { hashData, normalizeAndHashPhone } from './metaTracking';
 // Replace with from environment variables later
 // For production, ensure these are in your .env file
 const META_ACCESS_TOKEN = process.env.META_ACCESS_TOKEN || "REPLACE_WITH_CAPI_TOKEN";
-const META_PIXEL_ID = process.env.META_PIXEL_ID || "REPLACE_WITH_YOUR_PIXEL_ID";
+const META_PIXEL_ID = process.env.META_PIXEL_ID || "124174543556349";
 
 interface CAPIUserData {
     em?: string[]; // Email in SHA256 array
