@@ -483,7 +483,7 @@ export async function triggerLegacyWorkflow(reservationId: string) {
         const user = reservation.buyer;
         let resetLink = null;
 
-        // If it's a new legacy user (they need to set a password), send welcome email
+        // 1. Send to Password Reset Webhook (as Welcome Email) if new user
         if (user.mustChangePassword) {
             const secret = new TextEncoder().encode(process.env.AUTH_SECRET || "fallback_secret")
             const token = await new SignJWT({ email: user.email, sub: user.id })
@@ -495,7 +495,6 @@ export async function triggerLegacyWorkflow(reservationId: string) {
             const baseUrl = process.env.NEXTAUTH_URL || "https://aliminlomasdelmar.com"
             resetLink = `${baseUrl}/reset-password?token=${token}`
 
-            // Send to Password Reset Webhook (as Welcome Email)
             const webhookUrl = process.env.N8N_PASSWORD_RESET_WEBHOOK_URL
             if (webhookUrl) {
                 await fetch(webhookUrl, {
@@ -512,7 +511,49 @@ export async function triggerLegacyWorkflow(reservationId: string) {
             }
         }
 
-        // Send Pie Webhook as "Confirmation of Acquired Lot"
+        // 2. Trigger Main Payment Webhook (Simulation of Payment Success)
+        const paymentWebhookUrl = process.env.N8N_WEBHOOK_URL || "https://n8n-n8n.yszha2.easypanel.host/webhook/7b928d3b-2850-462d-87df-f6a87fe4108a";
+        const paymentPayload = {
+            contact_name: reservation.name,
+            contact_email: reservation.email,
+            contact_phone: reservation.phone,
+            contact_rut: reservation.rut,
+            contact_address: reservation.address,
+            lot_number: reservation.lot?.number,
+            lot_id: reservation.lot?.id,
+            lot_stage: reservation.lot?.stage,
+            lot_area_m2: reservation.lot?.area_m2,
+            lot_total_price: reservation.lot?.price_total_clp,
+            amount_paid: reservation.lot?.reservation_amount_clp || 500000,
+            transbank_order_id: `OFFLINE_${reservation.id}`,
+            authorization_code: "OFFLINE",
+            payment_status: 'approved',
+            timestamp: new Date().toISOString(),
+            reservation_id: reservation.id,
+            folio: reservation.folio,
+            payment_type_code: "VD", // Venta Débito as placeholder
+            installments_number: 0,
+            scope: 'RESERVATION',
+            is_legacy: true,
+            user_id: user.id
+        };
+
+        try {
+            const res = await fetch(paymentWebhookUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(paymentPayload)
+            });
+            if (!res.ok) {
+                console.error("Main Payment Webhook failed:", res.status, await res.text());
+            } else {
+                console.log("Main Payment Webhook sent successfully for OFFLINE sale");
+            }
+        } catch (e) {
+            console.error("Failed to trigger main payment webhook", e);
+        }
+
+        // 3. Send Pie Webhook as "Confirmation of Acquired Lot"
         await sendPieWebhook(reservation.id, 0).catch(e => console.error("Failed to trigger pie webhook for legacy", e));
 
         // Mark workflow as activated
