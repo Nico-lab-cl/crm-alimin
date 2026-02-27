@@ -380,39 +380,56 @@ export async function assignLegacyLotOwner(data: {
             }
         });
 
-        // Create a "Completed" reservation linking user and lot
+        // Create or update a "Completed" reservation linking user and lot
+        // We check if a reservation already exists to avoid duplicates
         const fullAddress = [address_street, address_number, address_commune, address_region].filter(Boolean).join(", ");
 
-        const reservation = await prisma.reservation.create({
-            data: {
+        const existingReservation = await prisma.reservation.findFirst({
+            where: {
                 lot_id: lotId,
-                buyer_id: user.id,
-                name,
-                email,
-                phone,
-                rut,
-                status: 'paid',
-                pipeline_stage: 'VENTA_CERRADA',
-                pie_status: 'PAID', // In offline, the pie is considered paid if they signed.
-                installments_paid: paidInstallments,
-                address: fullAddress || 'Dirección no especificada (Venta Legacy)',
+                status: { in: ['paid', 'confirmed'] }
+            },
+            orderBy: { created_at: 'desc' }
+        });
 
-                // New legal fields
-                marital_status: marital_status || 'SOLTERO/A', // Default fallback
-                profession: profession || 'Oficio no informado',
-                nationality: nationality || 'Chilena',
-                address_street,
-                address_number,
-                address_commune,
-                address_region,
+        const reservationData = {
+            buyer_id: user.id,
+            name,
+            email,
+            phone,
+            rut,
+            status: 'paid',
+            pipeline_stage: 'VENTA_CERRADA',
+            pie_status: 'PAID',
+            installments_paid: paidInstallments,
+            address: fullAddress || 'Dirección no especificada (Venta Legacy)',
+            marital_status: marital_status || 'SOLTERO/A',
+            profession: profession || 'Oficio no informado',
+            nationality: nationality || 'Chilena',
+            address_street,
+            address_number,
+            address_commune,
+            address_region,
+            is_legacy: true,
+            workflow_activated: false,
+            legacy_current_installment: legacy_current_installment || 1,
+            legacy_debt_start_date: legacy_debt_start_date ? new Date(legacy_debt_start_date) : null
+        };
 
-                // Legacy Offline indicators
-                is_legacy: true,
-                workflow_activated: false,
-                legacy_current_installment: legacy_current_installment || 1,
-                legacy_debt_start_date: legacy_debt_start_date ? new Date(legacy_debt_start_date) : null
-            }
-        })
+        let reservation;
+        if (existingReservation) {
+            // Update the existing reservation instead of creating a duplicate
+            reservation = await prisma.reservation.update({
+                where: { id: existingReservation.id },
+                data: reservationData
+            });
+        } else {
+            // No existing reservation for this lot — create a new one
+            reservation = await prisma.reservation.create({
+                data: { lot_id: lotId, ...reservationData }
+            });
+        }
+
 
         // Log action
         await logAdminAction({
