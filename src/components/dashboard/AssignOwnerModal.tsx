@@ -145,7 +145,7 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
                             <Label htmlFor="marital_status">Estado Civil</Label>
                             <select
                                 id="marital_status"
-                                required
+
                                 value={formData.marital_status}
                                 onChange={(e) => setFormData({ ...formData, marital_status: e.target.value })}
                                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
@@ -161,7 +161,7 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
                             <Label htmlFor="profession">Profesión u Oficio</Label>
                             <Input
                                 id="profession"
-                                required
+
                                 value={formData.profession}
                                 onChange={(e) => setFormData({ ...formData, profession: e.target.value })}
                             />
@@ -172,7 +172,7 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
                         <Label htmlFor="nationality">Nacionalidad</Label>
                         <Input
                             id="nationality"
-                            required
+
                             value={formData.nationality}
                             onChange={(e) => setFormData({ ...formData, nationality: e.target.value })}
                         />
@@ -183,7 +183,7 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
                             <Label htmlFor="address_street">Calle / Pasaje</Label>
                             <Input
                                 id="address_street"
-                                required
+
                                 value={formData.address_street}
                                 onChange={(e) => setFormData({ ...formData, address_street: e.target.value })}
                             />
@@ -192,7 +192,7 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
                             <Label htmlFor="address_number">Número</Label>
                             <Input
                                 id="address_number"
-                                required
+
                                 value={formData.address_number}
                                 onChange={(e) => setFormData({ ...formData, address_number: e.target.value })}
                             />
@@ -204,7 +204,7 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
                             <Label htmlFor="address_region">Región</Label>
                             <select
                                 id="address_region"
-                                required
+
                                 value={formData.address_region}
                                 onChange={(e) => setFormData({ ...formData, address_region: e.target.value, address_commune: "" })}
                                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
@@ -221,7 +221,7 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
                             <Label htmlFor="address_commune">Comuna</Label>
                             <select
                                 id="address_commune"
-                                required
+
                                 disabled={!formData.address_region}
                                 value={formData.address_commune}
                                 onChange={(e) => setFormData({ ...formData, address_commune: e.target.value })}
