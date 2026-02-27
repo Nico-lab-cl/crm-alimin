@@ -183,6 +183,7 @@ export async function getAdminLots() {
             include: {
                 reservations: {
                     where: { status: { in: ['paid', 'confirmed'] } },
+                    orderBy: { created_at: 'desc' },
                     take: 1,
                     select: {
                         id: true,
