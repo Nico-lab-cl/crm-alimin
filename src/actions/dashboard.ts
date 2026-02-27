@@ -409,9 +409,7 @@ export async function assignLegacyLotOwner(data: {
                 is_legacy: true,
                 workflow_activated: false,
                 legacy_current_installment: legacy_current_installment || 1,
-                legacy_debt_start_date: legacy_debt_start_date ? new Date(legacy_debt_start_date) : null,
-                signed_at: new Date(), // Pre-signed offline
-                promesa_signed_at: new Date()
+                legacy_debt_start_date: legacy_debt_start_date ? new Date(legacy_debt_start_date) : null
             }
         })
 
