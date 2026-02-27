@@ -210,7 +210,7 @@ export const AdminLotList = ({ lots: initialLots }: AdminLotListProps) => {
                                                     size="sm"
                                                     onClick={async () => {
                                                         if (!lot.reservations?.[0]?.id) return;
-                                                        if (!confirm("¿Estás seguro de activar el Workflow? Esto enviará un correo de bienvenida al cliente con su clave y notificará la venta a n8n.")) return;
+                                                        if (!confirm("¿Estás seguro de activar el Workflow? Esto activará al cliente en la base de datos de Aliman y enviará su correo de bienvenida.")) return;
 
                                                         setLoadingIds(prev => new Set(prev).add(lot.id));
                                                         try {

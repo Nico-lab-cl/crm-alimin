@@ -88,24 +88,31 @@ export async function POST(request: Request) {
 
                 let daysLate = 0;
 
-                // SMART SIMULATION LOGIC
-                // effectiveNow is the Simulated Payment Date
+                // SMART SIMULATION LOGIC & LEGACY DEBT HANDLING
                 const effectiveNow = comparisonDate || simulatedDate || new Date();
                 const now = new Date(effectiveNow);
                 const chileNow = new Date(now.toLocaleString("en-US", { timeZone: "America/Santiago" }));
-                // Reset hours for fair comparison
                 chileNow.setHours(0, 0, 0, 0);
 
-                // Grace Period End (10th of the due month)
-                const gracePeriodEnd = new Date(dueDate);
-                gracePeriodEnd.setDate(10);
-                // Grace period lasts until end of that day
-                gracePeriodEnd.setHours(23, 59, 59, 999);
+                if (reservation.is_legacy && reservation.legacy_debt_start_date) {
+                    // LEGACY CALCULATION: Compares target date to the designated debt start date directly
+                    const debtStart = new Date(reservation.legacy_debt_start_date);
+                    debtStart.setHours(0, 0, 0, 0);
 
-                // Calculate Delay
-                if (chileNow > gracePeriodEnd) {
-                    const diffTime = chileNow.getTime() - gracePeriodEnd.getTime();
-                    daysLate = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    if (chileNow > debtStart) {
+                        const diffTime = chileNow.getTime() - debtStart.getTime();
+                        daysLate = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    }
+                } else {
+                    // STANDARD ONLINE CALCULATION: Compares target date to the computed grace period end
+                    const gracePeriodEnd = new Date(dueDate);
+                    gracePeriodEnd.setDate(10);
+                    gracePeriodEnd.setHours(23, 59, 59, 999);
+
+                    if (chileNow > gracePeriodEnd) {
+                        const diffTime = chileNow.getTime() - gracePeriodEnd.getTime();
+                        daysLate = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    }
                 }
 
                 if (daysLate > 0) {

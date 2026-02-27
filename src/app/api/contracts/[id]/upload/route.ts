@@ -15,7 +15,7 @@ export async function POST(
         }
 
         const { id } = await params;
-        const { fileData } = await request.json();
+        const { fileData, type, fileName } = await request.json();
 
         if (!fileData) {
             return NextResponse.json({ error: "No file data provided" }, { status: 400 });
@@ -26,15 +26,43 @@ export async function POST(
             return NextResponse.json({ error: "Invalid file format. Must be a base64 PDF." }, { status: 400 });
         }
 
-        // Update the reservation record with the uploaded contract base64 string
-        const updatedReservation = await prisma.reservation.update({
-            where: { id },
-            data: {
-                uploaded_contract_url: fileData,
-            },
-        });
+        const reservation = await prisma.reservation.findUnique({ where: { id } });
+        if (!reservation) {
+            return NextResponse.json({ error: "Reservation not found" }, { status: 404 });
+        }
 
-        return NextResponse.json({ success: true, reservation: updatedReservation });
+        if (type === "legacy") {
+            // Handle multiple offline contracts
+            let existingContracts: { name: string, url: string }[] = [];
+            if (reservation.legacy_uploaded_contracts) {
+                try {
+                    existingContracts = JSON.parse(reservation.legacy_uploaded_contracts);
+                } catch (e) {
+                    // ignore parse error, start fresh
+                }
+            }
+
+            existingContracts.push({
+                name: fileName || `Documento_Offline_${existingContracts.length + 1}.pdf`,
+                url: fileData
+            });
+
+            const updatedReservation = await prisma.reservation.update({
+                where: { id },
+                data: { legacy_uploaded_contracts: JSON.stringify(existingContracts) },
+            });
+
+            return NextResponse.json({ success: true, reservation: updatedReservation });
+        } else {
+            // Traditional Promesa Flow
+            const updatedReservation = await prisma.reservation.update({
+                where: { id },
+                data: {
+                    uploaded_contract_url: fileData,
+                },
+            });
+            return NextResponse.json({ success: true, reservation: updatedReservation });
+        }
 
     } catch (error) {
         console.error("Error uploading contract:", error);

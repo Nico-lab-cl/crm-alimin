@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { triggerLegacyWorkflow } from "@/actions/dashboard";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
+import { ContractUploadAction } from "@/components/admin/ContractUploadAction";
 import {
     Popover,
     PopoverContent,
@@ -349,6 +350,26 @@ export function AdminPlotManager({ reservations, allClients, userId, initialUser
                                             {res.legacy_debt_start_date && (
                                                 <div className="text-[10px] bg-red-900/30 text-red-400 px-2 py-1 rounded border border-red-900/50">
                                                     ⚠️ Cliente traspasado con deuda desde: {new Date(res.legacy_debt_start_date).toLocaleDateString('es-CL')}
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    {!isUserView && res.is_legacy && (
+                                        <div className="pt-2">
+                                            <ContractUploadAction
+                                                reservationId={res.id}
+                                                reservationName={res.buyer?.name || "Cliente"}
+                                                label="Subir Documento Físico (PDF)"
+                                                type="legacy"
+                                                onUploadComplete={() => {
+                                                    toast.success("Documento físico subido para esta venta offline.");
+                                                    window.location.reload();
+                                                }}
+                                            />
+                                            {res.legacy_uploaded_contracts && JSON.parse(res.legacy_uploaded_contracts).length > 0 && (
+                                                <div className="mt-2 text-xs text-gray-400">
+                                                    📄 {JSON.parse(res.legacy_uploaded_contracts).length} documento(s) físico(s) subido(s).
                                                 </div>
                                             )}
                                         </div>

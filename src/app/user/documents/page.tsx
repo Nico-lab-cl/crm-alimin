@@ -20,6 +20,8 @@ interface Reservation {
         number: string;
         stage: number;
     };
+    is_legacy?: boolean;
+    legacy_uploaded_contracts?: string | null;
 }
 
 export default function UserDocumentsPage() {
@@ -143,6 +145,27 @@ export default function UserDocumentsPage() {
                                                     </a>
                                                 )}
                                             </div>
+
+                                            {res.is_legacy && res.legacy_uploaded_contracts && JSON.parse(res.legacy_uploaded_contracts).length > 0 && (
+                                                <>
+                                                    <div className="h-px w-full bg-white/10" />
+                                                    <div className="space-y-3">
+                                                        <h3 className="font-semibold text-gray-200 text-base">Documentos Físicos (Offline)</h3>
+                                                        <p className="text-xs text-gray-400">Contratos firmados presencialmente y respaldados en digital por la inmobiliaria.</p>
+                                                        {JSON.parse(res.legacy_uploaded_contracts).map((doc: any, i: number) => (
+                                                            <a
+                                                                key={i}
+                                                                href={doc.url}
+                                                                download={doc.name}
+                                                                className="mt-2 inline-flex items-center gap-2 px-4 py-2 bg-indigo-600/20 hover:bg-indigo-600/40 border border-indigo-500/30 text-indigo-300 rounded text-sm transition-colors w-full justify-center"
+                                                            >
+                                                                <Download className="h-4 w-4" />
+                                                                Descargar {doc.name.replace(".pdf", "")}
+                                                            </a>
+                                                        ))}
+                                                    </div>
+                                                </>
+                                            )}
 
                                             <div className="h-px w-full bg-white/10" />
 

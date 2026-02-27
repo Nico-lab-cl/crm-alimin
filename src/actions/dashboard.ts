@@ -443,8 +443,20 @@ export async function triggerLegacyWorkflow(reservationId: string) {
             include: { buyer: true, lot: true }
         });
 
-        if (!reservation || !reservation.buyer || !reservation.is_legacy) {
-            return { error: "Reserva no encontrada o no es una asignación manual (legacy)." }
+        console.log("Trigger Legacy Debug:", {
+            hasReservation: !!reservation,
+            hasBuyer: !!reservation?.buyer,
+            isLegacy: reservation?.is_legacy
+        });
+
+        if (!reservation) {
+            return { error: "Reserva no encontrada." }
+        }
+        if (!reservation.is_legacy) {
+            return { error: "No es una asignación manual (legacy)." }
+        }
+        if (!reservation.buyer) {
+            return { error: "La reserva no tiene un Usuario (buyer) asociado en la base de datos." }
         }
 
         if (reservation.workflow_activated) {

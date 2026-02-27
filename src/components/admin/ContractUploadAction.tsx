@@ -12,7 +12,21 @@ import {
     DialogTrigger,
 } from "@/components/ui/dialog";
 
-export function ContractUploadAction({ reservationId, reservationName, onUploadComplete, label }: { reservationId: string, reservationName: string, onUploadComplete?: () => void, label?: string }) {
+export function ContractUploadAction({
+    reservationId,
+    reservationName,
+    onUploadComplete,
+    label,
+    type,
+    fileName
+}: {
+    reservationId: string,
+    reservationName: string,
+    onUploadComplete?: () => void,
+    label?: string,
+    type?: string,
+    fileName?: string
+}) {
     const [open, setOpen] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -47,7 +61,11 @@ export function ContractUploadAction({ reservationId, reservationName, onUploadC
                     headers: {
                         "Content-Type": "application/json",
                     },
-                    body: JSON.stringify({ fileData: base64 }),
+                    body: JSON.stringify({
+                        fileData: base64,
+                        type: type || undefined,
+                        fileName: fileName || file.name
+                    }),
                 });
 
                 if (!res.ok) {

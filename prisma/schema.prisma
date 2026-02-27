@@ -59,6 +59,7 @@ model Reservation {
   address_number        String?
   address_commune       String?
   address_region        String?
+  legacy_uploaded_contracts String? // Stores JSON stringified array of uploaded file URLs for offline sales
 
   // Ad Tracking / Attributions
   utm_source   String?

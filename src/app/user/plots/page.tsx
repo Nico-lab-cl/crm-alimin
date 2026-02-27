@@ -26,6 +26,9 @@ interface Reservation {
     created_at: string;
     signed_at?: string | null;
     uploaded_contract_url?: string | null;
+    is_legacy?: boolean;
+    legacy_uploaded_contracts?: string | null;
+    legacy_debt_start_date?: string | null;
 }
 
 import { SignContractModal } from "@/components/SignContractModal";
@@ -168,16 +171,32 @@ export default function UserPlotsPage() {
                                                     <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
                                                     Firmado Digitalmente (Ver)
                                                 </a>
-                                            ) : (
+                                            ) : res.is_legacy ? null : (
                                                 <SignContractModal
                                                     reservationId={res.id}
                                                     lotNumber={res.lot.number}
                                                     lotStage={res.lot.stage}
                                                     onSuccess={() => {
-                                                        // Reload to update state
                                                         window.location.reload();
                                                     }}
                                                 />
+                                            )}
+
+                                            {res.is_legacy && res.legacy_uploaded_contracts && JSON.parse(res.legacy_uploaded_contracts).length > 0 && (
+                                                <div className="space-y-2 pb-2">
+                                                    <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Documentos Físicos (Offline)</h4>
+                                                    {JSON.parse(res.legacy_uploaded_contracts).map((doc: any, i: number) => (
+                                                        <a
+                                                            key={i}
+                                                            href={doc.url}
+                                                            download={doc.name}
+                                                            className="w-full py-2 px-4 bg-indigo-900/30 text-indigo-400 border border-indigo-500/30 rounded text-center text-sm flex items-center justify-center gap-2 hover:bg-indigo-900/50 transition-colors cursor-pointer"
+                                                        >
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-download"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" x2="12" y1="15" y2="3" /></svg>
+                                                            Descargar {doc.name.replace(".pdf", "")}
+                                                        </a>
+                                                    ))}
+                                                </div>
                                             )}
 
 
@@ -187,7 +206,9 @@ export default function UserPlotsPage() {
                                                 lot={res.lot}
                                                 reservation={{
                                                     pie_status: res.pie_status,
-                                                    installments_paid: res.installments_paid
+                                                    installments_paid: res.installments_paid,
+                                                    is_legacy: res.is_legacy,
+                                                    legacy_debt_start_date: res.legacy_debt_start_date
                                                 }}
                                                 acquisitionDate={res.created_at}
                                             />

@@ -34,6 +34,8 @@ interface PaymentButtonsProps {
     reservation: {
         pie_status: string | null;
         installments_paid: number | null;
+        is_legacy?: boolean;
+        legacy_debt_start_date?: Date | string | null;
     };
     acquisitionDate?: string | null;
     isAdminView?: boolean;
@@ -164,23 +166,46 @@ export function PaymentButtons({ reservationId, lot, reservation, acquisitionDat
 
         // Check ONLY the first pending quota
         const instNum = paidCuotas + 1;
-        if (instNum <= totalCuotas && acquisitionDate) {
-            const iDue = getInstallmentDueDate(acquisitionDate, instNum);
-            const graceEnd = new Date(iDue);
-            graceEnd.setDate(10);
-            graceEnd.setHours(23, 59, 59, 999);
+        if (instNum <= totalCuotas) {
 
-            if (targetDate > graceEnd) {
-                const diffTime = targetDate.getTime() - graceEnd.getTime();
-                const lateDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            // --- LEGACY OFFLINE DEBT CALCULATION ---
+            if (reservation.is_legacy && reservation.legacy_debt_start_date) {
+                const debtStart = new Date(reservation.legacy_debt_start_date);
+                debtStart.setHours(0, 0, 0, 0);
 
-                if (lateDays > 0) {
-                    let factor = 0.027785496;
-                    if (totalCuotas >= 77) factor = 0.0227324392;
-                    // Always use normal valorCuota for interest preview, unless it is the very last quota
-                    const iAmount = (includesLastInstallment && instNum === totalCuotas) ? lastInstallmentPrice : valorCuota;
-                    previewInterest = Math.round(iAmount * factor) * lateDays;
-                    previewDays = lateDays;
+                if (targetDate > debtStart) {
+                    const diffTime = targetDate.getTime() - debtStart.getTime();
+                    const lateDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                    if (lateDays > 0) {
+                        let factor = 0.027785496;
+                        if (totalCuotas >= 77) factor = 0.0227324392;
+
+                        const iAmount = (includesLastInstallment && instNum === totalCuotas) ? lastInstallmentPrice : valorCuota;
+                        previewInterest = Math.round(iAmount * factor) * lateDays;
+                        previewDays = lateDays;
+                    }
+                }
+            }
+            // --- STANDARD ONLINE DEBT CALCULATION ---
+            else if (acquisitionDate) {
+                const iDue = getInstallmentDueDate(acquisitionDate, instNum);
+                const graceEnd = new Date(iDue);
+                graceEnd.setDate(10);
+                graceEnd.setHours(23, 59, 59, 999);
+
+                if (targetDate > graceEnd) {
+                    const diffTime = targetDate.getTime() - graceEnd.getTime();
+                    const lateDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                    if (lateDays > 0) {
+                        let factor = 0.027785496;
+                        if (totalCuotas >= 77) factor = 0.0227324392;
+                        // Always use normal valorCuota for interest preview, unless it is the very last quota
+                        const iAmount = (includesLastInstallment && instNum === totalCuotas) ? lastInstallmentPrice : valorCuota;
+                        previewInterest = Math.round(iAmount * factor) * lateDays;
+                        previewDays = lateDays;
+                    }
                 }
             }
         }
