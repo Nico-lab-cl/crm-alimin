@@ -367,7 +367,7 @@ export function PaymentButtons({ reservationId, lot, reservation, acquisitionDat
                                             }
                                         } else {
                                             // STANDARD: Count days past the grace period (10th of due month)
-                                            const iDue = getInstallmentDueDate(acquisitionDate, instNum);
+                                            const iDue = getInstallmentDueDate(baseDate, instNum);
                                             const graceEnd = new Date(iDue);
                                             graceEnd.setDate(10);
                                             graceEnd.setHours(23, 59, 59, 999);
