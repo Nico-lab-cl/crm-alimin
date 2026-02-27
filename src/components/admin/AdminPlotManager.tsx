@@ -428,12 +428,14 @@ export function AdminPlotManager({ reservations, allClients, userId, initialUser
                                             lot={res.lot}
                                             reservation={{
                                                 pie_status: res.pie_status,
-                                                installments_paid: res.installments_paid
+                                                installments_paid: res.installments_paid,
+                                                is_legacy: res.is_legacy,
+                                                legacy_debt_start_date: res.legacy_debt_start_date
                                             }}
                                             acquisitionDate={res.created_at}
                                             isAdminView={!isUserView}
                                             simulatedDate={simulatedDate}
-                                            comparisonDate={comparisonDate} // Pass End Date
+                                            comparisonDate={comparisonDate}
                                         />
 
                                     </div>
