@@ -11,10 +11,11 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { SignContractModal } from "@/components/SignContractModal";
 import { toast } from "sonner";
-import { triggerLegacyWorkflow } from "@/actions/dashboard";
+import { triggerLegacyWorkflow, removeLegacyLotOwner } from "@/actions/dashboard";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { ContractUploadAction } from "@/components/admin/ContractUploadAction";
+import { AssignOwnerModal } from "@/components/dashboard/AssignOwnerModal";
 import {
     Popover,
     PopoverContent,
@@ -35,6 +36,10 @@ export function AdminPlotManager({ reservations, allClients, userId, initialUser
     const [isTriggering, setIsTriggering] = useState<string | null>(null);
 
     const [isUserView, setIsUserView] = useState(false);
+
+    // Edit Modal State
+    const [editingReservation, setEditingReservation] = useState<any | null>(null);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
     const handleClearSimulation = () => {
         setSimulatedDate(undefined);
@@ -57,6 +62,22 @@ export function AdminPlotManager({ reservations, allClients, userId, initialUser
             toast.error("Error de servidor");
         } finally {
             setIsTriggering(null);
+        }
+    };
+
+    const handleDeleteLegacyOwner = async (reservationId: string) => {
+        if (!confirm("⚠️ PELIGRO: ¿Estás seguro de ELIMINAR esta asignación?\n\nEsto borrará al cliente del lote permanentemente y reseteará los valores financieros. NO SE PUEDE DESHACER.")) return;
+
+        try {
+            const res = await removeLegacyLotOwner(reservationId);
+            if (res.success) {
+                toast.success(res.message);
+                window.location.reload();
+            } else {
+                toast.error(res.error || "Ocurrió un error al eliminar");
+            }
+        } catch (e) {
+            toast.error("Error de servidor al eliminar asignación");
         }
     };
 
@@ -372,6 +393,28 @@ export function AdminPlotManager({ reservations, allClients, userId, initialUser
                                                     📄 {JSON.parse(res.legacy_uploaded_contracts).length} documento(s) físico(s) subido(s).
                                                 </div>
                                             )}
+
+                                            <div className="flex gap-2 mt-3 pt-3 border-t border-white/10">
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className="w-full text-xs bg-black/20 text-gray-300 border-white/20 hover:bg-white/10"
+                                                    onClick={() => {
+                                                        setEditingReservation(res);
+                                                        setIsEditModalOpen(true);
+                                                    }}
+                                                >
+                                                    ✏️ Editar
+                                                </Button>
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className="w-full text-xs bg-red-900/20 text-red-400 border-red-500/30 hover:bg-red-900/50 hover:text-red-300"
+                                                    onClick={() => handleDeleteLegacyOwner(res.id)}
+                                                >
+                                                    🗑️ Eliminar
+                                                </Button>
+                                            </div>
                                         </div>
                                     )}
 
@@ -446,6 +489,21 @@ export function AdminPlotManager({ reservations, allClients, userId, initialUser
                     </div>
                 )}
             </section>
+
+            {/* Edit Modal Injection */}
+            {editingReservation && (
+                <AssignOwnerModal
+                    lotId={editingReservation.lot.id}
+                    lotNumber={editingReservation.lot.number}
+                    open={isEditModalOpen}
+                    onOpenChange={setIsEditModalOpen}
+                    onSuccess={() => {
+                        setIsEditModalOpen(false);
+                        window.location.reload();
+                    }}
+                    existingReservation={editingReservation}
+                />
+            )}
         </div>
     );
 }

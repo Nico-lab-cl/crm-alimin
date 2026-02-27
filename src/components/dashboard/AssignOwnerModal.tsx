@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -22,9 +22,10 @@ interface AssignOwnerModalProps {
     open: boolean
     onOpenChange: (open: boolean) => void
     onSuccess: () => void
+    existingReservation?: any
 }
 
-export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSuccess }: AssignOwnerModalProps) {
+export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSuccess, existingReservation }: AssignOwnerModalProps) {
     const [loading, setLoading] = useState(false)
     const [formData, setFormData] = useState({
         name: "",
@@ -46,12 +47,75 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
         last_installment_amount: 0,
         price_total_clp: 0,
         legacy_current_installment: 1,
+        isPiePaid: true,
     })
 
     const [hasDebt, setHasDebt] = useState(false)
     const [debtStartDate, setDebtStartDate] = useState<Date | undefined>(undefined)
     const [installmentStartDate, setInstallmentStartDate] = useState<Date | undefined>(undefined)
     const [installmentRanges, setInstallmentRanges] = useState<{ from: number | '', to: number | '', amount: number | '' }[]>([])
+
+    useEffect(() => {
+        if (open && existingReservation && existingReservation.buyer) {
+            setFormData({
+                name: existingReservation.name || existingReservation.buyer.name || "",
+                email: existingReservation.email || existingReservation.buyer.email || "",
+                phone: existingReservation.phone || existingReservation.buyer.phone || "",
+                rut: existingReservation.rut || existingReservation.buyer.rut || "",
+                marital_status: existingReservation.marital_status || "SOLTERO/A",
+                profession: existingReservation.profession || "",
+                nationality: existingReservation.nationality || "Chilena",
+                address_street: existingReservation.address_street || "",
+                address_number: existingReservation.address_number || "",
+                address_commune: existingReservation.address_commune || "",
+                address_region: existingReservation.address_region || "",
+                reservation_amount_clp: existingReservation.lot?.reservation_amount_clp || 500000,
+                pie: existingReservation.lot?.pie || 0,
+                cuotas: existingReservation.lot?.cuotas || 0,
+                valor_cuota: existingReservation.lot?.valor_cuota || 0,
+                last_installment_amount: existingReservation.lot?.last_installment_amount || 0,
+                price_total_clp: existingReservation.lot?.price_total_clp || 0,
+                legacy_current_installment: existingReservation.installments_paid ? existingReservation.installments_paid + 1 : 1,
+                isPiePaid: existingReservation.pie_status !== 'PENDING',
+            })
+            if (existingReservation.legacy_debt_start_date) {
+                setHasDebt(true)
+                setDebtStartDate(new Date(existingReservation.legacy_debt_start_date))
+            } else {
+                setHasDebt(false)
+                setDebtStartDate(undefined)
+            }
+            if (existingReservation.legacy_installment_start_date) {
+                setInstallmentStartDate(new Date(existingReservation.legacy_installment_start_date))
+            } else {
+                setInstallmentStartDate(undefined)
+            }
+            if (existingReservation.legacy_installment_ranges) {
+                try {
+                    const parsed = typeof existingReservation.legacy_installment_ranges === 'string'
+                        ? JSON.parse(existingReservation.legacy_installment_ranges)
+                        : existingReservation.legacy_installment_ranges;
+                    setInstallmentRanges(parsed || []);
+                } catch (e) {
+                    setInstallmentRanges([]);
+                }
+            } else {
+                setInstallmentRanges([]);
+            }
+        } else if (open && !existingReservation) {
+            // Reset if opening in create mode
+            setFormData({
+                name: "", email: "", phone: "", rut: "",
+                marital_status: "", profession: "", nationality: "Chilena",
+                address_street: "", address_number: "", address_commune: "", address_region: "",
+                reservation_amount_clp: 500000, pie: 0, cuotas: 0, valor_cuota: 0, last_installment_amount: 0, price_total_clp: 0, legacy_current_installment: 1, isPiePaid: true
+            })
+            setHasDebt(false)
+            setDebtStartDate(undefined)
+            setInstallmentStartDate(undefined)
+            setInstallmentRanges([])
+        }
+    }, [open, existingReservation])
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -64,7 +128,8 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
                 ...formData,
                 legacy_installment_start_date: installmentStartDate?.toISOString(),
                 legacy_debt_start_date: hasDebt ? debtStartDate?.toISOString() : undefined,
-                legacy_installment_ranges: JSON.stringify(installmentRanges.filter(r => r.from !== '' && r.to !== '' && r.amount !== ''))
+                legacy_installment_ranges: JSON.stringify(installmentRanges.filter(r => r.from !== '' && r.to !== '' && r.amount !== '')),
+                reservationId: existingReservation?.id
             })
 
             if (result.success) {
@@ -73,7 +138,7 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
                     name: "", email: "", phone: "", rut: "",
                     marital_status: "", profession: "", nationality: "Chilena",
                     address_street: "", address_number: "", address_commune: "", address_region: "",
-                    reservation_amount_clp: 500000, pie: 0, cuotas: 0, valor_cuota: 0, last_installment_amount: 0, price_total_clp: 0, legacy_current_installment: 1
+                    reservation_amount_clp: 500000, pie: 0, cuotas: 0, valor_cuota: 0, last_installment_amount: 0, price_total_clp: 0, legacy_current_installment: 1, isPiePaid: true
                 })
                 setHasDebt(false)
                 setDebtStartDate(undefined)
@@ -95,9 +160,9 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                    <DialogTitle>Asignar Dueño a Lote {lotNumber}</DialogTitle>
+                    <DialogTitle>{existingReservation ? `Editar Asignación de Lote ${lotNumber}` : `Asignar Dueño a Lote ${lotNumber}`}</DialogTitle>
                     <DialogDescription>
-                        Ingresa los datos completos del propietario para generar el contrato.
+                        {existingReservation ? "Modifica los datos del propietario o condiciones financieras de esta venta offline." : "Ingresa los datos completos del propietario para generar el contrato."}
                     </DialogDescription>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-4 pt-2">
@@ -278,6 +343,27 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
                                 value={formData.pie === 0 ? "" : formData.pie}
                                 onChange={(e) => setFormData({ ...formData, pie: Number(e.target.value) })}
                             />
+                        </div>
+                    </div>
+
+                    <div className="flex items-center space-x-2 bg-gray-50 border border-gray-200 p-3 rounded-md">
+                        <input
+                            type="checkbox"
+                            id="isPiePaid"
+                            className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                            checked={formData.isPiePaid}
+                            onChange={(e) => setFormData({ ...formData, isPiePaid: e.target.checked })}
+                        />
+                        <div className="grid gap-1.5 leading-none">
+                            <label
+                                htmlFor="isPiePaid"
+                                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                            >
+                                ¿El Pie está completamente pagado?
+                            </label>
+                            <p className="text-[11px] text-gray-500">
+                                Si desmarcas esta opción, el usuario podrá pagar el resto de su Pie desde la plataforma web.
+                            </p>
                         </div>
                     </div>
 

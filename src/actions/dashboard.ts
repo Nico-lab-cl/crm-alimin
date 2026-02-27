@@ -327,6 +327,8 @@ export async function assignLegacyLotOwner(data: {
     legacy_debt_start_date?: string;
     legacy_installment_start_date?: string;
     legacy_installment_ranges?: string;
+    isPiePaid?: boolean;
+    reservationId?: string;
 }) {
     const session = await auth()
     if (session?.user?.role !== Role.ADMIN) return { error: "No autorizado" }
@@ -335,7 +337,8 @@ export async function assignLegacyLotOwner(data: {
         lotId, name, email, phone, rut, marital_status, profession, nationality,
         address_street, address_number, address_commune, address_region,
         reservation_amount_clp, pie, cuotas, valor_cuota, last_installment_amount,
-        price_total_clp, legacy_current_installment, legacy_debt_start_date, legacy_installment_start_date, legacy_installment_ranges
+        price_total_clp, legacy_current_installment, legacy_debt_start_date, legacy_installment_start_date, legacy_installment_ranges, isPiePaid,
+        reservationId
     } = data
 
     try {
@@ -386,13 +389,19 @@ export async function assignLegacyLotOwner(data: {
         // We check if a reservation already exists to avoid duplicates
         const fullAddress = [address_street, address_number, address_commune, address_region].filter(Boolean).join(", ");
 
-        const existingReservation = await prisma.reservation.findFirst({
-            where: {
-                lot_id: lotId,
-                status: { in: ['paid', 'confirmed'] }
-            },
-            orderBy: { created_at: 'desc' }
-        });
+        // Check if a reservation is explicitly being edited, or if one already exists for the lot
+        let existingReservation = null;
+        if (reservationId) {
+            existingReservation = await prisma.reservation.findUnique({ where: { id: reservationId } });
+        } else {
+            existingReservation = await prisma.reservation.findFirst({
+                where: {
+                    lot_id: lotId,
+                    status: { in: ['paid', 'confirmed'] }
+                },
+                orderBy: { created_at: 'desc' }
+            });
+        }
 
         const reservationData = {
             buyer_id: user.id,
@@ -402,7 +411,7 @@ export async function assignLegacyLotOwner(data: {
             rut,
             status: 'paid',
             pipeline_stage: 'VENTA_CERRADA',
-            pie_status: 'PAID',
+            pie_status: isPiePaid === false ? 'PENDING' : 'PAID',
             installments_paid: paidInstallments,
             address: fullAddress || 'Dirección no especificada (Venta Legacy)',
             marital_status: marital_status || 'SOLTERO/A',
@@ -584,6 +593,47 @@ export async function triggerLegacyWorkflow(reservationId: string) {
     } catch (error) {
         console.error("Error triggering legacy workflow:", error)
         return { error: "Error al activar el workflow" }
+    }
+}
+
+export async function removeLegacyLotOwner(reservationId: string) {
+    const session = await auth()
+    if (session?.user?.role !== Role.ADMIN) return { error: "No autorizado" }
+
+    try {
+        const reservation = await prisma.reservation.findUnique({
+            where: { id: reservationId },
+            include: { lot: true }
+        });
+
+        if (!reservation) {
+            return { error: 'Reserva no encontrada' }
+        }
+
+        // 1. Delete the reservation
+        await prisma.reservation.delete({
+            where: { id: reservationId }
+        });
+
+        // 2. Reset the lot properties
+        await prisma.lot.update({
+            where: { id: reservation.lot_id },
+            data: {
+                status: 'available',
+                price_total_clp: null,
+                reservation_amount_clp: null,
+                pie: null,
+                cuotas: null,
+                valor_cuota: null,
+                last_installment_amount: null
+            }
+        });
+
+        revalidatePath("/admin/plots");
+        return { success: true, message: "Asignación eliminada y lote liberado correctamente." }
+    } catch (error) {
+        console.error("Error al eliminar dueño offline:", error);
+        return { error: "Ocurrió un error al intentar eliminar la asignación." }
     }
 }
 
