@@ -241,14 +241,24 @@ export async function GET(req: NextRequest) {
                     user_id: userId
                 };
 
-                await fetch(paymentWebhookUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                }).then(res => {
-                    if (!res.ok) console.error("Payment Webhook failed:", res.status, res.statusText);
-                    else console.log("Payment Webhook sent successfully");
-                }).catch(e => console.error("Failed to trigger payment webhook", e));
+                try {
+                    const res = await fetch(paymentWebhookUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify(payload)
+                    });
+                    if (!res.ok) {
+                        const errText = await res.text();
+                        console.error("Payment Webhook failed:", res.status, errText);
+                    } else {
+                        console.log("Payment Webhook sent successfully");
+                    }
+                } catch (e) {
+                    console.error("Failed to trigger payment webhook", e);
+                }
 
                 // Fire Meta CAPI Purchase for Reservation
                 try {
