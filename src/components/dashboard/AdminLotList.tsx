@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { Lot } from '@prisma/client'
-import { updateLotStatus } from '@/actions/dashboard'
+import { updateLotStatus, triggerLegacyWorkflow } from '@/actions/dashboard'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Search, Loader2, UserPlus, User } from 'lucide-react'
@@ -21,6 +21,8 @@ type LotWithReservation = Lot & {
         id: string;
         buyer: { name: string; email: string } | null;
         signed_at: Date | null;
+        is_legacy?: boolean;
+        workflow_activated?: boolean;
     }[]
 }
 
@@ -196,9 +198,45 @@ export const AdminLotList = ({ lots: initialLots }: AdminLotListProps) => {
 
                                 {/* Show Owner if exists, or Assign Button if Sold/Reserved but no owner */}
                                 {hasOwner ? (
-                                    <div className="flex items-center gap-1 text-[10px] text-gray-400 mt-1 justify-center" title={owner?.email}>
-                                        <User className="w-3 h-3" />
-                                        <span className="truncate max-w-[120px]">{owner?.name?.split(' ')[0]}</span>
+                                    <div className="flex flex-col items-center gap-1 mt-1 font-bold">
+                                        <div className="flex items-center gap-1 text-[10px] text-gray-400" title={owner?.email}>
+                                            <User className="w-3 h-3" />
+                                            <span className="truncate max-w-[120px]">{owner?.name?.split(' ')[0]}</span>
+                                        </div>
+                                        {/* If it's a legacy user without an active workflow, we offer the activation button */}
+                                        {lot.reservations?.[0]?.is_legacy && !lot.reservations?.[0]?.workflow_activated && (
+                                            <div className="w-full px-1">
+                                                <Button
+                                                    size="sm"
+                                                    onClick={async () => {
+                                                        if (!lot.reservations?.[0]?.id) return;
+                                                        if (!confirm("¿Estás seguro de activar el Workflow? Esto enviará un correo de bienvenida al cliente con su clave y notificará la venta a n8n.")) return;
+
+                                                        setLoadingIds(prev => new Set(prev).add(lot.id));
+                                                        try {
+                                                            // We must import triggerLegacyWorkflow at the top of the file
+                                                            const res = await triggerLegacyWorkflow(lot.reservations[0].id);
+                                                            if (res.success) {
+                                                                toast.success(res.message);
+                                                                window.location.reload();
+                                                            } else {
+                                                                toast.error(res.error || "Error al activar el workflow");
+                                                            }
+                                                        } finally {
+                                                            setLoadingIds(prev => {
+                                                                const next = new Set(prev);
+                                                                next.delete(lot.id);
+                                                                return next;
+                                                            });
+                                                        }
+                                                    }}
+                                                    disabled={isLoading}
+                                                    className="w-full h-6 text-[10px] bg-blue-600 hover:bg-blue-700 text-white mt-1 gap-1"
+                                                >
+                                                    🚀 Activar
+                                                </Button>
+                                            </div>
+                                        )}
                                     </div>
                                 ) : isSold ? (
                                     <Button
