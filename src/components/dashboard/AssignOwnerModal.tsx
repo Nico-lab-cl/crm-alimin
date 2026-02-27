@@ -131,7 +131,7 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
                             <Label htmlFor="phone">Teléfono</Label>
                             <Input
                                 id="phone"
-                                required
+
                                 placeholder="+569..."
                                 value={formData.phone}
                                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
