@@ -136,6 +136,30 @@ function PagoExitoContent() {
                         if (!cancelled) {
                             setReceipt((data ?? null) as ReceiptData | null);
                             setReceiptError(null);
+
+                            // Trigger Meta Pixel Purchase Event
+                            if (data && typeof window !== 'undefined' && (window as any).fbq) {
+                                const receiptData = data as any;
+                                const amount = receiptData.payment?.amount_clp || 500000;
+                                const lotIdStr = receiptData.lot?.id ? String(receiptData.lot.id) : undefined;
+                                const lotName = receiptData.lot?.number ? `Reserva Lote ${receiptData.lot.number}` : 'Reserva Lote';
+                                const orderId = receiptData.payment?.buy_order;
+
+                                // Prevent duplicate firing by checking a session flag
+                                const eventFlag = `fbq_purchase_${orderId || reservationId}`;
+                                if (!sessionStorage.getItem(eventFlag)) {
+                                    (window as any).fbq('track', 'Purchase', {
+                                        value: amount,
+                                        currency: 'CLP',
+                                        content_name: lotName,
+                                        content_ids: lotIdStr ? [lotIdStr] : undefined,
+                                        content_type: 'product',
+                                        order_id: orderId
+                                    }, { eventID: `reserva_${reservationId}_${orderId || 'unknown'}` });
+                                    sessionStorage.setItem(eventFlag, 'true');
+                                    console.log('✅ Meta Pixel Purchase fired for:', orderId);
+                                }
+                            }
                         }
                         return;
                     } catch {
