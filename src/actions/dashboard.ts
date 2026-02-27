@@ -340,7 +340,7 @@ export async function assignLegacyLotOwner(data: {
         let isNewUser = false
         let resetLink = null
 
-        // If user doesn't exist, create one with temp password
+        // If user doesn't exist, create one with temp password in SILENCE
         if (!user) {
             isNewUser = true
             const tempPassword = Math.random().toString(36).slice(-8)
@@ -352,37 +352,10 @@ export async function assignLegacyLotOwner(data: {
                     email,
                     password: hashedPassword,
                     role: Role.USER,
-                    emailVerified: new Date(), // Auto-verify legacy owners?
+                    emailVerified: new Date(),
                     mustChangePassword: true
                 }
             })
-
-            // Generate Reset Token for "Welcome" email
-            const secret = new TextEncoder().encode(process.env.AUTH_SECRET || "fallback_secret")
-            const token = await new SignJWT({ email: user.email, sub: user.id })
-                .setProtectedHeader({ alg: "HS256" })
-                .setIssuedAt()
-                .setExpirationTime("24h")
-                .sign(secret)
-
-            const baseUrl = process.env.NEXTAUTH_URL || "https://aliminlomasdelmar.com"
-            resetLink = `${baseUrl}/reset-password?token=${token}`
-
-            // Send to Password Reset Webhook (as Welcome Email)
-            const webhookUrl = process.env.N8N_PASSWORD_RESET_WEBHOOK_URL
-            if (webhookUrl) {
-                await fetch(webhookUrl, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        email: user.email,
-                        name: user.name,
-                        resetLink, // Using reset link as "set password"
-                        isNewLegacyUser: true, // Flag for n8n if needed
-                        timestamp: new Date().toISOString(),
-                    }),
-                }).catch(e => console.error("Failed to trigger password webhook", e))
-            }
         }
 
         // Base assumption: if pie is set, it's paid. If they gave us current installment, we calculate how many they've paid.
@@ -483,31 +456,37 @@ export async function triggerLegacyWorkflow(reservationId: string) {
         const user = reservation.buyer;
         let resetLink = null;
 
-        // 1. Send to Password Reset Webhook (as Welcome Email) if new user
+        // 1. Send to Temporal Password Webhook (as Welcome Email) if new user
         if (user.mustChangePassword) {
-            const secret = new TextEncoder().encode(process.env.AUTH_SECRET || "fallback_secret")
-            const token = await new SignJWT({ email: user.email, sub: user.id })
-                .setProtectedHeader({ alg: "HS256" })
-                .setIssuedAt()
-                .setExpirationTime("24h")
-                .sign(secret)
+            // Generate a fresh random password since we couldn't store the plain text one from assignment
+            const randomPassword = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8);
+            const hashedPassword = await hash(randomPassword, 10);
 
-            const baseUrl = process.env.NEXTAUTH_URL || "https://aliminlomasdelmar.com"
-            resetLink = `${baseUrl}/reset-password?token=${token}`
+            await prisma.user.update({
+                where: { id: user.id },
+                data: { password: hashedPassword }
+            });
 
-            const webhookUrl = process.env.N8N_PASSWORD_RESET_WEBHOOK_URL
-            if (webhookUrl) {
-                await fetch(webhookUrl, {
+            const baseUrl = process.env.NEXTAUTH_URL || "https://aliminlomasdelmar.com";
+            const registerWebhookUrl = "https://n8n-n8n.yszha2.easypanel.host/webhook/7febf5b8-27dd-4988-b137-364480bcba58";
+
+            try {
+                await fetch(registerWebhookUrl, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
                         email: user.email,
                         name: user.name,
-                        resetLink, // Using reset link as "set password"
-                        isNewLegacyUser: true, // Flag for n8n if needed
-                        timestamp: new Date().toISOString(),
+                        temp_password: randomPassword,
+                        login_url: `${baseUrl}/login`,
+                        dashboard_url: `${baseUrl}/user/plots`,
+                        rut: reservation.rut,
+                        phone: reservation.phone,
+                        is_legacy: true
                     }),
-                }).catch(e => console.error("Failed to trigger password webhook", e))
+                });
+            } catch (e) {
+                console.error("Failed to trigger legacy register webhook", e);
             }
         }
 
