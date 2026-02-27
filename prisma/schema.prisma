@@ -73,10 +73,11 @@ model Reservation {
   installments_paid Int?    @default(0)
 
   // Legacy Offline Data
-  legacy_debt_start_date     DateTime? // If the user has a debt from before digital onboarding
-  legacy_current_installment Int? // e.g "Cuota 4 que debe pagar el 5 de marzo"
-  is_legacy                  Boolean   @default(false)
-  workflow_activated         Boolean   @default(true) // For normal users true by default, for legacy false until admin activates
+  legacy_debt_start_date         DateTime? // If the user has a debt from before digital onboarding
+  legacy_installment_start_date  DateTime? // The base date from which installment schedule is computed (month BEFORE first cuota month)
+  legacy_current_installment     Int? // e.g "Cuota 4 que debe pagar el 5 de marzo"
+  is_legacy                      Boolean   @default(false)
+  workflow_activated              Boolean   @default(true) // For normal users true by default, for legacy false until admin activates
 
   // Digital Signature — Contrato Reserva
   signature_otp         String?

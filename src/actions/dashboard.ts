@@ -325,6 +325,7 @@ export async function assignLegacyLotOwner(data: {
     price_total_clp?: number;
     legacy_current_installment?: number;
     legacy_debt_start_date?: string;
+    legacy_installment_start_date?: string;
 }) {
     const session = await auth()
     if (session?.user?.role !== Role.ADMIN) return { error: "No autorizado" }
@@ -333,7 +334,7 @@ export async function assignLegacyLotOwner(data: {
         lotId, name, email, phone, rut, marital_status, profession, nationality,
         address_street, address_number, address_commune, address_region,
         reservation_amount_clp, pie, cuotas, valor_cuota, last_installment_amount,
-        price_total_clp, legacy_current_installment, legacy_debt_start_date
+        price_total_clp, legacy_current_installment, legacy_debt_start_date, legacy_installment_start_date
     } = data
 
     try {
@@ -413,7 +414,8 @@ export async function assignLegacyLotOwner(data: {
             is_legacy: true,
             workflow_activated: false,
             legacy_current_installment: legacy_current_installment || 1,
-            legacy_debt_start_date: legacy_debt_start_date ? new Date(legacy_debt_start_date) : null
+            legacy_debt_start_date: legacy_debt_start_date ? new Date(legacy_debt_start_date) : null,
+            legacy_installment_start_date: legacy_installment_start_date ? new Date(legacy_installment_start_date) : null
         };
 
         let reservation;

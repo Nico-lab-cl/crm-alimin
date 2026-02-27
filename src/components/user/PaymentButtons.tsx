@@ -36,6 +36,7 @@ interface PaymentButtonsProps {
         installments_paid: number | null;
         is_legacy?: boolean;
         legacy_debt_start_date?: Date | string | null;
+        legacy_installment_start_date?: Date | string | null;
     };
     acquisitionDate?: string | null;
     isAdminView?: boolean;
@@ -322,9 +323,13 @@ export function PaymentButtons({ reservationId, lot, reservation, acquisitionDat
                                     <span>Cuotas restantes:</span>
                                     <span>{remainingCuotas} de {totalCuotas}</span>
                                 </div>
-                                {acquisitionDate && count > 0 && (() => {
-                                    const firstDue = getInstallmentDueDate(acquisitionDate, paidCuotas + 1);
-                                    const lastDue = getInstallmentDueDate(acquisitionDate, paidCuotas + count);
+                                {(acquisitionDate || reservation.legacy_installment_start_date) && count > 0 && (() => {
+                                    // For legacy clients with a specific installment start, use that instead of acquisitionDate
+                                    const baseDate = reservation.legacy_installment_start_date
+                                        ? new Date(reservation.legacy_installment_start_date).toISOString()
+                                        : acquisitionDate!;
+                                    const firstDue = getInstallmentDueDate(baseDate, paidCuotas + 1);
+                                    const lastDue = getInstallmentDueDate(baseDate, paidCuotas + count);
 
                                     // Calculate Interest for Display
                                     let calculatedInterest = 0;

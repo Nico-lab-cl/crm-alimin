@@ -50,6 +50,7 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
 
     const [hasDebt, setHasDebt] = useState(false)
     const [debtStartDate, setDebtStartDate] = useState<Date | undefined>(undefined)
+    const [installmentStartDate, setInstallmentStartDate] = useState<Date | undefined>(undefined)
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -60,6 +61,7 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
             const result = await assignLegacyLotOwner({
                 lotId,
                 ...formData,
+                legacy_installment_start_date: installmentStartDate?.toISOString(),
                 legacy_debt_start_date: hasDebt ? debtStartDate?.toISOString() : undefined
             })
 
@@ -73,6 +75,7 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
                 })
                 setHasDebt(false)
                 setDebtStartDate(undefined)
+                setInstallmentStartDate(undefined)
                 onSuccess()
                 onOpenChange(false)
             } else {
@@ -312,62 +315,90 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
                         <h4 className="font-semibold text-blue-900 border-b border-blue-200 pb-2">Estado de Pagos Actual</h4>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <Label htmlFor="legacy_current_installment">¿Qué cuota le toca pagar en Marzo?</Label>
+                                <Label htmlFor="legacy_current_installment">Cuotas ya pagadas por el cliente</Label>
                                 <Input
                                     id="legacy_current_installment"
                                     type="number"
-                                    min="1"
+                                    min="0"
                                     required
                                     value={formData.legacy_current_installment}
                                     onChange={(e) => setFormData({ ...formData, legacy_current_installment: Number(e.target.value) })}
                                 />
-                                <p className="text-xs text-blue-600">Ej: Si pones 4, el sistema asume que ya pagó 3 cuotas.</p>
+                                <p className="text-xs text-blue-600">Ej: Si pagó 5 cuotas (Ene-May), pon 5. La próxima será la 6.</p>
                             </div>
 
-                            <div className="space-y-3">
-                                <Label>¿Este cliente presenta deuda previa (mora)?</Label>
-                                <div className="flex items-center space-x-2">
-                                    <input
-                                        type="checkbox"
-                                        id="hasDebt"
-                                        checked={hasDebt}
-                                        onChange={(e) => setHasDebt(e.target.checked)}
-                                        className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                                    />
-                                    <label htmlFor="hasDebt" className="text-sm font-medium text-gray-700">
-                                        Viene con mora acumulada
-                                    </label>
+                            <div className="space-y-2">
+                                <Label>Fecha Inicio de Cuotas</Label>
+                                <p className="text-xs text-gray-500">Mes ANTERIOR al de la primera cuota. Ej: si la cuota 1 fue en Enero, selecciona Diciembre.</p>
+                                <Popover>
+                                    <PopoverTrigger asChild>
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            className={cn(
+                                                "w-full justify-start text-left font-normal",
+                                                !installmentStartDate && "text-muted-foreground"
+                                            )}
+                                        >
+                                            <CalendarIcon className="mr-2 h-4 w-4" />
+                                            {installmentStartDate ? format(installmentStartDate, "MM/yyyy", { locale: es }) : <span>Seleccionar mes base</span>}
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto p-0" align="start">
+                                        <Calendar
+                                            mode="single"
+                                            selected={installmentStartDate}
+                                            onSelect={setInstallmentStartDate}
+                                            initialFocus
+                                        />
+                                    </PopoverContent>
+                                </Popover>
+                            </div>
+                        </div>
+
+                        <div className="space-y-3 pt-2 border-t border-blue-200">
+                            <Label>¿Este cliente presenta deuda previa (mora)?</Label>
+                            <div className="flex items-center space-x-2">
+                                <input
+                                    type="checkbox"
+                                    id="hasDebt"
+                                    checked={hasDebt}
+                                    onChange={(e) => setHasDebt(e.target.checked)}
+                                    className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                />
+                                <label htmlFor="hasDebt" className="text-sm font-medium text-gray-700">
+                                    Viene con mora acumulada
+                                </label>
+                            </div>
+
+                            {hasDebt && (
+                                <div className="pt-2">
+                                    <Label className="block mb-2 text-xs">Fecha desde que dejó de pagar</Label>
+                                    <Popover>
+                                        <PopoverTrigger asChild>
+                                            <Button
+                                                type="button"
+                                                variant={"outline"}
+                                                className={cn(
+                                                    "w-full justify-start text-left font-normal",
+                                                    !debtStartDate && "text-muted-foreground"
+                                                )}
+                                            >
+                                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                                {debtStartDate ? format(debtStartDate, "PPP", { locale: es }) : <span>Seleccionar Inicio Mora</span>}
+                                            </Button>
+                                        </PopoverTrigger>
+                                        <PopoverContent className="w-auto p-0" align="start">
+                                            <Calendar
+                                                mode="single"
+                                                selected={debtStartDate}
+                                                onSelect={setDebtStartDate}
+                                                initialFocus
+                                            />
+                                        </PopoverContent>
+                                    </Popover>
                                 </div>
-
-                                {hasDebt && (
-                                    <div className="pt-2">
-                                        <Label className="block mb-2 text-xs">Fecha desde que dejó de pagar</Label>
-                                        <Popover>
-                                            <PopoverTrigger asChild>
-                                                <Button
-                                                    type="button"
-                                                    variant={"outline"}
-                                                    className={cn(
-                                                        "w-full justify-start text-left font-normal",
-                                                        !debtStartDate && "text-muted-foreground"
-                                                    )}
-                                                >
-                                                    <CalendarIcon className="mr-2 h-4 w-4" />
-                                                    {debtStartDate ? format(debtStartDate, "PPP", { locale: es }) : <span>Seleccionar Inicio Mora</span>}
-                                                </Button>
-                                            </PopoverTrigger>
-                                            <PopoverContent className="w-auto p-0" align="start">
-                                                <Calendar
-                                                    mode="single"
-                                                    selected={debtStartDate}
-                                                    onSelect={setDebtStartDate}
-                                                    initialFocus
-                                                />
-                                            </PopoverContent>
-                                        </Popover>
-                                    </div>
-                                )}
-                            </div>
+                            )}
                         </div>
                     </div>
 
