@@ -553,9 +553,6 @@ export async function triggerLegacyWorkflow(reservationId: string) {
             console.error("Failed to trigger main payment webhook", e);
         }
 
-        // 3. Send Pie Webhook as "Confirmation of Acquired Lot"
-        await sendPieWebhook(reservation.id, 0).catch(e => console.error("Failed to trigger pie webhook for legacy", e));
-
         // Mark workflow as activated
         await prisma.reservation.update({
             where: { id: reservationId },
