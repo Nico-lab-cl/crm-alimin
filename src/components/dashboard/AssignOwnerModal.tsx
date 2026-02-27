@@ -51,6 +51,7 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
     const [hasDebt, setHasDebt] = useState(false)
     const [debtStartDate, setDebtStartDate] = useState<Date | undefined>(undefined)
     const [installmentStartDate, setInstallmentStartDate] = useState<Date | undefined>(undefined)
+    const [installmentRanges, setInstallmentRanges] = useState<{ from: number | '', to: number | '', amount: number | '' }[]>([])
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -62,7 +63,8 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
                 lotId,
                 ...formData,
                 legacy_installment_start_date: installmentStartDate?.toISOString(),
-                legacy_debt_start_date: hasDebt ? debtStartDate?.toISOString() : undefined
+                legacy_debt_start_date: hasDebt ? debtStartDate?.toISOString() : undefined,
+                legacy_installment_ranges: JSON.stringify(installmentRanges.filter(r => r.from !== '' && r.to !== '' && r.amount !== ''))
             })
 
             if (result.success) {
@@ -76,6 +78,7 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
                 setHasDebt(false)
                 setDebtStartDate(undefined)
                 setInstallmentStartDate(undefined)
+                setInstallmentRanges([])
                 onSuccess()
                 onOpenChange(false)
             } else {
@@ -309,6 +312,89 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
                                 onChange={(e) => setFormData({ ...formData, last_installment_amount: Number(e.target.value) })}
                             />
                         </div>
+                    </div>
+
+                    <div className="bg-amber-50/50 p-4 rounded-lg border border-amber-100 space-y-4">
+                        <div className="flex items-center justify-between border-b border-amber-200 pb-2">
+                            <div>
+                                <h4 className="font-semibold text-amber-900">Excepciones de Precios (Opcional)</h4>
+                                <p className="text-xs text-amber-700">Si un grupo de cuotas tiene un valor diferente al normal, defínelo aquí.</p>
+                            </div>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                className="text-amber-700 border-amber-300 hover:bg-amber-100"
+                                onClick={() => setInstallmentRanges([...installmentRanges, { from: '', to: '', amount: '' }])}
+                            >
+                                + Agregar Rango Excepcional
+                            </Button>
+                        </div>
+
+                        {installmentRanges.length > 0 && (
+                            <div className="space-y-3">
+                                {installmentRanges.map((range, index) => (
+                                    <div key={index} className="flex flex-wrap md:flex-nowrap items-end gap-2 bg-white/60 p-2 rounded border border-amber-200 shadow-sm">
+                                        <div className="w-full md:w-1/4 space-y-1">
+                                            <Label className="text-xs text-amber-800">Desde Cuota</Label>
+                                            <Input
+                                                type="number"
+                                                min="1"
+                                                value={range.from}
+                                                onChange={(e) => {
+                                                    const newArr = [...installmentRanges]
+                                                    newArr[index].from = e.target.value ? Number(e.target.value) : ''
+                                                    setInstallmentRanges(newArr)
+                                                }}
+                                                placeholder="Ej: 1"
+                                                required
+                                            />
+                                        </div>
+                                        <div className="w-full md:w-1/4 space-y-1">
+                                            <Label className="text-xs text-amber-800">Hasta Cuota</Label>
+                                            <Input
+                                                type="number"
+                                                min="1"
+                                                value={range.to}
+                                                onChange={(e) => {
+                                                    const newArr = [...installmentRanges]
+                                                    newArr[index].to = e.target.value ? Number(e.target.value) : ''
+                                                    setInstallmentRanges(newArr)
+                                                }}
+                                                placeholder="Ej: 3"
+                                                required
+                                            />
+                                        </div>
+                                        <div className="w-full md:w-2/4 space-y-1">
+                                            <Label className="text-xs text-amber-800">Monto Exceptuado (CLP)</Label>
+                                            <Input
+                                                type="number"
+                                                value={range.amount}
+                                                onChange={(e) => {
+                                                    const newArr = [...installmentRanges]
+                                                    newArr[index].amount = e.target.value ? Number(e.target.value) : ''
+                                                    setInstallmentRanges(newArr)
+                                                }}
+                                                placeholder="Ej: 650000"
+                                                required
+                                            />
+                                        </div>
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            className="text-red-500 hover:bg-red-50 px-2"
+                                            onClick={() => {
+                                                const newArr = [...installmentRanges]
+                                                newArr.splice(index, 1)
+                                                setInstallmentRanges(newArr)
+                                            }}
+                                        >
+                                            X
+                                        </Button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
 
                     <div className="bg-blue-50/50 p-4 rounded-lg border border-blue-100 space-y-4">

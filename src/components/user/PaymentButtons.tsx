@@ -37,6 +37,7 @@ interface PaymentButtonsProps {
         is_legacy?: boolean;
         legacy_debt_start_date?: Date | string | null;
         legacy_installment_start_date?: Date | string | null;
+        legacy_installment_ranges?: any;
     };
     acquisitionDate?: string | null;
     isAdminView?: boolean;
@@ -63,6 +64,32 @@ function formatDateChile(date: Date): string {
         month: 'long',
         year: 'numeric',
     });
+}
+
+// Helper: Determine the exact price for a specific installment number
+function getInstallmentAmount(
+    installmentNumber: number,
+    totalCuotas: number,
+    baseValorCuota: number,
+    lastInstallmentAmount: number,
+    legacyRanges?: any
+): number {
+    // 1. Last Installment Exception
+    if (installmentNumber === totalCuotas) {
+        return lastInstallmentAmount;
+    }
+
+    // 2. Custom Legacy Ranges Exception
+    if (legacyRanges && Array.isArray(legacyRanges)) {
+        for (const range of legacyRanges) {
+            if (installmentNumber >= range.from && installmentNumber <= range.to) {
+                return range.amount;
+            }
+        }
+    }
+
+    // 3. Standard Price
+    return baseValorCuota;
 }
 
 export function PaymentButtons({ reservationId, lot, reservation, acquisitionDate, isAdminView, simulatedDate, comparisonDate }: PaymentButtonsProps) {
@@ -95,12 +122,16 @@ export function PaymentButtons({ reservationId, lot, reservation, acquisitionDat
     const lastInstallmentPrice = lot.last_installment_amount || valorCuota;
 
     let totalToPay = 0;
-    if (includesLastInstallment) {
-        // (Normal installments * price) + (1 * Last Price)
-        // Note: If count is 1 and it IS the last installment, then (0 * normal) + last.
-        totalToPay = ((count - 1) * valorCuota) + lastInstallmentPrice;
-    } else {
-        totalToPay = count * valorCuota;
+    // Iterate over each installment being paid in this transaction to accumulate exact price
+    for (let i = 0; i < count; i++) {
+        const instNum = paidCuotas + 1 + i;
+        totalToPay += getInstallmentAmount(
+            instNum,
+            totalCuotas,
+            valorCuota,
+            lastInstallmentPrice,
+            reservation.legacy_installment_ranges
+        );
     }
 
     const handlePayment = async (scope: 'PIE' | 'INSTALLMENT') => {
@@ -182,7 +213,14 @@ export function PaymentButtons({ reservationId, lot, reservation, acquisitionDat
                         let factor = 0.027785496;
                         if (totalCuotas >= 77) factor = 0.0227324392;
 
-                        const iAmount = (includesLastInstallment && instNum === totalCuotas) ? lastInstallmentPrice : valorCuota;
+                        // Use getInstallmentAmount to get the EXACT amount for this installment
+                        const iAmount = getInstallmentAmount(
+                            instNum,
+                            totalCuotas,
+                            valorCuota,
+                            lastInstallmentPrice,
+                            reservation.legacy_installment_ranges
+                        );
                         previewInterest = Math.round(iAmount * factor) * lateDays;
                         previewDays = lateDays;
                     }
@@ -202,8 +240,14 @@ export function PaymentButtons({ reservationId, lot, reservation, acquisitionDat
                     if (lateDays > 0) {
                         let factor = 0.027785496;
                         if (totalCuotas >= 77) factor = 0.0227324392;
-                        // Always use normal valorCuota for interest preview, unless it is the very last quota
-                        const iAmount = (includesLastInstallment && instNum === totalCuotas) ? lastInstallmentPrice : valorCuota;
+
+                        const iAmount = getInstallmentAmount(
+                            instNum,
+                            totalCuotas,
+                            valorCuota,
+                            lastInstallmentPrice,
+                            reservation.legacy_installment_ranges
+                        );
                         previewInterest = Math.round(iAmount * factor) * lateDays;
                         previewDays = lateDays;
                     }

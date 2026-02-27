@@ -3,6 +3,27 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { webpayCreate } from '@/lib/transbank'; // Use shared utility
 
+// Helper: Determine the exact price for a specific installment number
+function getInstallmentAmount(
+    installmentNumber: number,
+    totalCuotas: number,
+    baseValorCuota: number,
+    lastInstallmentAmount: number,
+    legacyRanges?: any
+): number {
+    if (installmentNumber === totalCuotas) {
+        return lastInstallmentAmount;
+    }
+    if (legacyRanges && Array.isArray(legacyRanges)) {
+        for (const range of legacyRanges) {
+            if (installmentNumber >= range.from && installmentNumber <= range.to) {
+                return range.amount;
+            }
+        }
+    }
+    return baseValorCuota;
+}
+
 export async function POST(request: Request) {
     console.log("Processing init-payment request...");
     try {
@@ -52,17 +73,19 @@ export async function POST(request: Request) {
                 return NextResponse.json({ error: 'La cantidad de cuotas excede el total restante' }, { status: 400 });
             }
 
-            // Calculate Amount with Custom Last Installment Logic
+            // Calculate Amount Iteratively using Custom Logic
             const startInstallment = currentPaid + 1;
-            const endInstallment = startInstallment + installments - 1;
-            const includesLastInstallment = endInstallment === totalCuotas;
 
-            if (includesLastInstallment) {
-                // Determine base amount
-                const baseAmount = ((installments - 1) * valorCuota) + lastInstallmentAmount;
-                amount = baseAmount;
-            } else {
-                amount = installments * valorCuota;
+            amount = 0;
+            for (let i = 0; i < installments; i++) {
+                const instNum = startInstallment + i;
+                amount += getInstallmentAmount(
+                    instNum,
+                    totalCuotas,
+                    valorCuota,
+                    lastInstallmentAmount,
+                    reservation.legacy_installment_ranges
+                );
             }
 
             // Calculate Interest
@@ -80,11 +103,14 @@ export async function POST(request: Request) {
                 dueDate.setDate(5);
                 dueDate.setHours(0, 0, 0, 0);
 
-                // Determine amount for THIS specific installment
-                let instAmount = valorCuota;
-                if (installmentNum === totalCuotas) {
-                    instAmount = lastInstallmentAmount;
-                }
+                // Determine amount for THIS specific installment taking ranges into account
+                const instAmount = getInstallmentAmount(
+                    installmentNum,
+                    totalCuotas,
+                    valorCuota,
+                    lastInstallmentAmount,
+                    reservation.legacy_installment_ranges
+                );
 
                 let daysLate = 0;
 
