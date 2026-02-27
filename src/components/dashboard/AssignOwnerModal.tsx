@@ -109,7 +109,6 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
                             <Label htmlFor="rut">RUT</Label>
                             <Input
                                 id="rut"
-                                required
                                 placeholder="12.345.678-9"
                                 value={formData.rut}
                                 onChange={(e) => setFormData({ ...formData, rut: e.target.value })}
