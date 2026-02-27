@@ -332,53 +332,65 @@ export function PaymentButtons({ reservationId, lot, reservation, acquisitionDat
                                     let lateRangeDisplay = "";
 
                                     for (let i = 0; i < count; i++) {
-                                        // User Request: Only apply interest to the FIRST installment in the batch (the oldest one).
-                                        // "si quiere pagar mas cuotas solo se debe agregar el valor a apgar de esas cuotas no agregarle mas interes"
+                                        // Only apply interest to the FIRST installment in the batch (the oldest one).
                                         if (i > 0) continue;
 
                                         const instNum = paidCuotas + 1 + i;
-                                        const iDue = getInstallmentDueDate(acquisitionDate, instNum);
                                         const iAmount = (includesLastInstallment && instNum === totalCuotas) ? lastInstallmentPrice : valorCuota;
 
-                                        // SMART SIMULATION LOGIC: Calculate interest per quota based on "Target Payment Date"
+                                        // Target Payment Date (use simulation date if set, otherwise today)
                                         const effectiveDate = comparisonDate || simulatedDate || new Date();
                                         const targetDate = new Date(effectiveDate);
                                         targetDate.setHours(0, 0, 0, 0);
 
-                                        // Grace Period: 10th of the month of the Due Date
-                                        const graceEnd = new Date(iDue);
-                                        graceEnd.setDate(10);
-                                        graceEnd.setHours(23, 59, 59, 999);
+                                        let lateDays = 0;
 
-                                        // Check if Target Date is past Grace Period
-                                        if (targetDate > graceEnd) {
-                                            const diffTime = targetDate.getTime() - graceEnd.getTime();
-                                            const lateDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                                        if (reservation.is_legacy && reservation.legacy_debt_start_date) {
+                                            // LEGACY: Count days from the designated debt start date
+                                            const debtStart = new Date(reservation.legacy_debt_start_date);
+                                            debtStart.setHours(0, 0, 0, 0);
 
-                                            if (lateDays > 0) {
-                                                let factor = 0.027785496;
-                                                if (totalCuotas >= 77) factor = 0.0227324392;
+                                            if (targetDate > debtStart) {
+                                                const diffTime = targetDate.getTime() - debtStart.getTime();
+                                                lateDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-                                                calculatedInterest += Math.round(iAmount * factor) * lateDays;
-                                                daysLateForDisplay = Math.max(daysLateForDisplay, lateDays);
+                                                if (!lateRangeDisplay && lateDays > 0) {
+                                                    const startStr = debtStart.toLocaleDateString('es-CL', { day: '2-digit', month: '2-digit' });
+                                                    const endStr = targetDate.toLocaleDateString('es-CL', { day: '2-digit', month: '2-digit' });
+                                                    lateRangeDisplay = `${startStr} - ${endStr}`;
+                                                }
+                                            }
+                                        } else {
+                                            // STANDARD: Count days past the grace period (10th of due month)
+                                            const iDue = getInstallmentDueDate(acquisitionDate, instNum);
+                                            const graceEnd = new Date(iDue);
+                                            graceEnd.setDate(10);
+                                            graceEnd.setHours(23, 59, 59, 999);
 
-                                                // Calculate Late Start Date (Day 11)
-                                                // If we want "From when to when":
-                                                // From: Grace End + 1
-                                                // To: Target Date
-                                                if (!lateRangeDisplay) {
+                                            if (targetDate > graceEnd) {
+                                                const diffTime = targetDate.getTime() - graceEnd.getTime();
+                                                lateDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                                                if (!lateRangeDisplay && lateDays > 0) {
                                                     const lateStart = new Date(graceEnd);
                                                     lateStart.setDate(lateStart.getDate() + 1);
-
                                                     const startStr = lateStart.toLocaleDateString('es-CL', { day: '2-digit', month: '2-digit' });
                                                     const endStr = targetDate.toLocaleDateString('es-CL', { day: '2-digit', month: '2-digit' });
                                                     lateRangeDisplay = `${startStr} - ${endStr}`;
                                                 }
                                             }
                                         }
+
+                                        if (lateDays > 0) {
+                                            let factor = 0.027785496;
+                                            if (totalCuotas >= 77) factor = 0.0227324392;
+                                            calculatedInterest += Math.round(iAmount * factor) * lateDays;
+                                            daysLateForDisplay = Math.max(daysLateForDisplay, lateDays);
+                                        }
                                     }
 
                                     const finalTotal = totalToPay + calculatedInterest;
+
 
                                     return (
                                         <div className="border-t border-gray-200 mt-2 pt-2 space-y-1">
