@@ -18,6 +18,12 @@ export async function GET() {
             ALTER TABLE "Reservation" ADD COLUMN IF NOT EXISTS "address_commune" TEXT;
             ALTER TABLE "Reservation" ADD COLUMN IF NOT EXISTS "address_region" TEXT;
 
+            -- Fix Legacy/Offline Columns
+            ALTER TABLE "Reservation" ADD COLUMN IF NOT EXISTS "legacy_debt_start_date" TIMESTAMP(3);
+            ALTER TABLE "Reservation" ADD COLUMN IF NOT EXISTS "legacy_current_installment" INTEGER;
+            ALTER TABLE "Reservation" ADD COLUMN IF NOT EXISTS "is_legacy" BOOLEAN DEFAULT false;
+            ALTER TABLE "Reservation" ADD COLUMN IF NOT EXISTS "workflow_activated" BOOLEAN DEFAULT true;
+
             -- Fix Foreign Keys (using DO block for safety)
             DO $$ 
             BEGIN 
