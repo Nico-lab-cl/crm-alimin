@@ -10,6 +10,8 @@ import Link from "next/link";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { SignContractModal } from "@/components/SignContractModal";
+import { toast } from "sonner";
+import { triggerLegacyWorkflow } from "@/actions/dashboard";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -29,12 +31,32 @@ interface AdminPlotManagerProps {
 export function AdminPlotManager({ reservations, allClients, userId, initialUserName }: AdminPlotManagerProps) {
     const [simulatedDate, setSimulatedDate] = useState<Date | undefined>(undefined); // Start Date (Inicio Mora)
     const [comparisonDate, setComparisonDate] = useState<Date | undefined>(undefined); // End Date (Fin Mora)
+    const [isTriggering, setIsTriggering] = useState<string | null>(null);
 
     const [isUserView, setIsUserView] = useState(false);
 
     const handleClearSimulation = () => {
         setSimulatedDate(undefined);
         setComparisonDate(undefined);
+    };
+
+    const handleTriggerWorkflow = async (reservationId: string) => {
+        if (!confirm("¿Estás seguro de activar el Workflow? Esto enviará un correo de bienvenida al cliente con su clave y notificará la venta a n8n.")) return;
+
+        setIsTriggering(reservationId);
+        try {
+            const res = await triggerLegacyWorkflow(reservationId);
+            if (res.success) {
+                toast.success(res.message);
+                window.location.reload();
+            } else {
+                toast.error(res.error || "Ocurrió un error");
+            }
+        } catch (e) {
+            toast.error("Error de servidor");
+        } finally {
+            setIsTriggering(null);
+        }
     };
 
     return (
@@ -173,6 +195,40 @@ export function AdminPlotManager({ reservations, allClients, userId, initialUser
                                         const lastInstallmentPrice = res.lot.last_installment_amount || valorCuota;
                                         const acquisitionDate = new Date(res.created_at);
 
+                                        // -----------------------------------------------------------------
+                                        // LEGACY DEBT CALCULATION
+                                        // -----------------------------------------------------------------
+                                        if (res.is_legacy && res.legacy_debt_start_date) {
+                                            const debtStart = new Date(res.legacy_debt_start_date);
+                                            debtStart.setHours(0, 0, 0, 0);
+
+                                            // Only calculate if the simulation End Date is after the Debt Start Date
+                                            if (end > debtStart) {
+                                                const diffTime = end.getTime() - debtStart.getTime();
+                                                const lateDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                                                if (lateDays > 0) {
+                                                    // For legacy debt, we assume the base amount penalty is currently 1 installment's worth of penalty per period missed. 
+                                                    // Since we don't know the EXACT schedule of their offline debt without a complex ledger, 
+                                                    // we apply the daily penalty factor (0.027785496%) to their normal installment value, times the total days they are late.
+
+                                                    // To be more accurate to the user's manual tracking: if they missed multiple cuotas, 
+                                                    // the admin will manually assign how many they missed. We apply the penalty to the standard cuota.
+                                                    let amount = valorCuota;
+                                                    let factor = 0.027785496;
+                                                    if (totalCuotas >= 77) factor = 0.0227324392;
+
+                                                    // If we are simulating from a specific date forward, the days accumulate
+                                                    totalInterestAccrued += Math.round(amount * factor) * lateDays;
+                                                    lateInstallmentsCount++; // Representing 1 block of legacy debt
+                                                }
+                                            }
+                                            return; // Skip the standard loop for this legacy user
+                                        }
+
+                                        // -----------------------------------------------------------------
+                                        // STANDARD DIGITAL PURCHASE CALCULATION
+                                        // -----------------------------------------------------------------
                                         for (let i = paidCuotas + 1; i <= totalCuotas; i++) {
                                             // Calculate Due Date
                                             const dueDate = new Date(acquisitionDate);
@@ -280,6 +336,24 @@ export function AdminPlotManager({ reservations, allClients, userId, initialUser
                                         <span>${res.lot.price_total_clp?.toLocaleString('es-CL') || 'N/A'}</span>
                                     </div>
 
+                                    {/* Legacy Offline Indicator */}
+                                    {res.is_legacy && (
+                                        <div className="flex flex-col gap-1 mt-2">
+                                            <div className="text-xs bg-indigo-900/40 text-indigo-300 border border-indigo-500/30 px-2 py-1.5 rounded flex items-center gap-2">
+                                                <span>📁 Venta Offline</span>
+                                                <span className="font-bold opacity-70 ml-auto">
+                                                    (Cuotas pagadas: {res.installments_paid} de {res.lot.cuotas})
+                                                </span>
+                                            </div>
+
+                                            {res.legacy_debt_start_date && (
+                                                <div className="text-[10px] bg-red-900/30 text-red-400 px-2 py-1 rounded border border-red-900/50">
+                                                    ⚠️ Cliente traspasado con deuda desde: {new Date(res.legacy_debt_start_date).toLocaleDateString('es-CL')}
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+
                                     <div className="space-y-3 pt-2 mt-auto">
                                         {res.signed_at ? (
                                             <a
@@ -313,6 +387,19 @@ export function AdminPlotManager({ reservations, allClients, userId, initialUser
                                                 <FileDown className="w-4 h-4" />
                                                 Contrato Pendiente (Descargar)
                                             </a>
+                                        )}
+
+                                        {!isUserView && res.is_legacy && !res.workflow_activated && (
+                                            <Button
+                                                onClick={() => handleTriggerWorkflow(res.id)}
+                                                disabled={isTriggering === res.id}
+                                                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 mt-2 gap-2"
+                                            >
+                                                {isTriggering === res.id ? (
+                                                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                                                ) : "🚀"}
+                                                Activar Workflow y Accesos
+                                            </Button>
                                         )}
 
                                         <PaymentButtons

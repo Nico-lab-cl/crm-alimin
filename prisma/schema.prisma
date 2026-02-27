@@ -1,5 +1,5 @@
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
   binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
 }
 
@@ -9,89 +9,95 @@ datasource db {
 }
 
 model Lot {
-  id                     Int       @id @default(autoincrement())
-  number                 String?
-  stage                  Int?
-  area_m2                Float?
-  price_total_clp        Int?
-  reservation_amount_clp Int?
-  status                 String    @default("available") // available, reserved, sold
-  cuotas                 Int?
-  pie                    Int?
-  valor_cuota            Int?
+  id                      Int       @id @default(autoincrement())
+  number                  String?
+  stage                   Int?
+  area_m2                 Float?
+  price_total_clp         Int?
+  reservation_amount_clp  Int?
+  status                  String    @default("available") // available, reserved, sold
+  cuotas                  Int?
+  pie                     Int?
+  valor_cuota             Int?
   last_installment_amount Int?
-  reserved_until         DateTime?
-  reserved_at            DateTime?
-  reserved_by            String?
-  order_id               String?
-  updated_at             DateTime? @updatedAt
-  
+  reserved_until          DateTime?
+  reserved_at             DateTime?
+  reserved_by             String?
+  order_id                String?
+  updated_at              DateTime? @updatedAt
+
   // Relations
-  reservations           Reservation[]
-  locks                  LotLock[]
-  transactions           WebpayTransaction[]
+  reservations Reservation[]
+  locks        LotLock[]
+  transactions WebpayTransaction[]
 }
 
 model Reservation {
-  id          String    @id @default(uuid())
-  lot_id      Int
-  name        String
-  email       String
-  phone       String
-  rut         String?
-  address     String?
-  folio       String?
-  status      String    // pending_payment, paid, canceled
-  session_id  String?
-  expires_at  DateTime?
-  created_at  DateTime  @default(now())
-  
+  id         String    @id @default(uuid())
+  lot_id     Int
+  name       String
+  email      String
+  phone      String
+  rut        String?
+  address    String?
+  folio      String?
+  status     String // pending_payment, paid, canceled
+  session_id String?
+  expires_at DateTime?
+  created_at DateTime  @default(now())
+
   // Legal / Contract Data
-  marital_status  String?
-  profession      String?
-  nationality     String?   @default("Chilena")
+  marital_status String?
+  profession     String?
+  nationality    String? @default("Chilena")
 
   // Pipeline Data
-  pipeline_stage  String    @default("RESERVA_PAGADA") // RESERVA_PAGADA, ESPERANDO_PIE, PIE_PAGADO, PAGO_CUOTAS, VENTA_CERRADA
-  notes           String?
+  pipeline_stage        String  @default("RESERVA_PAGADA") // RESERVA_PAGADA, ESPERANDO_PIE, PIE_PAGADO, PAGO_CUOTAS, VENTA_CERRADA
+  notes                 String?
   uploaded_contract_url String?
-  address_street  String?
-  address_number  String?
-  address_commune String?
-  address_region  String?
+  address_street        String?
+  address_number        String?
+  address_commune       String?
+  address_region        String?
 
   // Ad Tracking / Attributions
-  utm_source      String?
-  utm_medium      String?
-  utm_campaign    String?
-  utm_content     String?
-  utm_term        String?
+  utm_source   String?
+  utm_medium   String?
+  utm_campaign String?
+  utm_content  String?
+  utm_term     String?
 
   // Payment Tracking
-  pie_status      String?   @default("PENDING") // PENDING, PAID
+  pie_status        String? @default("PENDING") // PENDING, PAID
   installments_paid Int?    @default(0)
 
+  // Legacy Offline Data
+  legacy_debt_start_date     DateTime? // If the user has a debt from before digital onboarding
+  legacy_current_installment Int? // e.g "Cuota 4 que debe pagar el 5 de marzo"
+  is_legacy                  Boolean   @default(false)
+  workflow_activated         Boolean   @default(true) // For normal users true by default, for legacy false until admin activates
+
   // Digital Signature — Contrato Reserva
-  signature_otp       String?
+  signature_otp         String?
   signature_otp_expires DateTime?
-  signed_at           DateTime?
-  signature_ip        String?
+  signed_at             DateTime?
+  signature_ip          String?
 
   // Digital Signature — Promesa de Compraventa
-  promesa_signature_otp       String?
+  promesa_signature_otp         String?
   promesa_signature_otp_expires DateTime?
-  promesa_signed_at           DateTime?
-  promesa_signature_ip        String?
+  promesa_signed_at             DateTime?
+  promesa_signature_ip          String?
 
   // Relations
-  lot         Lot                 @relation(fields: [lot_id], references: [id])
+  lot          Lot                 @relation(fields: [lot_id], references: [id])
   transactions WebpayTransaction[]
 
-  seller_id   String?
-  seller      User?               @relation("SellerReservations", fields: [seller_id], references: [id])
+  seller_id String?
+  seller    User?   @relation("SellerReservations", fields: [seller_id], references: [id])
 
-  buyer_id    String?
-  buyer       User?               @relation("BuyerReservations", fields: [buyer_id], references: [id])
+  buyer_id String?
+  buyer    User?   @relation("BuyerReservations", fields: [buyer_id], references: [id])
 }
 
 model LotLock {
@@ -99,8 +105,8 @@ model LotLock {
   locked_by    String
   locked_until DateTime
   created_at   DateTime @default(now())
-  
-  lot          Lot      @relation(fields: [lot_id], references: [id])
+
+  lot Lot @relation(fields: [lot_id], references: [id])
 }
 
 model WebpayTransaction {
@@ -115,18 +121,18 @@ model WebpayTransaction {
   payment_type_code   String?
   installments_number Int?
   processed_at        DateTime?
-  
-  // Custom Payment Scope
-  scope               String?   @default("RESERVATION") // RESERVATION, PIE, INSTALLMENT
-  installments_count  Int?      @default(0) // How many installments are being paid in this tx
 
-  created_at          DateTime  @default(now())
-  
+  // Custom Payment Scope
+  scope              String? @default("RESERVATION") // RESERVATION, PIE, INSTALLMENT
+  installments_count Int?    @default(0) // How many installments are being paid in this tx
+
+  created_at DateTime @default(now())
+
   // Relations
-  reservation_id      String
-  lot_id              Int
-  reservation         Reservation @relation(fields: [reservation_id], references: [id])
-  lot                 Lot         @relation(fields: [lot_id], references: [id])
+  reservation_id String
+  lot_id         Int
+  reservation    Reservation @relation(fields: [reservation_id], references: [id])
+  lot            Lot         @relation(fields: [lot_id], references: [id])
 }
 
 enum Role {
@@ -136,14 +142,14 @@ enum Role {
 }
 
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  emailVerified DateTime?
-  password  String
-  name      String
-  role      Role     @default(SELLER)
-  mustChangePassword Boolean @default(false)
-  createdAt DateTime @default(now())
+  id                 String    @id @default(uuid())
+  email              String    @unique
+  emailVerified      DateTime?
+  password           String
+  name               String
+  role               Role      @default(SELLER)
+  mustChangePassword Boolean   @default(false)
+  createdAt          DateTime  @default(now())
 
   // Relations
   sales         Reservation[]  @relation("SellerReservations")
@@ -162,29 +168,29 @@ enum ActionType {
 }
 
 model AuditLog {
-  id          String     @id @default(uuid())
-  action      ActionType
-  entity      String
-  entity_id   String?
-  details     String?
-  pk          String?    // Primary key reference if needed
-  user_id     String?
-  user_email  String?
-  ip_address  String?
-  user_agent  String?
-  created_at  DateTime   @default(now())
+  id         String     @id @default(uuid())
+  action     ActionType
+  entity     String
+  entity_id  String?
+  details    String?
+  pk         String? // Primary key reference if needed
+  user_id    String?
+  user_email String?
+  ip_address String?
+  user_agent String?
+  created_at DateTime   @default(now())
 
-  user        User?      @relation(fields: [user_id], references: [id])
+  user User? @relation(fields: [user_id], references: [id])
 }
 
 model Notification {
-  id          String   @id @default(uuid())
-  user_id     String
-  type        String   // e.g. 'payment_due', 'contract_pending', 'lot_purchased'
-  title       String
-  message     String
-  read        Boolean  @default(false)
-  created_at  DateTime @default(now())
+  id         String   @id @default(uuid())
+  user_id    String
+  type       String // e.g. 'payment_due', 'contract_pending', 'lot_purchased'
+  title      String
+  message    String
+  read       Boolean  @default(false)
+  created_at DateTime @default(now())
 
-  user        User     @relation(fields: [user_id], references: [id])
+  user User @relation(fields: [user_id], references: [id])
 }

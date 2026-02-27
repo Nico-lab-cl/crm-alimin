@@ -7,7 +7,12 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { assignLegacyLotOwner } from "@/actions/dashboard"
 import { toast } from "sonner"
-import { Loader2 } from "lucide-react"
+import { Loader2, Calendar as CalendarIcon } from "lucide-react"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Calendar } from "@/components/ui/calendar"
+import { format } from "date-fns"
+import { es } from "date-fns/locale"
+import { cn } from "@/lib/utils"
 
 import { REGIONES_Y_COMUNAS } from "@/data/chile-data"
 
@@ -32,8 +37,19 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
         address_street: "",
         address_number: "",
         address_commune: "",
-        address_region: ""
+        address_region: "",
+        // Relacionado al terreno y pagos
+        reservation_amount_clp: 500000,
+        pie: 0,
+        cuotas: 0,
+        valor_cuota: 0,
+        last_installment_amount: 0,
+        price_total_clp: 0,
+        legacy_current_installment: 1,
     })
+
+    const [hasDebt, setHasDebt] = useState(false)
+    const [debtStartDate, setDebtStartDate] = useState<Date | undefined>(undefined)
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -43,7 +59,8 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
         try {
             const result = await assignLegacyLotOwner({
                 lotId,
-                ...formData
+                ...formData,
+                legacy_debt_start_date: hasDebt ? debtStartDate?.toISOString() : undefined
             })
 
             if (result.success) {
@@ -51,8 +68,11 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
                 setFormData({
                     name: "", email: "", phone: "", rut: "",
                     marital_status: "", profession: "", nationality: "Chilena",
-                    address_street: "", address_number: "", address_commune: "", address_region: ""
+                    address_street: "", address_number: "", address_commune: "", address_region: "",
+                    reservation_amount_clp: 500000, pie: 0, cuotas: 0, valor_cuota: 0, last_installment_amount: 0, price_total_clp: 0, legacy_current_installment: 1
                 })
+                setHasDebt(false)
+                setDebtStartDate(undefined)
                 onSuccess()
                 onOpenChange(false)
             } else {
@@ -215,6 +235,140 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
                                         </option>
                                     ))}
                             </select>
+                        </div>
+                    </div>
+
+                    <hr className="my-4 border-gray-200" />
+
+                    <h3 className="font-bold text-lg text-[#36595F]">Datos Financieros del Contrato</h3>
+                    <p className="text-sm text-gray-500 mb-4">Ingresa los valores exactos definidos en la compra offline.</p>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="price_total_clp">Valor Total Terreno (CLP)</Label>
+                            <Input
+                                id="price_total_clp"
+                                type="number"
+                                required
+                                value={formData.price_total_clp === 0 ? "" : formData.price_total_clp}
+                                onChange={(e) => setFormData({ ...formData, price_total_clp: Number(e.target.value) })}
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="reservation_amount_clp">Monto Reserva (CLP)</Label>
+                            <Input
+                                id="reservation_amount_clp"
+                                type="number"
+                                required
+                                value={formData.reservation_amount_clp === 0 ? "" : formData.reservation_amount_clp}
+                                onChange={(e) => setFormData({ ...formData, reservation_amount_clp: Number(e.target.value) })}
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="pie">Monto Pie Pagado (CLP)</Label>
+                            <Input
+                                id="pie"
+                                type="number"
+                                required
+                                value={formData.pie === 0 ? "" : formData.pie}
+                                onChange={(e) => setFormData({ ...formData, pie: Number(e.target.value) })}
+                            />
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="cuotas">Total de Cuotas</Label>
+                            <Input
+                                id="cuotas"
+                                type="number"
+                                required
+                                value={formData.cuotas === 0 ? "" : formData.cuotas}
+                                onChange={(e) => setFormData({ ...formData, cuotas: Number(e.target.value) })}
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="valor_cuota">Valor Cuota Normal (CLP)</Label>
+                            <Input
+                                id="valor_cuota"
+                                type="number"
+                                required
+                                value={formData.valor_cuota === 0 ? "" : formData.valor_cuota}
+                                onChange={(e) => setFormData({ ...formData, valor_cuota: Number(e.target.value) })}
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="last_installment_amount">Valor Última Cuota (CLP)</Label>
+                            <Input
+                                id="last_installment_amount"
+                                type="number"
+                                required
+                                value={formData.last_installment_amount === 0 ? "" : formData.last_installment_amount}
+                                onChange={(e) => setFormData({ ...formData, last_installment_amount: Number(e.target.value) })}
+                            />
+                        </div>
+                    </div>
+
+                    <div className="bg-blue-50/50 p-4 rounded-lg border border-blue-100 space-y-4">
+                        <h4 className="font-semibold text-blue-900 border-b border-blue-200 pb-2">Estado de Pagos Actual</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="legacy_current_installment">¿Qué cuota le toca pagar en Marzo?</Label>
+                                <Input
+                                    id="legacy_current_installment"
+                                    type="number"
+                                    min="1"
+                                    required
+                                    value={formData.legacy_current_installment}
+                                    onChange={(e) => setFormData({ ...formData, legacy_current_installment: Number(e.target.value) })}
+                                />
+                                <p className="text-xs text-blue-600">Ej: Si pones 4, el sistema asume que ya pagó 3 cuotas.</p>
+                            </div>
+
+                            <div className="space-y-3">
+                                <Label>¿Este cliente presenta deuda previa (mora)?</Label>
+                                <div className="flex items-center space-x-2">
+                                    <input
+                                        type="checkbox"
+                                        id="hasDebt"
+                                        checked={hasDebt}
+                                        onChange={(e) => setHasDebt(e.target.checked)}
+                                        className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                    />
+                                    <label htmlFor="hasDebt" className="text-sm font-medium text-gray-700">
+                                        Viene con mora acumulada
+                                    </label>
+                                </div>
+
+                                {hasDebt && (
+                                    <div className="pt-2">
+                                        <Label className="block mb-2 text-xs">Fecha desde que dejó de pagar</Label>
+                                        <Popover>
+                                            <PopoverTrigger asChild>
+                                                <Button
+                                                    type="button"
+                                                    variant={"outline"}
+                                                    className={cn(
+                                                        "w-full justify-start text-left font-normal",
+                                                        !debtStartDate && "text-muted-foreground"
+                                                    )}
+                                                >
+                                                    <CalendarIcon className="mr-2 h-4 w-4" />
+                                                    {debtStartDate ? format(debtStartDate, "PPP", { locale: es }) : <span>Seleccionar Inicio Mora</span>}
+                                                </Button>
+                                            </PopoverTrigger>
+                                            <PopoverContent className="w-auto p-0" align="start">
+                                                <Calendar
+                                                    mode="single"
+                                                    selected={debtStartDate}
+                                                    onSelect={setDebtStartDate}
+                                                    initialFocus
+                                                />
+                                            </PopoverContent>
+                                        </Popover>
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </div>
 

@@ -187,7 +187,9 @@ export async function getAdminLots() {
                     select: {
                         id: true,
                         buyer: { select: { name: true, email: true } },
-                        signed_at: true
+                        signed_at: true,
+                        is_legacy: true,
+                        workflow_activated: true
                     }
                 }
             }
@@ -242,6 +244,8 @@ export async function getAdminUsers() {
                         signed_at: true,
                         pie_status: true,
                         installments_paid: true,
+                        is_legacy: true,
+                        workflow_activated: true,
                         lot: {
                             select: { number: true, stage: true }
                         }
@@ -311,11 +315,25 @@ export async function assignLegacyLotOwner(data: {
     address_number?: string;
     address_commune?: string;
     address_region?: string;
+    // New Fields
+    reservation_amount_clp?: number;
+    pie?: number;
+    cuotas?: number;
+    valor_cuota?: number;
+    last_installment_amount?: number;
+    price_total_clp?: number;
+    legacy_current_installment?: number;
+    legacy_debt_start_date?: string;
 }) {
     const session = await auth()
     if (session?.user?.role !== Role.ADMIN) return { error: "No autorizado" }
 
-    const { lotId, name, email, phone, rut, marital_status, profession, nationality, address_street, address_number, address_commune, address_region } = data
+    const {
+        lotId, name, email, phone, rut, marital_status, profession, nationality,
+        address_street, address_number, address_commune, address_region,
+        reservation_amount_clp, pie, cuotas, valor_cuota, last_installment_amount,
+        price_total_clp, legacy_current_installment, legacy_debt_start_date
+    } = data
 
     try {
         let user = await prisma.user.findUnique({ where: { email } })
@@ -367,6 +385,27 @@ export async function assignLegacyLotOwner(data: {
             }
         }
 
+        // Base assumption: if pie is set, it's paid. If they gave us current installment, we calculate how many they've paid.
+        let paidInstallments = 0;
+        if (legacy_current_installment && legacy_current_installment > 1) {
+            paidInstallments = legacy_current_installment - 1;
+        }
+
+        // Update the Lot first to persist the financial constants
+        await prisma.lot.update({
+            where: { id: lotId },
+            data: {
+                price_total_clp: price_total_clp || 0,
+                reservation_amount_clp: reservation_amount_clp || 500000,
+                pie: pie || 0,
+                cuotas: cuotas || 0,
+                valor_cuota: valor_cuota || 0,
+                last_installment_amount: last_installment_amount || 0,
+                status: 'sold',
+                updated_at: new Date()
+            }
+        });
+
         // Create a "Completed" reservation linking user and lot
         const fullAddress = [address_street, address_number, address_commune, address_region].filter(Boolean).join(", ");
 
@@ -380,8 +419,8 @@ export async function assignLegacyLotOwner(data: {
                 rut,
                 status: 'paid',
                 pipeline_stage: 'VENTA_CERRADA',
-                pie_status: 'PAID',
-                installments_paid: 0,
+                pie_status: 'PAID', // In offline, the pie is considered paid if they signed.
+                installments_paid: paidInstallments,
                 address: fullAddress || 'Dirección no especificada (Venta Legacy)',
 
                 // New legal fields
@@ -391,7 +430,15 @@ export async function assignLegacyLotOwner(data: {
                 address_street,
                 address_number,
                 address_commune,
-                address_region
+                address_region,
+
+                // Legacy Offline indicators
+                is_legacy: true,
+                workflow_activated: false,
+                legacy_current_installment: legacy_current_installment || 1,
+                legacy_debt_start_date: legacy_debt_start_date ? new Date(legacy_debt_start_date) : null,
+                signed_at: new Date(), // Pre-signed offline
+                promesa_signed_at: new Date()
             }
         })
 
@@ -400,14 +447,11 @@ export async function assignLegacyLotOwner(data: {
             action: 'UPDATE',
             entity: 'Lot',
             entityId: String(lotId),
-            details: `Asignación manual de dueño a lote ${lotId}. Usuario: ${email} (${isNewUser ? 'NUEVO' : 'EXISTENTE'})`,
+            details: `Asignación manual de dueño a lote ${lotId}. Usuario: ${email} (${isNewUser ? 'NUEVO' : 'EXISTENTE'}). Datos financieros cargados.`,
             pk: String(lotId)
         })
 
-        // Confirm Lot / Legacy Sale Webhook
-        // Sending Pie Webhook as "Confirmation of Acquired Lot"
-        // This handles "enviarle el lote que adquirio" (via n8n)
-        await sendPieWebhook(reservation.id, 0).catch(e => console.error("Failed to trigger pie webhook for legacy", e))
+        // Webhooks are intentionally DEFERRED for legacy assignments until "Activar Workflow" is clicked
 
         revalidatePath('/admin/dashboard')
         return { success: true, message: isNewUser ? "Usuario creado y asignado. Se envió correo de bienvenida." : "Usuario asignado correctamente." }
@@ -415,6 +459,82 @@ export async function assignLegacyLotOwner(data: {
     } catch (error) {
         console.error("Error linking legacy owner:", error)
         return { error: "Error al asignar dueño al lote" }
+    }
+}
+
+export async function triggerLegacyWorkflow(reservationId: string) {
+    const session = await auth()
+    if (session?.user?.role !== Role.ADMIN) return { error: "No autorizado" }
+
+    try {
+        const reservation = await prisma.reservation.findUnique({
+            where: { id: reservationId },
+            include: { buyer: true, lot: true }
+        });
+
+        if (!reservation || !reservation.buyer || !reservation.is_legacy) {
+            return { error: "Reserva no encontrada o no es una asignación manual (legacy)." }
+        }
+
+        if (reservation.workflow_activated) {
+            return { error: "El workflow de esta reserva ya fue activado previamente." }
+        }
+
+        const user = reservation.buyer;
+        let resetLink = null;
+
+        // If it's a new legacy user (they need to set a password), send welcome email
+        if (user.mustChangePassword) {
+            const secret = new TextEncoder().encode(process.env.AUTH_SECRET || "fallback_secret")
+            const token = await new SignJWT({ email: user.email, sub: user.id })
+                .setProtectedHeader({ alg: "HS256" })
+                .setIssuedAt()
+                .setExpirationTime("24h")
+                .sign(secret)
+
+            const baseUrl = process.env.NEXTAUTH_URL || "https://aliminlomasdelmar.com"
+            resetLink = `${baseUrl}/reset-password?token=${token}`
+
+            // Send to Password Reset Webhook (as Welcome Email)
+            const webhookUrl = process.env.N8N_PASSWORD_RESET_WEBHOOK_URL
+            if (webhookUrl) {
+                await fetch(webhookUrl, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        email: user.email,
+                        name: user.name,
+                        resetLink, // Using reset link as "set password"
+                        isNewLegacyUser: true, // Flag for n8n if needed
+                        timestamp: new Date().toISOString(),
+                    }),
+                }).catch(e => console.error("Failed to trigger password webhook", e))
+            }
+        }
+
+        // Send Pie Webhook as "Confirmation of Acquired Lot"
+        await sendPieWebhook(reservation.id, 0).catch(e => console.error("Failed to trigger pie webhook for legacy", e));
+
+        // Mark workflow as activated
+        await prisma.reservation.update({
+            where: { id: reservationId },
+            data: { workflow_activated: true }
+        });
+
+        await logAdminAction({
+            action: 'UPDATE',
+            entity: 'Reservation',
+            entityId: reservationId,
+            details: `Workflow manual (Emails/n8n) activado para Lote ${reservation.lot.number}`,
+            pk: reservationId
+        });
+
+        revalidatePath('/admin/dashboard')
+        return { success: true, message: "Workflow activado y correos enviados correctamente." }
+
+    } catch (error) {
+        console.error("Error triggering legacy workflow:", error)
+        return { error: "Error al activar el workflow" }
     }
 }
 
