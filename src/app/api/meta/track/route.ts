@@ -34,7 +34,8 @@ export async function POST(req: Request) {
             fbp,
             fbc,
             userData?.city,
-            userData?.state
+            userData?.state,
+            userData?.external_id
         );
 
         // Forward to Meta

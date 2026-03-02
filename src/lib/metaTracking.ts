@@ -84,6 +84,7 @@ export interface CachedMetaUserData {
     phone?: string;
     city?: string;
     state?: string;
+    external_id?: string;
 }
 
 const META_CACHE_KEY = 'lomas_meta_user_data';
@@ -118,9 +119,15 @@ export const getCachedUserData = (): CachedMetaUserData => {
 
     try {
         const raw = localStorage.getItem(META_CACHE_KEY);
-        if (raw) {
-            return JSON.parse(raw) as CachedMetaUserData;
+        let data: CachedMetaUserData = raw ? JSON.parse(raw) : {};
+
+        // Auto-generate an external ID if one doesn't exist yet
+        if (!data.external_id) {
+            data.external_id = generateEventId('user'); // Re-using our UUID generator
+            localStorage.setItem(META_CACHE_KEY, JSON.stringify(data));
         }
+
+        return data;
     } catch (e) {
         console.warn("Failed to retrieve cached Meta user data", e);
     }
