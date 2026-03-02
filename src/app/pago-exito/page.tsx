@@ -138,7 +138,7 @@ function PagoExitoContent() {
                             setReceiptError(null);
 
                             // Trigger Meta Pixel Purchase Event
-                            if (data && typeof window !== 'undefined' && (window as any).fbq) {
+                            if (data && typeof window !== 'undefined') {
                                 const receiptData = data as any;
                                 const amount = receiptData.payment?.amount_clp || 500000;
                                 const lotIdStr = receiptData.lot?.id ? String(receiptData.lot.id) : undefined;
@@ -148,16 +148,29 @@ function PagoExitoContent() {
                                 // Prevent duplicate firing by checking a session flag
                                 const eventFlag = `fbq_purchase_${orderId || reservationId}`;
                                 if (!sessionStorage.getItem(eventFlag)) {
-                                    (window as any).fbq('track', 'Purchase', {
-                                        value: amount,
-                                        currency: 'CLP',
-                                        content_name: lotName,
-                                        content_ids: lotIdStr ? [lotIdStr] : undefined,
-                                        content_type: 'product',
-                                        order_id: orderId
-                                    }, { eventID: `reserva_${reservationId}_${orderId || 'unknown'}` });
                                     sessionStorage.setItem(eventFlag, 'true');
-                                    console.log('✅ Meta Pixel Purchase fired for:', orderId);
+
+                                    // Retry loop in case fbq hasn't loaded yet
+                                    let retries = 0;
+                                    const fireFbPurchase = () => {
+                                        if ((window as any).fbq) {
+                                            (window as any).fbq('track', 'Purchase', {
+                                                value: amount,
+                                                currency: 'CLP',
+                                                content_name: lotName,
+                                                content_ids: lotIdStr ? [lotIdStr] : undefined,
+                                                content_type: 'product',
+                                                order_id: orderId
+                                            }, { eventID: `reserva_${reservationId}_${orderId || 'unknown'}` });
+                                            console.log('✅ Meta Pixel Purchase fired for:', orderId);
+                                        } else if (retries < 20) {
+                                            retries++;
+                                            setTimeout(fireFbPurchase, 500);
+                                        } else {
+                                            console.error('❌ Meta Pixel failed to load in time for Purchase event.');
+                                        }
+                                    };
+                                    fireFbPurchase();
                                 }
                             }
                         }
