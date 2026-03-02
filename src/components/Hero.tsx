@@ -3,7 +3,7 @@
 import { useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { CheckCircle, ChevronDown, Shield } from 'lucide-react';
-import { trackPixelEvent, generateEventId } from '@/lib/metaTracking';
+import { trackPixelEvent, generateEventId, getCachedUserData } from '@/lib/metaTracking';
 
 interface HeroProps {
     onExploreClick: () => void;
@@ -89,6 +89,7 @@ export const Hero = ({ onExploreClick }: HeroProps) => {
                                 rel="noopener noreferrer"
                                 onClick={() => {
                                     const eventId = generateEventId('contact');
+                                    const userCache = getCachedUserData();
                                     const eventData = {
                                         content_name: 'WhatsApp Contact',
                                         content_category: 'Hero'
@@ -102,7 +103,8 @@ export const Hero = ({ onExploreClick }: HeroProps) => {
                                         body: JSON.stringify({
                                             eventName: 'Contact',
                                             eventId: eventId,
-                                            customData: eventData
+                                            customData: eventData,
+                                            userData: userCache
                                         })
                                     }).catch(e => console.error("Failed to forward CAPI Contact", e));
                                 }}

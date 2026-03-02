@@ -25,7 +25,7 @@ import { RutInput } from '@/components/RutInput';
 import { z } from 'zod';
 import { validateRutRaw } from '@/lib/rut';
 import { REGIONES_Y_COMUNAS } from '@/data/chile-data';
-import { trackPixelEvent, hashData, normalizeAndHashPhone } from '@/lib/metaTracking';
+import { trackPixelEvent, hashData, normalizeAndHashPhone, cacheUserData } from '@/lib/metaTracking';
 
 
 
@@ -206,6 +206,9 @@ export const LotReservationPopup = ({ lot, isOpen, onClose, onConfirm, isTempora
       } catch (e) {
         console.warn("Could not parse UTM data");
       }
+
+      // Record offline identity for future Meta Advanced Matching
+      cacheUserData(contactName, contactEmail, contactPhone);
 
       const res = await fetch('/api/webpay/create', {
         method: 'POST',

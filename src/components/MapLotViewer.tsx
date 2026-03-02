@@ -129,8 +129,10 @@ export default function MapLotViewer({ lots, onSelectLot, selectedLotId }: MapLo
                                             onClick={() => {
                                                 if (isClickable && onSelectLot) {
                                                     // Trigger ViewContent event
-                                                    import("@/lib/metaTracking").then(({ trackPixelEvent, generateEventId }) => {
+                                                    import("@/lib/metaTracking").then(({ trackPixelEvent, generateEventId, getCachedUserData }) => {
                                                         const eventId = generateEventId('view');
+                                                        const userCache = getCachedUserData();
+
                                                         const eventData = {
                                                             content_type: 'product',
                                                             content_ids: [lot.id.toString()],
@@ -142,14 +144,15 @@ export default function MapLotViewer({ lots, onSelectLot, selectedLotId }: MapLo
                                                         // 1. Send via Frontend Pixel
                                                         trackPixelEvent('ViewContent', eventData, eventId);
 
-                                                        // 2. Send via Backend CAPI for deduplication
+                                                        // 2. Send via Backend CAPI for deduplication with Match Quality enrichment
                                                         fetch('/api/meta/track', {
                                                             method: 'POST',
                                                             headers: { 'Content-Type': 'application/json' },
                                                             body: JSON.stringify({
                                                                 eventName: 'ViewContent',
                                                                 eventId: eventId,
-                                                                customData: eventData
+                                                                customData: eventData,
+                                                                userData: userCache
                                                             })
                                                         }).catch(e => console.error("Failed to forward CAPI ViewContent", e));
                                                     }).catch(console.error);

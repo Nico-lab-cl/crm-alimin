@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { Instagram, Mail, MessageCircle, Youtube, Facebook } from 'lucide-react';
 import Link from 'next/link';
-import { trackPixelEvent, generateEventId } from '@/lib/metaTracking';
+import { trackPixelEvent, generateEventId, getCachedUserData } from '@/lib/metaTracking';
 
 export const StickyContactBar = () => {
     const pathname = usePathname();
@@ -131,6 +131,7 @@ export const StickyContactBar = () => {
                     rel="noopener noreferrer"
                     onClick={() => {
                         const eventId = generateEventId('contact');
+                        const userCache = getCachedUserData();
                         const eventData = {
                             content_name: 'WhatsApp Contact',
                             content_category: 'Sticky Bar'
@@ -144,7 +145,8 @@ export const StickyContactBar = () => {
                             body: JSON.stringify({
                                 eventName: 'Contact',
                                 eventId: eventId,
-                                customData: eventData
+                                customData: eventData,
+                                userData: userCache
                             })
                         }).catch(e => console.error("Failed to forward CAPI Contact", e));
                     }}

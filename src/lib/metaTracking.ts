@@ -73,3 +73,46 @@ export const trackPixelEvent = (
         console.log(`[Meta Pixel] Tracked ${eventName}`, data, eventId ? `(ID: ${eventId})` : '');
     }
 };
+
+// --------------------------------------------------------
+// META CAPI MATCH QUALITY HELPERS (Caching)
+// --------------------------------------------------------
+
+export interface CachedMetaUserData {
+    name?: string;
+    email?: string;
+    phone?: string;
+}
+
+const META_CACHE_KEY = 'lomas_meta_user_data';
+
+export const cacheUserData = (name?: string, email?: string, phone?: string) => {
+    if (typeof window === 'undefined') return;
+
+    try {
+        const existingData = getCachedUserData() || {};
+        const newData = {
+            name: name || existingData.name,
+            email: email || existingData.email,
+            phone: phone || existingData.phone
+        };
+
+        localStorage.setItem(META_CACHE_KEY, JSON.stringify(newData));
+    } catch (e) {
+        console.warn("Failed to cache Meta user data", e);
+    }
+};
+
+export const getCachedUserData = (): CachedMetaUserData => {
+    if (typeof window === 'undefined') return {};
+
+    try {
+        const raw = localStorage.getItem(META_CACHE_KEY);
+        if (raw) {
+            return JSON.parse(raw) as CachedMetaUserData;
+        }
+    } catch (e) {
+        console.warn("Failed to retrieve cached Meta user data", e);
+    }
+    return {};
+};
