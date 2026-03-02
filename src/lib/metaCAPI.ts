@@ -14,6 +14,8 @@ interface CAPIUserData {
     client_user_agent?: string;
     fbp?: string;
     fbc?: string;
+    ct?: string[]; // City in SHA256 array
+    st?: string[]; // State in SHA256 array
 }
 
 interface CAPICustomData {
@@ -91,7 +93,9 @@ export function prepareCAPIUserData(
     ip?: string | null,
     userAgent?: string | null,
     fbp?: string | null,
-    fbc?: string | null
+    fbc?: string | null,
+    city?: string | null,
+    state?: string | null
 ): CAPIUserData {
 
     const userData: CAPIUserData = {};
@@ -119,6 +123,18 @@ export function prepareCAPIUserData(
             const hLast = hashData(last);
             if (hLast) userData.ln = [hLast];
         }
+    }
+
+    if (city) {
+        // Meta expects city in lowercase and hashed
+        const hCity = hashData(city.toLowerCase().trim());
+        if (hCity) userData.ct = [hCity];
+    }
+
+    if (state) {
+        // Meta expects state in lowercase and hashed
+        const hState = hashData(state.toLowerCase().trim());
+        if (hState) userData.st = [hState];
     }
 
     // Adding connection data

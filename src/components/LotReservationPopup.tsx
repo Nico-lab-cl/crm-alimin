@@ -208,7 +208,13 @@ export const LotReservationPopup = ({ lot, isOpen, onClose, onConfirm, isTempora
       }
 
       // Record offline identity for future Meta Advanced Matching
-      cacheUserData(contactName, contactEmail, contactPhone);
+      cacheUserData(
+        contactName,
+        contactEmail,
+        contactPhone,
+        formData.address_commune,
+        formData.address_region
+      );
 
       const res = await fetch('/api/webpay/create', {
         method: 'POST',

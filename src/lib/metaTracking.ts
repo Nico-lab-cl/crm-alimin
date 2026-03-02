@@ -82,11 +82,19 @@ export interface CachedMetaUserData {
     name?: string;
     email?: string;
     phone?: string;
+    city?: string;
+    state?: string;
 }
 
 const META_CACHE_KEY = 'lomas_meta_user_data';
 
-export const cacheUserData = (name?: string, email?: string, phone?: string) => {
+export const cacheUserData = (
+    name?: string,
+    email?: string,
+    phone?: string,
+    city?: string,
+    state?: string
+) => {
     if (typeof window === 'undefined') return;
 
     try {
@@ -94,7 +102,9 @@ export const cacheUserData = (name?: string, email?: string, phone?: string) => 
         const newData = {
             name: name || existingData.name,
             email: email || existingData.email,
-            phone: phone || existingData.phone
+            phone: phone || existingData.phone,
+            city: city || existingData.city,
+            state: state || existingData.state
         };
 
         localStorage.setItem(META_CACHE_KEY, JSON.stringify(newData));

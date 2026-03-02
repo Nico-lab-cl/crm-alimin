@@ -32,7 +32,9 @@ export async function POST(req: Request) {
             ipMatch,
             uaMatch,
             fbp,
-            fbc
+            fbc,
+            userData?.city,
+            userData?.state
         );
 
         // Forward to Meta
