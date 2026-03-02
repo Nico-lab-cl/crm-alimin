@@ -453,6 +453,40 @@ export async function assignLegacyLotOwner(data: {
             pk: String(lotId)
         })
 
+        // --- META CAPI: Offline Conversion Tracking ---
+        // Fire a 'Purchase' event to Meta to enrich the pixel AI with offline buyers demography
+        try {
+            const { sendMetaCAPIEvent, prepareCAPIUserData } = await import('@/lib/metaCAPI');
+            // Since this runs in a server action triggered by an Admin, the IP would belong to the Admin.
+            // But we pass the user's data (hashed on the server) to deduplicate using email/phone matching.
+            const userData = prepareCAPIUserData(
+                email,
+                phone,
+                name,
+                null, // No reliable user IP
+                null  // No reliable user agent
+            );
+
+            await sendMetaCAPIEvent({
+                eventName: 'Purchase',
+                eventId: `offline_reserva_${reservation.id}`,
+                actionSource: 'system_generated', // Explicitly marked as an offline conversion
+                userData,
+                customData: {
+                    currency: 'CLP',
+                    value: reservation_amount_clp || 500000,
+                    content_ids: [lotId.toString()],
+                    content_type: 'product',
+                    content_name: `Asignación Manual Lote`, // Since `lot` might not be joined here
+                    order_id: `OFFLINE_${reservation.id}`
+                }
+            });
+            console.log(`[Meta CAPI] Offline Conversion tracked for Reservation ${reservation.id}`);
+        } catch (metaErr) {
+            console.error("[Meta CAPI Error] Failed to track offline assignment:", metaErr);
+        }
+        // ----------------------------------------------
+
         // Webhooks are intentionally DEFERRED for legacy assignments until "Activar Workflow" is clicked
 
         revalidatePath('/admin/dashboard')

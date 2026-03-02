@@ -128,15 +128,31 @@ export default function MapLotViewer({ lots, onSelectLot, selectedLotId }: MapLo
                                             key={lot.id}
                                             onClick={() => {
                                                 if (isClickable && onSelectLot) {
-                                                    import("@/lib/metaTracking").then(({ trackPixelEvent }) => {
-                                                        trackPixelEvent('ViewContent', {
+                                                    // Trigger ViewContent event
+                                                    import("@/lib/metaTracking").then(({ trackPixelEvent, generateEventId }) => {
+                                                        const eventId = generateEventId('view');
+                                                        const eventData = {
                                                             content_type: 'product',
                                                             content_ids: [lot.id.toString()],
-                                                            content_name: `Lote ${lot.number} Etapa ${lot.stage}`,
-                                                            value: lot.totalPrice || 0,
-                                                            currency: 'CLP'
-                                                        });
-                                                    });
+                                                            content_name: `Vista Lote ${lot.number} Etapa ${lot.stage}`,
+                                                            currency: 'CLP',
+                                                            value: lot.totalPrice
+                                                        };
+
+                                                        // 1. Send via Frontend Pixel
+                                                        trackPixelEvent('ViewContent', eventData, eventId);
+
+                                                        // 2. Send via Backend CAPI for deduplication
+                                                        fetch('/api/meta/track', {
+                                                            method: 'POST',
+                                                            headers: { 'Content-Type': 'application/json' },
+                                                            body: JSON.stringify({
+                                                                eventName: 'ViewContent',
+                                                                eventId: eventId,
+                                                                customData: eventData
+                                                            })
+                                                        }).catch(e => console.error("Failed to forward CAPI ViewContent", e));
+                                                    }).catch(console.error);
                                                     onSelectLot(lot);
                                                 }
                                             }}

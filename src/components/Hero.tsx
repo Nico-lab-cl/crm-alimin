@@ -3,7 +3,7 @@
 import { useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { CheckCircle, ChevronDown, Shield } from 'lucide-react';
-import { trackPixelEvent } from '@/lib/metaTracking';
+import { trackPixelEvent, generateEventId } from '@/lib/metaTracking';
 
 interface HeroProps {
     onExploreClick: () => void;
@@ -88,10 +88,23 @@ export const Hero = ({ onExploreClick }: HeroProps) => {
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 onClick={() => {
-                                    trackPixelEvent('Contact', {
+                                    const eventId = generateEventId('contact');
+                                    const eventData = {
                                         content_name: 'WhatsApp Contact',
                                         content_category: 'Hero'
-                                    });
+                                    };
+
+                                    trackPixelEvent('Contact', eventData, eventId);
+
+                                    fetch('/api/meta/track', {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({
+                                            eventName: 'Contact',
+                                            eventId: eventId,
+                                            customData: eventData
+                                        })
+                                    }).catch(e => console.error("Failed to forward CAPI Contact", e));
                                 }}
                             >
                                 Hablar con Asesor

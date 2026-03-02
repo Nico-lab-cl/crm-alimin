@@ -33,6 +33,7 @@ interface CAPIEventParams {
     actionSource?: 'website' | 'system_generated' | 'other';
     userData: CAPIUserData;
     customData?: CAPICustomData;
+    testEventCode?: string;
 }
 
 /**
@@ -50,7 +51,8 @@ export async function sendMetaCAPIEvent(params: CAPIEventParams) {
                     user_data: params.userData,
                     custom_data: params.customData,
                 }
-            ]
+            ],
+            test_event_code: params.testEventCode,
         };
 
         const apiUrl = `https://graph.facebook.com/v19.0/${META_PIXEL_ID}/events?access_token=${META_ACCESS_TOKEN}`;
