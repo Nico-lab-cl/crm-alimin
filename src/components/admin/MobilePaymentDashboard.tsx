@@ -24,11 +24,20 @@ interface PaymentStats {
     totalInstallmentsPaid: number;
 }
 
-interface MobilePaymentDashboardProps {
-    stats: PaymentStats;
+interface SoldLot {
+    id: number;
+    number: string | null;
+    stage: number | null;
+    area_m2: number | null;
+    price_total_clp: number | null;
 }
 
-export function MobilePaymentDashboard({ stats }: MobilePaymentDashboardProps) {
+interface MobilePaymentDashboardProps {
+    stats: PaymentStats;
+    soldLots: SoldLot[];
+}
+
+export function MobilePaymentDashboard({ stats, soldLots }: MobilePaymentDashboardProps) {
     return (
         <div className="space-y-4">
             {/* Stats Cards Row */}
@@ -117,7 +126,7 @@ export function MobilePaymentDashboard({ stats }: MobilePaymentDashboardProps) {
             </Link>
 
             {/* Mora Explainer Card */}
-            <MoraExplainerCard />
+            <MoraExplainerCard soldLots={soldLots} />
         </div>
     );
 }

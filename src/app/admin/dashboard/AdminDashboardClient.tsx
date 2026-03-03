@@ -120,7 +120,16 @@ export function AdminDashboardClient({
 
                         {mobileTab === 'pagos' && (
                             <div className="animate-fade-in">
-                                <MobilePaymentDashboard stats={paymentStats} />
+                                <MobilePaymentDashboard
+                                    stats={paymentStats}
+                                    soldLots={lots.filter((l: any) => l.status === 'sold' && l.price_total_clp).map((l: any) => ({
+                                        id: l.id,
+                                        number: l.number,
+                                        stage: l.stage,
+                                        area_m2: l.area_m2,
+                                        price_total_clp: l.price_total_clp,
+                                    }))}
+                                />
                             </div>
                         )}
 
