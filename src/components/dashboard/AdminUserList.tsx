@@ -122,15 +122,15 @@ export const AdminUserList = ({ users: initialUsers }: AdminUserListProps) => {
     }
 
     return (
-        <div className="space-y-4">
-            <div className="flex flex-col md:flex-row gap-3 md:gap-4 justify-between items-center bg-white/5 p-3 md:p-4 rounded-xl border border-white/10">
-                <div className="flex items-center gap-2 w-full md:w-auto">
-                    <Search className="w-5 h-5 text-gray-400" />
+        <div className="space-y-4 overflow-x-hidden max-w-full">
+            <div className="flex flex-col gap-3 md:flex-row md:gap-4 justify-between items-stretch md:items-center bg-white/5 p-3 md:p-4 rounded-xl border border-white/10">
+                <div className="flex items-center gap-2 w-full md:w-auto min-w-0">
+                    <Search className="w-5 h-5 text-gray-400 shrink-0" />
                     <Input
                         placeholder="Buscar usuario..."
                         value={filter}
                         onChange={(e) => setFilter(e.target.value)}
-                        className="bg-transparent border-none text-white focus-visible:ring-0 placeholder:text-gray-500 w-full"
+                        className="bg-transparent border-none text-white focus-visible:ring-0 placeholder:text-gray-500 w-full min-w-0"
                     />
                 </div>
 
@@ -416,8 +416,8 @@ export const AdminUserList = ({ users: initialUsers }: AdminUserListProps) => {
                                                 <div className="flex items-center gap-2">
                                                     <p className="font-bold text-white text-[15px] truncate">{user.name}</p>
                                                     <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold shrink-0 ${user.role === 'ADMIN' ? 'bg-purple-500/20 text-purple-400 ring-1 ring-purple-500/20' :
-                                                            user.role === 'SELLER' ? 'bg-blue-500/20 text-blue-400 ring-1 ring-blue-500/20' :
-                                                                'bg-white/10 text-gray-400 ring-1 ring-white/5'
+                                                        user.role === 'SELLER' ? 'bg-blue-500/20 text-blue-400 ring-1 ring-blue-500/20' :
+                                                            'bg-white/10 text-gray-400 ring-1 ring-white/5'
                                                         }`}>
                                                         {roleLabel}
                                                     </span>

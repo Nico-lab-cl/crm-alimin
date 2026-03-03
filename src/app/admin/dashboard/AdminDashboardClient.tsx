@@ -111,7 +111,7 @@ export function AdminDashboardClient({
                     </div>
 
                     {/* ===== MOBILE VIEW (<md) ===== */}
-                    <div className="md:hidden">
+                    <div className="md:hidden overflow-x-hidden">
                         {mobileTab === 'terrenos' && (
                             <div className="animate-fade-in">
                                 <AdminLotList lots={lots} />
