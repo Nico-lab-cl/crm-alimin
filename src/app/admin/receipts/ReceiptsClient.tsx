@@ -9,7 +9,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Loader2, CheckCircle, XCircle, Eye } from "lucide-react";
+import { Loader2, CheckCircle, XCircle, Eye, MapPin, CreditCard, Clock } from "lucide-react";
 import { approvePaymentReceipt, rejectPaymentReceipt } from "@/actions/receipts";
 import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
@@ -28,7 +28,7 @@ export default function ReceiptsClient({ initialReceipts }: { initialReceipts: a
         try {
             await approvePaymentReceipt(id);
             setReceipts(prev => prev.map(r => r.id === id ? { ...r, status: 'APPROVED' } : r));
-            toast.success("Pago verificado y aprobado existosamente.");
+            toast.success("Pago verificado y aprobado exitosamente.");
         } catch (error) {
             console.error(error);
             toast.error("Error al aprobar el pago");
@@ -61,24 +61,32 @@ export default function ReceiptsClient({ initialReceipts }: { initialReceipts: a
         return new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(amount);
     };
 
+    const getStatusBadge = (status: string) => {
+        if (status === 'PENDING') return <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 text-[10px]">Pendiente</Badge>;
+        if (status === 'APPROVED') return <Badge className="bg-green-100 text-green-800 text-[10px]">Aprobado</Badge>;
+        if (status === 'REJECTED') return <Badge variant="destructive" className="text-[10px]">Rechazado</Badge>;
+        return null;
+    };
+
     return (
-        <div className="bg-white rounded-lg shadow border p-6">
-            <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-bold flex gap-2">
+        <div className="bg-white rounded-lg shadow border p-3 md:p-6">
+            <div className="flex justify-between items-center mb-4 md:mb-6">
+                <h2 className="text-lg md:text-xl font-bold flex gap-2 items-center">
                     Comprobantes
                     {pendingCount > 0 && (
-                        <Badge variant="destructive" className="ml-2 font-bold">{pendingCount} Pendientes</Badge>
+                        <Badge variant="destructive" className="ml-1 font-bold text-[10px] md:text-xs">{pendingCount} Pendientes</Badge>
                     )}
                 </h2>
             </div>
 
-            <div className="rounded-md border overflow-x-auto">
+            {/* ===== DESKTOP TABLE (md+) ===== */}
+            <div className="hidden md:block rounded-md border overflow-x-auto">
                 <Table>
                     <TableHeader className="bg-gray-50">
                         <TableRow>
                             <TableHead>Fecha</TableHead>
                             <TableHead>Cliente</TableHead>
-                            <TableHead>Lote</TableHead>
+                            <TableHead>Terreno</TableHead>
                             <TableHead>Tipo</TableHead>
                             <TableHead>Monto</TableHead>
                             <TableHead>Estado</TableHead>
@@ -93,12 +101,12 @@ export default function ReceiptsClient({ initialReceipts }: { initialReceipts: a
                                 </TableCell>
                                 <TableCell>
                                     <div className="font-medium text-sm">
-                                        {receipt.reservation.buyer?.nombre} {receipt.reservation.buyer?.apellidos}
+                                        {receipt.reservation.buyer?.name}
                                     </div>
-                                    <div className="text-xs text-gray-500">{receipt.reservation.buyer?.rut}</div>
+                                    <div className="text-xs text-gray-500">{receipt.reservation.buyer?.email}</div>
                                 </TableCell>
                                 <TableCell>
-                                    Etapa {receipt.reservation.lot?.stage} - Lote {receipt.reservation.lot?.number}
+                                    Etapa {receipt.reservation.lot?.stage} - Terreno {receipt.reservation.lot?.number}
                                 </TableCell>
                                 <TableCell>
                                     {receipt.scope === 'PIE' ? (
@@ -113,9 +121,7 @@ export default function ReceiptsClient({ initialReceipts }: { initialReceipts: a
                                     {formatCurrency(receipt.amount_clp)}
                                 </TableCell>
                                 <TableCell>
-                                    {receipt.status === 'PENDING' && <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">Pendiente</Badge>}
-                                    {receipt.status === 'APPROVED' && <Badge className="bg-green-100 text-green-800">Aprobado</Badge>}
-                                    {receipt.status === 'REJECTED' && <Badge variant="destructive">Rechazado</Badge>}
+                                    {getStatusBadge(receipt.status)}
                                 </TableCell>
                                 <TableCell className="text-right">
                                     <div className="flex justify-end gap-2">
@@ -171,14 +177,117 @@ export default function ReceiptsClient({ initialReceipts }: { initialReceipts: a
                 </Table>
             </div>
 
+            {/* ===== MOBILE CARD LIST (<md) ===== */}
+            <div className="md:hidden space-y-3">
+                {receipts.map((receipt) => (
+                    <div
+                        key={receipt.id}
+                        className={`rounded-xl border p-4 space-y-3 transition-colors ${receipt.status === 'PENDING'
+                                ? 'bg-yellow-50/50 border-yellow-200'
+                                : receipt.status === 'APPROVED'
+                                    ? 'bg-green-50/30 border-green-200'
+                                    : receipt.status === 'REJECTED'
+                                        ? 'bg-red-50/30 border-red-200'
+                                        : 'bg-gray-50 border-gray-200'
+                            }`}
+                    >
+                        {/* Top Row: Client + Status */}
+                        <div className="flex items-start justify-between gap-2">
+                            <div className="min-w-0">
+                                <p className="font-bold text-gray-900 text-sm truncate">
+                                    {receipt.reservation.buyer?.name || 'Sin nombre'}
+                                </p>
+                                <p className="text-[11px] text-gray-500 truncate">
+                                    {receipt.reservation.buyer?.email}
+                                </p>
+                            </div>
+                            {getStatusBadge(receipt.status)}
+                        </div>
+
+                        {/* Info Row */}
+                        <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-600">
+                            <span className="flex items-center gap-1">
+                                <MapPin className="w-3 h-3 text-gray-400" />
+                                T-{receipt.reservation.lot?.number} · Etapa {receipt.reservation.lot?.stage}
+                            </span>
+                            <span className="flex items-center gap-1">
+                                <CreditCard className="w-3 h-3 text-gray-400" />
+                                {receipt.scope === 'PIE' ? 'Pie' : `${receipt.installments_count > 1 ? receipt.installments_count + ' Cuotas' : '1 Cuota'}`}
+                            </span>
+                            <span className="flex items-center gap-1">
+                                <Clock className="w-3 h-3 text-gray-400" />
+                                {format(new Date(receipt.created_at), "dd MMM, HH:mm", { locale: es })}
+                            </span>
+                        </div>
+
+                        {/* Amount */}
+                        <div className="flex items-center justify-between bg-white rounded-lg px-3 py-2 border">
+                            <span className="text-xs text-gray-500">Monto</span>
+                            <span className="text-base font-bold text-gray-900">{formatCurrency(receipt.amount_clp)}</span>
+                        </div>
+
+                        {/* Rejection Reason */}
+                        {receipt.rejection_reason && (
+                            <div className="bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+                                <p className="text-xs text-red-600">
+                                    <span className="font-semibold">Motivo: </span>
+                                    {receipt.rejection_reason}
+                                </p>
+                            </div>
+                        )}
+
+                        {/* Action Buttons — 44px min height */}
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => setSelectedImage(receipt.receipt_url)}
+                                className="flex items-center justify-center gap-1.5 flex-1 min-h-[44px] rounded-lg bg-gray-100 text-gray-700 text-xs font-semibold hover:bg-gray-200 transition-colors active:scale-[0.97]"
+                            >
+                                <Eye className="w-4 h-4" />
+                                Ver
+                            </button>
+
+                            {receipt.status === 'PENDING' && (
+                                <>
+                                    <button
+                                        onClick={() => handleApprove(receipt.id)}
+                                        disabled={isProcessing === receipt.id}
+                                        className="flex items-center justify-center gap-1.5 flex-1 min-h-[44px] rounded-lg bg-green-600 text-white text-xs font-semibold hover:bg-green-700 transition-colors active:scale-[0.97] disabled:opacity-50"
+                                    >
+                                        {isProcessing === receipt.id ? (
+                                            <Loader2 className="w-4 h-4 animate-spin" />
+                                        ) : (
+                                            <CheckCircle className="w-4 h-4" />
+                                        )}
+                                        Aprobar
+                                    </button>
+                                    <button
+                                        onClick={() => setRejectingId(receipt.id)}
+                                        disabled={isProcessing === receipt.id}
+                                        className="flex items-center justify-center gap-1.5 flex-1 min-h-[44px] rounded-lg bg-red-600 text-white text-xs font-semibold hover:bg-red-700 transition-colors active:scale-[0.97] disabled:opacity-50"
+                                    >
+                                        <XCircle className="w-4 h-4" />
+                                        Rechazar
+                                    </button>
+                                </>
+                            )}
+                        </div>
+                    </div>
+                ))}
+                {receipts.length === 0 && (
+                    <div className="p-8 text-center text-gray-500 text-sm">
+                        No hay comprobantes de pago subidos aún.
+                    </div>
+                )}
+            </div>
+
             {/* Image Viewer Dialog */}
             <Dialog open={!!selectedImage} onOpenChange={() => setSelectedImage(null)}>
-                <DialogContent className="max-w-4xl p-0 overflow-hidden bg-black/5">
+                <DialogContent className="max-w-[95vw] md:max-w-4xl p-0 overflow-hidden bg-black/5">
                     <DialogHeader className="p-4 bg-white border-b absolute top-0 w-full z-10 hidden">
                         <DialogTitle>Comprobante de Transferencia</DialogTitle>
                     </DialogHeader>
                     {selectedImage && (
-                        <div className="w-full h-[80vh] flex items-center justify-center bg-gray-900 overflow-auto">
+                        <div className="w-full h-[70vh] md:h-[80vh] flex items-center justify-center bg-gray-900 overflow-auto">
                             {selectedImage.startsWith('data:application/pdf') ? (
                                 <iframe src={selectedImage} className="w-full h-full" />
                             ) : (
@@ -191,7 +300,7 @@ export default function ReceiptsClient({ initialReceipts }: { initialReceipts: a
 
             {/* Reject Reason Dialog */}
             <Dialog open={!!rejectingId} onOpenChange={(open) => !open && setRejectingId(null)}>
-                <DialogContent>
+                <DialogContent className="max-w-[90vw] md:max-w-md">
                     <DialogHeader>
                         <DialogTitle>Rechazar Transferencia</DialogTitle>
                     </DialogHeader>
@@ -204,9 +313,9 @@ export default function ReceiptsClient({ initialReceipts }: { initialReceipts: a
                             rows={3}
                         />
                     </div>
-                    <div className="flex justify-end space-x-2">
-                        <Button variant="outline" onClick={() => setRejectingId(null)}>Cancelar</Button>
-                        <Button variant="destructive" onClick={() => rejectingId && handleReject(rejectingId)} disabled={isProcessing === rejectingId}>
+                    <div className="flex flex-col-reverse sm:flex-row justify-end gap-2">
+                        <Button variant="outline" onClick={() => setRejectingId(null)} className="min-h-[44px]">Cancelar</Button>
+                        <Button variant="destructive" onClick={() => rejectingId && handleReject(rejectingId)} disabled={isProcessing === rejectingId} className="min-h-[44px]">
                             {isProcessing === rejectingId ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
                             Confirmar Rechazo
                         </Button>
