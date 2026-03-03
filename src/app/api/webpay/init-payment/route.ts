@@ -2,6 +2,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { webpayCreate } from '@/lib/transbank'; // Use shared utility
+import { calculateTotalInterest } from '@/lib/financials';
 
 // Helper: Determine the exact price for a specific installment number
 function getInstallmentAmount(
@@ -114,43 +115,26 @@ export async function POST(request: Request) {
 
                 let daysLate = 0;
 
-                // SMART SIMULATION LOGIC & LEGACY DEBT HANDLING
+                // NEW SIMULATION LOGIC - RELIES ENTIRELY ON FINANCIALS UTILITY
                 const effectiveNow = comparisonDate || simulatedDate || new Date();
                 const now = new Date(effectiveNow);
                 const chileNow = new Date(now.toLocaleString("en-US", { timeZone: "America/Santiago" }));
                 chileNow.setHours(0, 0, 0, 0);
 
-                if (reservation.is_legacy && reservation.legacy_debt_start_date) {
-                    // LEGACY CALCULATION: Compares target date to the designated debt start date directly
-                    const debtStart = new Date(reservation.legacy_debt_start_date);
-                    debtStart.setHours(0, 0, 0, 0);
+                const totalPrice = reservation.lot.price_total_clp || 0;
+                const lotAreaM2 = reservation.lot.area_m2 || 200;
 
-                    if (chileNow > debtStart) {
-                        const diffTime = chileNow.getTime() - debtStart.getTime();
-                        daysLate = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                    }
-                } else {
-                    // STANDARD ONLINE CALCULATION: Compares target date to the computed grace period end
-                    const gracePeriodEnd = new Date(dueDate);
-                    gracePeriodEnd.setDate(10);
-                    gracePeriodEnd.setHours(23, 59, 59, 999);
+                const interest = calculateTotalInterest(
+                    totalPrice,
+                    lotAreaM2,
+                    dueDate,
+                    Boolean(reservation.is_legacy),
+                    chileNow
+                );
 
-                    if (chileNow > gracePeriodEnd) {
-                        const diffTime = chileNow.getTime() - gracePeriodEnd.getTime();
-                        daysLate = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                    }
-                }
-
-                if (daysLate > 0) {
-                    let factor = 0.027785496; // Default / Low tier (>= 64)
-                    if (totalCuotas >= 77) {
-                        factor = 0.0227324392; // High tier
-                    }
-                    const dailyInterest = Math.round(instAmount * factor);
-                    const interest = dailyInterest * daysLate;
-
+                if (interest > 0) {
                     totalInterest += interest;
-                    console.log(`Installment ${installmentNum}: Late by ${daysLate} days. Interest: ${interest}`);
+                    console.log(`Installment ${installmentNum}: Applied Interest: ${interest}`);
                 }
             }
 

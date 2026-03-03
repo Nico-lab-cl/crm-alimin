@@ -27,8 +27,8 @@ import {
 export function InterestSimulator() {
     const [startDate, setStartDate] = useState<Date | undefined>(new Date());
     const [endDate, setEndDate] = useState<Date | undefined>(new Date());
-    const [amount, setAmount] = useState<number>(550000);
-    const [totalCuotas, setTotalCuotas] = useState<number>(77);
+    const [totalPrice, setTotalPrice] = useState<number>(45000000);
+    const [areaM2, setAreaM2] = useState<number>(200);
 
     // Calculation Logic
     const calculate = (): { error?: string, days?: number, daily?: number, total?: number, final?: number } | null => {
@@ -45,14 +45,14 @@ export function InterestSimulator() {
         const diffTime = end.getTime() - start.getTime();
         const days = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
         const daysCount = days; // Align with PaymentButtons.tsx which uses direct math without inclusive +1
-        const dailyInterest = calculateDailyInterest(amount, totalCuotas);
+        const dailyInterest = calculateDailyInterest(totalPrice, areaM2);
         const totalInterest = dailyInterest * daysCount;
 
         return {
             days: daysCount,
             daily: dailyInterest,
             total: totalInterest,
-            final: amount + totalInterest
+            final: Math.round(totalPrice / 77) + totalInterest // Mock base installment for display
         };
     };
 
@@ -77,25 +77,25 @@ export function InterestSimulator() {
                 <div className="grid gap-6 py-4">
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <Label>Monto Cuota</Label>
+                            <Label>Precio Total Lote</Label>
                             <Input
                                 type="number"
-                                value={amount}
-                                onChange={(e) => setAmount(Number(e.target.value))}
+                                value={totalPrice}
+                                onChange={(e) => setTotalPrice(Number(e.target.value))}
                                 className="bg-black/20 border-white/10 text-white"
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label>Total Cuotas Lote</Label>
+                            <Label>Área (m2)</Label>
                             <Input
                                 type="number"
-                                value={totalCuotas}
-                                onChange={(e) => setTotalCuotas(Number(e.target.value))}
+                                value={areaM2}
+                                onChange={(e) => setAreaM2(Number(e.target.value))}
                                 className="bg-black/20 border-white/10 text-white"
-                                placeholder="Ej: 77 o 64"
+                                placeholder="Ej: 200 o 300"
                             />
                             <p className="text-[10px] text-gray-400">
-                                {totalCuotas >= 77 ? "Factor Alto (2.27%)" : totalCuotas >= 64 ? "Factor Bajo (2.77%)" : "Factor Bajo (Defecto)"}
+                                {areaM2 >= 300 ? "Factor >= 300m2 (0.000227324392)" : "Factor < 300m2 (0.00027785496)"}
                             </p>
                         </div>
                     </div>

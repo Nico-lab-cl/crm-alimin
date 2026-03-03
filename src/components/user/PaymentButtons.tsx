@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/select";
 import { Loader2, CreditCard } from 'lucide-react';
 import { toast } from 'sonner';
+import { getInstallmentDueDate, calculateDailyInterest, calculateTotalInterest } from '@/lib/financials';
 
 interface PaymentButtonsProps {
     reservationId: string;
@@ -30,6 +31,8 @@ interface PaymentButtonsProps {
         cuotas: number | null;
         valor_cuota: number | null;
         last_installment_amount: number | null;
+        area_m2: number | null;
+        price_total_clp: number | null;
     };
     reservation: {
         pie_status: string | null;
@@ -43,18 +46,6 @@ interface PaymentButtonsProps {
     isAdminView?: boolean;
     simulatedDate?: Date;
     comparisonDate?: Date;
-}
-
-// Helper: get the due date for installment N (1-indexed) from acquisition date, in Chile timezone
-function getInstallmentDueDate(acquisitionDate: string, installmentNumber: number): Date {
-    const base = new Date(acquisitionDate);
-    // Use the 5th day of the month, N months after acquisition
-    // logic: Add months first, then fix day to 5.
-    // e.g. Jan 20 + 1 month = Feb 20 -> Feb 5.
-    const due = new Date(base);
-    due.setMonth(due.getMonth() + installmentNumber);
-    due.setDate(5);
-    return due;
 }
 
 function formatDateChile(date: Date): string {
@@ -210,18 +201,11 @@ export function PaymentButtons({ reservationId, lot, reservation, acquisitionDat
                     const lateDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
                     if (lateDays > 0) {
-                        let factor = 0.027785496;
-                        if (totalCuotas >= 77) factor = 0.0227324392;
+                        const totalPrice = lot.price_total_clp || 0;
+                        const lotAreaM2 = lot.area_m2 || 200;
 
-                        // Use getInstallmentAmount to get the EXACT amount for this installment
-                        const iAmount = getInstallmentAmount(
-                            instNum,
-                            totalCuotas,
-                            valorCuota,
-                            lastInstallmentPrice,
-                            reservation.legacy_installment_ranges
-                        );
-                        previewInterest = Math.round(iAmount * factor) * lateDays;
+                        const dailyInterest = calculateDailyInterest(totalPrice, lotAreaM2);
+                        previewInterest = dailyInterest * lateDays;
                         previewDays = lateDays;
                     }
                 }
@@ -229,28 +213,24 @@ export function PaymentButtons({ reservationId, lot, reservation, acquisitionDat
             // --- STANDARD ONLINE DEBT CALCULATION ---
             else if (acquisitionDate) {
                 const iDue = getInstallmentDueDate(acquisitionDate, instNum);
-                const graceEnd = new Date(iDue);
-                graceEnd.setDate(10);
-                graceEnd.setHours(23, 59, 59, 999);
 
-                if (targetDate > graceEnd) {
-                    const diffTime = targetDate.getTime() - graceEnd.getTime();
-                    const lateDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                const totalPrice = lot.price_total_clp || 0;
+                const lotAreaM2 = lot.area_m2 || 200;
 
-                    if (lateDays > 0) {
-                        let factor = 0.027785496;
-                        if (totalCuotas >= 77) factor = 0.0227324392;
+                const interestForThisInstallment = calculateTotalInterest(
+                    totalPrice,
+                    lotAreaM2,
+                    iDue,
+                    Boolean(reservation.is_legacy),
+                    targetDate
+                );
 
-                        const iAmount = getInstallmentAmount(
-                            instNum,
-                            totalCuotas,
-                            valorCuota,
-                            lastInstallmentPrice,
-                            reservation.legacy_installment_ranges
-                        );
-                        previewInterest = Math.round(iAmount * factor) * lateDays;
-                        previewDays = lateDays;
-                    }
+                if (interestForThisInstallment > 0) {
+                    // To get previewDays we need to re-calculate just the days or infer it from the amount.
+                    // A simple way to get days is to calculate daily interest and divide.
+                    const daily = calculateDailyInterest(totalPrice, lotAreaM2);
+                    previewDays = daily > 0 ? Math.round(interestForThisInstallment / daily) : 0;
+                    previewInterest = interestForThisInstallment;
                 }
             }
         }
@@ -410,17 +390,31 @@ export function PaymentButtons({ reservationId, lot, reservation, acquisitionDat
                                                 }
                                             }
                                         } else {
-                                            // STANDARD: Count days past the grace period (10th of due month)
+                                            // STANDARD ONLINE DEBT
                                             const iDue = getInstallmentDueDate(baseDate, instNum);
-                                            const graceEnd = new Date(iDue);
-                                            graceEnd.setDate(10);
-                                            graceEnd.setHours(23, 59, 59, 999);
+                                            const totalPrice = lot.price_total_clp || 0;
+                                            const lotAreaM2 = lot.area_m2 || 200;
 
-                                            if (targetDate > graceEnd) {
-                                                const diffTime = targetDate.getTime() - graceEnd.getTime();
-                                                lateDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                                            const interestForThisInstallment = calculateTotalInterest(
+                                                totalPrice,
+                                                lotAreaM2,
+                                                iDue,
+                                                Boolean(reservation.is_legacy),
+                                                targetDate
+                                            );
 
-                                                if (!lateRangeDisplay && lateDays > 0) {
+                                            if (interestForThisInstallment > 0) {
+                                                calculatedInterest += interestForThisInstallment;
+                                                // Estimate days for display
+                                                const daily = calculateDailyInterest(totalPrice, lotAreaM2);
+                                                if (daily > 0) {
+                                                    lateDays = Math.round(interestForThisInstallment / daily);
+                                                    daysLateForDisplay = Math.max(daysLateForDisplay, lateDays);
+                                                }
+
+                                                if (!lateRangeDisplay) {
+                                                    const graceEnd = new Date(iDue);
+                                                    graceEnd.setDate(10);
                                                     const lateStart = new Date(graceEnd);
                                                     lateStart.setDate(lateStart.getDate() + 1);
                                                     const startStr = lateStart.toLocaleDateString('es-CL', { day: '2-digit', month: '2-digit' });
@@ -428,13 +422,6 @@ export function PaymentButtons({ reservationId, lot, reservation, acquisitionDat
                                                     lateRangeDisplay = `${startStr} - ${endStr}`;
                                                 }
                                             }
-                                        }
-
-                                        if (lateDays > 0) {
-                                            let factor = 0.027785496;
-                                            if (totalCuotas >= 77) factor = 0.0227324392;
-                                            calculatedInterest += Math.round(iAmount * factor) * lateDays;
-                                            daysLateForDisplay = Math.max(daysLateForDisplay, lateDays);
                                         }
                                     }
 

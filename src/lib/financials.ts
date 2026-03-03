@@ -1,7 +1,8 @@
 
-export const INTEREST_RATE_HIGH_TIER = 0.0227324392; // 2.27% approx for >= 77 cuotas
-export const INTEREST_RATE_LOW_TIER = 0.027785496;  // 2.77% approx for >= 64 cuotas
+export const PENALTY_RATE_200M2 = 0.00027785496;  // For lots < 300m2
+export const PENALTY_RATE_300M2 = 0.000227324392; // For lots >= 300m2
 export const GRACE_PERIOD_DAYS = 5; // From day 5 to 10 (inclusive)
+export const PENALTY_START_DATE_WEB = new Date('2026-03-11T00:00:00-03:00'); // March 11, 2026
 
 export function getInstallmentDueDate(acquisitionDate: Date | string, installmentNumber: number): Date {
     const base = new Date(acquisitionDate);
@@ -13,27 +14,18 @@ export function getInstallmentDueDate(acquisitionDate: Date | string, installmen
 }
 
 export function calculateDailyInterest(
-    installmentAmount: number,
-    totalLotCuotas: number
+    totalLotPrice: number,
+    lotAreaM2: number
 ): number {
-    let factor = 0;
-    if (totalLotCuotas >= 77) {
-        factor = INTEREST_RATE_HIGH_TIER;
-    } else if (totalLotCuotas >= 64) {
-        factor = INTEREST_RATE_LOW_TIER;
-    } else {
-        // Default to low tier logic (higher interest) or 0? 
-        // User said "no hay ningún lote menor a 64".
-        // Use the low tier factor as a safe fallback for now.
-        factor = INTEREST_RATE_LOW_TIER;
-    }
-    return Math.round(installmentAmount * factor);
+    const rate = lotAreaM2 >= 300 ? PENALTY_RATE_300M2 : PENALTY_RATE_200M2;
+    return Math.round(totalLotPrice * rate);
 }
 
 export function calculateTotalInterest(
-    installmentAmount: number,
+    totalLotPrice: number,
+    lotAreaM2: number,
     dueDate: Date,
-    totalLotCuotas: number,
+    isLegacy: boolean,
     paymentDate: Date = new Date()
 ): number {
     // 1. Determine Grace Period End (10th of the month of the due date)
@@ -47,23 +39,38 @@ export function calculateTotalInterest(
     }
 
     // 2. Calculate days late
-    // User: "se cobra multa por 1 dia el dia 11".
-    // So if paymentDate is 11th, we want 1 day.
-    // 11 - 10 = 1.
-    // We calculate difference in days between paymentDate and gracePeriodEnd.
-
-    // Normalize dates to remove time for day diff calculation
     const pDate = new Date(paymentDate);
     pDate.setHours(0, 0, 0, 0);
 
     const gDate = new Date(gracePeriodEnd);
     gDate.setHours(0, 0, 0, 0);
 
+    // 3. Apply Web Rule Cutoff (March 11, 2026) for non-legacy users
+    // If a non-legacy user is late, we ONLY count days late starting from March 11.
+    // If their due date/grace period was BEFORE March 11, we act as if their grace period
+    // magically extended until March 10, so day 1 of penalty is March 11.
+    if (!isLegacy) {
+        const webCutoff = new Date(PENALTY_START_DATE_WEB);
+        webCutoff.setHours(0, 0, 0, 0);
+
+        // If the payment is happening before or on March 10, no penalty.
+        if (pDate < webCutoff) {
+            return 0;
+        }
+
+        // If the grace period end was before March 10, we move the starting line to March 10,
+        // so that the first day of penalty calculated is March 11.
+        if (gDate < webCutoff) {
+            gDate.setTime(webCutoff.getTime());
+            gDate.setDate(gDate.getDate() - 1); // Grace period ends on March 10
+        }
+    }
+
     const diffTime = pDate.getTime() - gDate.getTime();
     const daysLate = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
     if (daysLate <= 0) return 0;
 
-    const dailyInterest = calculateDailyInterest(installmentAmount, totalLotCuotas);
+    const dailyInterest = calculateDailyInterest(totalLotPrice, lotAreaM2);
     return dailyInterest * daysLate;
 }

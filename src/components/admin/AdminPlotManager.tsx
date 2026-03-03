@@ -22,6 +22,7 @@ import {
     PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { calculateTotalInterest, calculateDailyInterest } from '@/lib/financials';
 
 interface AdminPlotManagerProps {
     reservations: any[]; // Using any for simplicity with Prisma includes, or define tight type
@@ -234,14 +235,14 @@ export function AdminPlotManager({ reservations, allClients, userId, initialUser
                                                     // Since we don't know the EXACT schedule of their offline debt without a complex ledger, 
                                                     // we apply the daily penalty factor (0.027785496%) to their normal installment value, times the total days they are late.
 
-                                                    // To be more accurate to the user's manual tracking: if they missed multiple cuotas, 
-                                                    // the admin will manually assign how many they missed. We apply the penalty to the standard cuota.
-                                                    let amount = valorCuota;
-                                                    let factor = 0.027785496;
-                                                    if (totalCuotas >= 77) factor = 0.0227324392;
+                                                    // En lugar de calcular usando el factor hardcodeado antiguo, usamos la nueva lógica:
+                                                    const totalPrice = res.lot.price_total_clp || 0;
+                                                    const lotAreaM2 = res.lot.area_m2 || 200;
+
+                                                    const dailyInterest = calculateDailyInterest(totalPrice, lotAreaM2);
 
                                                     // If we are simulating from a specific date forward, the days accumulate
-                                                    totalInterestAccrued += Math.round(amount * factor) * lateDays;
+                                                    totalInterestAccrued += dailyInterest * lateDays;
                                                     lateInstallmentsCount++; // Representing 1 block of legacy debt
                                                 }
                                             }
@@ -263,20 +264,21 @@ export function AdminPlotManager({ reservations, allClients, userId, initialUser
                                             graceEnd.setDate(10);
                                             graceEnd.setHours(23, 59, 59, 999);
 
-                                            if (end > graceEnd) {
-                                                const diffTime = end.getTime() - graceEnd.getTime();
-                                                const lateDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                                            const totalPrice = res.lot.price_total_clp || 0;
+                                            const lotAreaM2 = res.lot.area_m2 || 200;
 
-                                                if (lateDays > 0) {
-                                                    let amount = valorCuota;
-                                                    if (i === totalCuotas) amount = lastInstallmentPrice;
+                                            // Usage: calculateTotalInterest(totalPrice, area, dueDate, isLegacy, comparisonDate)
+                                            const interestForThisInstallment = calculateTotalInterest(
+                                                totalPrice,
+                                                lotAreaM2,
+                                                dueDate,
+                                                Boolean(res.is_legacy),
+                                                end
+                                            );
 
-                                                    let factor = 0.027785496;
-                                                    if (totalCuotas >= 77) factor = 0.0227324392;
-
-                                                    totalInterestAccrued += Math.round(amount * factor) * lateDays;
-                                                    lateInstallmentsCount++;
-                                                }
+                                            if (interestForThisInstallment > 0) {
+                                                totalInterestAccrued += interestForThisInstallment;
+                                                lateInstallmentsCount++;
                                             }
                                         }
                                     });
