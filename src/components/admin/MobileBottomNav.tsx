@@ -21,8 +21,7 @@ export function MobileBottomNav({ activeTab, onTabChange }: MobileBottomNavProps
         <nav
             className="
                 fixed bottom-0 left-0 right-0 z-50 md:hidden
-                bg-gray-950/95 backdrop-blur-xl
-                border-t border-white/10
+                bg-[#0a0a0a] border-t border-white/10
                 pb-[env(safe-area-inset-bottom,0px)]
             "
         >
@@ -34,7 +33,7 @@ export function MobileBottomNav({ activeTab, onTabChange }: MobileBottomNavProps
                             key={id}
                             onClick={() => onTabChange(id)}
                             className={cn(
-                                'flex flex-col items-center justify-center gap-0.5 flex-1 py-2 rounded-xl transition-all duration-200 min-h-[48px] min-w-[48px]',
+                                'flex flex-col items-center justify-center gap-0.5 flex-1 py-2 rounded-xl transition-colors duration-100 min-h-[48px] min-w-[48px]',
                                 'active:scale-90',
                                 isActive
                                     ? 'text-alimin-gold'
@@ -42,19 +41,13 @@ export function MobileBottomNav({ activeTab, onTabChange }: MobileBottomNavProps
                             )}
                         >
                             <div className={cn(
-                                'relative flex items-center justify-center w-10 h-7 rounded-full transition-all duration-200',
+                                'flex items-center justify-center w-10 h-7 rounded-full transition-colors duration-100',
                                 isActive && 'bg-alimin-green/30'
                             )}>
-                                <Icon className={cn(
-                                    'w-5 h-5 transition-all duration-200',
-                                    isActive && 'scale-110'
-                                )} />
-                                {isActive && (
-                                    <span className="absolute inset-0 rounded-full animate-pulse-ring bg-alimin-gold/20 pointer-events-none" />
-                                )}
+                                <Icon className="w-5 h-5" />
                             </div>
                             <span className={cn(
-                                'text-[10px] font-semibold tracking-wide transition-all duration-200',
+                                'text-[10px] font-semibold tracking-wide',
                                 isActive ? 'opacity-100' : 'opacity-60'
                             )}>
                                 {label}

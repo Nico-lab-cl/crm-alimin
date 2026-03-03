@@ -5,7 +5,7 @@ import { Lot } from '@prisma/client'
 import { updateLotStatus, triggerLegacyWorkflow } from '@/actions/dashboard'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Search, Loader2, UserPlus, User } from 'lucide-react'
+import { Search, Loader2, UserPlus, User, ChevronLeft, ChevronRight } from 'lucide-react'
 import { toast } from 'sonner'
 import { AssignOwnerModal } from './AssignOwnerModal'
 import { LotBottomSheet } from '@/components/admin/LotBottomSheet'
@@ -48,6 +48,10 @@ export const AdminLotList = ({ lots: initialLots }: AdminLotListProps) => {
     const [bottomSheetOpen, setBottomSheetOpen] = useState(false)
 
     const { startSync, endSync } = useSyncStatus()
+
+    // Pagination (mobile only)
+    const LOTS_PER_PAGE = 18
+    const [currentPage, setCurrentPage] = useState(1)
 
     // Get unique stages for the filter dropdown
     const stages = Array.from(new Set(lots.map(l => l.stage).filter(Boolean))).sort((a, b) => (a as number) - (b as number))
@@ -109,21 +113,35 @@ export const AdminLotList = ({ lots: initialLots }: AdminLotListProps) => {
         return numA - numB
     })
 
+    // Reset page when filter/stage changes
+    const handleFilterChange = (value: string) => {
+        setFilter(value)
+        setCurrentPage(1)
+    }
+    const handleStageChange = (value: string) => {
+        setSelectedStage(value)
+        setCurrentPage(1)
+    }
+
+    // Pagination calculations
+    const totalPages = Math.ceil(filteredLots.length / LOTS_PER_PAGE)
+    const paginatedLots = filteredLots.slice((currentPage - 1) * LOTS_PER_PAGE, currentPage * LOTS_PER_PAGE)
+
     return (
-        <div className="space-y-4">
+        <div className="space-y-4 overflow-x-hidden max-w-full">
             <div className="flex flex-col md:flex-row gap-3 md:gap-4 items-center bg-white/5 p-3 md:p-4 rounded-xl border border-white/10">
                 <div className="flex items-center gap-2 w-full md:w-auto flex-1">
                     <Search className="w-5 h-5 text-gray-400" />
                     <Input
                         placeholder="Buscar terreno..."
                         value={filter}
-                        onChange={(e) => setFilter(e.target.value)}
+                        onChange={(e) => handleFilterChange(e.target.value)}
                         className="bg-transparent border-none text-white focus-visible:ring-0 placeholder:text-gray-500 w-full"
                     />
                 </div>
 
                 <div className="w-full md:w-48">
-                    <Select value={selectedStage} onValueChange={setSelectedStage}>
+                    <Select value={selectedStage} onValueChange={handleStageChange}>
                         <SelectTrigger className="bg-white/10 border-white/20 text-white">
                             <SelectValue placeholder="Filtrar por Etapa" />
                         </SelectTrigger>
@@ -139,8 +157,14 @@ export const AdminLotList = ({ lots: initialLots }: AdminLotListProps) => {
                 </div>
             </div>
 
-            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-4 lg:grid-cols-6 gap-2 md:gap-3 max-h-[calc(100vh-220px)] md:max-h-[600px] overflow-y-auto pr-1 md:pr-2 custom-scrollbar">
-                {filteredLots.map(lot => {
+            {/* Mobile counter */}
+            <p className="md:hidden text-[11px] text-gray-500 font-medium px-1">
+                {filteredLots.length} terreno{filteredLots.length !== 1 ? 's' : ''}
+                {totalPages > 1 && ` · Pág ${currentPage} de ${totalPages}`}
+            </p>
+
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-4 lg:grid-cols-6 gap-2 md:gap-3 md:max-h-[600px] md:overflow-y-auto md:pr-2 custom-scrollbar">
+                {paginatedLots.map(lot => {
                     const isSold = lot.status === 'sold'
                     const isLoading = loadingIds.has(lot.id)
                     const owner = lot.reservations?.[0]?.buyer
@@ -302,6 +326,31 @@ export const AdminLotList = ({ lots: initialLots }: AdminLotListProps) => {
                     )
                 })}
             </div>
+
+            {/* Mobile Pagination Controls */}
+            {totalPages > 1 && (
+                <div className="flex md:hidden items-center justify-between gap-3 pt-2 pb-4">
+                    <button
+                        onClick={() => { setCurrentPage(p => Math.max(1, p - 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                        disabled={currentPage === 1}
+                        className="flex items-center justify-center gap-1 min-h-[44px] px-4 rounded-xl bg-white/5 border border-white/10 text-white text-xs font-bold disabled:opacity-30 disabled:cursor-not-allowed active:scale-[0.95] transition-all"
+                    >
+                        <ChevronLeft className="w-4 h-4" />
+                        Anterior
+                    </button>
+                    <span className="text-xs text-gray-400 font-mono">
+                        {currentPage}/{totalPages}
+                    </span>
+                    <button
+                        onClick={() => { setCurrentPage(p => Math.min(totalPages, p + 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                        disabled={currentPage === totalPages}
+                        className="flex items-center justify-center gap-1 min-h-[44px] px-4 rounded-xl bg-white/5 border border-white/10 text-white text-xs font-bold disabled:opacity-30 disabled:cursor-not-allowed active:scale-[0.95] transition-all"
+                    >
+                        Siguiente
+                        <ChevronRight className="w-4 h-4" />
+                    </button>
+                </div>
+            )}
 
             {/* Mobile Bottom Sheet */}
             <LotBottomSheet

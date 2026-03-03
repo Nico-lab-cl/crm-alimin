@@ -42,7 +42,7 @@ export function AdminDashboardClient({
 
     return (
         <>
-            <div className="min-h-screen bg-black/95 relative w-full pt-4 md:pt-8 px-2 md:px-4 pb-12">
+            <div className="min-h-screen bg-black/95 relative w-full pt-4 md:pt-8 px-2 md:px-4 pb-12 overflow-x-hidden">
                 <div className="absolute inset-0 bg-[url('/terreno-bg.JPG')] bg-cover bg-center opacity-20 blur-sm fixed" />
 
                 <div className="relative z-10 max-w-[1800px] mx-auto space-y-4 md:space-y-8">

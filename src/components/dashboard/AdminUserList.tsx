@@ -6,7 +6,7 @@ import { createVerifiedUser, adminResetUserPassword } from '@/actions/dashboard'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Search, Loader2, Plus, FileSignature, AlertCircle, CheckCircle2, Clock, FileDown, CreditCard, ExternalLink, Lock } from 'lucide-react'
+import { Search, Loader2, Plus, FileSignature, AlertCircle, CheckCircle2, Clock, FileDown, CreditCard, ExternalLink, Lock, ChevronLeft, ChevronRight } from 'lucide-react'
 import { toast } from 'sonner'
 import {
     Dialog,
@@ -54,12 +54,17 @@ const STAGE_COLORS: Record<string, string> = {
     VENTA_PERDIDA: 'bg-red-900/30 text-red-300',
 }
 
+const USERS_PER_PAGE = 10;
+
 export const AdminUserList = ({ users: initialUsers }: AdminUserListProps) => {
     const [users, setUsers] = useState(initialUsers)
     const [filter, setFilter] = useState('')
     const [isCreateOpen, setIsCreateOpen] = useState(false)
     const [isCreating, setIsCreating] = useState(false)
     const router = useRouter()
+
+    // Pagination
+    const [currentPage, setCurrentPage] = useState(1)
 
     // Reset Password State
     const [isResetOpen, setIsResetOpen] = useState(false)
@@ -79,6 +84,16 @@ export const AdminUserList = ({ users: initialUsers }: AdminUserListProps) => {
         user.name?.toLowerCase().includes(filter.toLowerCase()) ||
         user.email?.toLowerCase().includes(filter.toLowerCase())
     )
+
+    // Pagination calculations
+    const totalPages = Math.ceil(filteredUsers.length / USERS_PER_PAGE)
+    const paginatedUsers = filteredUsers.slice((currentPage - 1) * USERS_PER_PAGE, currentPage * USERS_PER_PAGE)
+
+    // Reset page when filter changes
+    const handleFilterChange = (value: string) => {
+        setFilter(value)
+        setCurrentPage(1)
+    }
 
     const handleCreateUser = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -129,7 +144,7 @@ export const AdminUserList = ({ users: initialUsers }: AdminUserListProps) => {
                     <Input
                         placeholder="Buscar usuario..."
                         value={filter}
-                        onChange={(e) => setFilter(e.target.value)}
+                        onChange={(e) => handleFilterChange(e.target.value)}
                         className="bg-transparent border-none text-white focus-visible:ring-0 placeholder:text-gray-500 w-full min-w-0"
                     />
                 </div>
@@ -396,8 +411,9 @@ export const AdminUserList = ({ users: initialUsers }: AdminUserListProps) => {
                     <>
                         <p className="text-[11px] text-gray-500 font-medium px-1">
                             {filteredUsers.length} usuario{filteredUsers.length !== 1 ? 's' : ''}
+                            {totalPages > 1 && ` · Pág ${currentPage} de ${totalPages}`}
                         </p>
-                        {filteredUsers.map(user => {
+                        {paginatedUsers.map(user => {
                             const res = user.purchases?.[0] ?? null
                             const roleLabel = user.role === 'ADMIN' ? 'Admin' : user.role === 'SELLER' ? 'Vendedor' : 'Cliente'
 
@@ -501,7 +517,32 @@ export const AdminUserList = ({ users: initialUsers }: AdminUserListProps) => {
                         })}
                     </>
                 )}
+
+                {/* Pagination Controls */}
+                {totalPages > 1 && (
+                    <div className="flex items-center justify-between gap-3 pt-2 pb-4">
+                        <button
+                            onClick={() => { setCurrentPage(p => Math.max(1, p - 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                            disabled={currentPage === 1}
+                            className="flex items-center justify-center gap-1 min-h-[44px] px-4 rounded-xl bg-white/5 border border-white/10 text-white text-xs font-bold disabled:opacity-30 disabled:cursor-not-allowed active:scale-[0.95] transition-all"
+                        >
+                            <ChevronLeft className="w-4 h-4" />
+                            Anterior
+                        </button>
+                        <span className="text-xs text-gray-400 font-mono">
+                            {currentPage}/{totalPages}
+                        </span>
+                        <button
+                            onClick={() => { setCurrentPage(p => Math.min(totalPages, p + 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                            disabled={currentPage === totalPages}
+                            className="flex items-center justify-center gap-1 min-h-[44px] px-4 rounded-xl bg-white/5 border border-white/10 text-white text-xs font-bold disabled:opacity-30 disabled:cursor-not-allowed active:scale-[0.95] transition-all"
+                        >
+                            Siguiente
+                            <ChevronRight className="w-4 h-4" />
+                        </button>
+                    </div>
+                )}
             </div>
-        </div>
+        </div >
     )
 }
