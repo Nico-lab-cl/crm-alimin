@@ -30,6 +30,7 @@ model Lot {
   reservations Reservation[]
   locks        LotLock[]
   transactions WebpayTransaction[]
+  receipts     PaymentReceipt[]
 }
 
 model Reservation {
@@ -95,6 +96,7 @@ model Reservation {
   // Relations
   lot          Lot                 @relation(fields: [lot_id], references: [id])
   transactions WebpayTransaction[]
+  receipts     PaymentReceipt[]
 
   seller_id String?
   seller    User?   @relation("SellerReservations", fields: [seller_id], references: [id])
@@ -196,4 +198,22 @@ model Notification {
   created_at DateTime @default(now())
 
   user User @relation(fields: [user_id], references: [id])
+}
+
+model PaymentReceipt {
+  id                  String    @id @default(uuid())
+  amount_clp          Int
+  status              String    @default("PENDING") // PENDING, APPROVED, REJECTED
+  receipt_url         String
+  scope               String    // PIE, INSTALLMENT
+  installments_count  Int?      @default(0)
+  created_at          DateTime  @default(now())
+  processed_at        DateTime?
+  rejection_reason    String?
+
+  // Relations
+  reservation_id      String
+  lot_id              Int
+  reservation         Reservation @relation(fields: [reservation_id], references: [id])
+  lot                 Lot         @relation(fields: [lot_id], references: [id])
 }

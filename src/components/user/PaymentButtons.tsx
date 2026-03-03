@@ -21,6 +21,8 @@ import {
 import { Loader2, CreditCard } from 'lucide-react';
 import { toast } from 'sonner';
 import { getInstallmentDueDate, calculateDailyInterest, calculateTotalInterest } from '@/lib/financials';
+import { uploadPaymentReceipt } from '@/actions/receipts';
+import { Input } from '@/components/ui/input';
 
 interface PaymentButtonsProps {
     reservationId: string;
@@ -41,6 +43,7 @@ interface PaymentButtonsProps {
         legacy_debt_start_date?: Date | string | null;
         legacy_installment_start_date?: Date | string | null;
         legacy_installment_ranges?: any;
+        receipts?: any[];
     };
     acquisitionDate?: string | null;
     isAdminView?: boolean;
@@ -88,6 +91,11 @@ export function PaymentButtons({ reservationId, lot, reservation, acquisitionDat
     const [selectedCuotas, setSelectedCuotas] = useState<string>("1");
     const [isPieModalOpen, setIsPieModalOpen] = useState(false);
     const [isCuotasModalOpen, setIsCuotasModalOpen] = useState(false);
+    const [fileBase64, setFileBase64] = useState<string | null>(null);
+
+    // Pending Receipt Checks
+    const pendingPieReceipt = reservation.receipts?.find((r: any) => r.scope === 'PIE' && r.status === 'PENDING');
+    const pendingInstReceipt = reservation.receipts?.find((r: any) => r.scope === 'INSTALLMENT' && r.status === 'PENDING');
 
     // Use simulatedDate if provided (Admin Mode), otherwise Now
     const currentDate = simulatedDate ? new Date(simulatedDate) : new Date();
@@ -125,52 +133,44 @@ export function PaymentButtons({ reservationId, lot, reservation, acquisitionDat
         );
     }
 
-    const handlePayment = async (scope: 'PIE' | 'INSTALLMENT') => {
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) {
+            setFileBase64(null);
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            setFileBase64(reader.result as string);
+        };
+        reader.readAsDataURL(file);
+    };
+
+    const handleTransferSubmit = async (scope: 'PIE' | 'INSTALLMENT', amount: number, numCuotas: number = 0) => {
+        if (!fileBase64) {
+            toast.error('Debes adjuntar el comprobante de transferencia');
+            return;
+        }
         setIsLoading(true);
         try {
-            const body = {
+            await uploadPaymentReceipt({
                 reservationId,
+                lotId: lot.id,
+                amount,
+                receiptUrl: fileBase64,
                 scope,
-                installments: scope === 'INSTALLMENT' ? parseInt(selectedCuotas) : undefined,
-                simulatedDate: simulatedDate ? simulatedDate.toISOString() : undefined, // Start Date for manual range
-                comparisonDate: comparisonDate ? comparisonDate.toISOString() : undefined // End Date for manual range
-            };
-            console.log("Initiating payment with body:", body);
-
-            const res = await fetch('/api/webpay/init-payment', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(body)
+                installmentsCount: scope === 'INSTALLMENT' ? numCuotas : undefined
             });
 
-            if (!res.ok) {
-                const err = await res.json();
-                throw new Error(err.error || 'Error al iniciar pago');
-            }
-
-            const data = await res.json();
-            console.log("Payment initialized, data:", data);
-
-            if (!data.url || !data.token) {
-                console.error("Missing URL or Token from Webpay");
-                throw new Error("Respuesta inválida de Webpay (Falta URL o Token)");
-            }
-
-            // Redirect to Webpay
-            const form = document.createElement('form');
-            form.action = data.url;
-            form.method = 'POST';
-            const input = document.createElement('input');
-            input.type = 'hidden';
-            input.name = 'token_ws';
-            input.value = data.token;
-            form.appendChild(input);
-            document.body.appendChild(form);
-            form.submit();
-
+            toast.success('Comprobante enviado. En revisión por administración.');
+            setFileBase64(null);
+            setIsPieModalOpen(false);
+            setIsCuotasModalOpen(false);
         } catch (error) {
-            console.error('Payment Error:', error);
-            toast.error(error instanceof Error ? error.message : 'Error al iniciar el pago');
+            console.error('Transfer Error:', error);
+            toast.error(error instanceof Error ? error.message : 'Error al enviar comprobante');
+        } finally {
             setIsLoading(false);
         }
     };
@@ -179,15 +179,26 @@ export function PaymentButtons({ reservationId, lot, reservation, acquisitionDat
         return new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(amount);
     };
 
-    // Calculate Preview Interest (Single Quota - Next Pending)
+    // Calculate For Display (Admin Preview & User Payment)
     let previewInterest = 0;
     let previewDays = 0;
-    if ((simulatedDate || comparisonDate) && totalCuotas > 0) {
+
+    let calculatedInterest = 0;
+    let daysLateForDisplay = 0;
+    let lateRangeDisplay = "";
+
+    const baseDate = reservation.legacy_installment_start_date
+        ? new Date(reservation.legacy_installment_start_date).toISOString()
+        : (acquisitionDate || new Date().toISOString());
+    const firstDue = getInstallmentDueDate(baseDate, paidCuotas + 1);
+    const lastDue = getInstallmentDueDate(baseDate, paidCuotas + count);
+
+    if (totalCuotas > 0 && count > 0) {
         const effectiveDate = comparisonDate || simulatedDate || new Date();
         const targetDate = new Date(effectiveDate);
         targetDate.setHours(0, 0, 0, 0);
 
-        // Check ONLY the first pending quota
+        // Check ONLY the first pending quota for interest calculation
         const instNum = paidCuotas + 1;
         if (instNum <= totalCuotas) {
 
@@ -203,17 +214,23 @@ export function PaymentButtons({ reservationId, lot, reservation, acquisitionDat
                     if (lateDays > 0) {
                         const totalPrice = lot.price_total_clp || 0;
                         const lotAreaM2 = lot.area_m2 || 200;
-
                         const dailyInterest = calculateDailyInterest(totalPrice, lotAreaM2);
-                        previewInterest = dailyInterest * lateDays;
+                        const totalInt = dailyInterest * lateDays;
+
+                        // Admin Preview
+                        previewInterest = totalInt;
                         previewDays = lateDays;
+
+                        // User Payment
+                        calculatedInterest = totalInt;
+                        daysLateForDisplay = lateDays;
+                        lateRangeDisplay = `${debtStart.toLocaleDateString('es-CL', { day: '2-digit', month: '2-digit' })} - ${targetDate.toLocaleDateString('es-CL', { day: '2-digit', month: '2-digit' })}`;
                     }
                 }
             }
             // --- STANDARD ONLINE DEBT CALCULATION ---
-            else if (acquisitionDate) {
-                const iDue = getInstallmentDueDate(acquisitionDate, instNum);
-
+            else {
+                const iDue = getInstallmentDueDate(baseDate, instNum);
                 const totalPrice = lot.price_total_clp || 0;
                 const lotAreaM2 = lot.area_m2 || 200;
 
@@ -226,15 +243,25 @@ export function PaymentButtons({ reservationId, lot, reservation, acquisitionDat
                 );
 
                 if (interestForThisInstallment > 0) {
-                    // To get previewDays we need to re-calculate just the days or infer it from the amount.
-                    // A simple way to get days is to calculate daily interest and divide.
                     const daily = calculateDailyInterest(totalPrice, lotAreaM2);
-                    previewDays = daily > 0 ? Math.round(interestForThisInstallment / daily) : 0;
+                    const calculatedDays = daily > 0 ? Math.round(interestForThisInstallment / daily) : 0;
+
+                    // Admin Preview
                     previewInterest = interestForThisInstallment;
+                    previewDays = calculatedDays;
+
+                    // User Payment
+                    calculatedInterest = interestForThisInstallment;
+                    daysLateForDisplay = calculatedDays;
+                    const graceEnd = new Date(iDue);
+                    graceEnd.setDate(10);
+                    lateRangeDisplay = `${graceEnd.toLocaleDateString('es-CL', { day: '2-digit', month: '2-digit' })} - ${targetDate.toLocaleDateString('es-CL', { day: '2-digit', month: '2-digit' })}`;
                 }
             }
         }
     }
+
+    const finalTotal = totalToPay + calculatedInterest;
 
     return (
         <div className="flex flex-col gap-3 mt-4">
@@ -249,36 +276,49 @@ export function PaymentButtons({ reservationId, lot, reservation, acquisitionDat
                             Pagar Pie
                         </Button>
                     </DialogTrigger>
-                    <DialogContent className="bg-white text-black">
+                    <DialogContent className="bg-white text-black sm:max-w-[500px]">
                         <DialogHeader>
                             <DialogTitle>Pagar Pie del Terreno</DialogTitle>
                             <DialogDescription>
-                                El valor de la reserva ({formatCurrency(reservationPaid)}) se descontará del pie total.
+                                Transfiere el monto a la siguiente cuenta y sube el comprobante.
                             </DialogDescription>
                         </DialogHeader>
-                        <div className="py-4 space-y-2">
-                            <div className="flex justify-between text-sm">
-                                <span>Total Pie:</span>
-                                <span>{formatCurrency(pieTotal)}</span>
+                        <div className="py-4 space-y-4">
+                            <div className="bg-gray-50 p-3 rounded text-sm space-y-1">
+                                <p><strong>Banco:</strong> Santander</p>
+                                <p><strong>Cuenta:</strong> Corriente N° 86876868</p>
+                                <p><strong>Nombre:</strong> Alimin SPA</p>
+                                <p><strong>RUT:</strong> 77.508.711-0</p>
+                                <p><strong>Correo:</strong> inmobiliaria@aliminspa.cl</p>
                             </div>
-                            <div className="flex justify-between text-sm text-green-600">
-                                <span>- Reserva pagada:</span>
-                                <span>{formatCurrency(reservationPaid)}</span>
+                            <div className="space-y-2 border-t pt-4">
+                                <div className="flex justify-between text-sm">
+                                    <span>Total Pie:</span>
+                                    <span>{formatCurrency(pieTotal)}</span>
+                                </div>
+                                <div className="flex justify-between text-sm text-green-600">
+                                    <span>- Reserva pagada:</span>
+                                    <span>{formatCurrency(reservationPaid)}</span>
+                                </div>
+                                <div className="flex justify-between font-bold text-lg border-t pt-2">
+                                    <span>Monto a Transferir:</span>
+                                    <span>{formatCurrency(pieToPay)}</span>
+                                </div>
                             </div>
-                            <div className="flex justify-between font-bold text-lg border-t pt-2 mt-2">
-                                <span>Total a pagar:</span>
-                                <span>{formatCurrency(pieToPay)}</span>
+                            <div className="space-y-2 pt-2">
+                                <label className="text-sm font-medium">Sube tu comprobante de pago</label>
+                                <Input type="file" accept="image/*,.pdf" onChange={handleFileChange} />
                             </div>
                         </div>
                         <DialogFooter>
                             <Button variant="outline" onClick={() => setIsPieModalOpen(false)} className="bg-white text-black border-gray-300 hover:bg-gray-100 hover:text-black">Cancelar</Button>
                             <Button
-                                onClick={() => handlePayment('PIE')}
-                                disabled={isLoading}
+                                onClick={() => handleTransferSubmit('PIE', pieToPay)}
+                                disabled={isLoading || !fileBase64 || Boolean(pendingPieReceipt)}
                                 className="bg-[#36595F] text-white"
                             >
                                 {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                                Ir a Pagar
+                                {pendingPieReceipt ? "En Revisión..." : "Subir Comprobante"}
                             </Button>
                         </DialogFooter>
                     </DialogContent>
@@ -303,9 +343,9 @@ export function PaymentButtons({ reservationId, lot, reservation, acquisitionDat
                             Pagar Cuotas
                         </Button>
                     </DialogTrigger>
-                    {previewInterest > 0 && isAdminView && (
+                    {calculatedInterest > 0 && isAdminView && (
                         <div className="mt-2 text-[10px] text-center text-red-400 bg-red-900/10 border border-red-500/20 rounded p-1">
-                            Simulación: +{formatCurrency(previewInterest)}/cuota ({previewDays} días)
+                            Simulación: +{formatCurrency(calculatedInterest)}/cuota ({daysLateForDisplay} días)
                         </div>
                     )}
                     <DialogContent className="bg-white text-black">
@@ -347,143 +387,72 @@ export function PaymentButtons({ reservationId, lot, reservation, acquisitionDat
                                     <span>Cuotas restantes:</span>
                                     <span>{remainingCuotas} de {totalCuotas}</span>
                                 </div>
-                                {(acquisitionDate || reservation.legacy_installment_start_date) && count > 0 && (() => {
-                                    // For legacy clients with a specific installment start, use that instead of acquisitionDate
-                                    const baseDate = reservation.legacy_installment_start_date
-                                        ? new Date(reservation.legacy_installment_start_date).toISOString()
-                                        : acquisitionDate!;
-                                    const firstDue = getInstallmentDueDate(baseDate, paidCuotas + 1);
-                                    const lastDue = getInstallmentDueDate(baseDate, paidCuotas + count);
-
-                                    // Calculate Interest for Display
-                                    let calculatedInterest = 0;
-                                    let daysLateForDisplay = 0;
-                                    let lateRangeDisplay = "";
-
-                                    for (let i = 0; i < count; i++) {
-                                        // Only apply interest to the FIRST installment in the batch (the oldest one).
-                                        if (i > 0) continue;
-
-                                        const instNum = paidCuotas + 1 + i;
-                                        const iAmount = (includesLastInstallment && instNum === totalCuotas) ? lastInstallmentPrice : valorCuota;
-
-                                        // Target Payment Date (use simulation date if set, otherwise today)
-                                        const effectiveDate = comparisonDate || simulatedDate || new Date();
-                                        const targetDate = new Date(effectiveDate);
-                                        targetDate.setHours(0, 0, 0, 0);
-
-                                        let lateDays = 0;
-
-                                        if (reservation.is_legacy && reservation.legacy_debt_start_date) {
-                                            // LEGACY: Count days from the designated debt start date
-                                            const debtStart = new Date(reservation.legacy_debt_start_date);
-                                            debtStart.setHours(0, 0, 0, 0);
-
-                                            if (targetDate > debtStart) {
-                                                const diffTime = targetDate.getTime() - debtStart.getTime();
-                                                lateDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-                                                if (!lateRangeDisplay && lateDays > 0) {
-                                                    const startStr = debtStart.toLocaleDateString('es-CL', { day: '2-digit', month: '2-digit' });
-                                                    const endStr = targetDate.toLocaleDateString('es-CL', { day: '2-digit', month: '2-digit' });
-                                                    lateRangeDisplay = `${startStr} - ${endStr}`;
-                                                }
-                                            }
-                                        } else {
-                                            // STANDARD ONLINE DEBT
-                                            const iDue = getInstallmentDueDate(baseDate, instNum);
-                                            const totalPrice = lot.price_total_clp || 0;
-                                            const lotAreaM2 = lot.area_m2 || 200;
-
-                                            const interestForThisInstallment = calculateTotalInterest(
-                                                totalPrice,
-                                                lotAreaM2,
-                                                iDue,
-                                                Boolean(reservation.is_legacy),
-                                                targetDate
-                                            );
-
-                                            if (interestForThisInstallment > 0) {
-                                                calculatedInterest += interestForThisInstallment;
-                                                // Estimate days for display
-                                                const daily = calculateDailyInterest(totalPrice, lotAreaM2);
-                                                if (daily > 0) {
-                                                    lateDays = Math.round(interestForThisInstallment / daily);
-                                                    daysLateForDisplay = Math.max(daysLateForDisplay, lateDays);
-                                                }
-
-                                                if (!lateRangeDisplay) {
-                                                    const graceEnd = new Date(iDue);
-                                                    graceEnd.setDate(10);
-                                                    const lateStart = new Date(graceEnd);
-                                                    lateStart.setDate(lateStart.getDate() + 1);
-                                                    const startStr = lateStart.toLocaleDateString('es-CL', { day: '2-digit', month: '2-digit' });
-                                                    const endStr = targetDate.toLocaleDateString('es-CL', { day: '2-digit', month: '2-digit' });
-                                                    lateRangeDisplay = `${startStr} - ${endStr}`;
-                                                }
-                                            }
-                                        }
-                                    }
-
-                                    const finalTotal = totalToPay + calculatedInterest;
-
-
-                                    return (
-                                        <div className="border-t border-gray-200 mt-2 pt-2 space-y-1">
-                                            <div className="text-sm font-bold text-[#36595F] mb-1">
-                                                Estás pagando:
-                                            </div>
-                                            {count === 1 ? (
-                                                <div className="flex justify-between text-blue-700 font-medium bg-blue-50 p-2 rounded">
-                                                    <span>Cuota {paidCuotas + 1}</span>
-                                                    <span>Vence: {formatDateChile(firstDue)}</span>
-                                                </div>
-                                            ) : (
-                                                <div className="space-y-1">
-                                                    <div className="flex justify-between text-blue-700 font-medium text-xs">
-                                                        <span>Desde Cuota {paidCuotas + 1}</span>
-                                                        <span>{formatDateChile(firstDue)}</span>
-                                                    </div>
-                                                    <div className="flex justify-between text-blue-700 font-medium text-xs">
-                                                        <span>Hasta Cuota {paidCuotas + count}</span>
-                                                        <span>{formatDateChile(lastDue)}</span>
-                                                    </div>
-                                                </div>
-                                            )}
-
-                                            {calculatedInterest > 0 && (
-                                                <div className="flex flex-col text-red-600 font-bold text-sm mt-2 border-t border-red-100 pt-1">
-                                                    <div className="flex justify-between">
-                                                        <span>Interés por mora:</span>
-                                                        <span>{formatCurrency(calculatedInterest)}</span>
-                                                    </div>
-                                                    {lateRangeDisplay && (
-                                                        <div className="text-xs font-normal text-red-500 text-right">
-                                                            ({lateRangeDisplay}: {daysLateForDisplay} días)
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            )}
-
-                                            <div className="flex justify-between font-bold text-lg pt-2 border-t border-gray-200 mt-2 text-[#36595F]">
-                                                <span>Total a pagar:</span>
-                                                <span>{formatCurrency(finalTotal)}</span>
-                                            </div>
+                                {(acquisitionDate || reservation.legacy_installment_start_date) && count > 0 && (
+                                    <div className="border-t border-gray-200 mt-2 pt-2 space-y-1">
+                                        <div className="text-sm font-bold text-[#36595F] mb-1">
+                                            Estás pagando:
                                         </div>
-                                    );
-                                })()}
+                                        {count === 1 ? (
+                                            <div className="flex justify-between text-blue-700 font-medium bg-blue-50 p-2 rounded">
+                                                <span>Cuota {paidCuotas + 1}</span>
+                                                <span>Vence: {formatDateChile(firstDue)}</span>
+                                            </div>
+                                        ) : (
+                                            <div className="space-y-1">
+                                                <div className="flex justify-between text-blue-700 font-medium text-xs">
+                                                    <span>Desde Cuota {paidCuotas + 1}</span>
+                                                    <span>{formatDateChile(firstDue)}</span>
+                                                </div>
+                                                <div className="flex justify-between text-blue-700 font-medium text-xs">
+                                                    <span>Hasta Cuota {paidCuotas + count}</span>
+                                                    <span>{formatDateChile(lastDue)}</span>
+                                                </div>
+                                            </div>
+                                        )}
 
+                                        {calculatedInterest > 0 && (
+                                            <div className="flex flex-col text-red-600 font-bold text-sm mt-2 border-t border-red-100 pt-1">
+                                                <div className="flex justify-between">
+                                                    <span>Interés por mora:</span>
+                                                    <span>{formatCurrency(calculatedInterest)}</span>
+                                                </div>
+                                                {lateRangeDisplay && (
+                                                    <div className="text-xs font-normal text-red-500 text-right">
+                                                        ({lateRangeDisplay}: {daysLateForDisplay} días)
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+
+                                        <div className="flex justify-between font-bold text-lg pt-2 border-t border-gray-200 mt-2 text-[#36595F]">
+                                            <span>Total a Transferir:</span>
+                                            <span>{formatCurrency(finalTotal)}</span>
+                                        </div>
+                                    </div>
+                                )}
+                                <div className="bg-gray-50 p-3 rounded text-sm space-y-1 mt-4 border border-gray-200">
+                                    <p className="font-semibold text-gray-800 mb-2">Datos de Transferencia:</p>
+                                    <p><strong>Banco:</strong> Santander</p>
+                                    <p><strong>Cuenta:</strong> Corriente N° 86876868</p>
+                                    <p><strong>Nombre:</strong> Alimin SPA</p>
+                                    <p><strong>RUT:</strong> 77.508.711-0</p>
+                                    <p><strong>Correo:</strong> inmobiliaria@aliminspa.cl</p>
+                                </div>
+                                <div className="space-y-2 pt-2">
+                                    <label className="text-sm font-medium text-gray-800">Sube tu comprobante de pago</label>
+                                    <Input type="file" accept="image/*,.pdf" onChange={handleFileChange} className="bg-white" />
+                                </div>
                             </div>
                         </div>
                         <DialogFooter>
                             <Button variant="outline" onClick={() => setIsCuotasModalOpen(false)} className="bg-white text-black border-gray-300 hover:bg-gray-100 hover:text-black">Cancelar</Button>
                             <Button
-                                onClick={() => handlePayment('INSTALLMENT')}
-                                disabled={isLoading}
+                                onClick={() => handleTransferSubmit('INSTALLMENT', finalTotal, parseInt(selectedCuotas))}
+                                disabled={isLoading || !fileBase64 || Boolean(pendingInstReceipt)}
                                 className="bg-[#36595F] text-white"
                             >
                                 {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                                Ir a Pagar
+                                {pendingInstReceipt ? "Verificando Pago Anteriror..." : "Subir Comprobante"}
                             </Button>
                         </DialogFooter>
                     </DialogContent>

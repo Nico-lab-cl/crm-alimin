@@ -34,6 +34,7 @@ export async function GET() {
             },
             include: {
                 lot: true,
+                receipts: true,
             },
             orderBy: {
                 created_at: "desc",

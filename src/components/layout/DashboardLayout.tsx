@@ -1,7 +1,7 @@
 "use client"
 
 import { SidebarProvider, Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarFooter, SidebarTrigger, SidebarRail, SidebarInset } from "@/components/ui/sidebar"
-import { Home, BarChart, LogOut, FileText } from "lucide-react"
+import { Home, BarChart, LogOut, FileText, CheckCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
@@ -29,6 +29,17 @@ export function DashboardLayout({ children, role }: { children: React.ReactNode,
                                 </Link>
                             </SidebarMenuButton>
                         </SidebarMenuItem>
+
+                        {role === "ADMIN" && (
+                            <SidebarMenuItem>
+                                <SidebarMenuButton asChild isActive={pathname === "/admin/receipts"} tooltip="Verificación de Pagos">
+                                    <Link href="/admin/receipts">
+                                        <CheckCircle />
+                                        <span>Verificación de Pagos</span>
+                                    </Link>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+                        )}
 
                         {role === "SELLER" && (
                             <SidebarMenuItem>
