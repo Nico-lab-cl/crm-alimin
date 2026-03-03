@@ -8,6 +8,8 @@ import { Input } from '@/components/ui/input'
 import { Search, Loader2, UserPlus, User } from 'lucide-react'
 import { toast } from 'sonner'
 import { AssignOwnerModal } from './AssignOwnerModal'
+import { LotBottomSheet } from '@/components/admin/LotBottomSheet'
+import { useSyncStatus } from '@/components/admin/SyncProvider'
 import {
     Select,
     SelectContent,
@@ -41,26 +43,54 @@ export const AdminLotList = ({ lots: initialLots }: AdminLotListProps) => {
         lotNumber: null
     })
 
+    // Mobile Bottom Sheet state
+    const [selectedLot, setSelectedLot] = useState<LotWithReservation | null>(null)
+    const [bottomSheetOpen, setBottomSheetOpen] = useState(false)
+
+    const { startSync, endSync } = useSyncStatus()
+
     // Get unique stages for the filter dropdown
     const stages = Array.from(new Set(lots.map(l => l.stage).filter(Boolean))).sort((a, b) => (a as number) - (b as number))
 
     const handleStatusChange = async (lotId: number, newStatus: string) => {
+        // Optimistic update
+        setLots(prev => prev.map(l => l.id === lotId ? { ...l, status: newStatus } : l))
+
         setLoadingIds(prev => new Set(prev).add(lotId))
+        const syncId = startSync()
 
-        const res = await updateLotStatus(lotId, newStatus)
+        try {
+            const res = await updateLotStatus(lotId, newStatus)
 
-        if (res.success) {
-            setLots(prev => prev.map(l => l.id === lotId ? { ...l, status: newStatus } : l))
-            toast.success(`Lote ${lotId} actualizado a ${newStatus.toUpperCase()}`)
-        } else {
-            toast.error("Error al actualizar estado")
+            if (res.success) {
+                toast.success(`Terreno ${lotId} actualizado a ${newStatus === 'sold' ? 'VENDIDO' : 'DISPONIBLE'}`)
+            } else {
+                // Rollback
+                setLots(prev => prev.map(l => l.id === lotId ? { ...l, status: l.status === newStatus ? (newStatus === 'sold' ? 'available' : 'sold') : l.status } : l))
+                toast.error("Error al actualizar estado")
+            }
+        } catch {
+            toast.error("Error de conexión")
+        } finally {
+            endSync(syncId)
+            setLoadingIds(prev => {
+                const next = new Set(prev)
+                next.delete(lotId)
+                return next
+            })
         }
+    }
 
-        setLoadingIds(prev => {
-            const next = new Set(prev)
-            next.delete(lotId)
-            return next
-        })
+    // Optimistic handler for bottom sheet
+    const handleOptimisticStatusChange = (lotId: number, newStatus: string) => {
+        setLots(prev => prev.map(l => l.id === lotId ? { ...l, status: newStatus } : l))
+        // Also update the selectedLot if it's the one changing
+        setSelectedLot(prev => prev && prev.id === lotId ? { ...prev, status: newStatus } : prev)
+    }
+
+    const handleOpenBottomSheet = (lot: LotWithReservation) => {
+        setSelectedLot(lot)
+        setBottomSheetOpen(true)
     }
 
     const filteredLots = lots.filter(lot => {
@@ -81,11 +111,11 @@ export const AdminLotList = ({ lots: initialLots }: AdminLotListProps) => {
 
     return (
         <div className="space-y-4">
-            <div className="flex flex-col md:flex-row gap-4 items-center bg-white/5 p-4 rounded-xl border border-white/10">
+            <div className="flex flex-col md:flex-row gap-3 md:gap-4 items-center bg-white/5 p-3 md:p-4 rounded-xl border border-white/10">
                 <div className="flex items-center gap-2 w-full md:w-auto flex-1">
                     <Search className="w-5 h-5 text-gray-400" />
                     <Input
-                        placeholder="Buscar por número..."
+                        placeholder="Buscar terreno..."
                         value={filter}
                         onChange={(e) => setFilter(e.target.value)}
                         className="bg-transparent border-none text-white focus-visible:ring-0 placeholder:text-gray-500 w-full"
@@ -109,79 +139,86 @@ export const AdminLotList = ({ lots: initialLots }: AdminLotListProps) => {
                 </div>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-4 lg:grid-cols-6 gap-2 md:gap-3 max-h-[calc(100vh-220px)] md:max-h-[600px] overflow-y-auto pr-1 md:pr-2 custom-scrollbar">
                 {filteredLots.map(lot => {
-                    // Admin only distinguishes between sold and available.
-                    // 'reserved' is a transient state for the public map only — show as available here.
                     const isSold = lot.status === 'sold'
                     const isLoading = loadingIds.has(lot.id)
-
-                    // Check if sold/reserved lot has an owner
                     const owner = lot.reservations?.[0]?.buyer
                     const hasOwner = !!owner
 
                     return (
                         <div
                             key={lot.id}
+                            onClick={() => {
+                                // On mobile, open bottom sheet
+                                if (window.innerWidth < 768) {
+                                    handleOpenBottomSheet(lot)
+                                }
+                            }}
                             className={`
-                                relative p-3 rounded-xl border transition-all duration-200 flex flex-col items-center gap-2
+                                relative p-2 md:p-3 rounded-xl border transition-all duration-200 flex flex-col items-center gap-1.5 md:gap-2
                                 ${isSold
                                     ? 'bg-red-900/20 border-red-500/30 hover:bg-red-900/30'
                                     : 'bg-green-900/20 border-green-500/30 hover:bg-green-900/30'
                                 }
+                                md:cursor-default cursor-pointer active:scale-[0.97] md:active:scale-100
                             `}
                         >
                             <div className="text-center">
-                                <span className={`text-xs uppercase font-bold tracking-wider ${isSold ? 'text-red-400' : 'text-green-400'}`}>
+                                <span className={`text-[10px] md:text-xs uppercase font-bold tracking-wider ${isSold ? 'text-red-400' : 'text-green-400'}`}>
                                     {isSold ? 'VENDIDO' : 'DISPONIBLE'}
                                 </span>
-                                <p className="text-white font-bold text-lg">
-                                    Lote {lot.number}
+                                <p className="text-white font-bold text-sm md:text-lg">
+                                    Terreno {lot.number}
                                 </p>
-                                <p className="text-white/50 text-xs">
+                                <p className="text-white/50 text-[10px] md:text-xs">
                                     Etapa {lot.stage}
                                 </p>
-                                {(lot.cuotas && lot.cuotas > 0) ? (
-                                    <div className="mt-2 text-[10px] text-gray-400 space-y-0.5">
-                                        <div className="flex justify-between">
-                                            <span>Cuotas ({((lot.cuotas || 0) - 1)}):</span>
-                                            <span className="text-white font-medium">
-                                                {new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(lot.valor_cuota || 0)}
-                                            </span>
+                                {/* Desktop: Show financial details inline */}
+                                <div className="hidden md:block">
+                                    {(lot.cuotas && lot.cuotas > 0) ? (
+                                        <div className="mt-2 text-[10px] text-gray-400 space-y-0.5">
+                                            <div className="flex justify-between">
+                                                <span>Cuotas ({((lot.cuotas || 0) - 1)}):</span>
+                                                <span className="text-white font-medium">
+                                                    {new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(lot.valor_cuota || 0)}
+                                                </span>
+                                            </div>
+                                            <div className="flex justify-between">
+                                                <span>Última Cuota:</span>
+                                                <span className="text-white font-medium">
+                                                    {new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(lot.last_installment_amount || 0)}
+                                                </span>
+                                            </div>
+                                            <div className="flex justify-between">
+                                                <span>Pie:</span>
+                                                <span className="text-white font-medium">
+                                                    {new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(lot.pie || 0)}
+                                                </span>
+                                            </div>
+                                            <div className="flex justify-between">
+                                                <span>Reserva:</span>
+                                                <span className="text-white font-medium">
+                                                    {new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(lot.reservation_amount_clp || 0)}
+                                                </span>
+                                            </div>
+                                            <div className="flex justify-between pt-0.5 border-t border-white/10 mt-0.5">
+                                                <span>Total:</span>
+                                                <span className="text-[#E0B457] font-medium">
+                                                    {new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(
+                                                        (((lot.cuotas || 0) - 1) * (lot.valor_cuota || 0)) +
+                                                        (lot.last_installment_amount || 0) +
+                                                        (lot.pie || 0)
+                                                    )}
+                                                </span>
+                                            </div>
                                         </div>
-                                        <div className="flex justify-between">
-                                            <span>Última Cuota:</span>
-                                            <span className="text-white font-medium">
-                                                {new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(lot.last_installment_amount || 0)}
-                                            </span>
-                                        </div>
-                                        <div className="flex justify-between">
-                                            <span>Pie:</span>
-                                            <span className="text-white font-medium">
-                                                {new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(lot.pie || 0)}
-                                            </span>
-                                        </div>
-                                        <div className="flex justify-between">
-                                            <span>Reserva:</span>
-                                            <span className="text-white font-medium">
-                                                {new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(lot.reservation_amount_clp || 0)}
-                                            </span>
-                                        </div>
-                                        <div className="flex justify-between pt-0.5 border-t border-white/10 mt-0.5">
-                                            <span>Total:</span>
-                                            <span className="text-[#E0B457] font-medium">
-                                                {new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(
-                                                    (((lot.cuotas || 0) - 1) * (lot.valor_cuota || 0)) +
-                                                    (lot.last_installment_amount || 0) +
-                                                    (lot.pie || 0)
-                                                )}
-                                            </span>
-                                        </div>
-                                    </div>
-                                ) : null}
+                                    ) : null}
+                                </div>
                             </div>
 
-                            <div className="w-full pt-2 border-t border-white/5">
+                            {/* Desktop: Show inline controls */}
+                            <div className="w-full pt-1.5 md:pt-2 border-t border-white/5 hidden md:block">
                                 <Select
                                     defaultValue={lot.status}
                                     onValueChange={(val) => handleStatusChange(lot.id, val)}
@@ -196,14 +233,12 @@ export const AdminLotList = ({ lots: initialLots }: AdminLotListProps) => {
                                     </SelectContent>
                                 </Select>
 
-                                {/* Show Owner if exists, or Assign Button if Sold/Reserved but no owner */}
                                 {hasOwner ? (
                                     <div className="flex flex-col items-center gap-1 mt-1 font-bold">
                                         <div className="flex items-center gap-1 text-[10px] text-gray-400" title={owner?.email}>
                                             <User className="w-3 h-3" />
                                             <span className="truncate max-w-[120px]">{owner?.name?.split(' ')[0]}</span>
                                         </div>
-                                        {/* If it's a legacy user without an active workflow, we offer the activation button */}
                                         {lot.reservations?.[0]?.is_legacy && !lot.reservations?.[0]?.workflow_activated && (
                                             <div className="w-full px-1">
                                                 <Button
@@ -214,7 +249,6 @@ export const AdminLotList = ({ lots: initialLots }: AdminLotListProps) => {
 
                                                         setLoadingIds(prev => new Set(prev).add(lot.id));
                                                         try {
-                                                            // We must import triggerLegacyWorkflow at the top of the file
                                                             const res = await triggerLegacyWorkflow(lot.reservations[0].id);
                                                             if (res.success) {
                                                                 toast.success(res.message);
@@ -250,10 +284,35 @@ export const AdminLotList = ({ lots: initialLots }: AdminLotListProps) => {
                                     </Button>
                                 ) : null}
                             </div>
+
+                            {/* Mobile: Show owner badge or status icon */}
+                            <div className="md:hidden w-full text-center">
+                                {hasOwner ? (
+                                    <div className="flex items-center justify-center gap-1 text-[10px] text-gray-400">
+                                        <User className="w-3 h-3" />
+                                        <span className="truncate max-w-[60px]">{owner?.name?.split(' ')[0]}</span>
+                                    </div>
+                                ) : isSold ? (
+                                    <div className="text-[10px] text-alimin-gold font-medium">
+                                        Sin dueño
+                                    </div>
+                                ) : null}
+                            </div>
                         </div>
                     )
                 })}
             </div>
+
+            {/* Mobile Bottom Sheet */}
+            <LotBottomSheet
+                lot={selectedLot}
+                open={bottomSheetOpen}
+                onOpenChange={setBottomSheetOpen}
+                onStatusChange={handleOptimisticStatusChange}
+                onAssignOwner={(lotId, lotNumber) => {
+                    setAssignModal({ open: true, lotId, lotNumber })
+                }}
+            />
 
             <AssignOwnerModal
                 lotId={assignModal.lotId}
@@ -261,11 +320,6 @@ export const AdminLotList = ({ lots: initialLots }: AdminLotListProps) => {
                 open={assignModal.open}
                 onOpenChange={(open) => setAssignModal(prev => ({ ...prev, open }))}
                 onSuccess={() => {
-                    // Ideally refresh data, for now we rely on revalidatePath from action and maybe router.refresh() 
-                    // typically triggers a re-render if using server components, but here we have local state `lots`.
-                    // We should really force a refresh or update local state...
-                    // For simplicity, we can reload the page or just accept that revalidatePath handles the next visit.
-                    // A better UX would be to emit an event or router.refresh()
                     window.location.reload()
                 }}
             />
