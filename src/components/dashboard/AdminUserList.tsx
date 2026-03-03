@@ -387,90 +387,119 @@ export const AdminUserList = ({ users: initialUsers }: AdminUserListProps) => {
 
             {/* ===== MOBILE CARD LIST (<md) ===== */}
             <div className="md:hidden space-y-3">
-                {filteredUsers.map(user => {
-                    const res = user.purchases?.[0] ?? null
-
-                    return (
-                        <div
-                            key={user.id}
-                            className="bg-white/5 rounded-xl border border-white/10 p-4 space-y-3 transition-colors hover:bg-white/[0.07]"
-                        >
-                            {/* User Info Row */}
-                            <div className="flex items-center gap-3">
-                                <div className="w-11 h-11 rounded-full bg-[#36595F] flex items-center justify-center text-[#E0B457] font-bold text-lg shrink-0">
-                                    {user.name.charAt(0).toUpperCase()}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                    <p className="font-bold text-white text-base truncate">{user.name}</p>
-                                    <p className="text-gray-500 text-xs truncate">{user.email}</p>
-                                </div>
-                                <span className={`px-2 py-1 rounded text-[10px] font-bold shrink-0 ${user.role === 'ADMIN' ? 'bg-purple-500/20 text-purple-400' :
-                                    user.role === 'SELLER' ? 'bg-blue-500/20 text-blue-400' :
-                                        'bg-gray-500/20 text-gray-400'
-                                    }`}>
-                                    {user.role}
-                                </span>
-                            </div>
-
-                            {/* Status Row */}
-                            <div className="flex flex-wrap gap-1.5">
-                                {res ? (
-                                    <>
-                                        <span className={`px-2 py-1 rounded-full text-[10px] font-bold ${STAGE_COLORS[res.pipeline_stage] ?? 'bg-gray-700 text-gray-300'}`}>
-                                            {STAGE_LABELS[res.pipeline_stage] ?? res.pipeline_stage}
-                                        </span>
-                                        {res.lot && (
-                                            <span className="px-2 py-1 rounded-full text-[10px] font-bold bg-white/10 text-gray-300">
-                                                T-{res.lot.number}
-                                            </span>
-                                        )}
-                                        {res.signed_at && (
-                                            <span className="px-2 py-1 rounded-full text-[10px] font-bold bg-green-900/30 text-green-400">
-                                                ✓ Firmado
-                                            </span>
-                                        )}
-                                        {res.pie_status === 'PAID' && (
-                                            <span className="px-2 py-1 rounded-full text-[10px] font-bold bg-purple-900/30 text-purple-400">
-                                                Pie ✓
-                                            </span>
-                                        )}
-                                        {(res.installments_paid ?? 0) > 0 && (
-                                            <span className="px-2 py-1 rounded-full text-[10px] font-bold bg-indigo-900/30 text-indigo-400">
-                                                {res.installments_paid} cuota(s)
-                                            </span>
-                                        )}
-                                    </>
-                                ) : (
-                                    <span className="text-gray-600 text-xs flex items-center gap-1">
-                                        <AlertCircle className="w-3 h-3" />
-                                        Sin reserva
-                                    </span>
-                                )}
-                            </div>
-
-                            {/* Action Buttons — minimum 44x44px touch targets */}
-                            <div className="flex gap-2 pt-1">
-                                <button
-                                    onClick={() => openResetPassword(user)}
-                                    className="flex items-center justify-center gap-1.5 flex-1 min-h-[44px] rounded-lg bg-amber-900/20 text-amber-400 text-xs font-semibold hover:bg-amber-900/30 transition-colors active:scale-[0.97]"
-                                >
-                                    <Lock className="w-4 h-4" />
-                                    Contraseña
-                                </button>
-                                <Link href={`/admin/users/${user.id}/plots`} className="flex-1">
-                                    <button className="flex items-center justify-center gap-1.5 w-full min-h-[44px] rounded-lg bg-blue-900/20 text-blue-400 text-xs font-semibold hover:bg-blue-900/30 transition-colors active:scale-[0.97]">
-                                        <ExternalLink className="w-4 h-4" />
-                                        Ver Gestión
-                                    </button>
-                                </Link>
-                            </div>
-                        </div>
-                    )
-                })}
-                {filteredUsers.length === 0 && (
-                    <div className="p-8 text-center text-gray-500">
-                        No se encontraron usuarios.
+                {filteredUsers.length === 0 ? (
+                    <div className="py-16 text-center">
+                        <Search className="w-10 h-10 text-gray-600 mx-auto mb-3" />
+                        <p className="text-gray-500 text-sm">No se encontraron usuarios.</p>
                     </div>
+                ) : (
+                    <>
+                        <p className="text-[11px] text-gray-500 font-medium px-1">
+                            {filteredUsers.length} usuario{filteredUsers.length !== 1 ? 's' : ''}
+                        </p>
+                        {filteredUsers.map(user => {
+                            const res = user.purchases?.[0] ?? null
+                            const roleLabel = user.role === 'ADMIN' ? 'Admin' : user.role === 'SELLER' ? 'Vendedor' : 'Cliente'
+
+                            return (
+                                <div
+                                    key={user.id}
+                                    className="bg-gradient-to-br from-white/[0.06] to-white/[0.02] rounded-2xl border border-white/[0.08] overflow-hidden"
+                                >
+                                    {/* Header: Avatar + Name + Role */}
+                                    <div className="px-4 pt-4 pb-3">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#36595F] to-[#2a464b] flex items-center justify-center text-[#E0B457] font-bold text-xl shrink-0 shadow-lg ring-2 ring-white/5">
+                                                {user.name?.charAt(0).toUpperCase() || '?'}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-center gap-2">
+                                                    <p className="font-bold text-white text-[15px] truncate">{user.name}</p>
+                                                    <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold shrink-0 ${user.role === 'ADMIN' ? 'bg-purple-500/20 text-purple-400 ring-1 ring-purple-500/20' :
+                                                            user.role === 'SELLER' ? 'bg-blue-500/20 text-blue-400 ring-1 ring-blue-500/20' :
+                                                                'bg-white/10 text-gray-400 ring-1 ring-white/5'
+                                                        }`}>
+                                                        {roleLabel}
+                                                    </span>
+                                                </div>
+                                                <p className="text-gray-500 text-xs truncate mt-0.5">{user.email}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Lot + Status Info */}
+                                    {res ? (
+                                        <div className="px-4 pb-3">
+                                            {/* Lot Row */}
+                                            {res.lot && (
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <div className="w-7 h-7 rounded-lg bg-alimin-green/20 flex items-center justify-center">
+                                                        <span className="text-[10px] font-black text-alimin-gold">{res.lot.number}</span>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-white text-xs font-semibold">Terreno {res.lot.number}</p>
+                                                        <p className="text-gray-500 text-[10px]">Etapa {res.lot.stage}</p>
+                                                    </div>
+                                                </div>
+                                            )}
+                                            {/* Badges */}
+                                            <div className="flex flex-wrap gap-1.5">
+                                                <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${STAGE_COLORS[res.pipeline_stage] ?? 'bg-gray-700 text-gray-300'}`}>
+                                                    {STAGE_LABELS[res.pipeline_stage] ?? res.pipeline_stage}
+                                                </span>
+                                                {res.signed_at && (
+                                                    <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-green-900/30 text-green-400 ring-1 ring-green-500/10">
+                                                        ✓ Firmado
+                                                    </span>
+                                                )}
+                                                {res.pie_status === 'PAID' && (
+                                                    <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-purple-900/30 text-purple-400 ring-1 ring-purple-500/10">
+                                                        Pie ✓
+                                                    </span>
+                                                )}
+                                                {(res.installments_paid ?? 0) > 0 && (
+                                                    <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-indigo-900/30 text-indigo-400 ring-1 ring-indigo-500/10">
+                                                        {res.installments_paid} cuota{(res.installments_paid ?? 0) > 1 ? 's' : ''}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="px-4 pb-3">
+                                            <div className="flex items-center gap-1.5 text-gray-600">
+                                                <AlertCircle className="w-3.5 h-3.5" />
+                                                <span className="text-xs">Sin terreno asignado</span>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Date */}
+                                    <div className="px-4 pb-2">
+                                        <p className="text-[10px] text-gray-600">
+                                            Registrado {new Date(user.createdAt).toLocaleDateString('es-CL', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                        </p>
+                                    </div>
+
+                                    {/* Action Buttons — 48px height, full bleed */}
+                                    <div className="flex border-t border-white/5">
+                                        <button
+                                            onClick={() => openResetPassword(user)}
+                                            className="flex items-center justify-center gap-2 flex-1 min-h-[48px] text-amber-400 text-xs font-semibold hover:bg-amber-900/15 transition-colors active:scale-[0.97] active:bg-amber-900/25 border-r border-white/5"
+                                        >
+                                            <Lock className="w-4 h-4" />
+                                            Contraseña
+                                        </button>
+                                        <Link href={`/admin/users/${user.id}/plots`} className="flex-1">
+                                            <button className="flex items-center justify-center gap-2 w-full min-h-[48px] text-blue-400 text-xs font-semibold hover:bg-blue-900/15 transition-colors active:scale-[0.97] active:bg-blue-900/25">
+                                                <ExternalLink className="w-4 h-4" />
+                                                Ver Gestión
+                                            </button>
+                                        </Link>
+                                    </div>
+                                </div>
+                            )
+                        })}
+                    </>
                 )}
             </div>
         </div>
