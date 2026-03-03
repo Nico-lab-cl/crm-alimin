@@ -20,7 +20,7 @@ export default async function AdminDashboard() {
     const soldLots = lots.filter((l: any) => l.status === 'sold')
     const lotsWithPiePaid = lots.filter((l: any) => {
         const res = l.reservations?.[0]
-        return res && res.buyer && l.status === 'sold'
+        return res && res.buyer && l.status === 'sold' && res.pie_status === 'PAID'
     })
 
     // Calculate installments from user reservations

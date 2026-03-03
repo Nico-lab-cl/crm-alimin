@@ -189,6 +189,7 @@ export async function getAdminLots() {
                         id: true,
                         buyer: { select: { name: true, email: true } },
                         signed_at: true,
+                        pie_status: true,
                         is_legacy: true,
                         workflow_activated: true
                     }
