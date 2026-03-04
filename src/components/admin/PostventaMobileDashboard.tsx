@@ -7,12 +7,12 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, CheckCircle, XCircle, Eye, MapPin, CreditCard, Clock, Receipt } from 'lucide-react';
+import { Loader2, CheckCircle, XCircle, Eye, MapPin, CreditCard, Clock, Receipt, BookOpen, AlertTriangle } from 'lucide-react';
 import { approvePaymentReceipt, rejectPaymentReceipt } from '@/actions/receipts';
 import { toast } from 'sonner';
 import { MoraExplainerCard } from './MoraExplainerCard';
 
-export type PostventaTab = 'recibos' | 'mora';
+export type PostventaTab = 'recibos' | 'mora' | 'ledger' | 'alertas';
 
 interface SoldLot {
     id: number;
@@ -26,9 +26,11 @@ interface PostventaMobileDashboardProps {
     initialReceipts: any[];
     soldLots: SoldLot[];
     activeTab: PostventaTab;
+    ledger?: any[];
+    debtAlerts?: any[];
 }
 
-export function PostventaMobileDashboard({ initialReceipts, soldLots, activeTab }: PostventaMobileDashboardProps) {
+export function PostventaMobileDashboard({ initialReceipts, soldLots, activeTab, ledger = [], debtAlerts = [] }: PostventaMobileDashboardProps) {
     const [receipts, setReceipts] = useState(initialReceipts);
     const [selectedImage, setSelectedImage] = useState<string | null>(null);
     const [rejectingId, setRejectingId] = useState<string | null>(null);
@@ -84,6 +86,96 @@ export function PostventaMobileDashboard({ initialReceipts, soldLots, activeTab 
         return null;
     };
 
+    if (activeTab === 'ledger') {
+        return (
+            <div className="space-y-4 pb-24">
+                <div className="flex items-center gap-2 mb-4">
+                    <BookOpen className="w-5 h-5 text-indigo-400" />
+                    <h2 className="text-lg font-bold text-white">Estado de Cuentas</h2>
+                </div>
+
+                <div className="space-y-3">
+                    {ledger.map(client => (
+                        <div key={client.id} className="bg-white/5 border border-white/10 p-4 rounded-xl space-y-3 relative overflow-hidden">
+                            <div className="flex justify-between items-start">
+                                <div>
+                                    <p className="font-bold text-white text-sm">{client.clientName}</p>
+                                    <p className="text-xs text-indigo-300 font-medium">T-{client.lotNumber}</p>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-0.5">Saldo Pendiente</p>
+                                    <p className="font-bold text-indigo-400">{formatCurrency(client.pendingBalance)}</p>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-2 text-xs">
+                                <div className="bg-black/40 p-2.5 rounded-lg border border-white/5">
+                                    <p className="text-gray-500 mb-0.5 text-[10px] uppercase">Total Pagado</p>
+                                    <p className="font-semibold text-white">{formatCurrency(client.totalPaid)}</p>
+                                </div>
+                                <div className="bg-black/40 p-2.5 rounded-lg border border-white/5">
+                                    <p className="text-gray-500 mb-0.5 text-[10px] uppercase">Progreso Cuotas</p>
+                                    <p className="font-semibold text-white">{client.paidCuotas} / {client.totalCuotas || 0}</p>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                    {ledger.length === 0 && (
+                        <div className="text-center p-8 text-gray-500 text-sm">No hay cuentas activas.</div>
+                    )}
+                </div>
+            </div>
+        );
+    }
+
+    if (activeTab === 'alertas') {
+        return (
+            <div className="space-y-4 pb-24">
+                <div className="flex items-center gap-2 mb-4">
+                    <AlertTriangle className="w-5 h-5 text-red-500" />
+                    <h2 className="text-lg font-bold text-white">Alertas de Morosidad</h2>
+                    {debtAlerts.length > 0 && (
+                        <Badge variant="destructive" className="ml-auto font-bold">{debtAlerts.length}</Badge>
+                    )}
+                </div>
+
+                <div className="space-y-3">
+                    {debtAlerts.map(alert => (
+                        <div key={alert.id} className="bg-red-500/10 border border-red-500/20 p-4 rounded-xl space-y-3 relative overflow-hidden">
+                            <div className="absolute top-0 right-0 w-24 h-24 bg-red-500/10 rounded-bl-full -z-10" />
+
+                            <div className="flex justify-between items-start">
+                                <div>
+                                    <p className="font-bold text-white text-sm">{alert.clientName}</p>
+                                    <p className="text-xs text-red-400 font-medium">T-{alert.lotNumber} · {alert.lateDays} días de atraso</p>
+                                </div>
+                            </div>
+
+                            <div className="flex items-center justify-between bg-black/40 rounded-lg p-3 border border-red-500/10">
+                                <div>
+                                    <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-0.5">Multa Calculada</p>
+                                    <p className="font-bold text-red-400 text-sm">{formatCurrency(alert.penaltyAmount)}</p>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-0.5">Venció el</p>
+                                    <p className="font-semibold text-white text-sm">
+                                        {alert.nextDueDate ? format(new Date(alert.nextDueDate), 'dd MMM yyyy', { locale: es }) : 'N/A'}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                    {debtAlerts.length === 0 && (
+                        <div className="text-center p-8 bg-green-500/10 border border-green-500/20 rounded-xl mt-8">
+                            <CheckCircle className="w-8 h-8 text-green-400 mx-auto mb-3" />
+                            <p className="text-green-400 font-medium text-sm">Excelente, no hay clientes morosos.</p>
+                        </div>
+                    )}
+                </div>
+            </div>
+        );
+    }
+
     if (activeTab === 'mora') {
         return (
             <div className="space-y-4 pb-24">
@@ -115,8 +207,8 @@ export function PostventaMobileDashboard({ initialReceipts, soldLots, activeTab 
                         key={f}
                         onClick={() => setFilter(f)}
                         className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-colors ${filter === f
-                                ? 'bg-[#36595F] text-white'
-                                : 'bg-white/5 text-gray-400 hover:bg-white/10'
+                            ? 'bg-[#36595F] text-white'
+                            : 'bg-white/5 text-gray-400 hover:bg-white/10'
                             }`}
                     >
                         {f === 'PENDING' ? `Pendientes (${pendingCount})` : f === 'ALL' ? 'Todos' : f === 'APPROVED' ? 'Aprobados' : 'Rechazados'}
@@ -130,12 +222,12 @@ export function PostventaMobileDashboard({ initialReceipts, soldLots, activeTab 
                     <div
                         key={receipt.id}
                         className={`rounded-xl border p-4 space-y-3 transition-colors ${receipt.status === 'PENDING'
-                                ? 'bg-yellow-500/5 border-yellow-500/20'
-                                : receipt.status === 'APPROVED'
-                                    ? 'bg-green-500/5 border-green-500/20'
-                                    : receipt.status === 'REJECTED'
-                                        ? 'bg-red-500/5 border-red-500/20'
-                                        : 'bg-white/5 border-white/10'
+                            ? 'bg-yellow-500/5 border-yellow-500/20'
+                            : receipt.status === 'APPROVED'
+                                ? 'bg-green-500/5 border-green-500/20'
+                                : receipt.status === 'REJECTED'
+                                    ? 'bg-red-500/5 border-red-500/20'
+                                    : 'bg-white/5 border-white/10'
                             }`}
                     >
                         {/* Client + Status */}

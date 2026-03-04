@@ -1,6 +1,6 @@
 'use client';
 
-import { Map, Wallet, Users, Receipt, Calculator } from 'lucide-react';
+import { Map, Wallet, Users, Receipt, Calculator, BookOpen, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { PostventaTab } from './PostventaMobileDashboard';
 
@@ -19,7 +19,9 @@ const adminTabs: { id: AdminMobileTab; label: string; icon: React.ElementType }[
 
 const postventaTabs: { id: PostventaTab; label: string; icon: React.ElementType }[] = [
     { id: 'recibos', label: 'Recibos', icon: Receipt },
-    { id: 'mora', label: 'Simulador', icon: Calculator },
+    { id: 'mora', label: 'Simular', icon: Calculator },
+    { id: 'ledger', label: 'Cuentas', icon: BookOpen },
+    { id: 'alertas', label: 'Alertas', icon: AlertTriangle },
 ];
 
 export function MobileBottomNav({ activeTab, onTabChange, isPostventa = false }: MobileBottomNavProps) {

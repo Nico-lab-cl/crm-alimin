@@ -1,6 +1,7 @@
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import { getAdminPipeline, getSellers, getAdminLots, getAdminUsers } from "@/actions/dashboard"
+import { getPostventaData } from "@/actions/postventa"
 import { AdminDashboardClient } from "./AdminDashboardClient"
 
 const POSTVENTA_EMAIL = 'postventa@lomasdelmar.cl';
@@ -46,24 +47,25 @@ export default async function AdminDashboard() {
         totalInstallmentsPaid,
     }
 
-    // Fetch receipts for postventa user
+    // Fetch receipts and ledger for postventa user
     let receipts: any[] = []
+    let ledger: any[] = []
+    let debtAlerts: any[] = []
+
     if (userEmail === POSTVENTA_EMAIL) {
         try {
-            // @ts-ignore
-            receipts = await prisma.paymentReceipt.findMany({
-                orderBy: { created_at: 'desc' },
-                include: {
-                    reservation: {
-                        include: {
-                            buyer: true,
-                            lot: true
-                        }
-                    }
-                }
-            })
+            const postventaData = await getPostventaData()
+
+            if (postventaData.success) {
+                ledger = postventaData.ledger || []
+                debtAlerts = postventaData.debtAlerts || []
+
+                // Extract receipts from ledger to avoid duplicate queries
+                const allReceipts = ledger.flatMap(entry => entry.receipts || [])
+                receipts = allReceipts
+            }
         } catch (e) {
-            console.error('Error fetching receipts for postventa:', e)
+            console.error('Error fetching data for postventa:', e)
         }
     }
 
@@ -76,6 +78,8 @@ export default async function AdminDashboard() {
             userEmail={userEmail}
             receipts={receipts}
             paymentStats={paymentStats}
+            ledger={ledger}
+            debtAlerts={debtAlerts}
         />
     )
 }

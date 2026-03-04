@@ -27,6 +27,8 @@ interface AdminDashboardClientProps {
         lotsWithPiePending: number
         totalInstallmentsPaid: number
     }
+    ledger?: any[]
+    debtAlerts?: any[]
 }
 
 export function AdminDashboardClient({
@@ -37,6 +39,8 @@ export function AdminDashboardClient({
     userEmail,
     receipts = [],
     paymentStats,
+    ledger = [],
+    debtAlerts = [],
 }: AdminDashboardClientProps) {
     const isPostventa = userEmail === POSTVENTA_EMAIL;
 
@@ -72,26 +76,47 @@ export function AdminDashboardClient({
                             </span>
                         </div>
 
-                        {/* Desktop: side-by-side layout */}
-                        <div className="hidden md:grid md:grid-cols-2 gap-6">
-                            <div>
-                                <PostventaMobileDashboard
-                                    initialReceipts={receipts}
-                                    soldLots={soldLots}
-                                    activeTab="recibos"
-                                />
-                            </div>
-                            <div>
-                                <MoraExplainerCard soldLots={soldLots} />
-                            </div>
+                        {/* Desktop: Tabs layout */}
+                        <div className="hidden md:block">
+                            <Tabs defaultValue="recibos" className="w-full">
+                                <TabsList className="grid w-full grid-cols-4 bg-white/10 p-1 rounded-xl border border-white/5">
+                                    <TabsTrigger value="recibos" className="data-[state=active]:bg-[#36595F] data-[state=active]:text-white text-gray-300 font-bold">
+                                        Recibos
+                                    </TabsTrigger>
+                                    <TabsTrigger value="ledger" className="data-[state=active]:bg-[#36595F] data-[state=active]:text-white text-gray-300 font-bold">
+                                        Estado de Cuentas
+                                    </TabsTrigger>
+                                    <TabsTrigger value="alertas" className="data-[state=active]:bg-[#36595F] data-[state=active]:text-white text-gray-300 font-bold">
+                                        Alertas de Morosidad
+                                    </TabsTrigger>
+                                    <TabsTrigger value="mora" className="data-[state=active]:bg-[#36595F] data-[state=active]:text-white text-gray-300 font-bold">
+                                        Calculadora
+                                    </TabsTrigger>
+                                </TabsList>
+
+                                <TabsContent value="recibos" className="mt-6 max-w-3xl">
+                                    <PostventaMobileDashboard initialReceipts={receipts} soldLots={soldLots} activeTab="recibos" ledger={ledger} debtAlerts={debtAlerts} />
+                                </TabsContent>
+                                <TabsContent value="ledger" className="mt-6 max-w-4xl">
+                                    <PostventaMobileDashboard initialReceipts={receipts} soldLots={soldLots} activeTab="ledger" ledger={ledger} debtAlerts={debtAlerts} />
+                                </TabsContent>
+                                <TabsContent value="alertas" className="mt-6 max-w-4xl">
+                                    <PostventaMobileDashboard initialReceipts={receipts} soldLots={soldLots} activeTab="alertas" ledger={ledger} debtAlerts={debtAlerts} />
+                                </TabsContent>
+                                <TabsContent value="mora" className="mt-6 max-w-xl">
+                                    <MoraExplainerCard soldLots={soldLots} />
+                                </TabsContent>
+                            </Tabs>
                         </div>
 
-                        {/* Mobile: tab-switched */}
+                        {/* Mobile: tab-switched via bottom nav */}
                         <div className="md:hidden overflow-x-hidden">
                             <PostventaMobileDashboard
                                 initialReceipts={receipts}
                                 soldLots={soldLots}
                                 activeTab={mobileTab as PostventaTab}
+                                ledger={ledger}
+                                debtAlerts={debtAlerts}
                             />
                         </div>
                     </div>
