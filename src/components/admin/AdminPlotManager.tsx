@@ -136,7 +136,7 @@ export function AdminPlotManager({ reservations, allClients, userId, initialUser
 
                                 <div className="bg-black/40 rounded-xl p-4 border border-white/10 inline-block">
                                     <label className="text-xs text-gray-400 block mb-2 font-medium">
-                                        Selecciona rango: inicio mora → fecha de pago
+                                        Simula la tasa de interés: selecciona fecha de inicio y fin
                                     </label>
                                     <Calendar
                                         mode="range"
@@ -179,7 +179,7 @@ export function AdminPlotManager({ reservations, allClients, userId, initialUser
                                             {comparisonDate ? (
                                                 <> → <span className="text-white font-semibold">{format(comparisonDate, "PPP", { locale: es })}</span></>
                                             ) : (
-                                                <span className="text-gray-500 ml-1">— selecciona fecha de pago</span>
+                                                <span className="text-gray-500 ml-1">— selecciona la fecha fin</span>
                                             )}
                                         </p>
                                     )}

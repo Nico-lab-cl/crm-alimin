@@ -110,7 +110,7 @@ export function MoraExplainerCard({ soldLots }: MoraExplainerCardProps) {
                         <p className="text-xs text-gray-300 leading-relaxed">
                             Selecciona un <span className="text-white font-semibold">rango de fechas</span> en el calendario.
                             La primera fecha es cuando inicia el atraso (desde el <span className="text-red-400 font-semibold">día 11</span>)
-                            y la segunda es cuando el cliente paga. Se cobra:
+                            y la segunda es hasta cuándo deseas calcular el interés acumulado. Se cobra:
                             <br />
                             <span className="text-alimin-gold font-mono text-[11px]">{penaltyRate} × valor total del terreno</span> por cada día de ese rango.
                         </p>
@@ -145,7 +145,7 @@ export function MoraExplainerCard({ soldLots }: MoraExplainerCardProps) {
                 {/* Calendar Range Picker */}
                 <div className="space-y-2">
                     <Label className="text-xs text-gray-400 font-medium">
-                        Selecciona rango: fecha inicio mora → fecha de pago
+                        Simula la tasa de interés: selecciona fecha de inicio y fin
                     </Label>
                     <div className="flex justify-center">
                         <Calendar
