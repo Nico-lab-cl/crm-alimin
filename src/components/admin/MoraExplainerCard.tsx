@@ -2,11 +2,11 @@
 
 import { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Slider } from '@/components/ui/slider';
 import { Label } from '@/components/ui/label';
-import { Calculator, TrendingUp, AlertTriangle, Clock, CalendarDays } from 'lucide-react';
-import { calculateDailyInterest } from '@/lib/financials';
+import { Calculator, TrendingUp, AlertTriangle, CalendarDays } from 'lucide-react';
+import { calculateDailyInterest, PENALTY_START_DATE_WEB } from '@/lib/financials';
 import { InfoTooltip } from './InfoTooltip';
+import { Calendar } from '@/components/ui/calendar';
 import {
     Select,
     SelectContent,
@@ -27,11 +27,14 @@ interface MoraExplainerCardProps {
     soldLots: SoldLot[];
 }
 
+// March 11, 2026 — the date penalties begin
+const PENALTY_START = new Date(PENALTY_START_DATE_WEB);
+
 export function MoraExplainerCard({ soldLots }: MoraExplainerCardProps) {
     const [selectedLotId, setSelectedLotId] = useState<string>(
         soldLots.length > 0 ? String(soldLots[0].id) : ''
     );
-    const [daysLate, setDaysLate] = useState(15);
+    const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
 
     const selectedLot = soldLots.find(l => String(l.id) === selectedLotId) || soldLots[0];
 
@@ -39,15 +42,30 @@ export function MoraExplainerCard({ soldLots }: MoraExplainerCardProps) {
     const areaM2 = selectedLot?.area_m2 || 200;
 
     const calculation = useMemo(() => {
+        if (!selectedDate) return { dailyInterest: 0, totalInterest: 0, daysLate: 0 };
+
         const dailyInterest = calculateDailyInterest(totalLotPrice, areaM2);
+
+        // Calculate days between March 11 and the selected date
+        const start = new Date(PENALTY_START);
+        start.setHours(0, 0, 0, 0);
+        const end = new Date(selectedDate);
+        end.setHours(0, 0, 0, 0);
+
+        const diffTime = end.getTime() - start.getTime();
+        const daysLate = Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
+
         const totalInterest = dailyInterest * daysLate;
-        return { dailyInterest, totalInterest };
-    }, [totalLotPrice, areaM2, daysLate]);
+        return { dailyInterest, totalInterest, daysLate };
+    }, [totalLotPrice, areaM2, selectedDate]);
 
     const CLP = (value: number) =>
         new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(value);
 
     const penaltyRate = areaM2 >= 300 ? '0,000227324392' : '0,00027785496';
+
+    const formatDateChile = (date: Date) =>
+        date.toLocaleDateString('es-CL', { day: '2-digit', month: 'long', year: 'numeric' });
 
     if (soldLots.length === 0) {
         return (
@@ -84,7 +102,7 @@ export function MoraExplainerCard({ soldLots }: MoraExplainerCardProps) {
                     />
                 </div>
             </CardHeader>
-            <CardContent className="space-y-5">
+            <CardContent className="space-y-4">
                 {/* How it works */}
                 <div className="bg-white/5 rounded-xl p-3 border border-white/5">
                     <div className="flex items-start gap-2">
@@ -99,7 +117,7 @@ export function MoraExplainerCard({ soldLots }: MoraExplainerCardProps) {
                     </div>
                 </div>
 
-                {/* Lot Selector — REAL DATA */}
+                {/* Lot Selector */}
                 <div className="space-y-2">
                     <Label className="text-xs text-gray-400 font-medium">Seleccionar Terreno</Label>
                     <Select value={selectedLotId} onValueChange={setSelectedLotId}>
@@ -124,7 +142,45 @@ export function MoraExplainerCard({ soldLots }: MoraExplainerCardProps) {
                     </Select>
                 </div>
 
-                {/* Selected lot info */}
+                {/* Calendar Date Picker */}
+                <div className="space-y-2">
+                    <Label className="text-xs text-gray-400 font-medium">
+                        Selecciona la fecha de pago simulada
+                    </Label>
+                    <div className="flex justify-center">
+                        <Calendar
+                            mode="single"
+                            selected={selectedDate}
+                            onSelect={setSelectedDate}
+                            defaultMonth={PENALTY_START}
+                            disabled={{ before: PENALTY_START }}
+                            className="rounded-xl border border-white/10 bg-white/5 text-white"
+                            classNames={{
+                                months: "flex flex-col space-y-4",
+                                month: "space-y-3",
+                                caption: "flex justify-center pt-1 relative items-center",
+                                caption_label: "text-sm font-bold text-white",
+                                nav: "space-x-1 flex items-center",
+                                nav_button: "h-8 w-8 bg-white/10 border border-white/10 rounded-lg p-0 opacity-70 hover:opacity-100 hover:bg-white/20 inline-flex items-center justify-center transition-colors",
+                                nav_button_previous: "absolute left-1",
+                                nav_button_next: "absolute right-1",
+                                table: "w-full border-collapse",
+                                head_row: "flex",
+                                head_cell: "text-gray-500 rounded-md w-9 font-medium text-[0.7rem] uppercase",
+                                row: "flex w-full mt-1",
+                                cell: "h-9 w-9 text-center text-sm p-0 relative",
+                                day: "h-9 w-9 p-0 font-normal rounded-lg hover:bg-alimin-gold/20 transition-colors inline-flex items-center justify-center cursor-pointer text-gray-300 hover:text-white",
+                                day_selected: "bg-alimin-gold text-black font-bold hover:bg-alimin-gold/90 hover:text-black",
+                                day_today: "bg-white/10 text-white font-bold",
+                                day_outside: "text-gray-700 opacity-40",
+                                day_disabled: "text-gray-700 opacity-20 cursor-not-allowed hover:bg-transparent",
+                                day_hidden: "invisible",
+                            }}
+                        />
+                    </div>
+                </div>
+
+                {/* Selected Lot Info + Result */}
                 {selectedLot && (
                     <div className="bg-alimin-gold/10 border border-alimin-gold/20 rounded-xl p-3">
                         <p className="text-xs text-alimin-gold/80 font-medium mb-1 flex items-center gap-1.5">
@@ -135,73 +191,55 @@ export function MoraExplainerCard({ soldLots }: MoraExplainerCardProps) {
                             Valor total: <span className="font-bold text-white">{CLP(totalLotPrice)}</span> · {areaM2}m²
                             {areaM2 >= 300 ? ' (terreno grande)' : ' (terreno estándar)'}
                         </p>
-                        {daysLate > 0 && (
+                        {selectedDate && calculation.daysLate > 0 && (
                             <p className="text-sm text-gray-200 leading-relaxed mt-1">
-                                Con <span className="font-bold text-alimin-gold">{daysLate} días</span> de atraso,
-                                la multa es de <span className="font-bold text-red-400">{CLP(calculation.totalInterest)}</span>
+                                Pagando el <span className="font-bold text-white">{formatDateChile(selectedDate)}</span>
+                                {' '}= <span className="font-bold text-alimin-gold">{calculation.daysLate} días</span> de atraso
                             </p>
                         )}
                     </div>
                 )}
 
-                {/* Days Late Slider */}
-                <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                        <Label className="text-xs text-gray-400 font-medium flex items-center gap-1.5">
-                            <Clock className="w-3 h-3" />
-                            Días de atraso (desde el día 11)
-                        </Label>
-                        <span className={`text-sm font-bold font-mono ${daysLate > 30 ? 'text-red-400' : daysLate > 10 ? 'text-amber-400' : 'text-green-400'}`}>
-                            {daysLate} días
-                        </span>
-                    </div>
-                    <Slider
-                        value={[daysLate]}
-                        onValueChange={(v) => setDaysLate(v[0])}
-                        min={1}
-                        max={180}
-                        step={1}
-                        className="touch-pan-y"
-                    />
-                    <div className="flex justify-between text-[10px] text-gray-500">
-                        <span>1 día</span>
-                        <span>6 meses</span>
-                    </div>
-                </div>
-
                 {/* Results */}
-                <div className="bg-black/30 rounded-xl p-3 border border-white/5 space-y-2">
-                    <div className="flex justify-between text-sm">
-                        <span className="text-gray-400">Fórmula</span>
-                        <span className="font-mono text-gray-300 text-xs">
-                            {penaltyRate} × {CLP(totalLotPrice)}
-                        </span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                        <span className="text-gray-400 flex items-center gap-1">
-                            Interés diario
-                        </span>
-                        <span className="font-mono text-white">{CLP(calculation.dailyInterest)}/día</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                        <span className="text-gray-400">Días de atraso</span>
-                        <span className="font-mono text-white">× {daysLate}</span>
-                    </div>
-                    <div className="border-t border-white/10 pt-2 mt-2">
-                        <div className="flex justify-between items-center">
-                            <span className="text-sm font-bold text-alimin-gold flex items-center gap-1.5">
-                                <AlertTriangle className="w-4 h-4" />
-                                Multa Total
-                            </span>
-                            <span className="text-lg font-black text-red-400 font-mono">
-                                {CLP(calculation.totalInterest)}
+                {selectedDate && calculation.daysLate > 0 && (
+                    <div className="bg-black/30 rounded-xl p-3 border border-white/5 space-y-2">
+                        <div className="flex justify-between text-sm">
+                            <span className="text-gray-400">Fórmula</span>
+                            <span className="font-mono text-gray-300 text-xs">
+                                {penaltyRate} × {CLP(totalLotPrice)}
                             </span>
                         </div>
-                        <p className="text-[10px] text-gray-500 mt-1">
-                            Se suma al valor de la cuota que debe pagar el cliente
-                        </p>
+                        <div className="flex justify-between text-sm">
+                            <span className="text-gray-400">Interés diario</span>
+                            <span className="font-mono text-white">{CLP(calculation.dailyInterest)}/día</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                            <span className="text-gray-400">Días de atraso</span>
+                            <span className="font-mono text-white">× {calculation.daysLate}</span>
+                        </div>
+                        <div className="border-t border-white/10 pt-2 mt-2">
+                            <div className="flex justify-between items-center">
+                                <span className="text-sm font-bold text-alimin-gold flex items-center gap-1.5">
+                                    <AlertTriangle className="w-4 h-4" />
+                                    Multa Total
+                                </span>
+                                <span className="text-lg font-black text-red-400 font-mono">
+                                    {CLP(calculation.totalInterest)}
+                                </span>
+                            </div>
+                            <p className="text-[10px] text-gray-500 mt-1">
+                                Se suma al valor de la cuota que debe pagar el cliente
+                            </p>
+                        </div>
                     </div>
-                </div>
+                )}
+
+                {/* Empty state when no date selected */}
+                {!selectedDate && (
+                    <div className="text-center py-3 text-gray-500 text-xs">
+                        Selecciona una fecha en el calendario para simular la mora
+                    </div>
+                )}
             </CardContent>
         </Card>
     );
