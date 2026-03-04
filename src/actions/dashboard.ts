@@ -760,3 +760,46 @@ export async function adminResetUserPassword(userId: string, newPassword: string
         return { error: "Error al actualizar la contraseña" };
     }
 }
+
+// ADMIN: FORCE SIGN CONTRACT ON BEHALF OF CLIENT
+export async function adminForceSignContract(reservationId: string, contractType: 'RESERVA' | 'PROMESA') {
+    const session = await auth();
+    if (session?.user?.role !== Role.ADMIN) return { error: "No autorizado" };
+
+    try {
+        const adminIp = "Admin-Forced-Signature"; // Fixed string or could try to get real IP if passed from client
+
+        if (contractType === 'RESERVA') {
+            await prisma.reservation.update({
+                where: { id: reservationId },
+                data: {
+                    signed_at: new Date(),
+                    signature_ip: adminIp,
+                }
+            });
+        } else if (contractType === 'PROMESA') {
+            await prisma.reservation.update({
+                where: { id: reservationId },
+                data: {
+                    promesa_signed_at: new Date(),
+                    promesa_signature_ip: adminIp,
+                }
+            });
+        }
+
+        await logAdminAction({
+            action: 'UPDATE',
+            entity: 'Reservation',
+            entityId: reservationId,
+            details: `Admin forzó firma de contrato: ${contractType}`,
+            pk: reservationId
+        });
+
+        revalidatePath('/admin/dashboard');
+        return { success: true, message: "Contrato firmado exitosamente por administración" };
+    } catch (error) {
+        console.error("Error forcing signature:", error);
+        return { error: "Error al forzar la firma del contrato" };
+    }
+}
+
