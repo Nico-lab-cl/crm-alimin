@@ -305,9 +305,9 @@ export function PaymentButtons({ reservationId, lot, reservation, acquisitionDat
                                     <span>{formatCurrency(pieToPay)}</span>
                                 </div>
                             </div>
-                            <div className="space-y-2 pt-2">
-                                <label className="text-sm font-medium">Sube tu comprobante de pago</label>
-                                <Input type="file" accept="image/*,.pdf" onChange={handleFileChange} />
+                            <div className="space-y-2 pt-2 text-center">
+                                <label className="text-sm font-medium block">Sube tu comprobante de pago</label>
+                                <Input type="file" accept="image/*,.pdf" onChange={handleFileChange} className="mx-auto text-center" />
                             </div>
                         </div>
                         <DialogFooter>
@@ -438,9 +438,9 @@ export function PaymentButtons({ reservationId, lot, reservation, acquisitionDat
                                     <p><strong>RUT:</strong> 77.508.711-0</p>
                                     <p><strong>Correo:</strong> inmobiliaria@aliminspa.cl</p>
                                 </div>
-                                <div className="space-y-2 pt-2">
-                                    <label className="text-sm font-medium text-gray-800">Sube tu comprobante de pago</label>
-                                    <Input type="file" accept="image/*,.pdf" onChange={handleFileChange} className="bg-white" />
+                                <div className="space-y-2 pt-2 text-center">
+                                    <label className="text-sm font-medium text-gray-800 block">Sube tu comprobante de pago</label>
+                                    <Input type="file" accept="image/*,.pdf" onChange={handleFileChange} className="bg-white mx-auto text-center" />
                                 </div>
                             </div>
                         </div>
