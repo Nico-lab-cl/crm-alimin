@@ -7,6 +7,7 @@ import { AdminUserList } from "@/components/dashboard/AdminUserList"
 import { AdminLogs } from "@/components/dashboard/AdminLogs"
 import { MobileBottomNav, type AdminMobileTab } from "@/components/admin/MobileBottomNav"
 import { MobilePaymentDashboard } from "@/components/admin/MobilePaymentDashboard"
+import { MoraExplainerCard } from "@/components/admin/MoraExplainerCard"
 import { OnboardingTour } from "@/components/admin/OnboardingTour"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
@@ -90,10 +91,19 @@ export function AdminDashboardClient({
                                 </div>
                             </TabsContent>
 
-                            <TabsContent value="lots" className="mt-6">
+                            <TabsContent value="lots" className="mt-6 space-y-6">
                                 <div className="bg-black/40 backdrop-blur-md rounded-xl p-6 border border-white/10 shadow-xl">
                                     <h3 className="text-xl font-bold text-white mb-4">Control de Disponibilidad</h3>
                                     <AdminLotList lots={lots} />
+                                </div>
+                                <div className="max-w-lg">
+                                    <MoraExplainerCard soldLots={lots.filter((l: any) => l.status === 'sold' && l.price_total_clp).map((l: any) => ({
+                                        id: l.id,
+                                        number: l.number,
+                                        stage: l.stage,
+                                        area_m2: l.area_m2,
+                                        price_total_clp: l.price_total_clp,
+                                    }))} />
                                 </div>
                             </TabsContent>
 
