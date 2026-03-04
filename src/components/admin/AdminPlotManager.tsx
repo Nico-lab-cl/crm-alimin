@@ -16,11 +16,6 @@ import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { ContractUploadAction } from "@/components/admin/ContractUploadAction";
 import { AssignOwnerModal } from "@/components/dashboard/AssignOwnerModal";
-import {
-    Popover,
-    PopoverContent,
-    PopoverTrigger,
-} from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { calculateTotalInterest, calculateDailyInterest } from '@/lib/financials';
 
@@ -125,76 +120,69 @@ export function AdminPlotManager({ reservations, allClients, userId, initialUser
 
                         {/* Simulation Logic - HIDDEN IN USER VIEW */}
                         {!isUserView && (
-                            <div className="mt-4 flex flex-col gap-2">
+                            <div className="mt-4 flex flex-col gap-3">
                                 <div className="flex items-center gap-2">
-                                    <span className="text-sm text-gray-300 font-bold bg-[#36595F] px-2 py-1 rounded">Simulador de Intereses Manual</span>
+                                    <span className="text-sm text-gray-300 font-bold bg-[#36595F] px-2 py-1 rounded">Simulador de Intereses</span>
                                     {(simulatedDate || comparisonDate) && (
                                         <Button
                                             variant="ghost"
                                             onClick={handleClearSimulation}
                                             className="h-8 text-xs text-red-400 hover:text-red-300 hover:bg-red-900/20"
                                         >
-                                            Limpiar Filtros
+                                            Limpiar
                                         </Button>
                                     )}
                                 </div>
 
-                                <div className="flex items-center gap-4 bg-black/40 p-3 rounded-lg border border-white/10">
-                                    <div className="space-y-1">
-                                        <label className="text-xs text-gray-400 block">Inicio Mora (Desde)</label>
-                                        <Popover>
-                                            <PopoverTrigger asChild>
-                                                <Button
-                                                    variant={"outline"}
-                                                    className={cn(
-                                                        "w-[200px] justify-start text-left font-normal bg-black/20 border-white/10 text-white hover:bg-white/5 hover:text-white h-9",
-                                                        !simulatedDate && "text-muted-foreground"
-                                                    )}
-                                                >
-                                                    <CalendarIcon className="mr-2 h-4 w-4" />
-                                                    {simulatedDate ? format(simulatedDate, "PPP", { locale: es }) : <span>Seleccionar Inicio</span>}
-                                                </Button>
-                                            </PopoverTrigger>
-                                            <PopoverContent className="w-auto p-0 bg-gray-900 border-white/10 text-white">
-                                                <Calendar
-                                                    mode="single"
-                                                    selected={simulatedDate}
-                                                    onSelect={setSimulatedDate}
-                                                    initialFocus
-                                                    className="bg-gray-900 text-white"
-                                                />
-                                            </PopoverContent>
-                                        </Popover>
-                                    </div>
-
-                                    <span className="text-gray-500 mt-4">➜</span>
-
-                                    <div className="space-y-1">
-                                        <label className="text-xs text-gray-400 block">Fin Mora (Hasta/Pago)</label>
-                                        <Popover>
-                                            <PopoverTrigger asChild>
-                                                <Button
-                                                    variant={"outline"}
-                                                    className={cn(
-                                                        "w-[200px] justify-start text-left font-normal bg-black/20 border-white/10 text-white hover:bg-white/5 hover:text-white h-9",
-                                                        !comparisonDate && "text-muted-foreground"
-                                                    )}
-                                                >
-                                                    <CalendarIcon className="mr-2 h-4 w-4" />
-                                                    {comparisonDate ? format(comparisonDate, "PPP", { locale: es }) : <span>Seleccionar Fin</span>}
-                                                </Button>
-                                            </PopoverTrigger>
-                                            <PopoverContent className="w-auto p-0 bg-gray-900 border-white/10 text-white">
-                                                <Calendar
-                                                    mode="single"
-                                                    selected={comparisonDate}
-                                                    onSelect={setComparisonDate}
-                                                    initialFocus
-                                                    className="bg-gray-900 text-white"
-                                                />
-                                            </PopoverContent>
-                                        </Popover>
-                                    </div>
+                                <div className="bg-black/40 rounded-xl p-4 border border-white/10 inline-block">
+                                    <label className="text-xs text-gray-400 block mb-2 font-medium">
+                                        Selecciona rango: inicio mora → fecha de pago
+                                    </label>
+                                    <Calendar
+                                        mode="range"
+                                        selected={simulatedDate && comparisonDate ? { from: simulatedDate, to: comparisonDate } : simulatedDate ? { from: simulatedDate, to: undefined } : undefined}
+                                        onSelect={(range) => {
+                                            setSimulatedDate(range?.from);
+                                            setComparisonDate(range?.to);
+                                        }}
+                                        defaultMonth={new Date('2026-03-11T00:00:00-03:00')}
+                                        disabled={{ before: new Date('2026-03-11T00:00:00-03:00') }}
+                                        numberOfMonths={1}
+                                        className="rounded-xl border border-white/10 bg-white/5 text-white"
+                                        classNames={{
+                                            months: "flex flex-col space-y-4",
+                                            month: "space-y-3",
+                                            caption: "flex justify-center pt-1 relative items-center",
+                                            caption_label: "text-sm font-bold text-white",
+                                            nav: "space-x-1 flex items-center",
+                                            nav_button: "h-8 w-8 bg-white/10 border border-white/10 rounded-lg p-0 opacity-70 hover:opacity-100 hover:bg-white/20 inline-flex items-center justify-center transition-colors",
+                                            nav_button_previous: "absolute left-1",
+                                            nav_button_next: "absolute right-1",
+                                            table: "w-full border-collapse",
+                                            head_row: "flex",
+                                            head_cell: "text-gray-500 rounded-md w-9 font-medium text-[0.7rem] uppercase",
+                                            row: "flex w-full mt-1",
+                                            cell: "h-9 w-9 text-center text-sm p-0 relative [&:has([aria-selected])]:bg-[#36595F]/20 first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md",
+                                            day: "h-9 w-9 p-0 font-normal rounded-lg hover:bg-[#36595F]/30 transition-colors inline-flex items-center justify-center cursor-pointer text-gray-300 hover:text-white",
+                                            day_selected: "bg-[#36595F] text-white font-bold hover:bg-[#36595F]/90",
+                                            day_today: "bg-white/10 text-white font-bold",
+                                            day_outside: "text-gray-700 opacity-40",
+                                            day_disabled: "text-gray-700 opacity-20 cursor-not-allowed hover:bg-transparent",
+                                            day_range_middle: "bg-[#36595F]/15 text-[#36595F] rounded-none",
+                                            day_range_end: "rounded-r-lg",
+                                            day_hidden: "invisible",
+                                        }}
+                                    />
+                                    {simulatedDate && (
+                                        <p className="text-center text-xs text-gray-400 mt-2">
+                                            <span className="text-white font-semibold">{format(simulatedDate, "PPP", { locale: es })}</span>
+                                            {comparisonDate ? (
+                                                <> → <span className="text-white font-semibold">{format(comparisonDate, "PPP", { locale: es })}</span></>
+                                            ) : (
+                                                <span className="text-gray-500 ml-1">— selecciona fecha de pago</span>
+                                            )}
+                                        </p>
+                                    )}
                                 </div>
 
                                 {(simulatedDate && comparisonDate) && (() => {
