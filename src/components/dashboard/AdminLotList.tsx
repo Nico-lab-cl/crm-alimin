@@ -49,7 +49,7 @@ export const AdminLotList = ({ lots: initialLots }: AdminLotListProps) => {
 
     const { startSync, endSync } = useSyncStatus()
 
-    // Pagination (mobile only)
+    // Pagination
     const LOTS_PER_PAGE = 18
     const [currentPage, setCurrentPage] = useState(1)
 
@@ -157,13 +157,13 @@ export const AdminLotList = ({ lots: initialLots }: AdminLotListProps) => {
                 </div>
             </div>
 
-            {/* Mobile counter */}
-            <p className="md:hidden text-[11px] text-gray-500 font-medium px-1">
+            {/* Counter */}
+            <p className="text-[11px] text-gray-500 font-medium px-1">
                 {filteredLots.length} terreno{filteredLots.length !== 1 ? 's' : ''}
                 {totalPages > 1 && ` · Pág ${currentPage} de ${totalPages}`}
             </p>
 
-            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-4 lg:grid-cols-6 gap-2 md:gap-3 md:max-h-[600px] md:overflow-y-auto md:pr-2 custom-scrollbar">
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-4 lg:grid-cols-6 gap-2 md:gap-3">
                 {paginatedLots.map(lot => {
                     const isSold = lot.status === 'sold'
                     const isLoading = loadingIds.has(lot.id)
@@ -327,9 +327,9 @@ export const AdminLotList = ({ lots: initialLots }: AdminLotListProps) => {
                 })}
             </div>
 
-            {/* Mobile Pagination Controls */}
+            {/* Pagination Controls */}
             {totalPages > 1 && (
-                <div className="flex md:hidden items-center justify-between gap-3 pt-2 pb-4">
+                <div className="flex items-center justify-between gap-3 pt-2 pb-4">
                     <button
                         onClick={() => { setCurrentPage(p => Math.max(1, p - 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
                         disabled={currentPage === 1}

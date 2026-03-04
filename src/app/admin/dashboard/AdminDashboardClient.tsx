@@ -189,9 +189,6 @@ export function AdminDashboardClient({
                                     <h3 className="text-xl font-bold text-white mb-4">Control de Disponibilidad</h3>
                                     <AdminLotList lots={lots} />
                                 </div>
-                                <div className="max-w-lg">
-                                    <MoraExplainerCard soldLots={soldLots} />
-                                </div>
                             </TabsContent>
 
                             <TabsContent value="users" className="mt-6">
