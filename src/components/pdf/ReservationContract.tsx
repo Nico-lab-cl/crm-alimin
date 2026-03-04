@@ -143,8 +143,33 @@ export const ReservationContract = ({ reservation, lot, logoPath, signaturePath 
         }
     }
 
-    // Fecha Promesa: 4 de Marzo del 2026 (request by admin)
-    let fechaPromesa = "4 de Marzo del 2026";
+    // Fecha Promesa: 10 días desde el pago de la reserva (created_at)
+    let fechaPromesa = "";
+
+    // Exception for the specific client who had March 4, 2026.
+    // We can identify this by checking if the reservation was created around the time that exception was made (e.g., before late Feb 2026).
+    // Specifically, for any reservation created BEFORE Feb 25, 2026, we'll keep the March 4th date to not break old PDFs.
+    // For any new reservation, we add 10 days.
+    const cutoffDateForException = new Date('2026-02-24T00:00:00-03:00');
+
+    if (contractDate < cutoffDateForException) {
+        fechaPromesa = "4 de Marzo del 2026";
+    } else {
+        const promiseDeadline = new Date(contractDate);
+        promiseDeadline.setDate(promiseDeadline.getDate() + 10);
+
+        // Format the new deadline date
+        const timeZone = 'America/Santiago';
+        const day = promiseDeadline.toLocaleDateString('es-CL', { day: 'numeric', timeZone });
+        const month = promiseDeadline.toLocaleDateString('es-CL', { month: 'long', timeZone });
+        const year = promiseDeadline.toLocaleDateString('es-CL', { year: 'numeric', timeZone });
+
+        const monthCap = month.charAt(0).toUpperCase() + month.slice(1);
+        const yearNumber = parseInt(year);
+        const yearText = yearToText(yearNumber);
+
+        fechaPromesa = `${day} de ${monthCap} del año ${yearText}`;
+    }
 
     return (
         <Document>
