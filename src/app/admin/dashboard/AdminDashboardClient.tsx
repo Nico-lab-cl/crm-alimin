@@ -6,16 +6,20 @@ import { AdminLotList } from "@/components/dashboard/AdminLotList"
 import { AdminUserList } from "@/components/dashboard/AdminUserList"
 import { AdminLogs } from "@/components/dashboard/AdminLogs"
 import { MobileBottomNav, type AdminMobileTab } from "@/components/admin/MobileBottomNav"
-import { MobilePaymentDashboard } from "@/components/admin/MobilePaymentDashboard"
 import { MoraExplainerCard } from "@/components/admin/MoraExplainerCard"
+import { PostventaMobileDashboard, type PostventaTab } from "@/components/admin/PostventaMobileDashboard"
 import { OnboardingTour } from "@/components/admin/OnboardingTour"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+
+const POSTVENTA_EMAIL = 'postventa@lomasdelmar.cl';
 
 interface AdminDashboardClientProps {
     pipelineData: any
     sellers: any[]
     lots: any[]
     users: any[]
+    userEmail?: string
+    receipts?: any[]
     paymentStats: {
         totalLots: number
         soldLots: number
@@ -30,17 +34,81 @@ export function AdminDashboardClient({
     sellers,
     lots,
     users,
+    userEmail,
+    receipts = [],
     paymentStats,
 }: AdminDashboardClientProps) {
-    const [mobileTab, setMobileTab] = useState<AdminMobileTab>('terrenos')
+    const isPostventa = userEmail === POSTVENTA_EMAIL;
 
-    // Map mobile tabs to desktop tab values
-    const mobileToDesktop: Record<AdminMobileTab, string> = {
-        terrenos: 'lots',
-        pagos: 'pipeline', // show pipeline on desktop, custom on mobile
-        usuarios: 'users',
+    const [mobileTab, setMobileTab] = useState<AdminMobileTab | PostventaTab>(
+        isPostventa ? 'recibos' : 'terrenos'
+    );
+
+    const soldLots = lots.filter((l: any) => l.status === 'sold' && l.price_total_clp).map((l: any) => ({
+        id: l.id,
+        number: l.number,
+        stage: l.stage,
+        area_m2: l.area_m2,
+        price_total_clp: l.price_total_clp,
+    }));
+
+    // ============================================================
+    // POSTVENTA VIEW — dedicated receipt + mora interface
+    // ============================================================
+    if (isPostventa) {
+        return (
+            <>
+                <div className="min-h-screen bg-black/95 relative w-full pt-4 md:pt-8 px-2 md:px-4 pb-24 overflow-x-hidden">
+                    <div className="absolute inset-0 bg-[url('/terreno-bg.JPG')] bg-cover bg-center opacity-20 blur-sm fixed" />
+
+                    <div className="relative z-10 max-w-[1800px] mx-auto space-y-4 md:space-y-8">
+                        {/* Header */}
+                        <div className="flex items-center justify-between pt-1 pb-2">
+                            <h2 className="text-xl md:text-3xl font-black text-white">
+                                Postventa
+                            </h2>
+                            <span className="text-xs text-gray-500 font-medium">
+                                Lomas del Mar
+                            </span>
+                        </div>
+
+                        {/* Desktop: side-by-side layout */}
+                        <div className="hidden md:grid md:grid-cols-2 gap-6">
+                            <div>
+                                <PostventaMobileDashboard
+                                    initialReceipts={receipts}
+                                    soldLots={soldLots}
+                                    activeTab="recibos"
+                                />
+                            </div>
+                            <div>
+                                <MoraExplainerCard soldLots={soldLots} />
+                            </div>
+                        </div>
+
+                        {/* Mobile: tab-switched */}
+                        <div className="md:hidden overflow-x-hidden">
+                            <PostventaMobileDashboard
+                                initialReceipts={receipts}
+                                soldLots={soldLots}
+                                activeTab={mobileTab as PostventaTab}
+                            />
+                        </div>
+                    </div>
+                </div>
+
+                <MobileBottomNav
+                    activeTab={mobileTab}
+                    onTabChange={setMobileTab}
+                    isPostventa
+                />
+            </>
+        );
     }
 
+    // ============================================================
+    // REGULAR ADMIN VIEW
+    // ============================================================
     return (
         <>
             <div className="min-h-screen bg-black/95 relative w-full pt-4 md:pt-8 px-2 md:px-4 pb-12 overflow-x-hidden">
@@ -97,13 +165,7 @@ export function AdminDashboardClient({
                                     <AdminLotList lots={lots} />
                                 </div>
                                 <div className="max-w-lg">
-                                    <MoraExplainerCard soldLots={lots.filter((l: any) => l.status === 'sold' && l.price_total_clp).map((l: any) => ({
-                                        id: l.id,
-                                        number: l.number,
-                                        stage: l.stage,
-                                        area_m2: l.area_m2,
-                                        price_total_clp: l.price_total_clp,
-                                    }))} />
+                                    <MoraExplainerCard soldLots={soldLots} />
                                 </div>
                             </TabsContent>
 
@@ -125,21 +187,6 @@ export function AdminDashboardClient({
                         {mobileTab === 'terrenos' && (
                             <div className="animate-fade-in">
                                 <AdminLotList lots={lots} />
-                            </div>
-                        )}
-
-                        {mobileTab === 'pagos' && (
-                            <div className="animate-fade-in">
-                                <MobilePaymentDashboard
-                                    stats={paymentStats}
-                                    soldLots={lots.filter((l: any) => l.status === 'sold' && l.price_total_clp).map((l: any) => ({
-                                        id: l.id,
-                                        number: l.number,
-                                        stage: l.stage,
-                                        area_m2: l.area_m2,
-                                        price_total_clp: l.price_total_clp,
-                                    }))}
-                                />
                             </div>
                         )}
 

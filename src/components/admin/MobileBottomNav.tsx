@@ -1,22 +1,30 @@
 'use client';
 
-import { Map, Wallet, Users } from 'lucide-react';
+import { Map, Wallet, Users, Receipt, Calculator } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import type { PostventaTab } from './PostventaMobileDashboard';
 
 export type AdminMobileTab = 'terrenos' | 'pagos' | 'usuarios';
 
 interface MobileBottomNavProps {
-    activeTab: AdminMobileTab;
-    onTabChange: (tab: AdminMobileTab) => void;
+    activeTab: AdminMobileTab | PostventaTab;
+    onTabChange: (tab: any) => void;
+    isPostventa?: boolean;
 }
 
-const tabs: { id: AdminMobileTab; label: string; icon: React.ElementType }[] = [
+const adminTabs: { id: AdminMobileTab; label: string; icon: React.ElementType }[] = [
     { id: 'terrenos', label: 'Terrenos', icon: Map },
-    { id: 'pagos', label: 'Pagos', icon: Wallet },
     { id: 'usuarios', label: 'Usuarios', icon: Users },
 ];
 
-export function MobileBottomNav({ activeTab, onTabChange }: MobileBottomNavProps) {
+const postventaTabs: { id: PostventaTab; label: string; icon: React.ElementType }[] = [
+    { id: 'recibos', label: 'Recibos', icon: Receipt },
+    { id: 'mora', label: 'Simulador', icon: Calculator },
+];
+
+export function MobileBottomNav({ activeTab, onTabChange, isPostventa = false }: MobileBottomNavProps) {
+    const tabs = isPostventa ? postventaTabs : adminTabs;
+
     return (
         <nav
             className="

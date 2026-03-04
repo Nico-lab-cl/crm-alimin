@@ -1,7 +1,14 @@
+import { auth } from "@/auth"
+import { prisma } from "@/lib/prisma"
 import { getAdminPipeline, getSellers, getAdminLots, getAdminUsers } from "@/actions/dashboard"
 import { AdminDashboardClient } from "./AdminDashboardClient"
 
+const POSTVENTA_EMAIL = 'postventa@lomasdelmar.cl';
+
 export default async function AdminDashboard() {
+    const session = await auth()
+    const userEmail = session?.user?.email || ''
+
     const [pipelineResult, sellersResult, lotsResult, usersResult] = await Promise.all([
         getAdminPipeline(),
         getSellers(),
@@ -39,12 +46,35 @@ export default async function AdminDashboard() {
         totalInstallmentsPaid,
     }
 
+    // Fetch receipts for postventa user
+    let receipts: any[] = []
+    if (userEmail === POSTVENTA_EMAIL) {
+        try {
+            // @ts-ignore
+            receipts = await prisma.paymentReceipt.findMany({
+                orderBy: { created_at: 'desc' },
+                include: {
+                    reservation: {
+                        include: {
+                            buyer: true,
+                            lot: true
+                        }
+                    }
+                }
+            })
+        } catch (e) {
+            console.error('Error fetching receipts for postventa:', e)
+        }
+    }
+
     return (
         <AdminDashboardClient
             pipelineData={pipelineResult.data as any}
             sellers={sellersResult.data || []}
             lots={lotsResult.data || []}
             users={usersResult.data || []}
+            userEmail={userEmail}
+            receipts={receipts}
             paymentStats={paymentStats}
         />
     )
