@@ -63,7 +63,7 @@ export function AdminForceSignAction({ reservationId, userId, clientName, isRese
             <DialogTrigger asChild>
                 <Button variant="outline" size="sm" className="w-full mt-2 border-orange-200 text-orange-700 hover:bg-orange-50 hover:text-orange-800">
                     <ShieldAlert className="w-4 h-4 mr-2" />
-                    Asistencia Cliente (Old School)
+                    Asistencia Cliente
                 </Button>
             </DialogTrigger>
             <DialogContent className="max-w-md">
