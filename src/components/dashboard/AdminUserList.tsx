@@ -25,6 +25,7 @@ import {
     SelectValue,
 } from "@/components/ui/select"
 import { Label } from '@/components/ui/label'
+import { AdminForceSignAction } from "@/components/admin/AdminForceSignAction"
 
 type AdminUserListProps = {
     users: any[]
@@ -387,6 +388,17 @@ export const AdminUserList = ({ users: initialUsers }: AdminUserListProps) => {
                                                 </Button>
                                             </Link>
                                         </div>
+                                        {res && (
+                                            <div className="mt-2 w-full max-w-[200px] ml-auto">
+                                                <AdminForceSignAction
+                                                    reservationId={res.id}
+                                                    userId={user.id}
+                                                    clientName={user.name!}
+                                                    isReservaSigned={res.signed_at != null}
+                                                    isPromesaSigned={res.promesa_signed_at != null}
+                                                />
+                                            </div>
+                                        )}
                                     </td>
                                 </tr>
                             )
@@ -497,20 +509,33 @@ export const AdminUserList = ({ users: initialUsers }: AdminUserListProps) => {
                                     </div>
 
                                     {/* Action Buttons — 48px height, full bleed */}
-                                    <div className="flex border-t border-white/5">
-                                        <button
-                                            onClick={() => openResetPassword(user)}
-                                            className="flex items-center justify-center gap-2 flex-1 min-h-[48px] text-amber-400 text-xs font-semibold hover:bg-amber-900/15 transition-colors active:scale-[0.97] active:bg-amber-900/25 border-r border-white/5"
-                                        >
-                                            <Lock className="w-4 h-4" />
-                                            Contraseña
-                                        </button>
-                                        <Link href={`/admin/users/${user.id}/plots`} className="flex-1">
-                                            <button className="flex items-center justify-center gap-2 w-full min-h-[48px] text-blue-400 text-xs font-semibold hover:bg-blue-900/15 transition-colors active:scale-[0.97] active:bg-blue-900/25">
-                                                <ExternalLink className="w-4 h-4" />
-                                                Ver Gestión
+                                    <div className="flex flex-col border-t border-white/5">
+                                        <div className="flex w-full">
+                                            <button
+                                                onClick={() => openResetPassword(user)}
+                                                className="flex items-center justify-center gap-2 flex-1 min-h-[48px] text-amber-400 text-xs font-semibold hover:bg-amber-900/15 transition-colors active:scale-[0.97] active:bg-amber-900/25 border-r border-white/5"
+                                            >
+                                                <Lock className="w-4 h-4" />
+                                                Contraseña
                                             </button>
-                                        </Link>
+                                            <Link href={`/admin/users/${user.id}/plots`} className="flex-1">
+                                                <button className="flex items-center justify-center gap-2 w-full min-h-[48px] text-blue-400 text-xs font-semibold hover:bg-blue-900/15 transition-colors active:scale-[0.97] active:bg-blue-900/25">
+                                                    <ExternalLink className="w-4 h-4" />
+                                                    Ver Gestión
+                                                </button>
+                                            </Link>
+                                        </div>
+                                        {res && (
+                                            <div className="border-t border-white/5 bg-white/[0.02]">
+                                                <AdminForceSignAction
+                                                    reservationId={res.id}
+                                                    userId={user.id}
+                                                    clientName={user.name!}
+                                                    isReservaSigned={res.signed_at != null}
+                                                    isPromesaSigned={res.promesa_signed_at != null}
+                                                />
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             )

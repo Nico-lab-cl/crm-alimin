@@ -16,7 +16,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { getEffectiveStage } from "@/lib/pipeline"
 import { PromesaGeneratorAction } from "@/components/admin/PromesaGeneratorAction"
 import { ContractUploadAction } from "@/components/admin/ContractUploadAction"
-import { AdminForceSignAction } from "@/components/admin/AdminForceSignAction"
 
 type ReservationWithDetails = Reservation & {
     lot: Lot
@@ -158,17 +157,6 @@ export function AdminPipelineCard({
                         />
                     </div>
                 )}
-
-                {/* Old School Client Assistance */}
-                <div className="pt-2">
-                    <AdminForceSignAction
-                        reservationId={reservation.id}
-                        userId={reservation.buyer?.id}
-                        clientName={reservation.name}
-                        isReservaSigned={(reservation as any).signed_at != null}
-                        isPromesaSigned={(reservation as any).promesa_signed_at != null}
-                    />
-                </div>
 
                 <div className="flex justify-between items-center pt-2 border-t mt-2">
                     <Button
