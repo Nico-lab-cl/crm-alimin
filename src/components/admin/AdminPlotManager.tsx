@@ -17,7 +17,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { ContractUploadAction } from "@/components/admin/ContractUploadAction";
 import { AssignOwnerModal } from "@/components/dashboard/AssignOwnerModal";
 import { cn } from "@/lib/utils";
-import { calculateTotalInterest, calculateDailyInterest } from '@/lib/financials';
+import { calculateTotalInterest, calculateDailyInterest, getInstallmentDueDate } from '@/lib/financials';
 
 interface AdminPlotManagerProps {
     reservations: any[]; // Using any for simplicity with Prisma includes, or define tight type
@@ -242,10 +242,7 @@ export function AdminPlotManager({ reservations, allClients, userId, initialUser
                                         // -----------------------------------------------------------------
                                         for (let i = paidCuotas + 1; i <= totalCuotas; i++) {
                                             // Calculate Due Date
-                                            const dueDate = new Date(acquisitionDate);
-                                            dueDate.setMonth(dueDate.getMonth() + i);
-                                            dueDate.setDate(5);
-                                            dueDate.setHours(0, 0, 0, 0);
+                                            const dueDate = getInstallmentDueDate(acquisitionDate, i, Boolean(res.is_legacy));
 
                                             // Grace Period
                                             const graceEnd = new Date(dueDate);

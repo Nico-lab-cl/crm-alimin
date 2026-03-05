@@ -4,10 +4,18 @@ export const PENALTY_RATE_300M2 = 0.000227324392; // For lots >= 300m2
 export const GRACE_PERIOD_DAYS = 5; // From day 5 to 10 (inclusive)
 export const PENALTY_START_DATE_WEB = new Date('2026-03-11T00:00:00-03:00'); // March 11, 2026
 
-export function getInstallmentDueDate(acquisitionDate: Date | string, installmentNumber: number): Date {
+export function getInstallmentDueDate(acquisitionDate: Date | string, installmentNumber: number, isLegacy: boolean = false): Date {
     const base = new Date(acquisitionDate);
     const due = new Date(base);
-    due.setMonth(due.getMonth() + installmentNumber);
+
+    // For legacy users, baseDate is legacy_installment_start_date (1 month before first cuota)
+    if (isLegacy) {
+        due.setMonth(due.getMonth() + installmentNumber);
+    } else {
+        // For web users, baseDate is purchase date. First cuota is due in the same month.
+        due.setMonth(due.getMonth() + (installmentNumber - 1));
+    }
+
     due.setDate(5); // Due date is always the 5th
     due.setHours(0, 0, 0, 0);
     return due;

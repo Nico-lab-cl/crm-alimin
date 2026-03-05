@@ -52,9 +52,10 @@ export async function getPostventaData() {
                     ? new Date(res.legacy_installment_start_date).toISOString()
                     : res.created_at.toISOString();
 
-                nextDueDate = getInstallmentDueDate(baseDate, paidCuotas + 1);
+                const isLegacyBool = Boolean(res.is_legacy);
+                nextDueDate = getInstallmentDueDate(baseDate, paidCuotas + 1, isLegacyBool);
 
-                if (res.is_legacy && res.legacy_debt_start_date) {
+                if (isLegacyBool && res.legacy_debt_start_date) {
                     const debtStart = new Date(res.legacy_debt_start_date);
                     debtStart.setHours(0, 0, 0, 0);
                     if (currentDate > debtStart) {
@@ -67,7 +68,7 @@ export async function getPostventaData() {
                         }
                     }
                 } else {
-                    const iDue = getInstallmentDueDate(baseDate, paidCuotas + 1);
+                    const iDue = getInstallmentDueDate(baseDate, paidCuotas + 1, isLegacyBool);
                     const lotAreaM2 = lot.area_m2 || 200;
                     penaltyAmount = calculateTotalInterest(
                         totalToPay,

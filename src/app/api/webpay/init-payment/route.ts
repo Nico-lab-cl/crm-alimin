@@ -2,7 +2,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { webpayCreate } from '@/lib/transbank'; // Use shared utility
-import { calculateTotalInterest } from '@/lib/financials';
+import { calculateTotalInterest, getInstallmentDueDate } from '@/lib/financials';
 
 // Helper: Determine the exact price for a specific installment number
 function getInstallmentAmount(
@@ -99,10 +99,7 @@ export async function POST(request: Request) {
                 if (i > 0) continue;
 
                 const installmentNum = startInstallment + i;
-                const dueDate = new Date(acquisitionDate);
-                dueDate.setMonth(dueDate.getMonth() + installmentNum);
-                dueDate.setDate(5);
-                dueDate.setHours(0, 0, 0, 0);
+                const dueDate = getInstallmentDueDate(acquisitionDate, installmentNum, Boolean(reservation.is_legacy));
 
                 // Determine amount for THIS specific installment taking ranges into account
                 const instAmount = getInstallmentAmount(

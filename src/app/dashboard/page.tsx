@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
+import { getInstallmentDueDate } from "@/lib/financials";
 
 interface Reservation {
     id: string;
@@ -18,6 +19,8 @@ interface Reservation {
     status: string;
     created_at: string;
     installments_paid: number;
+    is_legacy?: boolean;
+    legacy_installment_start_date?: string;
 }
 
 export default function UserDashboard() {
@@ -124,11 +127,9 @@ export default function UserDashboard() {
                                             // We need acquisition date to be precise, ensuring we align with `getInstallmentDueDate`.
                                             // `res.created_at` is acquisition date.
 
-                                            const acquisitionDate = new Date(res.created_at);
+                                            const baseDate = res.legacy_installment_start_date ? new Date(res.legacy_installment_start_date) : new Date(res.created_at);
                                             const nextInstNum = (res.installments_paid || 0) + 1;
-                                            const nextDueDate = new Date(acquisitionDate);
-                                            nextDueDate.setMonth(nextDueDate.getMonth() + nextInstNum);
-                                            nextDueDate.setDate(5);
+                                            const nextDueDate = getInstallmentDueDate(baseDate, nextInstNum, Boolean(res.is_legacy));
 
                                             const isUrgent = new Date() > nextDueDate; // If past due
 
