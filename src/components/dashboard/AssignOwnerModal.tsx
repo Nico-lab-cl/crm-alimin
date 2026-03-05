@@ -48,6 +48,8 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
         price_total_clp: 0,
         legacy_current_installment: 1,
         isPiePaid: true,
+        reserva_firmada: false,
+        compraventa_firmada: false,
     })
 
     const [hasDebt, setHasDebt] = useState(false)
@@ -77,6 +79,8 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
                 price_total_clp: existingReservation.lot?.price_total_clp || 0,
                 legacy_current_installment: existingReservation.installments_paid ? existingReservation.installments_paid + 1 : 1,
                 isPiePaid: existingReservation.pie_status !== 'PENDING',
+                reserva_firmada: !!existingReservation.signed_at,
+                compraventa_firmada: !!existingReservation.promesa_signed_at,
             })
             if (existingReservation.legacy_debt_start_date) {
                 setHasDebt(true)
@@ -108,7 +112,8 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
                 name: "", email: "", phone: "", rut: "",
                 marital_status: "", profession: "", nationality: "Chilena",
                 address_street: "", address_number: "", address_commune: "", address_region: "",
-                reservation_amount_clp: 500000, pie: 0, cuotas: 0, valor_cuota: 0, last_installment_amount: 0, price_total_clp: 0, legacy_current_installment: 1, isPiePaid: true
+                reservation_amount_clp: 500000, pie: 0, cuotas: 0, valor_cuota: 0, last_installment_amount: 0, price_total_clp: 0, legacy_current_installment: 1, isPiePaid: true,
+                reserva_firmada: false, compraventa_firmada: false
             })
             setHasDebt(false)
             setDebtStartDate(undefined)
@@ -138,7 +143,8 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
                     name: "", email: "", phone: "", rut: "",
                     marital_status: "", profession: "", nationality: "Chilena",
                     address_street: "", address_number: "", address_commune: "", address_region: "",
-                    reservation_amount_clp: 500000, pie: 0, cuotas: 0, valor_cuota: 0, last_installment_amount: 0, price_total_clp: 0, legacy_current_installment: 1, isPiePaid: true
+                    reservation_amount_clp: 500000, pie: 0, cuotas: 0, valor_cuota: 0, last_installment_amount: 0, price_total_clp: 0, legacy_current_installment: 1, isPiePaid: true,
+                    reserva_firmada: false, compraventa_firmada: false
                 })
                 setHasDebt(false)
                 setDebtStartDate(undefined)
@@ -571,6 +577,52 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
                                     </Popover>
                                 </div>
                             )}
+                        </div>
+                    </div>
+
+                    <div className="bg-green-50/50 p-4 rounded-lg border border-green-100 space-y-4">
+                        <h4 className="font-semibold text-green-900 border-b border-green-200 pb-2">Estado de Firmas (Offline)</h4>
+                        <div className="flex flex-col gap-3">
+                            <div className="flex items-center space-x-2">
+                                <input
+                                    type="checkbox"
+                                    id="reserva_firmada"
+                                    className="w-4 h-4 text-green-600 rounded border-gray-300 focus:ring-green-500"
+                                    checked={formData.reserva_firmada}
+                                    onChange={(e) => setFormData({ ...formData, reserva_firmada: e.target.checked })}
+                                />
+                                <div className="grid gap-1.5 leading-none">
+                                    <label
+                                        htmlFor="reserva_firmada"
+                                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-green-900"
+                                    >
+                                        Reserva Firmada
+                                    </label>
+                                    <p className="text-[11px] text-green-700">
+                                        Si se marca, el contrato de Reserva no aparecerá como pendiente de firma en el portal del cliente.
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                                <input
+                                    type="checkbox"
+                                    id="compraventa_firmada"
+                                    className="w-4 h-4 text-green-600 rounded border-gray-300 focus:ring-green-500"
+                                    checked={formData.compraventa_firmada}
+                                    onChange={(e) => setFormData({ ...formData, compraventa_firmada: e.target.checked })}
+                                />
+                                <div className="grid gap-1.5 leading-none">
+                                    <label
+                                        htmlFor="compraventa_firmada"
+                                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-green-900"
+                                    >
+                                        Promesa de Compraventa Firmada
+                                    </label>
+                                    <p className="text-[11px] text-green-700">
+                                        Si se marca, la Promesa de Compraventa no aparecerá como pendiente de firma en el portal del cliente.
+                                    </p>
+                                </div>
+                            </div>
                         </div>
                     </div>
 

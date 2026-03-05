@@ -329,6 +329,8 @@ export async function assignLegacyLotOwner(data: {
     legacy_installment_start_date?: string;
     legacy_installment_ranges?: string;
     isPiePaid?: boolean;
+    reserva_firmada?: boolean;
+    compraventa_firmada?: boolean;
     reservationId?: string;
 }) {
     const session = await auth()
@@ -339,6 +341,7 @@ export async function assignLegacyLotOwner(data: {
         address_street, address_number, address_commune, address_region,
         reservation_amount_clp, pie, cuotas, valor_cuota, last_installment_amount,
         price_total_clp, legacy_current_installment, legacy_debt_start_date, legacy_installment_start_date, legacy_installment_ranges, isPiePaid,
+        reserva_firmada, compraventa_firmada,
         reservationId
     } = data
 
@@ -427,7 +430,11 @@ export async function assignLegacyLotOwner(data: {
             legacy_current_installment: legacy_current_installment || 1,
             legacy_debt_start_date: legacy_debt_start_date ? new Date(legacy_debt_start_date) : null,
             legacy_installment_start_date: legacy_installment_start_date ? new Date(legacy_installment_start_date) : null,
-            legacy_installment_ranges: legacy_installment_ranges ? JSON.parse(legacy_installment_ranges) : null
+            legacy_installment_ranges: legacy_installment_ranges ? JSON.parse(legacy_installment_ranges) : null,
+            signed_at: reserva_firmada ? new Date() : (existingReservation?.signed_at || null),
+            signature_ip: reserva_firmada ? 'Firma Offline' : (existingReservation?.signature_ip || null),
+            promesa_signed_at: compraventa_firmada ? new Date() : (existingReservation?.promesa_signed_at || null),
+            promesa_signature_ip: compraventa_firmada ? 'Firma Offline' : (existingReservation?.promesa_signature_ip || null),
         };
 
         let reservation;
