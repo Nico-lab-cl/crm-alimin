@@ -25,6 +25,7 @@ interface Reservation {
     installments_paid: number | null;
     created_at: string;
     signed_at?: string | null;
+    signature_ip?: string | null;
     uploaded_contract_url?: string | null;
     is_legacy?: boolean;
     legacy_uploaded_contracts?: string | null;
@@ -162,7 +163,7 @@ export default function UserPlotsPage() {
                                         <div className="space-y-3 pt-2">
                                             {/* Base Contract button removed as requested */}
 
-                                            {res.signed_at ? (
+                                            {res.signed_at && res.signature_ip !== 'Firma Offline' ? (
                                                 <a
                                                     href={`/api/contracts/${res.id}/pdf`}
                                                     target="_blank"
