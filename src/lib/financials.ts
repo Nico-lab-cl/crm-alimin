@@ -6,18 +6,23 @@ export const PENALTY_START_DATE_WEB = new Date('2026-03-11T00:00:00-03:00'); // 
 
 export function getInstallmentDueDate(acquisitionDate: Date | string, installmentNumber: number, isLegacy: boolean = false): Date {
     const base = new Date(acquisitionDate);
-    const due = new Date(base);
+    // Initialize the physical due date safely to the 5th of that same month to avoid JS Date overflow bugs (e.g., Jan 31 -> Feb 31 -> Mar 3)
+    const due = new Date(base.getFullYear(), base.getMonth(), 5, 0, 0, 0, 0);
 
-    // For legacy users, baseDate is legacy_installment_start_date (1 month before first cuota)
     if (isLegacy) {
+        // Offline clients: the base date is typically a virtual month before their first debt
         due.setMonth(due.getMonth() + installmentNumber);
     } else {
-        // For web users, baseDate is purchase date. First cuota is due in the same month.
-        due.setMonth(due.getMonth() + (installmentNumber - 1));
+        // Web Users:
+        // Si compraron entre el día 1 y 5, su primera cuota es este mismo mes.
+        // Si compraron después del 5, su primera cuota es el mes siguiente.
+        if (base.getDate() <= 5) {
+            due.setMonth(due.getMonth() + (installmentNumber - 1));
+        } else {
+            due.setMonth(due.getMonth() + installmentNumber);
+        }
     }
 
-    due.setDate(5); // Due date is always the 5th
-    due.setHours(0, 0, 0, 0);
     return due;
 }
 
