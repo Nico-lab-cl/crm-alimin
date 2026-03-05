@@ -85,6 +85,10 @@ export async function getPostventaData() {
                 }
             }
 
+            const reservaAmount = lot.reservation_amount_clp || 0;
+            const pieAmount = res.receipts.filter(r => r.scope === 'PIE').reduce((acc, r) => acc + r.amount_clp, 0);
+            const cuotasAmount = res.receipts.filter(r => r.scope === 'INSTALLMENT').reduce((acc, r) => acc + r.amount_clp, 0);
+
             const ledgerEntry = {
                 id: res.id,
                 clientName: buyer?.name || 'Sin nombre',
@@ -98,6 +102,9 @@ export async function getPostventaData() {
                 totalCuotas,
                 pieStatus: res.pie_status,
                 nextDueDate,
+                reservaAmount,
+                pieAmount,
+                cuotasAmount,
                 receipts: res.receipts
             };
             ledger.push(ledgerEntry);

@@ -38,6 +38,10 @@ export function PostventaMobileDashboard({ initialReceipts, soldLots, activeTab,
     const [isProcessing, setIsProcessing] = useState<string | null>(null);
     const [filter, setFilter] = useState<'ALL' | 'PENDING' | 'APPROVED' | 'REJECTED'>('PENDING');
 
+    const [ledgerPage, setLedgerPage] = useState(1);
+    const [selectedClientLedger, setSelectedClientLedger] = useState<any | null>(null);
+    const ledgerItemsPerPage = 10;
+
     const pendingCount = receipts.filter(r => r.status === 'PENDING').length;
 
     const filteredReceipts = filter === 'ALL'
@@ -87,6 +91,9 @@ export function PostventaMobileDashboard({ initialReceipts, soldLots, activeTab,
     };
 
     if (activeTab === 'ledger') {
+        const totalLedgerPages = Math.ceil(ledger.length / ledgerItemsPerPage);
+        const paginatedLedger = ledger.slice((ledgerPage - 1) * ledgerItemsPerPage, ledgerPage * ledgerItemsPerPage);
+
         return (
             <div className="space-y-4 pb-24">
                 <div className="flex items-center gap-2 mb-4">
@@ -95,7 +102,7 @@ export function PostventaMobileDashboard({ initialReceipts, soldLots, activeTab,
                 </div>
 
                 <div className="space-y-3">
-                    {ledger.map(client => (
+                    {paginatedLedger.map(client => (
                         <div key={client.id} className="bg-white/5 border border-white/10 p-4 rounded-xl space-y-3 relative overflow-hidden">
                             <div className="flex justify-between items-start">
                                 <div>
@@ -103,8 +110,10 @@ export function PostventaMobileDashboard({ initialReceipts, soldLots, activeTab,
                                     <p className="text-xs text-indigo-300 font-medium">T-{client.lotNumber}</p>
                                 </div>
                                 <div className="text-right">
-                                    <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-0.5">Saldo Pendiente</p>
-                                    <p className="font-bold text-indigo-400">{formatCurrency(client.pendingBalance)}</p>
+                                    <Button variant="outline" size="sm" onClick={() => setSelectedClientLedger(client)} className="text-xs h-8 bg-indigo-500/10 text-indigo-400 border-indigo-500/20 hover:bg-indigo-500/30 hover:text-indigo-200">
+                                        <Eye className="w-3 h-3 mr-1" />
+                                        Ver Detalles
+                                    </Button>
                                 </div>
                             </div>
 
@@ -124,6 +133,95 @@ export function PostventaMobileDashboard({ initialReceipts, soldLots, activeTab,
                         <div className="text-center p-8 text-gray-500 text-sm">No hay cuentas activas.</div>
                     )}
                 </div>
+
+                {totalLedgerPages > 1 && (
+                    <div className="flex justify-between items-center bg-black/40 border border-white/10 rounded-xl p-3 mt-6">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setLedgerPage(p => Math.max(1, p - 1))}
+                            disabled={ledgerPage === 1}
+                            className="bg-white/5 border-white/10 text-white hover:bg-white/10"
+                        >
+                            Anterior
+                        </Button>
+                        <span className="text-xs text-gray-400 font-medium">Página {ledgerPage} de {totalLedgerPages}</span>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setLedgerPage(p => Math.min(totalLedgerPages, p + 1))}
+                            disabled={ledgerPage === totalLedgerPages}
+                            className="bg-white/5 border-white/10 text-white hover:bg-white/10"
+                        >
+                            Siguiente
+                        </Button>
+                    </div>
+                )}
+
+                {/* Modal for Client Ledger details */}
+                <Dialog open={!!selectedClientLedger} onOpenChange={(open) => !open && setSelectedClientLedger(null)}>
+                    <DialogContent className="max-w-[90vw] md:max-w-md bg-gray-900 border-white/10">
+                        <DialogHeader>
+                            <DialogTitle className="text-indigo-400">Detalle: {selectedClientLedger?.clientName}</DialogTitle>
+                        </DialogHeader>
+                        {selectedClientLedger && (
+                            <div className="space-y-4 py-2">
+                                <div className="bg-black/40 rounded-xl p-4 border border-white/5 space-y-2">
+                                    <p className="text-sm font-semibold border-b border-white/10 pb-2 mb-2 text-white">Resumen General</p>
+                                    <div className="flex justify-between text-xs">
+                                        <span className="text-gray-400">Terreno:</span>
+                                        <span className="font-bold text-white">Lote {selectedClientLedger.lotNumber}</span>
+                                    </div>
+                                    <div className="flex justify-between text-xs">
+                                        <span className="text-gray-400">Total a Pagar:</span>
+                                        <span className="font-bold text-white">{formatCurrency(selectedClientLedger.totalToPay)}</span>
+                                    </div>
+                                    <div className="flex justify-between text-xs text-green-400 mt-2">
+                                        <span>Total Pagado:</span>
+                                        <span className="font-bold">{formatCurrency(selectedClientLedger.totalPaid)}</span>
+                                    </div>
+                                </div>
+
+                                <div className="bg-black/40 rounded-xl p-4 border border-white/5 space-y-2">
+                                    <p className="text-sm font-semibold border-b border-white/10 pb-2 mb-2 text-white">Desglose de lo Pagado</p>
+                                    <div className="flex justify-between text-xs">
+                                        <span className="text-gray-400">Por Reserva:</span>
+                                        <span className="font-medium text-white">{formatCurrency(selectedClientLedger.reservaAmount || 0)}</span>
+                                    </div>
+                                    <div className="flex justify-between text-xs">
+                                        <span className="text-gray-400">Por Pie:</span>
+                                        <span className="font-medium text-white">{formatCurrency(selectedClientLedger.pieAmount || 0)}</span>
+                                    </div>
+                                    <div className="flex justify-between text-xs">
+                                        <span className="text-gray-400">Por Cuotas (Gral):</span>
+                                        <span className="font-medium text-white">{formatCurrency(selectedClientLedger.cuotasAmount || 0)}</span>
+                                    </div>
+                                </div>
+
+                                <div className="bg-black/40 rounded-xl p-4 border border-white/5 space-y-2">
+                                    <p className="text-sm font-semibold border-b border-white/10 pb-2 mb-2 text-white">Progreso</p>
+                                    <div className="flex justify-between text-xs">
+                                        <span className="text-gray-400">Pie Pagado:</span>
+                                        <span className="font-medium text-white">{selectedClientLedger.pieStatus === 'PAID' ? 'Sí' : 'No'}</span>
+                                    </div>
+                                    <div className="flex justify-between text-xs">
+                                        <span className="text-gray-400">Cuotas Pagadas:</span>
+                                        <span className="font-medium text-white">{selectedClientLedger.paidCuotas} de {selectedClientLedger.totalCuotas || 0}</span>
+                                    </div>
+                                    <div className="flex justify-between text-xs mt-2">
+                                        <span className="text-gray-400">Próximo Vencimiento:</span>
+                                        <span className="font-medium text-yellow-400">{selectedClientLedger.nextDueDate ? format(new Date(selectedClientLedger.nextDueDate), 'dd MMM yyyy', { locale: es }) : 'N/A'}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                        <div className="flex justify-end pt-2">
+                            <Button variant="outline" onClick={() => setSelectedClientLedger(null)} className="bg-white/10 border-white/20 text-white hover:bg-white/20">
+                                Cerrar
+                            </Button>
+                        </div>
+                    </DialogContent>
+                </Dialog>
             </div>
         );
     }
