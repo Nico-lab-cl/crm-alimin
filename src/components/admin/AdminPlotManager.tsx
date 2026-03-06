@@ -309,11 +309,9 @@ export function AdminPlotManager({ reservations, allClients, userId, initialUser
                     <TabsTrigger value="plots" className="data-[state=active]:bg-[#36595F] data-[state=active]:text-white">
                         Gestión de Terrenos
                     </TabsTrigger>
-                    {isUserView && (
-                        <TabsTrigger value="documents" className="data-[state=active]:bg-[#36595F] data-[state=active]:text-white">
-                            Documentos del Usuario
-                        </TabsTrigger>
-                    )}
+                    <TabsTrigger value="documents" className="data-[state=active]:bg-[#36595F] data-[state=active]:text-white">
+                        Documentos del Usuario
+                    </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="plots">
@@ -495,11 +493,9 @@ export function AdminPlotManager({ reservations, allClients, userId, initialUser
                     </section>
                 </TabsContent>
 
-                {isUserView && (
-                    <TabsContent value="documents">
-                        <UserDocumentsList reservations={reservations} />
-                    </TabsContent>
-                )}
+                <TabsContent value="documents">
+                    <UserDocumentsList reservations={reservations} />
+                </TabsContent>
             </Tabs>
 
             {/* Edit Modal Injection */}

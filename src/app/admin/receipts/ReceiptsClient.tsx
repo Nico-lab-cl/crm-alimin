@@ -9,7 +9,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Loader2, CheckCircle, XCircle, Eye, MapPin, CreditCard, Clock } from "lucide-react";
+import { Loader2, CheckCircle, XCircle, Eye, MapPin, CreditCard, Clock, Download } from "lucide-react";
 import { approvePaymentReceipt, rejectPaymentReceipt } from "@/actions/receipts";
 import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
@@ -129,10 +129,24 @@ export default function ReceiptsClient({ initialReceipts }: { initialReceipts: a
                                             variant="outline"
                                             size="sm"
                                             onClick={() => setSelectedImage(receipt.receipt_url)}
-                                            title="Ver Comprobante"
+                                            title="Ver Comprobante Subido"
                                         >
                                             <Eye className="w-4 h-4" />
                                         </Button>
+
+                                        {receipt.status === 'APPROVED' && (
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                className="border-green-500/30 bg-green-50 hover:bg-green-100 text-green-700 hover:text-green-800"
+                                                title="Descargar PDF Generado"
+                                                asChild
+                                            >
+                                                <a href={`/api/receipt/${receipt.id}/pdf`} target="_blank" rel="noopener noreferrer">
+                                                    <Download className="w-4 h-4" />
+                                                </a>
+                                            </Button>
+                                        )}
 
                                         {receipt.status === 'PENDING' && (
                                             <>
@@ -183,12 +197,12 @@ export default function ReceiptsClient({ initialReceipts }: { initialReceipts: a
                     <div
                         key={receipt.id}
                         className={`rounded-xl border p-4 space-y-3 transition-colors ${receipt.status === 'PENDING'
-                                ? 'bg-yellow-50/50 border-yellow-200'
-                                : receipt.status === 'APPROVED'
-                                    ? 'bg-green-50/30 border-green-200'
-                                    : receipt.status === 'REJECTED'
-                                        ? 'bg-red-50/30 border-red-200'
-                                        : 'bg-gray-50 border-gray-200'
+                            ? 'bg-yellow-50/50 border-yellow-200'
+                            : receipt.status === 'APPROVED'
+                                ? 'bg-green-50/30 border-green-200'
+                                : receipt.status === 'REJECTED'
+                                    ? 'bg-red-50/30 border-red-200'
+                                    : 'bg-gray-50 border-gray-200'
                             }`}
                     >
                         {/* Top Row: Client + Status */}
@@ -237,14 +251,28 @@ export default function ReceiptsClient({ initialReceipts }: { initialReceipts: a
                         )}
 
                         {/* Action Buttons — 44px min height */}
-                        <div className="flex gap-2">
+                        <div className="flex gap-2 text-center">
                             <button
                                 onClick={() => setSelectedImage(receipt.receipt_url)}
                                 className="flex items-center justify-center gap-1.5 flex-1 min-h-[44px] rounded-lg bg-gray-100 text-gray-700 text-xs font-semibold hover:bg-gray-200 transition-colors active:scale-[0.97]"
+                                title="Ver Comprobante Subido"
                             >
                                 <Eye className="w-4 h-4" />
-                                Ver
+                                Img
                             </button>
+
+                            {receipt.status === 'APPROVED' && (
+                                <a
+                                    href={`/api/receipt/${receipt.id}/pdf`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center justify-center gap-1.5 flex-1 min-h-[44px] rounded-lg bg-green-50 text-green-700 border border-green-200 text-xs font-semibold hover:bg-green-100 transition-colors active:scale-[0.97]"
+                                    title="Descargar PDF Generado"
+                                >
+                                    <Download className="w-4 h-4" />
+                                    PDF
+                                </a>
+                            )}
 
                             {receipt.status === 'PENDING' && (
                                 <>
