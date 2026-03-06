@@ -109,7 +109,7 @@ export const PromesaCompraventaContract: React.FC<PromesaContractProps> = ({
     };
 
     const totalCalculatedStr = formatCurrency(lot?.price_total_clp);
-    const reservaStr = formatCurrency(lot?.reserva || 500000);
+    const reservaStr = formatCurrency(lot?.reservation_amount_clp || 500000);
     const pieStr = formatCurrency(lot?.pie);
 
     const qtyCuotas = lot?.cuotas || 0;

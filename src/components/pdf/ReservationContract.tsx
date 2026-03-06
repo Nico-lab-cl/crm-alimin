@@ -126,8 +126,9 @@ export const ReservationContract = ({ reservation, lot, logoPath, signaturePath 
     const pieLote = lotAny.pie || 0; // Default or null check
     const valorPieLote = formatCurrency(pieLote);
 
-    const reservaAmount = 500000;
-    const saldoPie = Math.max(0, pieLote - reservaAmount);
+    const reservaAmount = lotAny.reservation_amount_clp || 500000;
+    const calculoReservaAmount = formatCurrency(reservaAmount);
+    const saldoPie = Math.max(0, pieLote - (lotAny.reservation_amount_clp ?? 500000));
     const calculoSaldoPie = formatCurrency(saldoPie);
 
     let textoCuotas = '';
@@ -188,11 +189,11 @@ export const ReservationContract = ({ reservation, lot, logoPath, signaturePath 
                 </Text>
 
                 <Text style={styles.text}>
-                    1- <Text style={styles.bold}>{userName}</Text>, hace entrega en este acto la cantidad de $500.000 pesos chilenos, con pago mediante transferencia a la cuenta de Alimin, quedando de modo reserva por el terreno número {loteNumero} etapa {loteEtapa}, del proyecto Lomas del Mar, el cual, el monto antes indicado será descontado del valor del pie del terreno. El terreno se encuentra ubicado en el tabo nuevo camino costero hijuela 5. IMPORTANTE: El valor del pie se descuenta del precio total del terreno.
+                    1- <Text style={styles.bold}>{userName}</Text>, hace entrega en este acto la cantidad de {calculoReservaAmount} pesos chilenos, con pago mediante transferencia a la cuenta de Alimin, quedando de modo reserva por el terreno número {loteNumero} etapa {loteEtapa}, del proyecto Lomas del Mar, el cual, el monto antes indicado será descontado del valor del pie del terreno. El terreno se encuentra ubicado en el tabo nuevo camino costero hijuela 5. IMPORTANTE: El valor del pie se descuenta del precio total del terreno.
                 </Text>
 
                 <Text style={styles.text}>
-                    2- El precio total del terreno tiene un valor de {precioTotal}, los cuales serán pagados mediante el pago de un pie inicial de {valorPieLote}, menos la reserva de $500.000 ya abonada, quedando un saldo de pie a pagar de {calculoSaldoPie} y {textoCuotas}.
+                    2- El precio total del terreno tiene un valor de {precioTotal}, los cuales serán pagados mediante el pago de un pie inicial de {valorPieLote}, menos la reserva de {calculoReservaAmount} ya abonada, quedando un saldo de pie a pagar de {calculoSaldoPie} y {textoCuotas}.
                 </Text>
 
                 <Text style={styles.text}>
