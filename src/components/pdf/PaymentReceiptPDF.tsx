@@ -18,7 +18,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         marginBottom: 40,
         borderBottomWidth: 2,
-        borderBottomColor: '#36595F',
+        borderBottomColor: '#4EA898',
         paddingBottom: 20,
     },
     logo: {
@@ -26,13 +26,13 @@ const styles = StyleSheet.create({
     },
     headerTextRight: {
         textAlign: 'right',
-        color: '#36595F',
+        color: '#4EA898',
     },
     title: {
         fontSize: 24,
         fontWeight: 'bold',
         marginBottom: 5,
-        color: '#36595F',
+        color: '#4EA898',
     },
     receiptNumber: {
         fontSize: 12,
@@ -45,7 +45,7 @@ const styles = StyleSheet.create({
     sectionTitle: {
         fontSize: 14,
         fontWeight: 'bold',
-        color: '#36595F',
+        color: '#4EA898',
         backgroundColor: '#f1f5f9',
         padding: 8,
         marginBottom: 10,
@@ -75,7 +75,7 @@ const styles = StyleSheet.create({
     },
     tableHeaderRow: {
         flexDirection: 'row',
-        backgroundColor: '#36595F',
+        backgroundColor: '#4EA898',
         padding: 10,
     },
     tableHeaderCellItem: {
@@ -118,7 +118,7 @@ const styles = StyleSheet.create({
         width: '60%',
         fontSize: 12,
         fontWeight: 'bold',
-        color: '#36595F',
+        color: '#4EA898',
         textAlign: 'right',
         paddingRight: 20,
     },
@@ -126,7 +126,7 @@ const styles = StyleSheet.create({
         width: '40%',
         fontSize: 14,
         fontWeight: 'bold',
-        color: '#36595F',
+        color: '#4EA898',
         textAlign: 'right',
     },
     footer: {
@@ -212,7 +212,7 @@ export const PaymentReceiptPDF = ({
                     {base64Logo ? (
                         <Image src={base64Logo} style={styles.logo} />
                     ) : (
-                        <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#36595F' }}>LOMAS DEL MAR</Text>
+                        <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#4EA898' }}>LOMAS DEL MAR</Text>
                     )}
                     <View style={styles.headerTextRight}>
                         <Text style={styles.title}>COMPROBANTE DE PAGO</Text>
