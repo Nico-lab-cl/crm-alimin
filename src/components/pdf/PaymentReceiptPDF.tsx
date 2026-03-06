@@ -296,7 +296,7 @@ export const PaymentReceiptPDF = ({
                         Este documento es un comprobante de pago electrónico. Conserva este recibo para tus registros.
                     </Text>
                     <Text style={styles.footerText}>
-                        Para cualquier consulta, por favor contáctanos a soporte@aliminlomasdelmar.com
+                        Para cualquier consulta, por favor contáctanos a bienesraices@aliminspa.cl
                     </Text>
                 </View>
             </Page>
