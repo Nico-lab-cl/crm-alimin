@@ -316,7 +316,23 @@ export function PaymentButtons({ reservationId, lot, reservation, acquisitionDat
                             </div>
                             <div className="space-y-2 pt-2 text-center">
                                 <label className="text-sm font-medium block">Sube tu comprobante de pago</label>
-                                <Input type="file" accept="image/*,.pdf" onChange={handleFileChange} className="mx-auto text-center" />
+                                <div className="text-[10px] text-gray-500 mb-2">Máximo 10MB por archivo</div>
+                                <div className="relative inline-block w-full">
+                                    <Input
+                                        type="file"
+                                        accept="image/*,.pdf"
+                                        onChange={handleFileChange}
+                                        className="absolute inset-0 opacity-0 cursor-pointer z-10"
+                                    />
+                                    <Button variant="outline" className="w-full bg-white text-gray-700 border-gray-300">
+                                        Seleccionar
+                                    </Button>
+                                    {fileBase64 && (
+                                        <div className="mt-1 text-[10px] text-green-600 font-medium truncate">
+                                            Archivo cargado ✓
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         </div>
                         <DialogFooter>
@@ -449,7 +465,23 @@ export function PaymentButtons({ reservationId, lot, reservation, acquisitionDat
                                 </div>
                                 <div className="space-y-2 pt-2 text-center">
                                     <label className="text-sm font-medium text-gray-800 block">Sube tu comprobante de pago</label>
-                                    <Input type="file" accept="image/*,.pdf" onChange={handleFileChange} className="bg-white mx-auto text-center" />
+                                    <div className="text-[10px] text-gray-500 mb-2">Máximo 10MB por archivo</div>
+                                    <div className="relative inline-block w-full">
+                                        <Input
+                                            type="file"
+                                            accept="image/*,.pdf"
+                                            onChange={handleFileChange}
+                                            className="absolute inset-0 opacity-0 cursor-pointer z-10"
+                                        />
+                                        <Button variant="outline" className="w-full bg-white text-gray-700 border-gray-300">
+                                            Seleccionar
+                                        </Button>
+                                        {fileBase64 && (
+                                            <div className="mt-1 text-[10px] text-green-600 font-medium truncate">
+                                                Archivo cargado ✓
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         </div>
