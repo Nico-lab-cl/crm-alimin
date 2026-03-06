@@ -218,10 +218,74 @@ export async function sendContractSignedWebhook(reservationId: string) {
             return { success: false, status: res.status };
         }
 
-        console.log(`[Webhook] Contract Signed Webhook sent successfully`);
         return { success: true };
     } catch (e) {
         console.error(`[Webhook] Failed to trigger contract signed webhook`, e);
         return { success: false, error: String(e) };
     }
 }
+
+export async function sendPaymentReceiptWebhook(receiptId: string) {
+    const webhookUrl = "https://n8n-n8n.yszha2.easypanel.host/webhook/a5ec08cd-b2cc-497b-b384-5f1712a3219f"; // Reemplazar con URL real
+
+    const receipt = await prisma.paymentReceipt.findUnique({
+        where: { id: receiptId },
+        include: {
+            reservation: {
+                include: { lot: true }
+            },
+            lot: true
+        }
+    });
+
+    if (!receipt || !receipt.reservation || !receipt.lot) {
+        return { success: false, error: 'Receipt, Reservation, or Lot not found' };
+    }
+
+    const { reservation, lot } = receipt;
+    const isCuotas = receipt.scope === 'INSTALLMENT';
+    const itemName = isCuotas
+        ? `Pago de ${receipt.installments_count} Cuota(s)`
+        : receipt.scope === 'PIE'
+            ? 'Pago de Pie'
+            : 'Pago de Reserva';
+
+    const payload = {
+        // Receipt info
+        receipt_id: receipt.id.split('-')[0].toUpperCase(),
+        amount_paid: receipt.amount_clp,
+        concept: itemName,
+        date: receipt.processed_at?.toISOString() || new Date().toISOString(),
+
+        // Client info
+        client_name: reservation.name,
+        client_email: reservation.email,
+
+        // Lot info
+        lot_number: lot.number,
+
+        // PDFs handling links
+        receipt_pdf_url: `${baseUrl}/api/receipt/${receipt.id}/pdf`,
+        dashboard_url: `${baseUrl}/user/documents`,
+    };
+
+    try {
+        const res = await fetch(webhookUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) {
+            console.error(`[Webhook] Receipt Webhook failed: ${res.status}`);
+            return { success: false, status: res.status };
+        }
+
+        console.log(`[Webhook] Receipt Email Webhook sent successfully`);
+        return { success: true };
+    } catch (e) {
+        console.error(`[Webhook] Failed to trigger receipt email webhook`, e);
+        return { success: false, error: String(e) };
+    }
+}
+

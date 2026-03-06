@@ -3,6 +3,7 @@
 import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
+import { sendPaymentReceiptWebhook } from '@/lib/webhooks';
 
 export async function uploadPaymentReceipt({
     reservationId,
@@ -105,6 +106,10 @@ export async function approvePaymentReceipt(receiptId: string) {
                 }
             });
         }
+
+        // Trigger webhook for Email Notification with PDF logic
+        // We do this non-blocking to prevent slow UI response
+        sendPaymentReceiptWebhook(receiptId).catch((e) => console.error("Webhook Error on Receipt Approval:", e));
 
         revalidatePath('/admin/receipts');
         revalidatePath('/user/plots');

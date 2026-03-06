@@ -22,6 +22,7 @@ interface Reservation {
     };
     is_legacy?: boolean;
     legacy_uploaded_contracts?: string | null;
+    receipts?: any[];
 }
 
 export default function UserDocumentsPage() {
@@ -146,75 +147,75 @@ export default function UserDocumentsPage() {
                                                 )}
                                             </div>
 
-                                            {res.is_legacy && res.legacy_uploaded_contracts && JSON.parse(res.legacy_uploaded_contracts).length > 0 && (
+                                            {res.is_legacy && res.legacy_uploaded_contracts && (() => {
+                                                try {
+                                                    const docs = JSON.parse(res.legacy_uploaded_contracts);
+                                                    if (!docs || docs.length === 0) return null;
+                                                    return (
+                                                        <>
+                                                            <div className="h-px w-full bg-white/10" />
+                                                            <div className="space-y-3 pt-2">
+                                                                <h3 className="font-semibold text-gray-200 text-base">Documentos Físicos (Offline)</h3>
+                                                                <p className="text-xs text-gray-400">Contratos firmados presencialmente y respaldados en digital por la inmobiliaria.</p>
+                                                                {docs.map((doc: any, i: number) => (
+                                                                    <a
+                                                                        key={i}
+                                                                        href={doc.url}
+                                                                        download={doc.name}
+                                                                        className="mt-2 text-center block w-full py-2 px-4 bg-indigo-600/20 hover:bg-indigo-600/40 border border-indigo-500/30 text-indigo-300 rounded text-sm transition-colors"
+                                                                    >
+                                                                        Descargar {doc.name.replace(".pdf", "")}
+                                                                    </a>
+                                                                ))}
+                                                            </div>
+                                                        </>
+                                                    );
+                                                } catch (e) {
+                                                    return null;
+                                                }
+                                            })()}
+
+                                            {/* ── Recibos de Pago ── */}
+                                            {res.receipts && res.receipts.filter((r: any) => r.status === 'APPROVED').length > 0 && (
                                                 <>
-                                                    <div className="h-px w-full bg-white/10" />
+                                                    <div className="h-px w-full bg-white/10 my-4" />
                                                     <div className="space-y-3">
-                                                        <h3 className="font-semibold text-gray-200 text-base">Documentos Físicos (Offline)</h3>
-                                                        <p className="text-xs text-gray-400">Contratos firmados presencialmente y respaldados en digital por la inmobiliaria.</p>
-                                                        {JSON.parse(res.legacy_uploaded_contracts).map((doc: any, i: number) => (
-                                                            <a
-                                                                key={i}
-                                                                href={doc.url}
-                                                                download={doc.name}
-                                                                className="mt-2 inline-flex items-center gap-2 px-4 py-2 bg-indigo-600/20 hover:bg-indigo-600/40 border border-indigo-500/30 text-indigo-300 rounded text-sm transition-colors w-full justify-center"
-                                                            >
-                                                                <Download className="h-4 w-4" />
-                                                                Descargar {doc.name.replace(".pdf", "")}
-                                                            </a>
-                                                        ))}
+                                                        <div className="flex justify-between items-center">
+                                                            <h3 className="font-semibold text-gray-200 text-base">Comprobantes de Pago</h3>
+                                                            <span className="flex items-center text-green-400 text-xs gap-1 bg-green-900/40 px-2 py-1 rounded">
+                                                                <CheckCircle className="h-3 w-3" /> Aprobados
+                                                            </span>
+                                                        </div>
+                                                        <p className="text-xs text-gray-400">Recibos oficiales generados tras la aprobación de tus transferencias.</p>
+
+                                                        <div className="flex flex-col gap-2 mt-3">
+                                                            {res.receipts.filter((r: any) => r.status === 'APPROVED').map((receipt: any) => {
+                                                                const isPie = receipt.scope === 'PIE';
+                                                                const isInstallment = receipt.scope === 'INSTALLMENT';
+                                                                const label = isPie ? "Pago de Pie" : isInstallment ? `Pago de ${receipt.installments_count || 1} Cuota(s)` : "Pago de Reserva";
+
+                                                                return (
+                                                                    <a
+                                                                        key={receipt.id}
+                                                                        href={`/api/receipt/${receipt.id}/pdf`}
+                                                                        target="_blank"
+                                                                        rel="noopener noreferrer"
+                                                                        className="w-full flex items-center justify-between px-4 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-sm transition-colors"
+                                                                    >
+                                                                        <div className="flex flex-col">
+                                                                            <span className="text-gray-200 font-medium">{label}</span>
+                                                                            <span className="text-xs text-gray-500">
+                                                                                {new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(receipt.amount_clp)}
+                                                                            </span>
+                                                                        </div>
+                                                                        <Download className="h-4 w-4 text-gray-400" />
+                                                                    </a>
+                                                                );
+                                                            })}
+                                                        </div>
                                                     </div>
                                                 </>
                                             )}
-
-                                            <div className="h-px w-full bg-white/10" />
-
-                                            {/* ── Promesa de Compraventa ── TEMPORARILY DISABLED 
-                                            <div className="space-y-3">
-                                                <div className="flex justify-between items-center">
-                                                    <h3 className="font-semibold text-gray-200 text-base">Promesa de Compraventa</h3>
-                                                    {!hasCompraventa ? (
-                                                        <span className="flex items-center text-gray-500 text-xs gap-1 bg-gray-800/40 px-2 py-1 rounded">
-                                                            <Clock className="h-3 w-3" /> No disponible aún
-                                                        </span>
-                                                    ) : promesaSigned ? (
-                                                        <span className="flex items-center text-green-400 text-xs gap-1 bg-green-900/40 px-2 py-1 rounded">
-                                                            <CheckCircle className="h-3 w-3" /> Firmada
-                                                        </span>
-                                                    ) : (
-                                                        <span className="flex items-center text-amber-400 text-xs gap-1 bg-amber-900/40 px-2 py-1 rounded">
-                                                            <Clock className="h-3 w-3" /> Pendiente de firma
-                                                        </span>
-                                                    )}
-                                                </div>
-                                                <p className="text-xs text-gray-400">Promesa de compraventa elaborada por nuestros abogados.</p>
-
-                                                {hasCompraventa && (
-                                                    <>
-                                                        {!promesaSigned && (
-                                                            <SignPromesaModal
-                                                                reservationId={res.id}
-                                                                lotNumber={res.lot.number}
-                                                                lotStage={res.lot.stage}
-                                                                contractBase64={res.uploaded_contract_url!}
-                                                                onSuccess={fetchReservations}
-                                                            />
-                                                        )}
-
-                                                        {promesaSigned && (
-                                                            <a
-                                                                href={res.uploaded_contract_url!}
-                                                                download={`Contrato_Compraventa_Lote${res.lot.number}.pdf`}
-                                                                className="mt-2 inline-flex items-center gap-2 px-4 py-2 bg-green-600/20 hover:bg-green-600/40 border border-green-500/30 text-green-300 rounded text-sm transition-colors w-full justify-center"
-                                                            >
-                                                                <Download className="h-4 w-4" />
-                                                                Descargar Contrato de Compraventa Firmado
-                                                            </a>
-                                                        )}
-                                                    </>
-                                                )}
-                                            </div>
-                                            */}
 
                                         </CardContent>
                                     </Card>
