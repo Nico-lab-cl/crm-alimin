@@ -406,7 +406,7 @@ export function AdminPlotManager({ reservations, allClients, userId, initialUser
                                     )}
 
                                     <div className="space-y-3 pt-2 mt-auto">
-                                        {res.signed_at ? (
+                                        {res.is_legacy ? null : res.signed_at ? (
                                             <a
                                                 href={`/api/contracts/${res.id}/pdf`}
                                                 target="_blank"
