@@ -461,7 +461,9 @@ export function AdminPlotManager({ reservations, allClients, userId, initialUser
                                                 installments_paid: res.installments_paid,
                                                 is_legacy: res.is_legacy,
                                                 legacy_debt_start_date: res.legacy_debt_start_date,
-                                                legacy_installment_start_date: res.legacy_installment_start_date
+                                                legacy_installment_start_date: res.legacy_installment_start_date,
+                                                legacy_installment_ranges: res.legacy_installment_ranges,
+                                                receipts: res.receipts
                                             }}
                                             acquisitionDate={res.created_at}
                                             isAdminView={!isUserView}

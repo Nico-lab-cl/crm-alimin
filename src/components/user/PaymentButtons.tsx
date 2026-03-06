@@ -74,8 +74,17 @@ function getInstallmentAmount(
     }
 
     // 2. Custom Legacy Ranges Exception
-    if (legacyRanges && Array.isArray(legacyRanges)) {
-        for (const range of legacyRanges) {
+    let parsedRanges = legacyRanges;
+    if (typeof legacyRanges === 'string') {
+        try {
+            parsedRanges = JSON.parse(legacyRanges);
+        } catch (e) {
+            console.error("Failed to parse legacyRanges:", legacyRanges);
+        }
+    }
+
+    if (parsedRanges && Array.isArray(parsedRanges)) {
+        for (const range of parsedRanges) {
             if (installmentNumber >= range.from && installmentNumber <= range.to) {
                 return range.amount;
             }
