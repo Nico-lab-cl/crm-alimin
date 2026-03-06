@@ -505,7 +505,7 @@ export function PaymentButtons({ reservationId, lot, reservation, acquisitionDat
                 <div className="text-center mt-2">
                     {isCuotasPaid
                         ? <span className="text-green-600 font-bold text-sm">¡Crédito Pagado Completamente! 🎉</span>
-                        : <span className="text-[#E0B457] font-bold text-sm uppercase tracking-wide">Avance: {paidCuotas} / {totalCuotas} cuotas pagadas</span>
+                        : <span className="text-[#E0B457] font-bold text-sm uppercase tracking-wide">Pendientes: {remainingCuotas} / {totalCuotas} cuotas por pagar</span>
                     }
                 </div>
             )}
