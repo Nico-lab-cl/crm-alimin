@@ -168,7 +168,7 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
                 <DialogHeader>
                     <DialogTitle>{existingReservation ? `Editar Asignación de Lote ${lotNumber}` : `Asignar Dueño a Lote ${lotNumber}`}</DialogTitle>
                     <DialogDescription>
-                        {existingReservation ? "Modifica los datos del propietario o condiciones financieras de esta venta offline." : "Ingresa los datos completos del propietario para generar el contrato."}
+                        {existingReservation ? "Modifica los datos del propietario o las condiciones financieras de esta venta." : "Ingresa los datos completos del propietario para generar el contrato."}
                     </DialogDescription>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-4 pt-2">
@@ -317,7 +317,7 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
                     <hr className="my-4 border-gray-200" />
 
                     <h3 className="font-bold text-lg text-[#36595F]">Datos Financieros del Contrato</h3>
-                    <p className="text-sm text-gray-500 mb-4">Ingresa los valores exactos definidos en la compra offline.</p>
+                    <p className="text-sm text-gray-500 mb-4">Ingresa los valores exactos definidos en la venta.</p>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div className="space-y-2">
@@ -632,7 +632,7 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
                         </Button>
                         <Button type="submit" className="bg-[#36595F] text-white hover:bg-[#2A464B]" disabled={loading}>
                             {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-                            Asignar Dueño
+                            {existingReservation ? "Guardar Cambios" : "Asignar Dueño"}
                         </Button>
                     </div>
                 </form>

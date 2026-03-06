@@ -376,21 +376,21 @@ export function AdminPlotManager({ reservations, allClients, userId, initialUser
                                                 </div>
                                             )}
 
-                                            {!isUserView && res.is_legacy && (
+                                            {!isUserView && (
                                                 <div className="pt-2">
                                                     <ContractUploadAction
                                                         reservationId={res.id}
                                                         reservationName={res.buyer?.name || "Cliente"}
-                                                        label="Subir Documento Físico (PDF)"
+                                                        label={res.is_legacy ? "Subir Documento Físico (PDF)" : "Subir Documento Adicional (PDF)"}
                                                         type="legacy"
                                                         onUploadComplete={() => {
-                                                            toast.success("Documento físico subido para esta venta offline.");
+                                                            toast.success("Documento subido correctamente.");
                                                             window.location.reload();
                                                         }}
                                                     />
                                                     {res.legacy_uploaded_contracts && JSON.parse(res.legacy_uploaded_contracts).length > 0 && (
                                                         <div className="mt-2 text-xs text-gray-400">
-                                                            📄 {JSON.parse(res.legacy_uploaded_contracts).length} documento(s) físico(s) subido(s).
+                                                            📄 {JSON.parse(res.legacy_uploaded_contracts).length} documento(s) subido(s).
                                                         </div>
                                                     )}
 
