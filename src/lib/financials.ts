@@ -6,8 +6,9 @@ export const PENALTY_START_DATE_WEB = new Date('2026-03-11T00:00:00-03:00'); // 
 
 export function getInstallmentDueDate(acquisitionDate: Date | string, installmentNumber: number, isLegacy: boolean = false): Date {
     const base = new Date(acquisitionDate);
-    // Initialize the physical due date safely to the 5th of that same month to avoid JS Date overflow bugs (e.g., Jan 31 -> Feb 31 -> Mar 3)
-    const due = new Date(base.getFullYear(), base.getMonth(), 5, 0, 0, 0, 0);
+    // Use the actual day from the base date (e.g., if assigned on the 15th, due is 15th)
+    const dueDay = base.getDate();
+    const due = new Date(base.getFullYear(), base.getMonth(), dueDay, 0, 0, 0, 0);
 
     if (isLegacy) {
         // Offline clients: the base date is typically a virtual month before their first debt
@@ -41,10 +42,17 @@ export function calculateTotalInterest(
     isLegacy: boolean,
     paymentDate: Date = new Date()
 ): number {
-    // 1. Determine Grace Period End (10th of the month of the due date)
-    // Due date is always 5th. Grace period is until 10th.
+    // 1. Determine Grace Period End (Dynamic)
     const gracePeriodEnd = new Date(dueDate);
-    gracePeriodEnd.setDate(10);
+
+    // Rule: If due date is precisely the 5th, grace period ends on the 10th (standard 5-day grace).
+    // If due date is ANY OTHER day (e.g., 15th), grace period ends on the 15th itself (penalty starts on the 16th).
+    if (dueDate.getDate() === 5) {
+        gracePeriodEnd.setDate(10);
+    } else {
+        // No grace period for custom dates; penalty starts the next day
+        // ensure it's at the very end of the day
+    }
     gracePeriodEnd.setHours(23, 59, 59, 999);
 
     if (paymentDate <= gracePeriodEnd) {

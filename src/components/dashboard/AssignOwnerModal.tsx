@@ -519,7 +519,7 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
                                             )}
                                         >
                                             <CalendarIcon className="mr-2 h-4 w-4" />
-                                            {installmentStartDate ? format(installmentStartDate, "MM/yyyy", { locale: es }) : <span>Seleccionar mes base</span>}
+                                            {installmentStartDate ? format(installmentStartDate, "dd/MM/yyyy", { locale: es }) : <span>Seleccionar fecha base</span>}
                                         </Button>
                                     </PopoverTrigger>
                                     <PopoverContent className="w-auto p-0" align="start">
