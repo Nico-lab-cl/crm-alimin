@@ -133,6 +133,16 @@ export default function ReceiptsClient({ initialReceipts }: { initialReceipts: a
                                         >
                                             <Eye className="w-4 h-4" />
                                         </Button>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            asChild
+                                            title="Descargar Comprobante Subido"
+                                        >
+                                            <a href={receipt.receipt_url} download target="_blank" rel="noopener noreferrer">
+                                                <Download className="w-4 h-4" />
+                                            </a>
+                                        </Button>
 
                                         {receipt.status === 'APPROVED' && (
                                             <Button
