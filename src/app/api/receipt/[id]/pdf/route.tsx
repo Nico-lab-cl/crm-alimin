@@ -36,7 +36,7 @@ export async function GET(
             return NextResponse.json({ error: "Forbidden" }, { status: 403 });
         }
 
-        const logoUrl = new URL('/favicon.png', request.url).toString();
+        const logoPath = 'public/favicon.png';
 
         const stream = await renderToStream(
             <PaymentReceiptPDF
@@ -51,7 +51,7 @@ export async function GET(
                 paymentScope={receipt.scope}
                 installmentsCount={receipt.installments_count || 0}
                 totalInstallments={receipt.lot.cuotas || 0}
-                base64Logo={logoUrl}
+                logoPath={logoPath}
             />
         );
 

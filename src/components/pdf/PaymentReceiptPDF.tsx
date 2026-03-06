@@ -22,7 +22,7 @@ const styles = StyleSheet.create({
         paddingBottom: 20,
     },
     logo: {
-        width: 140, // Ajusta según el logo real
+        width: 80, // Ajustado para favicon
     },
     headerTextRight: {
         textAlign: 'right',
@@ -176,7 +176,7 @@ interface PaymentReceiptPDFProps {
     paymentScope: 'PIE' | 'INSTALLMENT' | string;
     installmentsCount?: number;
     totalInstallments?: number;
-    base64Logo: string;
+    logoPath: string;
 }
 
 export const PaymentReceiptPDF = ({
@@ -191,7 +191,7 @@ export const PaymentReceiptPDF = ({
     paymentScope,
     installmentsCount = 0,
     totalInstallments = 0,
-    base64Logo
+    logoPath
 }: PaymentReceiptPDFProps) => {
 
     // Helper text logic
@@ -209,8 +209,8 @@ export const PaymentReceiptPDF = ({
             <Page size="A4" style={styles.page}>
                 {/* Header */}
                 <View style={styles.header}>
-                    {base64Logo ? (
-                        <Image src={base64Logo} style={styles.logo} />
+                    {logoPath ? (
+                        <Image src={logoPath} style={styles.logo} />
                     ) : (
                         <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#4EA898' }}>LOMAS DEL MAR</Text>
                     )}
