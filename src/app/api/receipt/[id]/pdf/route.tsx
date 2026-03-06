@@ -50,6 +50,7 @@ export async function GET(
                 amountPaid={receipt.amount_clp}
                 paymentScope={receipt.scope}
                 installmentsCount={receipt.installments_count || 0}
+                totalInstallments={receipt.lot.cuotas || 0}
                 base64Logo={logoUrl}
             />
         );

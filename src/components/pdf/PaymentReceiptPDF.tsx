@@ -175,6 +175,7 @@ interface PaymentReceiptPDFProps {
     amountPaid: number;
     paymentScope: 'PIE' | 'INSTALLMENT' | string;
     installmentsCount?: number;
+    totalInstallments?: number;
     base64Logo: string;
 }
 
@@ -189,13 +190,14 @@ export const PaymentReceiptPDF = ({
     amountPaid,
     paymentScope,
     installmentsCount = 0,
+    totalInstallments = 0,
     base64Logo
 }: PaymentReceiptPDFProps) => {
 
     // Helper text logic
     const isCuotas = paymentScope === 'INSTALLMENT';
     const itemName = isCuotas
-        ? `Pago de ${installmentsCount} Cuota(s)`
+        ? `Cuota #${String(installmentsCount).padStart(2, '0')}/${totalInstallments}`
         : paymentScope === 'PIE'
             ? 'Pago de Pie'
             : 'Pago de Reserva';
@@ -213,7 +215,7 @@ export const PaymentReceiptPDF = ({
                         <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#36595F' }}>LOMAS DEL MAR</Text>
                     )}
                     <View style={styles.headerTextRight}>
-                        <Text style={styles.title}>RECIBO DE PAGO</Text>
+                        <Text style={styles.title}>COMPROBANTE DE PAGO</Text>
                         <Text style={styles.receiptNumber}>Nº {shortId}</Text>
                         <Text style={{ fontSize: 10, color: '#666', marginTop: 4 }}>
                             Fecha Emisión: {format(new Date(), "dd 'de' MMMM, yyyy", { locale: es })}
