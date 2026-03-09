@@ -130,7 +130,8 @@ export async function getPostventaData() {
                 receipts: res.receipts,
                 isGracePeriod,
                 isPieDebt,
-                valor_cuota: lot.valor_cuota || 0
+                valor_cuota: lot.valor_cuota || 0,
+                monto_cuota: lot.valor_cuota || 0
             };
             ledger.push(ledgerEntry);
 
@@ -145,7 +146,8 @@ export async function getPostventaData() {
                     ...ledgerEntry,
                     lateDays,
                     penaltyAmount,
-                    isUpcoming: nextDueDate > currentDate && nextDueDate <= fiveDaysFromNow
+                    isUpcoming: nextDueDate > currentDate && nextDueDate <= fiveDaysFromNow,
+                    displayDueDate: nextDueDate // Use the actual calculated due date for display
                 });
             }
         }

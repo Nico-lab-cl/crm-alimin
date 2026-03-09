@@ -288,16 +288,16 @@ export function PostventaMobileDashboard({ initialReceipts, soldLots, activeTab,
                                 <div className={`flex items-center justify-between bg-black/40 rounded-lg p-3 border ${colorClass.split(' ')[1]}`}>
                                     <div>
                                         <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-0.5">
-                                            {isUpcoming ? 'A pagar' : isPie ? 'Saldo Pie' : isGrace ? 'Multa Prox.' : 'Multa Calculada'}
+                                            {isUpcoming ? 'A pagar' : isPie ? 'Saldo Pie' : isGrace ? 'Resumen' : 'Multa Calculada'}
                                         </p>
                                         <p className={`font-bold ${accentClass} text-sm`}>
-                                            {isUpcoming || isGrace ? (isUpcoming ? formatCurrency(alert.monto_cuota || 0) : 'Calculando...') : formatCurrency(isPie ? (alert.totalToPay * 0.2 - alert.pieAmount) : alert.penaltyAmount)}
+                                            {isUpcoming || isGrace ? formatCurrency(alert.monto_cuota || 0) : formatCurrency(isPie ? (alert.totalToPay * 0.2 - alert.pieAmount) : alert.penaltyAmount)}
                                         </p>
                                     </div>
                                     <div className="text-right">
                                         <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-0.5">{isUpcoming ? 'Vence el' : 'Venció el'}</p>
                                         <p className="font-semibold text-white text-sm">
-                                            {alert.nextDueDate ? format(new Date(alert.nextDueDate), 'dd MMM yyyy', { locale: es }) : 'N/A'}
+                                            {alert.displayDueDate ? format(new Date(alert.displayDueDate), 'dd MMM yyyy', { locale: es }) : 'N/A'}
                                         </p>
                                     </div>
                                 </div>
