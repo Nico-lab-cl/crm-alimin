@@ -32,11 +32,12 @@ export async function POST(req: NextRequest) {
         const month = chileNow.getMonth() + 1;
         const year = chileNow.getFullYear();
 
-        // Find all users with active reservations
+        // Find all users with active reservations (matching postventa dashboard logic)
         const reservations = await prisma.reservation.findMany({
             where: {
-                status: { in: ['paid', 'confirmed'] },
                 buyer_id: { not: null },
+                lot: { status: { in: ['sold', 'reserved'] } },
+                status: { not: 'pending' } // Exclude completely unpaid shopping carts
             },
             include: {
                 buyer: true,

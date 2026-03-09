@@ -31,11 +31,12 @@ export async function POST(req: NextRequest) {
         const month = chileNow.getMonth() + 1;
         const year = chileNow.getFullYear();
 
-        // Find all users with active reservations
+        // Find all users with active reservations (matching postventa dashboard logic)
         const reservations = await prisma.reservation.findMany({
             where: {
-                status: { in: ['paid', 'confirmed'] },
                 buyer_id: { not: null },
+                lot: { status: { in: ['sold', 'reserved'] } },
+                status: { not: 'pending' } // Exclude completely unpaid shopping carts
             },
             include: {
                 buyer: true,
@@ -45,14 +46,22 @@ export async function POST(req: NextRequest) {
 
         let notifiedCount = 0;
         const notifiedUsers: any[] = [];
+        const debugInfo: any[] = [];
+        const isDebug = url.searchParams.get('debug') === 'true';
 
         for (const res of reservations) {
-            if (!res.buyer_id || !res.buyer || !res.lot) continue;
+            if (!res.buyer_id || !res.buyer || !res.lot) {
+                if (isDebug) debugInfo.push({ id: res.id, reason: 'Missing buyer_id, buyer, or lot' });
+                continue;
+            }
 
             const installmentsPaid = res.installments_paid || 0;
             const totalCuotas = res.lot.cuotas || 0;
 
-            if (installmentsPaid >= totalCuotas) continue;
+            if (installmentsPaid >= totalCuotas) {
+                if (isDebug) debugInfo.push({ id: res.id, name: res.buyer.name, reason: 'All installments paid', paid: installmentsPaid, total: totalCuotas });
+                continue;
+            }
 
             const nextInstallmentNum = installmentsPaid + 1;
             const dueDate = getInstallmentDueDate(res.created_at, nextInstallmentNum, res.is_legacy);
@@ -62,6 +71,7 @@ export async function POST(req: NextRequest) {
 
             // Check if the due date is in the CURRENT month (or past)
             if (dueYear > year || (dueYear === year && dueMonth > month)) {
+                if (isDebug) debugInfo.push({ id: res.id, name: res.buyer.name, reason: 'Due date in future', dueDate, dueMonth, currentMonth: month });
                 continue;
             }
 
@@ -76,7 +86,10 @@ export async function POST(req: NextRequest) {
                         }
                     }
                 });
-                if (existingNotification) continue;
+                if (existingNotification) {
+                    if (isDebug) debugInfo.push({ id: res.id, name: res.buyer.name, reason: 'Already notified this month' });
+                    continue;
+                }
             }
 
             const valorCuota = res.lot.valor_cuota || 0;
@@ -117,7 +130,8 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({
             ok: true,
             message: `Proceso completado. Alertas pre-mora enviadas: ${notifiedCount}`,
-            data: notifiedUsers
+            data: notifiedUsers,
+            debug: isDebug ? debugInfo : undefined
         });
 
     } catch (error) {
