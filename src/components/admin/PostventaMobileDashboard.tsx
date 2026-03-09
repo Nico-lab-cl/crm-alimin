@@ -240,29 +240,62 @@ export function PostventaMobileDashboard({ initialReceipts, soldLots, activeTab,
                 <div className="space-y-3">
                     {debtAlerts.map(alert => {
                         const isGrace = alert.isGracePeriod;
+                        const isPie = alert.isPieDebt;
+                        const isUpcoming = alert.isUpcoming;
+
+                        let colorClass = 'bg-red-500/10 border-red-500/20';
+                        let accentClass = 'text-red-400';
+                        let circleClass = 'bg-red-500/10';
+                        let badgeLabel = 'En Mora';
+                        let statusText = `${alert.lateDays} días de atraso`;
+
+                        if (isUpcoming) {
+                            colorClass = 'bg-blue-500/10 border-blue-500/20';
+                            accentClass = 'text-blue-400';
+                            circleClass = 'bg-blue-500/10';
+                            badgeLabel = 'Próximo';
+                            statusText = 'Vencimiento cercano';
+                        } else if (isPie) {
+                            colorClass = 'bg-purple-500/10 border-purple-500/20';
+                            accentClass = 'text-purple-400';
+                            circleClass = 'bg-purple-500/10';
+                            badgeLabel = 'Pendiente Pie';
+                            statusText = alert.lateDays > 0 ? `${alert.lateDays} d. atraso Pie` : 'Saldo Pie pendiente';
+                        } else if (isGrace) {
+                            colorClass = 'bg-amber-500/10 border-amber-500/20';
+                            accentClass = 'text-amber-400';
+                            circleClass = 'bg-amber-500/10';
+                            badgeLabel = 'Atrasado';
+                            statusText = 'Pendiente (Periodo de gracia)';
+                        }
+
                         return (
-                            <div key={alert.id} className={`${isGrace ? 'bg-amber-500/10 border-amber-500/20' : 'bg-red-500/10 border-red-500/20'} p-4 rounded-xl space-y-3 relative overflow-hidden`}>
-                                <div className={`absolute top-0 right-0 w-24 h-24 ${isGrace ? 'bg-amber-500/10' : 'bg-red-500/10'} rounded-bl-full -z-10`} />
+                            <div key={alert.id} className={`${colorClass} p-4 rounded-xl space-y-3 relative overflow-hidden`}>
+                                <div className={`absolute top-0 right-0 w-24 h-24 ${circleClass} rounded-bl-full -z-10`} />
 
                                 <div className="flex justify-between items-start">
                                     <div>
                                         <p className="font-bold text-white text-sm">{alert.clientName}</p>
-                                        <p className={`text-xs ${isGrace ? 'text-amber-400' : 'text-red-400'} font-medium`}>
-                                            T-{alert.lotNumber} · {isGrace ? 'Pendiente (Periodo de gracia)' : `${alert.lateDays} días de atraso`}
+                                        <p className={`text-xs ${accentClass} font-medium`}>
+                                            T-{alert.lotNumber} · {statusText}
                                         </p>
                                     </div>
-                                    {isGrace && <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30 text-[10px]">Atrasado</Badge>}
+                                    <Badge className={`${colorClass.replace('bg-', 'bg-').replace('/10', '/20')} ${accentClass} border-${accentClass.split('-')[0]}-500/30 text-[10px]`}>
+                                        {badgeLabel}
+                                    </Badge>
                                 </div>
 
-                                <div className={`flex items-center justify-between bg-black/40 rounded-lg p-3 border ${isGrace ? 'border-amber-500/10' : 'border-red-500/10'}`}>
+                                <div className={`flex items-center justify-between bg-black/40 rounded-lg p-3 border ${colorClass.split(' ')[1]}`}>
                                     <div>
-                                        <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-0.5">{isGrace ? 'Multa Prox.' : 'Multa Calculada'}</p>
-                                        <p className={`font-bold ${isGrace ? 'text-amber-400' : 'text-red-400'} text-sm`}>
-                                            {isGrace ? 'Calculando...' : formatCurrency(alert.penaltyAmount)}
+                                        <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-0.5">
+                                            {isUpcoming ? 'A pagar' : isPie ? 'Saldo Pie' : isGrace ? 'Multa Prox.' : 'Multa Calculada'}
+                                        </p>
+                                        <p className={`font-bold ${accentClass} text-sm`}>
+                                            {isUpcoming || isGrace ? (isUpcoming ? formatCurrency(alert.monto_cuota || 0) : 'Calculando...') : formatCurrency(isPie ? (alert.totalToPay * 0.2 - alert.pieAmount) : alert.penaltyAmount)}
                                         </p>
                                     </div>
                                     <div className="text-right">
-                                        <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-0.5">Venció el</p>
+                                        <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-0.5">{isUpcoming ? 'Vence el' : 'Venció el'}</p>
                                         <p className="font-semibold text-white text-sm">
                                             {alert.nextDueDate ? format(new Date(alert.nextDueDate), 'dd MMM yyyy', { locale: es }) : 'N/A'}
                                         </p>

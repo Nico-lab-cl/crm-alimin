@@ -13,8 +13,9 @@ export async function getPostventaData() {
     try {
         const reservations = await prisma.reservation.findMany({
             where: {
-                lot: { status: 'sold' },
-                buyer_id: { not: null }
+                buyer_id: { not: null },
+                status: { in: ['paid', 'confirmed'] }, // Filter by active reservations
+                lot: { status: { in: ['sold', 'reserved'] } }
             },
             include: {
                 lot: true,
@@ -46,13 +47,28 @@ export async function getPostventaData() {
             let nextDueDate = null;
             let lateDays = 0;
             let penaltyAmount = 0;
+            let isPieDebt = false;
 
-            if (res.pie_status === 'PAID' && paidCuotas < totalCuotas) {
-                const baseDate = res.legacy_installment_start_date
-                    ? new Date(res.legacy_installment_start_date).toISOString()
-                    : res.created_at.toISOString();
+            const isLegacyBool = Boolean(res.is_legacy);
+            const baseDate = res.legacy_installment_start_date
+                ? new Date(res.legacy_installment_start_date).toISOString()
+                : res.created_at.toISOString();
 
-                const isLegacyBool = Boolean(res.is_legacy);
+            if (res.pie_status !== 'PAID') {
+                // Pie Debt Logic
+                isPieDebt = true;
+                // Assuming Pie is due 15 days after reservation if not specified
+                const pieDueDate = new Date(res.created_at);
+                pieDueDate.setDate(pieDueDate.getDate() + 15);
+                nextDueDate = pieDueDate;
+
+                if (currentDate > pieDueDate) {
+                    const diffTime = currentDate.getTime() - pieDueDate.getTime();
+                    lateDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    // No interest for Pie yet, just alert
+                }
+            } else if (paidCuotas < totalCuotas) {
+                // Installment Logic
                 nextDueDate = getInstallmentDueDate(baseDate, paidCuotas + 1, isLegacyBool);
 
                 if (isLegacyBool && res.legacy_debt_start_date) {
@@ -112,21 +128,48 @@ export async function getPostventaData() {
                 pieAmount,
                 cuotasAmount,
                 receipts: res.receipts,
-                isGracePeriod
+                isGracePeriod,
+                isPieDebt,
+                valor_cuota: lot.valor_cuota || 0
             };
             ledger.push(ledgerEntry);
 
-            // Include in alerts if they are past the 5th (either in grace or in mora)
-            if (nextDueDate && currentDate >= nextDueDate) {
+            const fiveDaysFromNow = new Date(currentDate);
+            fiveDaysFromNow.setDate(fiveDaysFromNow.getDate() + 5);
+
+            // Include in alerts if:
+            // 1. They are already past the due date (grace or mora)
+            // 2. OR their due date is in the next 5 days ("A punto de vencer")
+            if (nextDueDate && (currentDate >= nextDueDate || nextDueDate <= fiveDaysFromNow)) {
                 debtAlerts.push({
                     ...ledgerEntry,
                     lateDays,
-                    penaltyAmount
+                    penaltyAmount,
+                    isUpcoming: nextDueDate > currentDate && nextDueDate <= fiveDaysFromNow
                 });
             }
         }
 
-        debtAlerts.sort((a, b) => b.lateDays - a.lateDays);
+        // Priority sorting: Mora > Grace > Pie > Upcoming
+        debtAlerts.sort((a, b) => {
+            // 1. Mora (penalty > 0)
+            if (a.penaltyAmount > 0 && b.penaltyAmount <= 0) return -1;
+            if (b.penaltyAmount > 0 && a.penaltyAmount <= 0) return 1;
+
+            // 2. Grace (isGracePeriod)
+            if (a.isGracePeriod && !b.isGracePeriod) return -1;
+            if (b.isGracePeriod && !a.isGracePeriod) return 1;
+
+            // 3. Pie Debt
+            if (a.isPieDebt && !b.isPieDebt) return -1;
+            if (b.isPieDebt && !a.isPieDebt) return 1;
+
+            // 4. Then by late days (desc)
+            if (b.lateDays !== a.lateDays) return b.lateDays - a.lateDays;
+
+            // 5. Finally by date
+            return (a.nextDueDate?.getTime() || 0) - (b.nextDueDate?.getTime() || 0);
+        });
 
         return { success: true, ledger, debtAlerts }
     } catch (error) {
