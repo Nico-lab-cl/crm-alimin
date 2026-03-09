@@ -64,7 +64,10 @@ export async function POST(req: NextRequest) {
             }
 
             const nextInstallmentNum = installmentsPaid + 1;
-            const dueDate = getInstallmentDueDate(res.created_at, nextInstallmentNum, res.is_legacy);
+            const baseDate = res.legacy_installment_start_date
+                ? new Date(res.legacy_installment_start_date)
+                : res.created_at;
+            const dueDate = getInstallmentDueDate(baseDate, nextInstallmentNum, res.is_legacy);
 
             const dueMonth = dueDate.getMonth() + 1;
             const dueYear = dueDate.getFullYear();
