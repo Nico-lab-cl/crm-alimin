@@ -291,7 +291,8 @@ export function PostventaMobileDashboard({ initialReceipts, soldLots, activeTab,
                     ))}
                 </div>
 
-                <div className="space-y-3 mt-4">
+                {/* Alerts Cards Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
                     {paginatedAlerts.map(alert => {
                         const isGrace = alert.isGracePeriod;
                         const isPie = alert.isPieDebt;
@@ -302,7 +303,7 @@ export function PostventaMobileDashboard({ initialReceipts, soldLots, activeTab,
                         let colorClass = 'bg-red-500/10 border-red-500/20';
                         let accentClass = 'text-red-400';
                         let circleClass = 'bg-red-500/10';
-                        let badgeLabel = 'En Mora';
+                        let badgeLabel = 'Atrasado'; // Red (11+)
                         let statusText = `${alert.lateDays} días de atraso`;
 
                         if (isOK) {
@@ -332,82 +333,84 @@ export function PostventaMobileDashboard({ initialReceipts, soldLots, activeTab,
                         }
 
                         return (
-                            <div key={alert.id} className={`${colorClass} p-4 rounded-xl space-y-3 relative overflow-hidden`}>
+                            <div key={alert.id} className={`${colorClass} p-4 rounded-xl space-y-3 relative overflow-hidden flex flex-col justify-between transition-all hover:border-white/20`}>
                                 <div className={`absolute top-0 right-0 w-24 h-24 ${circleClass} rounded-bl-full -z-10 opacity-50`} />
 
-                                <div className="flex justify-between items-start">
-                                    <div>
-                                        <p className="font-bold text-white text-sm">{alert.clientName}</p>
-                                        <p className={`text-[10px] ${accentClass} font-medium`}>
-                                            T-{alert.lotNumber} (Etapa {alert.lotStage}) · {statusText}
-                                        </p>
+                                <div className="space-y-3">
+                                    <div className="flex justify-between items-start">
+                                        <div className="min-w-0 pr-2">
+                                            <p className="font-bold text-white text-sm truncate">{alert.clientName}</p>
+                                            <p className={`text-[10px] ${accentClass} font-medium`}>
+                                                T-{alert.lotNumber} (Etapa {alert.lotStage}) · {statusText}
+                                            </p>
+                                        </div>
+                                        <Badge className={`${colorClass.replace('bg-', 'bg-').replace('/10', '/30')} ${accentClass} border-${accentClass.split('-')[0]}-500/30 text-[10px] font-bold shrink-0`}>
+                                            {badgeLabel}
+                                        </Badge>
                                     </div>
-                                    <Badge className={`${colorClass.replace('bg-', 'bg-').replace('/10', '/30')} ${accentClass} border-${accentClass.split('-')[0]}-500/30 text-[10px] font-bold`}>
-                                        {badgeLabel}
-                                    </Badge>
-                                </div>
 
-                                <div className={`flex items-center justify-between bg-black/40 rounded-lg p-3 border ${colorClass.split(' ')[1]}`}>
-                                    <div>
-                                        <p className="text-[9px] text-gray-400 uppercase tracking-wider mb-0.5">
-                                            {isUpcoming ? 'A pagar' : isPie ? 'Saldo Pie' : isGrace ? 'A Pagar' : isOK ? 'Total Cuotas' : 'Multa Calculada'}
-                                        </p>
-                                        <p className={`font-bold ${accentClass} text-sm`}>
-                                            {isOK
-                                                ? formatCurrency(alert.cuotasAmount)
-                                                : isUpcoming || isGrace
-                                                    ? formatCurrency(alert.monto_cuota || 0)
-                                                    : formatCurrency(isPie ? (alert.totalToPay * 0.2 - alert.pieAmount) : alert.penaltyAmount)
-                                            }
-                                        </p>
-                                    </div>
-                                    <div className="text-right">
-                                        <p className="text-[9px] text-gray-400 uppercase tracking-wider mb-0.5">
-                                            {isOK ? 'Cuotas' : isUpcoming ? 'Vence el' : 'Venció el'}
-                                        </p>
-                                        <p className="font-semibold text-white text-xs">
-                                            {isOK
-                                                ? `${alert.paidCuotas} de ${alert.totalCuotas}`
-                                                : alert.displayDueDate ? format(new Date(alert.displayDueDate), 'dd MMM yyyy', { locale: es }) : 'N/A'
-                                            }
-                                        </p>
+                                    <div className={`flex items-center justify-between bg-black/40 rounded-lg p-3 border ${colorClass.split(' ')[1]}`}>
+                                        <div>
+                                            <p className="text-[9px] text-gray-400 uppercase tracking-wider mb-0.5">
+                                                {isUpcoming ? 'A pagar' : isPie ? 'Saldo Pie' : isGrace ? 'A Pagar' : isOK ? 'Total Pagado' : 'Multa Calculada'}
+                                            </p>
+                                            <p className={`font-bold ${accentClass} text-sm`}>
+                                                {isOK
+                                                    ? formatCurrency(alert.cuotasAmount)
+                                                    : isUpcoming || isGrace
+                                                        ? formatCurrency(alert.monto_cuota || 0)
+                                                        : formatCurrency(isPie ? (alert.totalToPay * 0.2 - alert.pieAmount) : alert.penaltyAmount)
+                                                }
+                                            </p>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="text-[9px] text-gray-400 uppercase tracking-wider mb-0.5">
+                                                {isOK ? 'Progreso' : isUpcoming ? 'Vence el' : 'Venció el'}
+                                            </p>
+                                            <p className="font-semibold text-white text-xs">
+                                                {isOK
+                                                    ? `${alert.paidCuotas} de ${alert.totalCuotas}`
+                                                    : alert.displayDueDate ? format(new Date(alert.displayDueDate), 'dd MMM yyyy', { locale: es }) : 'N/A'
+                                                }
+                                            </p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         );
                     })}
-
-                    {filteredAlerts.length === 0 && (
-                        <div className="text-center p-8 bg-white/5 border border-white/10 rounded-xl mt-8">
-                            <CheckCircle className="w-8 h-8 text-green-400 mx-auto mb-3" />
-                            <p className="text-gray-400 font-medium text-sm">No hay clientes en esta categoría.</p>
-                        </div>
-                    )}
-
-                    {totalAlertPages > 1 && (
-                        <div className="flex justify-between items-center bg-black/40 border border-white/10 rounded-xl p-3 mt-6">
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setAlertPage(p => Math.max(1, p - 1))}
-                                disabled={alertPage === 1}
-                                className="h-8 text-[10px] bg-white/5 border-white/10 text-white"
-                            >
-                                Anterior
-                            </Button>
-                            <span className="text-[10px] text-gray-400 font-medium">Página {alertPage} de {totalAlertPages}</span>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setAlertPage(p => Math.min(totalAlertPages, p + 1))}
-                                disabled={alertPage === totalAlertPages}
-                                className="h-8 text-[10px] bg-white/5 border-white/10 text-white"
-                            >
-                                Siguiente
-                            </Button>
-                        </div>
-                    )}
                 </div>
+
+                {filteredAlerts.length === 0 && (
+                    <div className="text-center p-8 bg-white/5 border border-white/10 rounded-xl mt-8">
+                        <CheckCircle className="w-8 h-8 text-green-400 mx-auto mb-3" />
+                        <p className="text-gray-400 font-medium text-sm">No hay clientes en esta categoría.</p>
+                    </div>
+                )}
+
+                {totalAlertPages > 1 && (
+                    <div className="flex justify-between items-center bg-black/40 border border-white/10 rounded-xl p-3 mt-6">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setAlertPage(p => Math.max(1, p - 1))}
+                            disabled={alertPage === 1}
+                            className="h-8 text-[10px] bg-white/5 border-white/10 text-white"
+                        >
+                            Anterior
+                        </Button>
+                        <span className="text-[10px] text-gray-400 font-medium">Página {alertPage} de {totalAlertPages}</span>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setAlertPage(p => Math.min(totalAlertPages, p + 1))}
+                            disabled={alertPage === totalAlertPages}
+                            className="h-8 text-[10px] bg-white/5 border-white/10 text-white"
+                        >
+                            Siguiente
+                        </Button>
+                    </div>
+                )}
             </div>
         );
     }

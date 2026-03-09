@@ -14,7 +14,6 @@ export async function getPostventaData() {
         const reservations = await prisma.reservation.findMany({
             where: {
                 buyer_id: { not: null },
-                status: { in: ['paid', 'confirmed'] }, // Filter by active reservations
                 lot: { status: { in: ['sold', 'reserved'] } }
             },
             include: {
