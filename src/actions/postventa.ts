@@ -169,7 +169,7 @@ export async function getPostventaData() {
                 }
             }
 
-            const isUpToDate = !isPieDebt && !isGracePeriod && !isLate && !isUpcoming;
+            const isUpToDate = !isGracePeriod && !isLate && !isUpcoming;
 
             debtAlerts.push({
                 ...ledgerEntry,

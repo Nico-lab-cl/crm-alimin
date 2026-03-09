@@ -42,7 +42,7 @@ export function PostventaMobileDashboard({ initialReceipts, soldLots, activeTab,
     const [selectedClientLedger, setSelectedClientLedger] = useState<any | null>(null);
     const ledgerItemsPerPage = 10;
 
-    const [alertFilter, setAlertFilter] = useState<'ALL' | 'UPCOMING' | 'GRACE' | 'LATE' | 'PIE' | 'OK'>('ALL');
+    const [alertFilter, setAlertFilter] = useState<'ALL' | 'UPCOMING' | 'GRACE' | 'LATE' | 'OK'>('ALL');
     const [alertStage, setAlertStage] = useState<'ALL' | 1 | 2 | 3 | 4>('ALL');
     const [alertPage, setAlertPage] = useState(1);
     const alertsPerPage = 10;
@@ -240,7 +240,6 @@ export function PostventaMobileDashboard({ initialReceipts, soldLots, activeTab,
                 (alertFilter === 'UPCOMING' && alert.isUpcoming) ||
                 (alertFilter === 'GRACE' && alert.isGracePeriod) ||
                 (alertFilter === 'LATE' && alert.isLate) ||
-                (alertFilter === 'PIE' && alert.isPieDebt) ||
                 (alertFilter === 'OK' && alert.isUpToDate);
             return matchesStage && matchesStatus;
         });
@@ -265,14 +264,14 @@ export function PostventaMobileDashboard({ initialReceipts, soldLots, activeTab,
 
                 {/* Filters Row 1: Status */}
                 <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
-                    {(['ALL', 'LATE', 'GRACE', 'PIE', 'UPCOMING', 'OK'] as const).map(f => (
+                    {(['ALL', 'LATE', 'GRACE', 'UPCOMING', 'OK'] as const).map(f => (
                         <button
                             key={f}
                             onClick={() => { setAlertFilter(f); setAlertPage(1); }}
                             className={`px-3 py-1.5 rounded-full text-[10px] font-bold whitespace-nowrap transition-all border ${alertFilter === f ? 'bg-[#36595F] text-white border-[#36595F]' : 'bg-white/5 text-gray-400 border-white/10'
                                 }`}
                         >
-                            {f === 'ALL' ? 'Todos' : f === 'LATE' ? '🚩 Mora' : f === 'GRACE' ? '⌛ Gracia' : f === 'PIE' ? '🟣 Pie' : f === 'UPCOMING' ? '🔵 Próximos' : '✅ Al Día'}
+                            {f === 'ALL' ? 'Todos' : f === 'LATE' ? '🚩 Mora' : f === 'GRACE' ? '⌛ Gracia' : f === 'UPCOMING' ? '🔵 Próximos' : '✅ Al Día'}
                         </button>
                     ))}
                 </div>
@@ -295,7 +294,6 @@ export function PostventaMobileDashboard({ initialReceipts, soldLots, activeTab,
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
                     {paginatedAlerts.map(alert => {
                         const isGrace = alert.isGracePeriod;
-                        const isPie = alert.isPieDebt;
                         const isUpcoming = alert.isUpcoming;
                         const isLate = alert.isLate;
                         const isOK = alert.isUpToDate;
@@ -318,12 +316,6 @@ export function PostventaMobileDashboard({ initialReceipts, soldLots, activeTab,
                             circleClass = 'bg-blue-500/10';
                             badgeLabel = 'Próximo';
                             statusText = 'Vencimiento cercano';
-                        } else if (isPie) {
-                            colorClass = 'bg-purple-500/10 border-purple-500/20';
-                            accentClass = 'text-purple-400';
-                            circleClass = 'bg-purple-500/10';
-                            badgeLabel = 'Pendiente Pie';
-                            statusText = alert.lateDays > 0 ? `${alert.lateDays} d. atraso Pie` : 'Saldo Pie pendiente';
                         } else if (isGrace) {
                             colorClass = 'bg-amber-500/10 border-amber-500/20';
                             accentClass = 'text-amber-400';
@@ -352,14 +344,14 @@ export function PostventaMobileDashboard({ initialReceipts, soldLots, activeTab,
                                     <div className={`flex items-center justify-between bg-black/40 rounded-lg p-3 border ${colorClass.split(' ')[1]}`}>
                                         <div>
                                             <p className="text-[9px] text-gray-400 uppercase tracking-wider mb-0.5">
-                                                {isUpcoming ? 'A pagar' : isPie ? 'Saldo Pie' : isGrace ? 'A Pagar' : isOK ? 'Total Pagado' : 'Multa Calculada'}
+                                                {isUpcoming ? 'A pagar' : isGrace ? 'A Pagar' : isOK ? 'Total Pagado' : 'Multa Calculada'}
                                             </p>
                                             <p className={`font-bold ${accentClass} text-sm`}>
                                                 {isOK
                                                     ? formatCurrency(alert.cuotasAmount)
                                                     : isUpcoming || isGrace
                                                         ? formatCurrency(alert.monto_cuota || 0)
-                                                        : formatCurrency(isPie ? (alert.totalToPay * 0.2 - alert.pieAmount) : alert.penaltyAmount)
+                                                        : formatCurrency(alert.penaltyAmount)
                                                 }
                                             </p>
                                         </div>
