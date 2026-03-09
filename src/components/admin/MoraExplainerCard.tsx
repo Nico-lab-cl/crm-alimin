@@ -3,11 +3,12 @@
 import { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { Calculator, TrendingUp, AlertTriangle, CalendarDays } from 'lucide-react';
+import { Calculator, TrendingUp, AlertTriangle, CalendarDays, MapPin, Maximize } from 'lucide-react';
 import { calculateDailyInterest, PENALTY_START_DATE_WEB } from '@/lib/financials';
 import { InfoTooltip } from './InfoTooltip';
 import { Calendar } from '@/components/ui/calendar';
 import type { DateRange } from 'react-day-picker';
+import { Badge } from '@/components/ui/badge';
 import {
     Select,
     SelectContent,
@@ -78,188 +79,189 @@ export function MoraExplainerCard({ soldLots }: MoraExplainerCardProps) {
     }
 
     return (
-        <Card className="bg-gradient-to-br from-gray-900 via-gray-900 to-amber-950/20 border-alimin-gold/20 text-white overflow-hidden">
-            <CardHeader className="pb-3">
+        <Card className="bg-[#1a1a1a]/60 backdrop-blur-xl border-white/10 text-white overflow-hidden shadow-2xl">
+            <CardHeader className="pb-6 border-b border-white/5">
                 <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-lg bg-alimin-gold/20 flex items-center justify-center">
-                            <Calculator className="w-4 h-4 text-alimin-gold" />
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-orange-500/20 flex items-center justify-center border border-orange-500/20">
+                            <Calculator className="w-5 h-5 text-orange-400" />
                         </div>
-                        <CardTitle className="text-base font-bold text-white">
-                            Simulador de Mora
-                        </CardTitle>
+                        <div>
+                            <CardTitle className="text-xl font-black text-white tracking-tight">
+                                Simulador de Mora
+                            </CardTitle>
+                            <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-0.5">Cálculo de intereses acumulados</p>
+                        </div>
                     </div>
                     <InfoTooltip
                         content={
                             <div className="space-y-2 text-xs">
-                                <p className="font-semibold text-alimin-gold">¿Cómo funciona la mora?</p>
+                                <p className="font-bold text-orange-400">¿Cómo funciona la mora?</p>
                                 <p>Cada cuota vence el <b>día 5</b> de cada mes. Hay un período de gracia hasta el <b>día 10</b>.</p>
                                 <p>Si el cliente no paga antes del <b>día 11</b>, comienza a correr un interés <b>diario</b> que se calcula sobre el <b>valor total del terreno</b>.</p>
-                                <p className="pt-1 border-t border-white/10">• Terrenos &lt; 300m²: {penaltyRate} × valor total</p>
+                                <p className="pt-2 border-t border-white/10">• Terrenos &lt; 300m²: {penaltyRate} × valor total</p>
                                 <p>• Terrenos ≥ 300m²: 0,000227324392 × valor total</p>
                             </div>
                         }
                     />
                 </div>
             </CardHeader>
-            <CardContent className="space-y-4">
-                {/* How it works */}
-                <div className="bg-white/5 rounded-xl p-3 border border-white/5">
-                    <div className="flex items-start gap-2">
-                        <CalendarDays className="w-4 h-4 text-alimin-gold mt-0.5 shrink-0" />
-                        <p className="text-xs text-gray-300 leading-relaxed">
-                            Selecciona un <span className="text-white font-semibold">rango de fechas</span> en el calendario.
-                            La primera fecha es cuando inicia el atraso (desde el <span className="text-red-400 font-semibold">día 11</span>)
-                            y la segunda es hasta cuándo deseas calcular el interés acumulado. Se cobra:
-                            <br />
-                            <span className="text-alimin-gold font-mono text-[11px]">{penaltyRate} × valor total del terreno</span> por cada día de ese rango.
-                        </p>
-                    </div>
-                </div>
-
-                {/* Lot Selector */}
-                <div className="space-y-2">
-                    <Label className="text-xs text-gray-400 font-medium">Seleccionar Terreno</Label>
-                    <Select value={selectedLotId} onValueChange={setSelectedLotId}>
-                        <SelectTrigger className="bg-white/5 border-white/10 text-white h-11">
-                            <SelectValue placeholder="Elige un terreno" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-gray-900 border-white/10 text-white max-h-60">
-                            {soldLots.map(lot => (
-                                <SelectItem key={lot.id} value={String(lot.id)}>
-                                    <span className="flex items-center gap-2">
-                                        <span className="font-bold">T-{lot.number}</span>
-                                        <span className="text-gray-400">·</span>
-                                        <span className="text-gray-400">Etapa {lot.stage}</span>
-                                        <span className="text-gray-400">·</span>
-                                        <span className="text-gray-400">{lot.area_m2}m²</span>
-                                        <span className="text-gray-400">·</span>
-                                        <span className="text-alimin-gold font-mono text-xs">{CLP(lot.price_total_clp || 0)}</span>
-                                    </span>
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                </div>
-
-                {/* Calendar Range Picker */}
-                <div className="space-y-2">
-                    <Label className="text-xs text-gray-400 font-medium">
-                        Simula la tasa de interés: selecciona fecha de inicio y fin
-                    </Label>
-                    <div className="flex justify-center">
-                        <Calendar
-                            mode="range"
-                            selected={dateRange}
-                            onSelect={setDateRange}
-                            defaultMonth={PENALTY_START}
-                            disabled={{ before: PENALTY_START }}
-                            numberOfMonths={1}
-                            className="rounded-xl border border-white/10 bg-white/5 text-white"
-                            classNames={{
-                                months: "flex flex-col space-y-4",
-                                month: "space-y-3",
-                                caption: "flex justify-center pt-1 relative items-center",
-                                caption_label: "text-sm font-bold text-white",
-                                nav: "space-x-1 flex items-center",
-                                nav_button: "h-8 w-8 bg-white/10 border border-white/10 rounded-lg p-0 opacity-70 hover:opacity-100 hover:bg-white/20 inline-flex items-center justify-center transition-colors",
-                                nav_button_previous: "absolute left-1",
-                                nav_button_next: "absolute right-1",
-                                table: "w-full border-collapse",
-                                head_row: "flex",
-                                head_cell: "text-gray-500 rounded-md w-9 font-medium text-[0.7rem] uppercase",
-                                row: "flex w-full mt-1",
-                                cell: "h-9 w-9 text-center text-sm p-0 relative [&:has([aria-selected])]:bg-alimin-gold/15 first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md",
-                                day: "h-9 w-9 p-0 font-normal rounded-lg hover:bg-alimin-gold/20 transition-colors inline-flex items-center justify-center cursor-pointer text-gray-300 hover:text-white",
-                                day_selected: "bg-alimin-gold text-black font-bold hover:bg-alimin-gold/90 hover:text-black",
-                                day_today: "bg-white/10 text-white font-bold",
-                                day_outside: "text-gray-700 opacity-40",
-                                day_disabled: "text-gray-700 opacity-20 cursor-not-allowed hover:bg-transparent",
-                                day_range_middle: "bg-alimin-gold/15 text-alimin-gold rounded-none",
-                                day_range_end: "rounded-r-lg",
-                                day_hidden: "invisible",
-                            }}
-                        />
-                    </div>
-                    {/* Range display */}
-                    {dateRange?.from && (
-                        <div className="text-center text-xs text-gray-400 mt-1">
-                            <span className="text-white font-semibold">{formatDateChile(dateRange.from)}</span>
-                            {dateRange.to && (
-                                <>
-                                    {' → '}
-                                    <span className="text-white font-semibold">{formatDateChile(dateRange.to)}</span>
-                                </>
-                            )}
-                            {!dateRange.to && (
-                                <span className="text-gray-500 ml-1">— selecciona la fecha de pago</span>
-                            )}
+            <CardContent className="p-6">
+                <div className="lg:grid lg:grid-cols-[1fr_380px] lg:gap-8 items-start">
+                    {/* Left Column: Input Controls */}
+                    <div className="space-y-8">
+                        {/* Summary Info (only on LG) */}
+                        <div className="hidden lg:block bg-white/5 rounded-2xl p-5 border border-white/5 space-y-3">
+                            <div className="flex items-center gap-3">
+                                <CalendarDays className="w-5 h-5 text-orange-400 shrink-0" />
+                                <p className="text-sm text-gray-300 leading-snug">
+                                    Simula el costo de atraso seleccionando el terreno y el <span className="text-white font-bold">rango de fechas</span> de mora.
+                                </p>
+                            </div>
                         </div>
-                    )}
-                </div>
 
-                {/* Selected Lot Info + Result */}
-                {selectedLot && (
-                    <div className="bg-alimin-gold/10 border border-alimin-gold/20 rounded-xl p-3">
-                        <p className="text-xs text-alimin-gold/80 font-medium mb-1 flex items-center gap-1.5">
-                            <TrendingUp className="w-3.5 h-3.5" />
-                            Terreno {selectedLot.number} — Etapa {selectedLot.stage}
-                        </p>
-                        <p className="text-sm text-gray-200 leading-relaxed">
-                            Valor total: <span className="font-bold text-white">{CLP(totalLotPrice)}</span> · {areaM2}m²
-                            {areaM2 >= 300 ? ' (terreno grande)' : ' (terreno estándar)'}
-                        </p>
-                        {dateRange?.from && dateRange?.to && calculation.daysLate > 0 && (
-                            <p className="text-sm text-gray-200 leading-relaxed mt-1">
-                                Atraso de <span className="font-bold text-alimin-gold">{calculation.daysLate} días</span>{' '}
-                                ({formatDateChile(dateRange.from)} → {formatDateChile(dateRange.to)})
-                            </p>
+                        {/* Lot Selector */}
+                        <div className="space-y-3">
+                            <Label className="text-[11px] text-gray-500 font-black uppercase tracking-widest px-1">1. Seleccionar Terreno Vendido</Label>
+                            <Select value={selectedLotId} onValueChange={setSelectedLotId}>
+                                <SelectTrigger className="bg-black/40 border-white/10 text-white h-14 rounded-2xl focus:ring-orange-500/20 transition-all hover:bg-black/60">
+                                    <SelectValue placeholder="Elige un terreno" />
+                                </SelectTrigger>
+                                <SelectContent className="bg-gray-950 border-white/10 text-white max-h-60 rounded-2xl shadow-2xl">
+                                    {soldLots.map(lot => (
+                                        <SelectItem key={lot.id} value={String(lot.id)} className="cursor-pointer focus:bg-orange-500/10 focus:text-white rounded-xl mx-1 my-0.5">
+                                            <div className="flex items-center gap-3 py-1">
+                                                <Badge className="bg-white/10 text-white font-black">T-{lot.number}</Badge>
+                                                <div className="flex flex-col">
+                                                    <span className="text-xs font-bold">Etapa {lot.stage} · {lot.area_m2}m²</span>
+                                                    <span className="text-[10px] text-orange-400 font-black tracking-tight">{CLP(lot.price_total_clp || 0)}</span>
+                                                </div>
+                                            </div>
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        {/* Calendar Range Picker */}
+                        <div className="space-y-3">
+                            <Label className="text-[11px] text-gray-500 font-black uppercase tracking-widest px-1">
+                                2. Definir Rango de Atraso
+                            </Label>
+                            <div className="bg-black/40 rounded-3xl p-6 border border-white/5">
+                                <div className="flex justify-center">
+                                    <Calendar
+                                        mode="range"
+                                        selected={dateRange}
+                                        onSelect={setDateRange}
+                                        defaultMonth={PENALTY_START}
+                                        disabled={{ before: PENALTY_START }}
+                                        numberOfMonths={1}
+                                        className="rounded-xl"
+                                        classNames={{
+                                            months: "flex flex-col space-y-4",
+                                            month: "space-y-4",
+                                            caption: "flex justify-center pt-1 relative items-center mb-4",
+                                            caption_label: "text-base font-black text-white tracking-tight",
+                                            nav: "space-x-1 flex items-center",
+                                            nav_button: "h-9 w-9 bg-white/5 border border-white/10 rounded-xl p-0 opacity-70 hover:opacity-100 hover:bg-white/10 inline-flex items-center justify-center transition-all",
+                                            nav_button_previous: "absolute left-1",
+                                            nav_button_next: "absolute right-1",
+                                            table: "w-full border-collapse",
+                                            head_row: "flex mb-2",
+                                            head_cell: "text-gray-600 rounded-md w-10 font-black text-[0.6rem] uppercase tracking-tighter",
+                                            row: "flex w-full mt-1.5",
+                                            cell: "h-10 w-10 text-center text-sm p-0 relative [&:has([aria-selected])]:bg-orange-500/10 first:[&:has([aria-selected])]:rounded-l-xl last:[&:has([aria-selected])]:rounded-r-xl focus-within:relative focus-within:z-20",
+                                            day: "h-10 w-10 p-0 font-bold rounded-xl hover:bg-orange-500/20 transition-all inline-flex items-center justify-center cursor-pointer text-gray-400 hover:text-white group",
+                                            day_selected: "bg-orange-500 text-black font-black hover:bg-orange-500 hover:text-black shadow-lg shadow-orange-500/20",
+                                            day_today: "bg-white/10 text-white font-black ring-1 ring-white/20",
+                                            day_outside: "text-gray-800 opacity-30",
+                                            day_disabled: "text-gray-800 opacity-10 cursor-not-allowed hover:bg-transparent",
+                                            day_range_middle: "bg-orange-500/10 text-orange-400 rounded-none",
+                                            day_range_end: "rounded-r-xl",
+                                            day_hidden: "invisible",
+                                        }}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Right Column: Execution & Results */}
+                    <div className="space-y-6 mt-8 lg:mt-0 lg:sticky lg:top-0">
+                        {/* Selected Lot Detail Card */}
+                        {selectedLot && (
+                            <div className="bg-gradient-to-br from-[#2a1a10] to-[#1a1a1a] border border-orange-500/20 rounded-3xl p-6 shadow-xl relative overflow-hidden group">
+                                <TrendingUp className="absolute -bottom-4 -right-4 w-24 h-24 text-orange-500/5 rotate-12 group-hover:scale-110 transition-transform" />
+                                <div className="space-y-4 relative z-10">
+                                    <div className="flex items-center gap-3">
+                                        <Badge className="bg-orange-500 text-black font-black text-px py-0.5">T-{selectedLot.number}</Badge>
+                                        <span className="text-[10px] text-orange-400 font-black uppercase tracking-widest">Valor del Activo</span>
+                                    </div>
+                                    <p className="text-3xl font-black text-white">{CLP(totalLotPrice)}</p>
+                                    <div className="flex items-center gap-4 text-xs font-bold text-gray-400 border-t border-white/5 pt-4">
+                                        <span className="flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5" /> Etapa {selectedLot.stage}</span>
+                                        <span className="flex items-center gap-1.5"><Maximize className="w-3.5 h-3.5" /> {areaM2}m²</span>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Calculation Results */}
+                        {dateRange?.from && dateRange?.to && calculation.daysLate > 0 ? (
+                            <div className="bg-black/40 backdrop-blur-md rounded-3xl p-6 border border-white/10 space-y-6 shadow-2xl">
+                                <div className="space-y-4">
+                                    <div className="flex items-center justify-between text-[11px] font-black uppercase tracking-widest text-gray-500">
+                                        <span>Detalle del Cálculo</span>
+                                        <Badge variant="outline" className="border-orange-500/30 text-orange-400 text-[10px]">{calculation.daysLate} días</Badge>
+                                    </div>
+
+                                    <div className="space-y-3">
+                                        <div className="flex justify-between items-end">
+                                            <span className="text-xs text-gray-400 font-medium">Tasa aplicada:</span>
+                                            <span className="font-mono text-white text-[10px]">{penaltyRate}</span>
+                                        </div>
+                                        <div className="flex justify-between items-end border-b border-white/5 pb-2">
+                                            <span className="text-xs text-gray-400 font-medium">Interés diario:</span>
+                                            <span className="font-bold text-white text-sm">{CLP(calculation.dailyInterest)}</span>
+                                        </div>
+                                        <div className="flex justify-between items-end">
+                                            <span className="text-xs text-gray-400 font-medium">Total Acumulado:</span>
+                                            <span className="font-black text-green-400 text-sm">+{CLP(calculation.totalInterest)}</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="bg-red-500/10 border border-red-500/20 rounded-2xl p-5 space-y-2">
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-sm font-black text-red-400 uppercase tracking-tight flex items-center gap-2">
+                                            <AlertTriangle className="w-4 h-4" />
+                                            Multa a Cobrar
+                                        </span>
+                                        <span className="text-2xl font-black text-white font-mono tracking-tighter">
+                                            {CLP(calculation.totalInterest)}
+                                        </span>
+                                    </div>
+                                    <p className="text-[10px] text-red-300/50 font-bold uppercase tracking-wider text-center pt-2 border-t border-red-500/10">Este monto se suma a la cuota mensual</p>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="bg-black/20 rounded-3xl p-12 border border-dashed border-white/5 flex flex-col items-center justify-center text-center space-y-4">
+                                <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center">
+                                    <Calculator className="w-6 h-6 text-gray-600" />
+                                </div>
+                                <div>
+                                    <p className="text-gray-500 font-bold text-sm uppercase tracking-widest">Esperando Selección</p>
+                                    <p className="text-[10px] text-gray-600 font-bold max-w-[200px] mt-2 leading-relaxed">
+                                        {!dateRange?.from
+                                            ? 'Selecciona una fecha en el calendario para iniciar la simulación'
+                                            : 'Define la fecha de término del atraso'}
+                                    </p>
+                                </div>
+                            </div>
                         )}
                     </div>
-                )}
-
-                {/* Results */}
-                {dateRange?.from && dateRange?.to && calculation.daysLate > 0 && (
-                    <div className="bg-black/30 rounded-xl p-3 border border-white/5 space-y-2">
-                        <div className="flex justify-between text-sm">
-                            <span className="text-gray-400">Fórmula</span>
-                            <span className="font-mono text-gray-300 text-xs">
-                                {penaltyRate} × {CLP(totalLotPrice)}
-                            </span>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                            <span className="text-gray-400">Interés diario</span>
-                            <span className="font-mono text-white">{CLP(calculation.dailyInterest)}/día</span>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                            <span className="text-gray-400">Días de atraso</span>
-                            <span className="font-mono text-white">× {calculation.daysLate}</span>
-                        </div>
-                        <div className="border-t border-white/10 pt-2 mt-2">
-                            <div className="flex justify-between items-center">
-                                <span className="text-sm font-bold text-alimin-gold flex items-center gap-1.5">
-                                    <AlertTriangle className="w-4 h-4" />
-                                    Multa Total
-                                </span>
-                                <span className="text-lg font-black text-red-400 font-mono">
-                                    {CLP(calculation.totalInterest)}
-                                </span>
-                            </div>
-                            <p className="text-[10px] text-gray-500 mt-1">
-                                Se suma al valor de la cuota que debe pagar el cliente
-                            </p>
-                        </div>
-                    </div>
-                )}
-
-                {/* Empty state */}
-                {(!dateRange?.from || !dateRange?.to) && (
-                    <div className="text-center py-3 text-gray-500 text-xs">
-                        {!dateRange?.from
-                            ? 'Selecciona la fecha de inicio de mora en el calendario'
-                            : 'Ahora selecciona la fecha de pago para calcular la multa'}
-                    </div>
-                )}
+                </div>
             </CardContent>
         </Card>
     );

@@ -108,36 +108,41 @@ export function PostventaMobileDashboard({ initialReceipts, soldLots, activeTab,
                     <h2 className="text-lg font-bold text-white">Estado de Cuentas</h2>
                 </div>
 
-                <div className="space-y-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 mt-4">
                     {paginatedLedger.map(client => (
-                        <div key={client.id} className="bg-white/5 border border-white/10 p-4 rounded-xl space-y-3 relative overflow-hidden">
+                        <div key={client.id} className="bg-[#1a1a1a]/40 backdrop-blur-md border border-white/10 p-5 rounded-2xl space-y-4 relative overflow-hidden transition-all hover:border-indigo-500/30 group">
+                            <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500/5 rounded-bl-full -z-10 group-hover:bg-indigo-500/10 transition-colors" />
+
                             <div className="flex justify-between items-start">
                                 <div>
-                                    <p className="font-bold text-white text-sm">{client.clientName}</p>
-                                    <p className="text-xs text-indigo-300 font-medium">T-{client.lotNumber}</p>
+                                    <p className="font-black text-white text-base tracking-tight">{client.clientName}</p>
+                                    <p className="text-[10px] text-indigo-400 font-black uppercase tracking-widest mt-0.5">Lote T-{client.lotNumber}</p>
                                 </div>
                                 <div className="text-right">
-                                    <Button variant="outline" size="sm" onClick={() => setSelectedClientLedger(client)} className="text-xs h-8 bg-indigo-500/10 text-indigo-400 border-indigo-500/20 hover:bg-indigo-500/30 hover:text-indigo-200">
-                                        <Eye className="w-3 h-3 mr-1" />
-                                        Ver Detalles
+                                    <Button variant="outline" size="sm" onClick={() => setSelectedClientLedger(client)} className="text-[10px] h-8 font-black uppercase tracking-tight bg-indigo-500/10 text-indigo-400 border-indigo-500/20 hover:bg-indigo-500/30 hover:text-indigo-200 cursor-pointer">
+                                        <Eye className="w-3.5 h-3.5 mr-1.5" />
+                                        Detalles
                                     </Button>
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-2 text-xs">
-                                <div className="bg-black/40 p-2.5 rounded-lg border border-white/5">
-                                    <p className="text-gray-500 mb-0.5 text-[10px] uppercase">Total Pagado</p>
-                                    <p className="font-semibold text-white">{formatCurrency(client.totalPaid)}</p>
+                            <div className="grid grid-cols-2 gap-3">
+                                <div className="bg-black/40 p-3 rounded-xl border border-white/5">
+                                    <p className="text-gray-500 mb-1 text-[9px] font-black uppercase tracking-widest leading-none">Total Pagado</p>
+                                    <p className="font-black text-white text-sm">{formatCurrency(client.totalPaid)}</p>
                                 </div>
-                                <div className="bg-black/40 p-2.5 rounded-lg border border-white/5">
-                                    <p className="text-gray-500 mb-0.5 text-[10px] uppercase">Progreso Cuotas</p>
-                                    <p className="font-semibold text-white">{client.paidCuotas} / {client.totalCuotas || 0}</p>
+                                <div className="bg-black/40 p-3 rounded-xl border border-white/5">
+                                    <p className="text-gray-500 mb-1 text-[9px] font-black uppercase tracking-widest leading-none">Progreso</p>
+                                    <p className="font-black text-white text-sm">{client.paidCuotas} / {client.totalCuotas || 0}</p>
                                 </div>
                             </div>
                         </div>
                     ))}
                     {ledger.length === 0 && (
-                        <div className="text-center p-8 text-gray-500 text-sm">No hay cuentas activas.</div>
+                        <div className="col-span-full text-center py-16 bg-white/5 border border-dashed border-white/10 rounded-2xl">
+                            <BookOpen className="w-10 h-10 text-gray-700 mx-auto mb-3" />
+                            <p className="text-gray-500 font-bold">No hay cuentas activas</p>
+                        </div>
                     )}
                 </div>
 
@@ -247,162 +252,255 @@ export function PostventaMobileDashboard({ initialReceipts, soldLots, activeTab,
         const totalAlertPages = Math.ceil(filteredAlerts.length / alertsPerPage);
         const paginatedAlerts = filteredAlerts.slice((alertPage - 1) * alertsPerPage, alertPage * alertsPerPage);
 
+        const stats = {
+            total: debtAlerts.length,
+            late: debtAlerts.filter(a => a.isLate).length,
+            grace: debtAlerts.filter(a => a.isGracePeriod).length,
+            upcoming: debtAlerts.filter(a => a.isUpcoming).length,
+            ok: debtAlerts.filter(a => a.isUpToDate).length
+        };
+
         return (
-            <div className="space-y-4 pb-24">
-                <div className="flex flex-col gap-1 mb-4">
-                    <div className="flex items-center gap-2">
-                        <AlertTriangle className="w-5 h-5 text-red-500" />
-                        <h2 className="text-lg font-bold text-white">Gestión de Clientes</h2>
-                        {filteredAlerts.length > 0 && (
-                            <Badge variant="outline" className="ml-auto font-bold bg-white/5 border-white/10 text-white">{filteredAlerts.length} total</Badge>
-                        )}
+            <div className="space-y-6 pb-24">
+                {/* Dashboard Header */}
+                <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+                    <div className="space-y-1">
+                        <div className="flex items-center gap-3">
+                            <div className="bg-red-500/20 p-2 rounded-lg">
+                                <AlertTriangle className="w-5 h-5 text-red-500" />
+                            </div>
+                            <h2 className="text-2xl font-black text-white tracking-tight">Gestión de Clientes</h2>
+                        </div>
+                        <p className="text-xs text-gray-500 font-medium uppercase tracking-[0.2em] ml-11">
+                            {format(today, "EEEE d 'de' MMMM 'de' yyyy", { locale: es })}
+                        </p>
                     </div>
-                    <p className="text-[10px] text-gray-400 font-medium uppercase tracking-widest mt-1">
-                        Hoy: {format(today, "EEEE d 'de' MMMM 'de' yyyy", { locale: es })}
-                    </p>
+
+                    {/* Mobile Only: Total Badge */}
+                    <Badge variant="outline" className="md:hidden self-start font-bold bg-white/5 border-white/10 text-white px-3 py-1">
+                        {filteredAlerts.length} Clientes Filtrados
+                    </Badge>
                 </div>
 
-                {/* Filters Row 1: Status */}
-                <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
-                    {(['ALL', 'LATE', 'GRACE', 'UPCOMING', 'OK'] as const).map(f => (
-                        <button
-                            key={f}
-                            onClick={() => { setAlertFilter(f); setAlertPage(1); }}
-                            className={`px-3 py-1.5 rounded-full text-[10px] font-bold whitespace-nowrap transition-all border ${alertFilter === f ? 'bg-[#36595F] text-white border-[#36595F]' : 'bg-white/5 text-gray-400 border-white/10'
-                                }`}
-                        >
-                            {f === 'ALL' ? 'Todos' : f === 'LATE' ? '🚩 Mora' : f === 'GRACE' ? '⌛ Gracia' : f === 'UPCOMING' ? '🔵 Próximos' : '✅ Al Día'}
-                        </button>
-                    ))}
-                </div>
+                <div className="lg:grid lg:grid-cols-[280px_1fr] lg:gap-8 items-start">
+                    {/* Sidebar / Filters Panel */}
+                    <aside className="space-y-6 lg:sticky lg:top-4 z-20">
+                        {/* Summary Stats Card (Desktop Only) */}
+                        <div className="hidden lg:block bg-[#1a1a1a]/60 backdrop-blur-xl border border-white/10 rounded-2xl p-5 space-y-4 shadow-2xl">
+                            <div className="flex items-center justify-between">
+                                <h3 className="text-white font-bold text-xs uppercase tracking-wider opacity-60">Panorama General</h3>
+                                <Badge className="bg-white/10 text-[10px]">{stats.total}</Badge>
+                            </div>
 
-                {/* Filters Row 2: Stages */}
-                <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
-                    {(['ALL', 1, 2, 3, 4] as const).map(s => (
-                        <button
-                            key={s}
-                            onClick={() => { setAlertStage(s as any); setAlertPage(1); }}
-                            className={`px-3 py-1 text-[10px] font-bold whitespace-nowrap transition-all border rounded-lg ${alertStage === s ? 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30' : 'bg-white/5 text-gray-500 border-white/5'
-                                }`}
-                        >
-                            {s === 'ALL' ? 'Todas las Etapas' : `Etapa ${s}`}
-                        </button>
-                    ))}
-                </div>
-
-                {/* Alerts Cards Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
-                    {paginatedAlerts.map(alert => {
-                        const isGrace = alert.isGracePeriod;
-                        const isUpcoming = alert.isUpcoming;
-                        const isLate = alert.isLate;
-                        const isOK = alert.isUpToDate;
-
-                        let colorClass = 'bg-red-500/10 border-red-500/20';
-                        let accentClass = 'text-red-400';
-                        let circleClass = 'bg-red-500/10';
-                        let badgeLabel = 'Atrasado'; // Red (11+)
-                        let statusText = `${alert.lateDays} días de atraso`;
-
-                        if (isOK) {
-                            colorClass = 'bg-green-500/10 border-green-500/20';
-                            accentClass = 'text-green-400';
-                            circleClass = 'bg-green-500/10';
-                            badgeLabel = 'Al Día';
-                            statusText = 'Pagos correctos';
-                        } else if (isUpcoming) {
-                            colorClass = 'bg-blue-500/10 border-blue-500/20';
-                            accentClass = 'text-blue-400';
-                            circleClass = 'bg-blue-500/10';
-                            badgeLabel = 'Próximo';
-                            statusText = 'Vencimiento cercano';
-                        } else if (isGrace) {
-                            colorClass = 'bg-amber-500/10 border-amber-500/20';
-                            accentClass = 'text-amber-400';
-                            circleClass = 'bg-amber-500/10';
-                            badgeLabel = 'Periodo Gracia';
-                            statusText = 'Pendiente (Sin multa)';
-                        }
-
-                        return (
-                            <div key={alert.id} className={`${colorClass} p-4 rounded-xl space-y-3 relative overflow-hidden flex flex-col justify-between transition-all hover:border-white/20`}>
-                                <div className={`absolute top-0 right-0 w-24 h-24 ${circleClass} rounded-bl-full -z-10 opacity-50`} />
-
-                                <div className="space-y-3">
-                                    <div className="flex justify-between items-start">
-                                        <div className="min-w-0 pr-2">
-                                            <p className="font-bold text-white text-sm truncate">{alert.clientName}</p>
-                                            <p className={`text-[10px] ${accentClass} font-medium`}>
-                                                T-{alert.lotNumber} (Etapa {alert.lotStage}) · {statusText}
-                                            </p>
-                                        </div>
-                                        <Badge className={`${colorClass.replace('bg-', 'bg-').replace('/10', '/30')} ${accentClass} border-${accentClass.split('-')[0]}-500/30 text-[10px] font-bold shrink-0`}>
-                                            {badgeLabel}
-                                        </Badge>
-                                    </div>
-
-                                    <div className={`flex items-center justify-between bg-black/40 rounded-lg p-3 border ${colorClass.split(' ')[1]}`}>
-                                        <div>
-                                            <p className="text-[9px] text-gray-400 uppercase tracking-wider mb-0.5">
-                                                {isUpcoming ? 'A pagar' : isGrace ? 'A Pagar' : isOK ? 'Total Pagado' : 'Multa Calculada'}
-                                            </p>
-                                            <p className={`font-bold ${accentClass} text-sm`}>
-                                                {isOK
-                                                    ? formatCurrency(alert.cuotasAmount)
-                                                    : isUpcoming || isGrace
-                                                        ? formatCurrency(alert.monto_cuota || 0)
-                                                        : formatCurrency(alert.penaltyAmount)
-                                                }
-                                            </p>
-                                        </div>
-                                        <div className="text-right">
-                                            <p className="text-[9px] text-gray-400 uppercase tracking-wider mb-0.5">
-                                                {isOK ? 'Progreso' : isUpcoming ? 'Vence el' : 'Venció el'}
-                                            </p>
-                                            <p className="font-semibold text-white text-xs">
-                                                {isOK
-                                                    ? `${alert.paidCuotas} de ${alert.totalCuotas}`
-                                                    : alert.displayDueDate ? format(new Date(alert.displayDueDate), 'dd MMM yyyy', { locale: es }) : 'N/A'
-                                                }
-                                            </p>
-                                        </div>
-                                    </div>
+                            <div className="grid grid-cols-2 gap-3 mt-2">
+                                <div className="bg-red-500/5 border border-red-500/10 p-3 rounded-xl transition-colors hover:bg-red-500/10">
+                                    <p className="text-red-500 text-[9px] font-black uppercase tracking-tighter mb-1">Mora</p>
+                                    <p className="text-white text-xl font-black">{stats.late}</p>
+                                </div>
+                                <div className="bg-amber-500/5 border border-amber-500/10 p-3 rounded-xl transition-colors hover:bg-amber-500/10">
+                                    <p className="text-amber-500 text-[9px] font-black uppercase tracking-tighter mb-1">Gracia</p>
+                                    <p className="text-white text-xl font-black">{stats.grace}</p>
+                                </div>
+                                <div className="bg-blue-500/5 border border-blue-500/10 p-3 rounded-xl transition-colors hover:bg-blue-500/10">
+                                    <p className="text-blue-500 text-[9px] font-black uppercase tracking-tighter mb-1">Próximo</p>
+                                    <p className="text-white text-xl font-black">{stats.upcoming}</p>
+                                </div>
+                                <div className="bg-green-500/5 border border-green-500/10 p-3 rounded-xl transition-colors hover:bg-green-500/10">
+                                    <p className="text-green-500 text-[9px] font-black uppercase tracking-tighter mb-1">Al Día</p>
+                                    <p className="text-white text-xl font-black">{stats.ok}</p>
                                 </div>
                             </div>
-                        );
-                    })}
+                        </div>
+
+                        {/* Filter Sections */}
+                        <div className="space-y-6 bg-[#1a1a1a]/40 lg:bg-transparent p-4 lg:p-0 rounded-2xl border border-white/5 lg:border-none backdrop-blur-md lg:backdrop-blur-none transition-all">
+                            {/* Filter: Status */}
+                            <div className="space-y-3">
+                                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest px-1">Estado de Pago</p>
+                                <div className="flex flex-row lg:flex-col gap-2 overflow-x-auto pb-1 no-scrollbar lg:overflow-visible lg:pb-0">
+                                    {(['ALL', 'LATE', 'GRACE', 'UPCOMING', 'OK'] as const).map(f => (
+                                        <button
+                                            key={f}
+                                            onClick={() => { setAlertFilter(f); setAlertPage(1); }}
+                                            className={`px-4 py-2.5 rounded-xl text-[11px] font-bold whitespace-nowrap transition-all border flex items-center gap-2 flex-grow lg:flex-grow-0 cursor-pointer ${alertFilter === f
+                                                ? 'bg-[#36595F] text-white border-[#36595F] shadow-lg shadow-[#36595F]/20 translate-x-1'
+                                                : 'bg-white/5 text-gray-400 border-white/10 hover:bg-white/10 hover:border-white/20'
+                                                }`}
+                                        >
+                                            <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{
+                                                backgroundColor: f === 'LATE' ? '#ef4444' : f === 'GRACE' ? '#f59e0b' : f === 'UPCOMING' ? '#3b82f6' : f === 'OK' ? '#22c55e' : 'white',
+                                                visibility: f === 'ALL' ? 'hidden' : 'visible'
+                                            }} />
+                                            {f === 'ALL' ? 'Todos los Clientes' : f === 'LATE' ? 'En Mora' : f === 'GRACE' ? 'Periodo Gracia' : f === 'UPCOMING' ? 'Próximos Venc' : 'Al Día'}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Filter: Stage */}
+                            <div className="space-y-3">
+                                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest px-1">Filtrar por Etapa</p>
+                                <div className="flex flex-row lg:flex-wrap gap-2 overflow-x-auto pb-1 no-scrollbar lg:overflow-visible lg:pb-0">
+                                    {(['ALL', 1, 2, 3, 4] as const).map(s => (
+                                        <button
+                                            key={s}
+                                            onClick={() => { setAlertStage(s as any); setAlertPage(1); }}
+                                            className={`px-4 py-2.5 rounded-xl text-[11px] font-bold transition-all border shrink-0 cursor-pointer ${alertStage === s
+                                                ? 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30'
+                                                : 'bg-white/5 text-gray-500 border-white/5 hover:border-white/20'
+                                                }`}
+                                        >
+                                            {s === 'ALL' ? 'Todas' : `Etapa ${s}`}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </aside>
+
+                    {/* Main Content Area */}
+                    <main className="space-y-6">
+                        {/* Summary Row (Mobile Only) */}
+                        <div className="lg:hidden flex gap-2 overflow-x-auto pb-2 no-scrollbar">
+                            <div className="bg-red-500/10 border border-red-500/20 px-4 py-2 rounded-lg shrink-0">
+                                <span className="text-red-400 font-bold text-xs uppercase mr-2">Mora:</span>
+                                <span className="text-white font-black text-sm">{stats.late}</span>
+                            </div>
+                            <div className="bg-amber-500/10 border border-amber-500/20 px-4 py-2 rounded-lg shrink-0">
+                                <span className="text-amber-400 font-bold text-xs uppercase mr-2">Gracia:</span>
+                                <span className="text-white font-black text-sm">{stats.grace}</span>
+                            </div>
+                            <div className="bg-blue-500/10 border border-blue-500/20 px-4 py-2 rounded-lg shrink-0">
+                                <span className="text-blue-400 font-bold text-xs uppercase mr-2">Próximo:</span>
+                                <span className="text-white font-black text-sm">{stats.upcoming}</span>
+                            </div>
+                        </div>
+
+                        {/* Alerts Cards Grid */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+                            {paginatedAlerts.map(alert => {
+                                const isGrace = alert.isGracePeriod;
+                                const isUpcoming = alert.isUpcoming;
+                                const isLate = alert.isLate;
+                                const isOK = alert.isUpToDate;
+
+                                let colorClass = 'bg-red-500/5 hover:bg-red-500/10 border-red-500/20 group';
+                                let accentClass = 'text-red-400';
+                                let circleClass = 'bg-red-500/10';
+                                let badgeLabel = 'Atrasado';
+                                let statusText = `${alert.lateDays} días de mora`;
+
+                                if (isOK) {
+                                    colorClass = 'bg-green-500/5 hover:bg-green-500/10 border-green-500/20 group';
+                                    accentClass = 'text-green-400';
+                                    circleClass = 'bg-green-500/10';
+                                    badgeLabel = 'Al Día';
+                                    statusText = 'Pagos correctos';
+                                } else if (isUpcoming) {
+                                    colorClass = 'bg-blue-500/5 hover:bg-blue-500/10 border-blue-500/20 group';
+                                    accentClass = 'text-blue-400';
+                                    circleClass = 'bg-blue-500/10';
+                                    badgeLabel = 'Próximo';
+                                    statusText = 'Vencimiento cercano';
+                                } else if (isGrace) {
+                                    colorClass = 'bg-amber-500/5 hover:bg-amber-500/10 border-amber-500/20 group';
+                                    accentClass = 'text-amber-400';
+                                    circleClass = 'bg-amber-500/10';
+                                    badgeLabel = 'Periodo Gracia';
+                                    statusText = 'Pendiente (Sin multa)';
+                                }
+
+                                return (
+                                    <div key={alert.id} className={`${colorClass} p-5 rounded-2xl border backdrop-blur-md transition-all duration-300 hover:scale-[1.02] flex flex-col justify-between relative overflow-hidden shadow-lg`}>
+                                        <div className={`absolute top-0 right-0 w-32 h-32 ${circleClass} rounded-bl-full -z-10 opacity-40 transition-transform group-hover:scale-110`} />
+
+                                        <div className="space-y-4">
+                                            <div className="flex justify-between items-start">
+                                                <div className="min-w-0 pr-2">
+                                                    <p className="font-black text-white text-base truncate tracking-tight">{alert.clientName}</p>
+                                                    <div className="flex items-center gap-2 mt-1">
+                                                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded bg-white/5 border border-white/10 text-gray-300 uppercase`}>T-{alert.lotNumber}</span>
+                                                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded bg-white/5 border border-white/10 text-gray-300 uppercase`}>Etapa {alert.lotStage}</span>
+                                                    </div>
+                                                </div>
+                                                <Badge className={`bg-black/50 ${accentClass} border-${accentClass.split('-')[1]}-500/30 text-[9px] font-black uppercase tracking-wider px-2 py-1`}>
+                                                    {badgeLabel}
+                                                </Badge>
+                                            </div>
+
+                                            <p className={`text-[11px] ${accentClass} font-bold uppercase tracking-widest mt-2`}>
+                                                {statusText}
+                                            </p>
+
+                                            <div className={`grid grid-cols-2 gap-3 bg-black/40 rounded-xl p-4 border border-white/5`}>
+                                                <div className="space-y-1">
+                                                    <p className="text-[9px] text-gray-500 uppercase font-black tracking-widest">
+                                                        {isUpcoming ? 'Próximo' : isGrace ? 'Por Pagar' : isOK ? 'Invertido' : 'Interest'}
+                                                    </p>
+                                                    <p className={`font-black ${accentClass} text-sm leading-tight`}>
+                                                        {isOK
+                                                            ? formatCurrency(alert.cuotasAmount)
+                                                            : isUpcoming || isGrace
+                                                                ? formatCurrency(alert.monto_cuota || 0)
+                                                                : formatCurrency(alert.penaltyAmount)
+                                                        }
+                                                    </p>
+                                                </div>
+                                                <div className="text-right space-y-1">
+                                                    <p className="text-[9px] text-gray-500 uppercase font-black tracking-widest">
+                                                        {isOK ? 'Progreso' : isUpcoming ? 'Vence' : 'Fecha'}
+                                                    </p>
+                                                    <p className="font-black text-white text-sm leading-tight">
+                                                        {isOK
+                                                            ? `${alert.paidCuotas} / ${alert.totalCuotas}`
+                                                            : alert.displayDueDate ? format(new Date(alert.displayDueDate), 'dd MMM yy', { locale: es }) : 'N/A'
+                                                        }
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+
+                        {filteredAlerts.length === 0 && (
+                            <div className="text-center py-16 bg-white/5 border border-dashed border-white/10 rounded-3xl">
+                                <CheckCircle className="w-12 h-12 text-green-500/40 mx-auto mb-4" />
+                                <p className="text-gray-400 font-bold text-lg">No hay clientes aquí</p>
+                                <p className="text-gray-600 text-sm mt-1 uppercase tracking-widest font-medium">Búsqueda impecable</p>
+                            </div>
+                        )}
+
+                        {/* Pagination */}
+                        {totalAlertPages > 1 && (
+                            <div className="flex justify-between items-center bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl p-4 mt-8">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => { setAlertPage(p => Math.max(1, p - 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                                    disabled={alertPage === 1}
+                                    className="h-9 px-4 text-[11px] font-black uppercase bg-white/5 border-white/10 text-white hover:bg-white/10 transition-all cursor-pointer"
+                                >
+                                    Anterior
+                                </Button>
+                                <div className="flex flex-col items-center">
+                                    <span className="text-[10px] text-gray-500 font-black uppercase tracking-widest">Página</span>
+                                    <span className="text-sm text-white font-black">{alertPage} <span className="text-gray-600 text-xs">de {totalAlertPages}</span></span>
+                                </div>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => { setAlertPage(p => Math.min(totalAlertPages, p + 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                                    disabled={alertPage === totalAlertPages}
+                                    className="h-9 px-4 text-[11px] font-black uppercase bg-white/5 border-white/10 text-white hover:bg-white/10 transition-all cursor-pointer"
+                                >
+                                    Siguiente
+                                </Button>
+                            </div>
+                        )}
+                    </main>
                 </div>
-
-                {filteredAlerts.length === 0 && (
-                    <div className="text-center p-8 bg-white/5 border border-white/10 rounded-xl mt-8">
-                        <CheckCircle className="w-8 h-8 text-green-400 mx-auto mb-3" />
-                        <p className="text-gray-400 font-medium text-sm">No hay clientes en esta categoría.</p>
-                    </div>
-                )}
-
-                {totalAlertPages > 1 && (
-                    <div className="flex justify-between items-center bg-black/40 border border-white/10 rounded-xl p-3 mt-6">
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setAlertPage(p => Math.max(1, p - 1))}
-                            disabled={alertPage === 1}
-                            className="h-8 text-[10px] bg-white/5 border-white/10 text-white"
-                        >
-                            Anterior
-                        </Button>
-                        <span className="text-[10px] text-gray-400 font-medium">Página {alertPage} de {totalAlertPages}</span>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setAlertPage(p => Math.min(totalAlertPages, p + 1))}
-                            disabled={alertPage === totalAlertPages}
-                            className="h-8 text-[10px] bg-white/5 border-white/10 text-white"
-                        >
-                            Siguiente
-                        </Button>
-                    </div>
-                )}
             </div>
         );
     }
@@ -447,12 +545,12 @@ export function PostventaMobileDashboard({ initialReceipts, soldLots, activeTab,
                 ))}
             </div>
 
-            {/* Receipt Cards */}
-            <div className="space-y-3">
+            {/* Receipt Cards Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
                 {filteredReceipts.map(receipt => (
                     <div
                         key={receipt.id}
-                        className={`rounded-xl border p-4 space-y-3 transition-colors ${receipt.status === 'PENDING'
+                        className={`rounded-2xl border p-5 space-y-4 backdrop-blur-md transition-all duration-300 hover:scale-[1.01] flex flex-col justify-between ${receipt.status === 'PENDING'
                             ? 'bg-yellow-500/5 border-yellow-500/20'
                             : receipt.status === 'APPROVED'
                                 ? 'bg-green-500/5 border-green-500/20'
@@ -462,52 +560,69 @@ export function PostventaMobileDashboard({ initialReceipts, soldLots, activeTab,
                             }`}
                     >
                         {/* Client + Status */}
-                        <div className="flex items-start justify-between gap-2">
+                        <div className="flex items-start justify-between gap-3">
                             <div className="min-w-0">
-                                <p className="font-bold text-white text-sm truncate">
+                                <p className="font-black text-white text-base truncate tracking-tight">
                                     {receipt.reservation?.buyer?.name || 'Sin nombre'}
                                 </p>
-                                <p className="text-[11px] text-gray-400 truncate">
+                                <p className="text-[11px] text-gray-500 truncate font-medium">
                                     {receipt.reservation?.buyer?.email}
                                 </p>
                             </div>
-                            {getStatusBadge(receipt.status)}
+                            <div className="shrink-0">
+                                {getStatusBadge(receipt.status)}
+                            </div>
                         </div>
 
-                        {/* Info Row */}
-                        <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-400">
-                            <span className="flex items-center gap-1">
-                                <MapPin className="w-3 h-3" />
-                                T-{receipt.reservation?.lot?.number} · Etapa {receipt.reservation?.lot?.stage}
-                            </span>
-                            <span className="flex items-center gap-1">
-                                <CreditCard className="w-3 h-3" />
-                                {receipt.scope === 'PIE' ? 'Pie' : `${(receipt.installments_count || 1) > 1 ? (receipt.installments_count || 1) + ' Cuotas' : '1 Cuota'}`}
-                            </span>
-                            <span className="flex items-center gap-1">
-                                <Clock className="w-3 h-3" />
-                                {format(new Date(receipt.created_at), 'dd MMM, HH:mm', { locale: es })}
-                            </span>
+                        {/* Info Row - Improved styling */}
+                        <div className="grid grid-cols-1 gap-2 border-t border-b border-white/5 py-4">
+                            <div className="flex items-center justify-between">
+                                <span className="flex items-center gap-2 text-[10px] font-black text-gray-500 uppercase tracking-widest">
+                                    <MapPin className="w-3 h-3 text-indigo-400" />
+                                    Ubicación
+                                </span>
+                                <span className="text-xs font-bold text-white uppercase">
+                                    T-{receipt.reservation?.lot?.number} · E{receipt.reservation?.lot?.stage}
+                                </span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                                <span className="flex items-center gap-2 text-[10px] font-black text-gray-500 uppercase tracking-widest">
+                                    <CreditCard className="w-3 h-3 text-indigo-400" />
+                                    Concepto
+                                </span>
+                                <span className="text-xs font-bold text-white uppercase">
+                                    {receipt.scope === 'PIE' ? 'Pago de Pie' : `${(receipt.installments_count || 1) > 1 ? (receipt.installments_count || 1) + ' Cuotas' : 'Cuota Mensual'}`}
+                                </span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                                <span className="flex items-center gap-2 text-[10px] font-black text-gray-500 uppercase tracking-widest">
+                                    <Clock className="w-3 h-3 text-indigo-400" />
+                                    Fecha
+                                </span>
+                                <span className="text-xs font-bold text-white uppercase">
+                                    {format(new Date(receipt.created_at), 'dd MMM yy, HH:mm', { locale: es })}
+                                </span>
+                            </div>
                         </div>
 
-                        {/* Amount */}
-                        <div className="flex items-center justify-between bg-white/5 rounded-lg px-3 py-2 border border-white/10">
-                            <span className="text-xs text-gray-500">Monto</span>
-                            <span className="text-base font-bold text-white">{formatCurrency(receipt.amount_clp)}</span>
+                        {/* Amount - Premium highlight */}
+                        <div className="flex items-center justify-between bg-black/40 rounded-xl px-4 py-3 border border-white/5">
+                            <span className="text-[10px] text-gray-500 font-black uppercase tracking-widest">Monto</span>
+                            <span className="text-xl font-black text-white">{formatCurrency(receipt.amount_clp)}</span>
                         </div>
 
                         {/* Rejection Reason */}
                         {receipt.rejection_reason && (
-                            <div className="bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">
-                                <p className="text-xs text-red-400">
-                                    <span className="font-semibold">Motivo: </span>
-                                    {receipt.rejection_reason}
+                            <div className="bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">
+                                <p className="text-[11px] text-red-500 font-bold uppercase tracking-tight mb-1">Motivo de Rechazo</p>
+                                <p className="text-xs text-red-100/70 font-medium italic">
+                                    "{receipt.rejection_reason}"
                                 </p>
                             </div>
                         )}
 
                         {/* Actions */}
-                        <div className="flex gap-2">
+                        <div className="flex gap-2 pt-2">
                             <button
                                 onClick={() => setSelectedImage(receipt.receipt_url)}
                                 className="flex items-center justify-center gap-1.5 flex-1 min-h-[44px] rounded-lg bg-white/10 text-white text-xs font-semibold hover:bg-white/20 transition-colors active:scale-[0.97]"
