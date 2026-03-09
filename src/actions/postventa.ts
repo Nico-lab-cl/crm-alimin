@@ -89,6 +89,12 @@ export async function getPostventaData() {
             const pieAmount = res.receipts.filter(r => r.scope === 'PIE').reduce((acc, r) => acc + r.amount_clp, 0);
             const cuotasAmount = res.receipts.filter(r => r.scope === 'INSTALLMENT').reduce((acc, r) => acc + r.amount_clp, 0);
 
+            let isGracePeriod = false;
+            // If they are past their due date but have 0 penalty, they are in grace (5th to 10th)
+            if (nextDueDate && currentDate >= nextDueDate && penaltyAmount === 0) {
+                isGracePeriod = true;
+            }
+
             const ledgerEntry = {
                 id: res.id,
                 clientName: buyer?.name || 'Sin nombre',
@@ -105,11 +111,13 @@ export async function getPostventaData() {
                 reservaAmount,
                 pieAmount,
                 cuotasAmount,
-                receipts: res.receipts
+                receipts: res.receipts,
+                isGracePeriod
             };
             ledger.push(ledgerEntry);
 
-            if (lateDays > 0) {
+            // Include in alerts if they are past the 5th (either in grace or in mora)
+            if (nextDueDate && currentDate >= nextDueDate) {
                 debtAlerts.push({
                     ...ledgerEntry,
                     lateDays,

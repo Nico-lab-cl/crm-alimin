@@ -238,31 +238,39 @@ export function PostventaMobileDashboard({ initialReceipts, soldLots, activeTab,
                 </div>
 
                 <div className="space-y-3">
-                    {debtAlerts.map(alert => (
-                        <div key={alert.id} className="bg-red-500/10 border border-red-500/20 p-4 rounded-xl space-y-3 relative overflow-hidden">
-                            <div className="absolute top-0 right-0 w-24 h-24 bg-red-500/10 rounded-bl-full -z-10" />
+                    {debtAlerts.map(alert => {
+                        const isGrace = alert.isGracePeriod;
+                        return (
+                            <div key={alert.id} className={`${isGrace ? 'bg-amber-500/10 border-amber-500/20' : 'bg-red-500/10 border-red-500/20'} p-4 rounded-xl space-y-3 relative overflow-hidden`}>
+                                <div className={`absolute top-0 right-0 w-24 h-24 ${isGrace ? 'bg-amber-500/10' : 'bg-red-500/10'} rounded-bl-full -z-10`} />
 
-                            <div className="flex justify-between items-start">
-                                <div>
-                                    <p className="font-bold text-white text-sm">{alert.clientName}</p>
-                                    <p className="text-xs text-red-400 font-medium">T-{alert.lotNumber} · {alert.lateDays} días de atraso</p>
+                                <div className="flex justify-between items-start">
+                                    <div>
+                                        <p className="font-bold text-white text-sm">{alert.clientName}</p>
+                                        <p className={`text-xs ${isGrace ? 'text-amber-400' : 'text-red-400'} font-medium`}>
+                                            T-{alert.lotNumber} · {isGrace ? 'Pendiente (Periodo de gracia)' : `${alert.lateDays} días de atraso`}
+                                        </p>
+                                    </div>
+                                    {isGrace && <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30 text-[10px]">Atrasado</Badge>}
+                                </div>
+
+                                <div className={`flex items-center justify-between bg-black/40 rounded-lg p-3 border ${isGrace ? 'border-amber-500/10' : 'border-red-500/10'}`}>
+                                    <div>
+                                        <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-0.5">{isGrace ? 'Multa Prox.' : 'Multa Calculada'}</p>
+                                        <p className={`font-bold ${isGrace ? 'text-amber-400' : 'text-red-400'} text-sm`}>
+                                            {isGrace ? 'Calculando...' : formatCurrency(alert.penaltyAmount)}
+                                        </p>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-0.5">Venció el</p>
+                                        <p className="font-semibold text-white text-sm">
+                                            {alert.nextDueDate ? format(new Date(alert.nextDueDate), 'dd MMM yyyy', { locale: es }) : 'N/A'}
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
-
-                            <div className="flex items-center justify-between bg-black/40 rounded-lg p-3 border border-red-500/10">
-                                <div>
-                                    <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-0.5">Multa Calculada</p>
-                                    <p className="font-bold text-red-400 text-sm">{formatCurrency(alert.penaltyAmount)}</p>
-                                </div>
-                                <div className="text-right">
-                                    <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-0.5">Venció el</p>
-                                    <p className="font-semibold text-white text-sm">
-                                        {alert.nextDueDate ? format(new Date(alert.nextDueDate), 'dd MMM yyyy', { locale: es }) : 'N/A'}
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    ))}
+                        );
+                    })}
                     {debtAlerts.length === 0 && (
                         <div className="text-center p-8 bg-green-500/10 border border-green-500/20 rounded-xl mt-8">
                             <CheckCircle className="w-8 h-8 text-green-400 mx-auto mb-3" />
