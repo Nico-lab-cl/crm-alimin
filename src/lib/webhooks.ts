@@ -288,4 +288,37 @@ export async function sendPaymentReceiptWebhook(receiptId: string) {
         return { success: false, error: String(e) };
     }
 }
+export async function sendMoraWebhook(payload: {
+    reservation_id: string;
+    contact_name: string;
+    contact_email: string;
+    lot_number: string;
+    lot_stage: number;
+    cuota_numero: number;
+    monto_cuota: number;
+    interes_mora: number;
+    total_a_pagar: number;
+    dias_atraso: number;
+    link_gestion_terreno: string;
+}) {
+    const moraWebhookUrl = "https://n8n-n8n.yszha2.easypanel.host/webhook/89c6e0f1-2e6d-4a21-9211-92fe1d1d2ba5";
 
+    try {
+        const res = await fetch(moraWebhookUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) {
+            console.error(`[Webhook] Mora Webhook failed: ${res.status}`);
+            return { success: false, status: res.status };
+        }
+
+        console.log(`[Webhook] Mora Webhook sent successfully for Reservation ${payload.reservation_id}`);
+        return { success: true };
+    } catch (e) {
+        console.error(`[Webhook] Failed to trigger mora webhook`, e);
+        return { success: false, error: String(e) };
+    }
+}

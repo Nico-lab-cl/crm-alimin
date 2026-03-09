@@ -6,8 +6,8 @@ export const PENALTY_START_DATE_WEB = new Date('2026-03-11T00:00:00-03:00'); // 
 
 export function getInstallmentDueDate(acquisitionDate: Date | string, installmentNumber: number, isLegacy: boolean = false): Date {
     const base = new Date(acquisitionDate);
-    // Use the actual day from the base date (e.g., if assigned on the 15th, due is 15th)
-    const dueDay = base.getDate();
+    // Business Rule: All installments are due on the 5th
+    const dueDay = 5;
     const due = new Date(base.getFullYear(), base.getMonth(), dueDay, 0, 0, 0, 0);
 
     if (isLegacy) {
@@ -15,8 +15,8 @@ export function getInstallmentDueDate(acquisitionDate: Date | string, installmen
         due.setMonth(due.getMonth() + installmentNumber);
     } else {
         // Web Users:
-        // Si compraron entre el día 1 y 5, su primera cuota es este mismo mes.
-        // Si compraron después del 5, su primera cuota es el mes siguiente.
+        // Si compraron entre el día 1 y 5 (inclusive), su primera cuota es este mismo mes.
+        // Si compraron después del día 5, su primera cuota es el mes siguiente.
         if (base.getDate() <= 5) {
             due.setMonth(due.getMonth() + (installmentNumber - 1));
         } else {
@@ -45,14 +45,9 @@ export function calculateTotalInterest(
     // 1. Determine Grace Period End (Dynamic)
     const gracePeriodEnd = new Date(dueDate);
 
-    // Rule: If due date is precisely the 5th, grace period ends on the 10th (standard 5-day grace).
-    // If due date is ANY OTHER day (e.g., 15th), grace period ends on the 15th itself (penalty starts on the 16th).
-    if (dueDate.getDate() === 5) {
-        gracePeriodEnd.setDate(10);
-    } else {
-        // No grace period for custom dates; penalty starts the next day
-        // ensure it's at the very end of the day
-    }
+    // Rule: All installments are due on the 5th, and grace period ends on the 10th.
+    // (Penalty starts on the 11th).
+    gracePeriodEnd.setDate(10);
     gracePeriodEnd.setHours(23, 59, 59, 999);
 
     if (paymentDate <= gracePeriodEnd) {
