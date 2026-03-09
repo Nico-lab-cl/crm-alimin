@@ -300,6 +300,7 @@ export async function sendMoraWebhook(payload: {
     total_a_pagar: number;
     dias_atraso: number;
     link_gestion_terreno: string;
+    is_pre_mora?: boolean;
 }) {
     const moraWebhookUrl = "https://n8n-n8n.yszha2.easypanel.host/webhook/89c6e0f1-2e6d-4a21-9211-92fe1d1d2ba5";
 

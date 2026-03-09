@@ -37,8 +37,6 @@ export async function POST(req: NextRequest) {
             where: {
                 status: { in: ['paid', 'confirmed'] },
                 buyer_id: { not: null },
-                // Use signed_at as a filter to only include those who have already started their payment schedule
-                signed_at: { not: null },
             },
             include: {
                 buyer: true,

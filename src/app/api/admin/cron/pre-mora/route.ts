@@ -1,0 +1,127 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
+import { getInstallmentDueDate } from '@/lib/financials';
+import { sendMoraWebhook } from '@/lib/webhooks';
+
+// This endpoint is called by n8n on the 10th of every month
+// Protected by a secret header: x-cron-secret
+export async function POST(req: NextRequest) {
+    const secret = req.headers.get('x-cron-secret');
+    if (secret !== process.env.CRON_SECRET) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // ?test=true → bypasses date check and skips DB writes (safe for testing in n8n)
+    const url = new URL(req.url);
+    const isTest = url.searchParams.get('test') === 'true';
+
+    try {
+        const now = new Date();
+        const chileNow = new Date(now.toLocaleString("en-US", { timeZone: "America/Santiago" }));
+        const dayOfMonth = chileNow.getDate();
+
+        // Rule: Only run on the 10th (unless it's a test)
+        if (!isTest && dayOfMonth !== 10) {
+            return NextResponse.json({
+                ok: false,
+                message: `La alerta pre-mora solo se procesa el día 10 de cada mes. Hoy es día ${dayOfMonth}`,
+            }, { status: 200 });
+        }
+
+        const month = chileNow.getMonth() + 1;
+        const year = chileNow.getFullYear();
+
+        // Find all users with active reservations
+        const reservations = await prisma.reservation.findMany({
+            where: {
+                status: { in: ['paid', 'confirmed'] },
+                buyer_id: { not: null },
+            },
+            include: {
+                buyer: true,
+                lot: true
+            }
+        });
+
+        let notifiedCount = 0;
+        const notifiedUsers: any[] = [];
+
+        for (const res of reservations) {
+            if (!res.buyer_id || !res.buyer || !res.lot) continue;
+
+            const installmentsPaid = res.installments_paid || 0;
+            const totalCuotas = res.lot.cuotas || 0;
+
+            if (installmentsPaid >= totalCuotas) continue;
+
+            const nextInstallmentNum = installmentsPaid + 1;
+            const dueDate = getInstallmentDueDate(res.created_at, nextInstallmentNum, res.is_legacy);
+
+            const dueMonth = dueDate.getMonth() + 1;
+            const dueYear = dueDate.getFullYear();
+
+            // Check if the due date is in the CURRENT month (or past)
+            if (dueYear > year || (dueYear === year && dueMonth > month)) {
+                continue;
+            }
+
+            // Avoid duplicate notifications in the SAME month for the same user
+            if (!isTest) {
+                const existingNotification = await prisma.notification.findFirst({
+                    where: {
+                        user_id: res.buyer_id,
+                        type: 'payment_warning',
+                        created_at: {
+                            gte: new Date(`${year}-${String(month).padStart(2, '0')}-01`),
+                        }
+                    }
+                });
+                if (existingNotification) continue;
+            }
+
+            const valorCuota = res.lot.valor_cuota || 0;
+            const payload = {
+                reservation_id: res.id,
+                contact_name: res.buyer.name,
+                contact_email: res.buyer.email,
+                lot_number: res.lot.number || '',
+                lot_stage: res.lot.stage || 0,
+                cuota_numero: nextInstallmentNum,
+                monto_cuota: valorCuota,
+                interes_mora: 0,
+                total_a_pagar: valorCuota,
+                dias_atraso: 0,
+                is_pre_mora: true,
+                link_gestion_terreno: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://aliminlomasdelmar.com'}/user/plots`
+            };
+
+            // Trigger Webhook using the existing mora webhook ID
+            await sendMoraWebhook(payload);
+
+            // Create Local Notification
+            if (!isTest) {
+                await prisma.notification.create({
+                    data: {
+                        user_id: res.buyer_id,
+                        type: 'payment_warning',
+                        title: '⚠️ Aviso Pre-Mora',
+                        message: `Recordatorio: Mañana comienza a aplicar el interés por mora para tu cuota ${nextInstallmentNum}/${totalCuotas}. Tienes hasta el día de hoy para pagar sin que te cobremos multas por atrasos.`,
+                    }
+                });
+            }
+
+            notifiedUsers.push(payload);
+            notifiedCount++;
+        }
+
+        return NextResponse.json({
+            ok: true,
+            message: `Proceso completado. Alertas pre-mora enviadas: ${notifiedCount}`,
+            data: notifiedUsers
+        });
+
+    } catch (error) {
+        console.error('[Cron Pre-Mora] Error:', error);
+        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    }
+}
