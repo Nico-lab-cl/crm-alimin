@@ -42,6 +42,13 @@ export function PostventaMobileDashboard({ initialReceipts, soldLots, activeTab,
     const [selectedClientLedger, setSelectedClientLedger] = useState<any | null>(null);
     const ledgerItemsPerPage = 10;
 
+    const [alertFilter, setAlertFilter] = useState<'ALL' | 'UPCOMING' | 'GRACE' | 'LATE' | 'PIE' | 'OK'>('ALL');
+    const [alertStage, setAlertStage] = useState<'ALL' | 1 | 2 | 3 | 4>('ALL');
+    const [alertPage, setAlertPage] = useState(1);
+    const alertsPerPage = 10;
+
+    const today = new Date();
+
     const pendingCount = receipts.filter(r => r.status === 'PENDING').length;
 
     const filteredReceipts = filter === 'ALL'
@@ -227,21 +234,70 @@ export function PostventaMobileDashboard({ initialReceipts, soldLots, activeTab,
     }
 
     if (activeTab === 'alertas') {
+        const filteredAlerts = debtAlerts.filter(alert => {
+            const matchesStage = alertStage === 'ALL' || alert.lotStage === alertStage;
+            const matchesStatus = alertFilter === 'ALL' ||
+                (alertFilter === 'UPCOMING' && alert.isUpcoming) ||
+                (alertFilter === 'GRACE' && alert.isGracePeriod) ||
+                (alertFilter === 'LATE' && alert.isLate) ||
+                (alertFilter === 'PIE' && alert.isPieDebt) ||
+                (alertFilter === 'OK' && alert.isUpToDate);
+            return matchesStage && matchesStatus;
+        });
+
+        const totalAlertPages = Math.ceil(filteredAlerts.length / alertsPerPage);
+        const paginatedAlerts = filteredAlerts.slice((alertPage - 1) * alertsPerPage, alertPage * alertsPerPage);
+
         return (
             <div className="space-y-4 pb-24">
-                <div className="flex items-center gap-2 mb-4">
-                    <AlertTriangle className="w-5 h-5 text-red-500" />
-                    <h2 className="text-lg font-bold text-white">Alertas de Morosidad</h2>
-                    {debtAlerts.length > 0 && (
-                        <Badge variant="destructive" className="ml-auto font-bold">{debtAlerts.length}</Badge>
-                    )}
+                <div className="flex flex-col gap-1 mb-4">
+                    <div className="flex items-center gap-2">
+                        <AlertTriangle className="w-5 h-5 text-red-500" />
+                        <h2 className="text-lg font-bold text-white">Gestión de Clientes</h2>
+                        {filteredAlerts.length > 0 && (
+                            <Badge variant="outline" className="ml-auto font-bold bg-white/5 border-white/10 text-white">{filteredAlerts.length} total</Badge>
+                        )}
+                    </div>
+                    <p className="text-[10px] text-gray-400 font-medium uppercase tracking-widest mt-1">
+                        Hoy: {format(today, "EEEE d 'de' MMMM 'de' yyyy", { locale: es })}
+                    </p>
                 </div>
 
-                <div className="space-y-3">
-                    {debtAlerts.map(alert => {
+                {/* Filters Row 1: Status */}
+                <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
+                    {(['ALL', 'LATE', 'GRACE', 'PIE', 'UPCOMING', 'OK'] as const).map(f => (
+                        <button
+                            key={f}
+                            onClick={() => { setAlertFilter(f); setAlertPage(1); }}
+                            className={`px-3 py-1.5 rounded-full text-[10px] font-bold whitespace-nowrap transition-all border ${alertFilter === f ? 'bg-[#36595F] text-white border-[#36595F]' : 'bg-white/5 text-gray-400 border-white/10'
+                                }`}
+                        >
+                            {f === 'ALL' ? 'Todos' : f === 'LATE' ? '🚩 Mora' : f === 'GRACE' ? '⌛ Gracia' : f === 'PIE' ? '🟣 Pie' : f === 'UPCOMING' ? '🔵 Próximos' : '✅ Al Día'}
+                        </button>
+                    ))}
+                </div>
+
+                {/* Filters Row 2: Stages */}
+                <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
+                    {(['ALL', 1, 2, 3, 4] as const).map(s => (
+                        <button
+                            key={s}
+                            onClick={() => { setAlertStage(s as any); setAlertPage(1); }}
+                            className={`px-3 py-1 text-[10px] font-bold whitespace-nowrap transition-all border rounded-lg ${alertStage === s ? 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30' : 'bg-white/5 text-gray-500 border-white/5'
+                                }`}
+                        >
+                            {s === 'ALL' ? 'Todas las Etapas' : `Etapa ${s}`}
+                        </button>
+                    ))}
+                </div>
+
+                <div className="space-y-3 mt-4">
+                    {paginatedAlerts.map(alert => {
                         const isGrace = alert.isGracePeriod;
                         const isPie = alert.isPieDebt;
                         const isUpcoming = alert.isUpcoming;
+                        const isLate = alert.isLate;
+                        const isOK = alert.isUpToDate;
 
                         let colorClass = 'bg-red-500/10 border-red-500/20';
                         let accentClass = 'text-red-400';
@@ -249,7 +305,13 @@ export function PostventaMobileDashboard({ initialReceipts, soldLots, activeTab,
                         let badgeLabel = 'En Mora';
                         let statusText = `${alert.lateDays} días de atraso`;
 
-                        if (isUpcoming) {
+                        if (isOK) {
+                            colorClass = 'bg-green-500/10 border-green-500/20';
+                            accentClass = 'text-green-400';
+                            circleClass = 'bg-green-500/10';
+                            badgeLabel = 'Al Día';
+                            statusText = 'Pagos correctos';
+                        } else if (isUpcoming) {
                             colorClass = 'bg-blue-500/10 border-blue-500/20';
                             accentClass = 'text-blue-400';
                             circleClass = 'bg-blue-500/10';
@@ -265,49 +327,84 @@ export function PostventaMobileDashboard({ initialReceipts, soldLots, activeTab,
                             colorClass = 'bg-amber-500/10 border-amber-500/20';
                             accentClass = 'text-amber-400';
                             circleClass = 'bg-amber-500/10';
-                            badgeLabel = 'Atrasado';
-                            statusText = 'Pendiente (Periodo de gracia)';
+                            badgeLabel = 'Periodo Gracia';
+                            statusText = 'Pendiente (Sin multa)';
                         }
 
                         return (
                             <div key={alert.id} className={`${colorClass} p-4 rounded-xl space-y-3 relative overflow-hidden`}>
-                                <div className={`absolute top-0 right-0 w-24 h-24 ${circleClass} rounded-bl-full -z-10`} />
+                                <div className={`absolute top-0 right-0 w-24 h-24 ${circleClass} rounded-bl-full -z-10 opacity-50`} />
 
                                 <div className="flex justify-between items-start">
                                     <div>
                                         <p className="font-bold text-white text-sm">{alert.clientName}</p>
-                                        <p className={`text-xs ${accentClass} font-medium`}>
-                                            T-{alert.lotNumber} · {statusText}
+                                        <p className={`text-[10px] ${accentClass} font-medium`}>
+                                            T-{alert.lotNumber} (Etapa {alert.lotStage}) · {statusText}
                                         </p>
                                     </div>
-                                    <Badge className={`${colorClass.replace('bg-', 'bg-').replace('/10', '/20')} ${accentClass} border-${accentClass.split('-')[0]}-500/30 text-[10px]`}>
+                                    <Badge className={`${colorClass.replace('bg-', 'bg-').replace('/10', '/30')} ${accentClass} border-${accentClass.split('-')[0]}-500/30 text-[10px] font-bold`}>
                                         {badgeLabel}
                                     </Badge>
                                 </div>
 
                                 <div className={`flex items-center justify-between bg-black/40 rounded-lg p-3 border ${colorClass.split(' ')[1]}`}>
                                     <div>
-                                        <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-0.5">
-                                            {isUpcoming ? 'A pagar' : isPie ? 'Saldo Pie' : isGrace ? 'Resumen' : 'Multa Calculada'}
+                                        <p className="text-[9px] text-gray-400 uppercase tracking-wider mb-0.5">
+                                            {isUpcoming ? 'A pagar' : isPie ? 'Saldo Pie' : isGrace ? 'A Pagar' : isOK ? 'Total Cuotas' : 'Multa Calculada'}
                                         </p>
                                         <p className={`font-bold ${accentClass} text-sm`}>
-                                            {isUpcoming || isGrace ? formatCurrency(alert.monto_cuota || 0) : formatCurrency(isPie ? (alert.totalToPay * 0.2 - alert.pieAmount) : alert.penaltyAmount)}
+                                            {isOK
+                                                ? formatCurrency(alert.cuotasAmount)
+                                                : isUpcoming || isGrace
+                                                    ? formatCurrency(alert.monto_cuota || 0)
+                                                    : formatCurrency(isPie ? (alert.totalToPay * 0.2 - alert.pieAmount) : alert.penaltyAmount)
+                                            }
                                         </p>
                                     </div>
                                     <div className="text-right">
-                                        <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-0.5">{isUpcoming ? 'Vence el' : 'Venció el'}</p>
-                                        <p className="font-semibold text-white text-sm">
-                                            {alert.displayDueDate ? format(new Date(alert.displayDueDate), 'dd MMM yyyy', { locale: es }) : 'N/A'}
+                                        <p className="text-[9px] text-gray-400 uppercase tracking-wider mb-0.5">
+                                            {isOK ? 'Cuotas' : isUpcoming ? 'Vence el' : 'Venció el'}
+                                        </p>
+                                        <p className="font-semibold text-white text-xs">
+                                            {isOK
+                                                ? `${alert.paidCuotas} de ${alert.totalCuotas}`
+                                                : alert.displayDueDate ? format(new Date(alert.displayDueDate), 'dd MMM yyyy', { locale: es }) : 'N/A'
+                                            }
                                         </p>
                                     </div>
                                 </div>
                             </div>
                         );
                     })}
-                    {debtAlerts.length === 0 && (
-                        <div className="text-center p-8 bg-green-500/10 border border-green-500/20 rounded-xl mt-8">
+
+                    {filteredAlerts.length === 0 && (
+                        <div className="text-center p-8 bg-white/5 border border-white/10 rounded-xl mt-8">
                             <CheckCircle className="w-8 h-8 text-green-400 mx-auto mb-3" />
-                            <p className="text-green-400 font-medium text-sm">Excelente, no hay clientes morosos.</p>
+                            <p className="text-gray-400 font-medium text-sm">No hay clientes en esta categoría.</p>
+                        </div>
+                    )}
+
+                    {totalAlertPages > 1 && (
+                        <div className="flex justify-between items-center bg-black/40 border border-white/10 rounded-xl p-3 mt-6">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setAlertPage(p => Math.max(1, p - 1))}
+                                disabled={alertPage === 1}
+                                className="h-8 text-[10px] bg-white/5 border-white/10 text-white"
+                            >
+                                Anterior
+                            </Button>
+                            <span className="text-[10px] text-gray-400 font-medium">Página {alertPage} de {totalAlertPages}</span>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setAlertPage(p => Math.min(totalAlertPages, p + 1))}
+                                disabled={alertPage === totalAlertPages}
+                                className="h-8 text-[10px] bg-white/5 border-white/10 text-white"
+                            >
+                                Siguiente
+                            </Button>
                         </div>
                     )}
                 </div>

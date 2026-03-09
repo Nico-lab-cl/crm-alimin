@@ -117,6 +117,7 @@ export async function getPostventaData() {
                 clientEmail: buyer?.email,
                 clientPhone: res.phone,
                 lotNumber: lot.number,
+                lotStage: lot.stage || 1,
                 totalToPay,
                 totalPaid,
                 pendingBalance,
@@ -138,18 +139,18 @@ export async function getPostventaData() {
             const fiveDaysFromNow = new Date(currentDate);
             fiveDaysFromNow.setDate(fiveDaysFromNow.getDate() + 5);
 
-            // Include in alerts if:
-            // 1. They are already past the due date (grace or mora)
-            // 2. OR their due date is in the next 5 days ("A punto de vencer")
-            if (nextDueDate && (currentDate >= nextDueDate || nextDueDate <= fiveDaysFromNow)) {
-                debtAlerts.push({
-                    ...ledgerEntry,
-                    lateDays,
-                    penaltyAmount,
-                    isUpcoming: nextDueDate > currentDate && nextDueDate <= fiveDaysFromNow,
-                    displayDueDate: nextDueDate // Use the actual calculated due date for display
-                });
-            }
+            const isLate = penaltyAmount > 0;
+            const isUpToDate = !isPieDebt && !isGracePeriod && !isLate && !(nextDueDate && nextDueDate <= fiveDaysFromNow && nextDueDate > currentDate);
+
+            debtAlerts.push({
+                ...ledgerEntry,
+                lateDays,
+                penaltyAmount,
+                isUpcoming: nextDueDate ? (nextDueDate > currentDate && nextDueDate <= fiveDaysFromNow) : false,
+                displayDueDate: nextDueDate,
+                isLate,
+                isUpToDate
+            });
         }
 
         // Priority sorting: Mora > Grace > Pie > Upcoming
@@ -162,14 +163,18 @@ export async function getPostventaData() {
             if (a.isGracePeriod && !b.isGracePeriod) return -1;
             if (b.isGracePeriod && !a.isGracePeriod) return 1;
 
-            // 3. Pie Debt
-            if (a.isPieDebt && !b.isPieDebt) return -1;
-            if (b.isPieDebt && !a.isPieDebt) return 1;
+            // 4. Upcoming
+            if (a.isUpcoming && !b.isUpcoming) return -1;
+            if (b.isUpcoming && !a.isUpcoming) return 1;
 
-            // 4. Then by late days (desc)
+            // 5. Up-to-date (Al día)
+            if (a.isUpToDate && !b.isUpToDate) return 1;
+            if (b.isUpToDate && !a.isUpToDate) return -1;
+
+            // 6. Then by late days (desc)
             if (b.lateDays !== a.lateDays) return b.lateDays - a.lateDays;
 
-            // 5. Finally by date
+            // 7. Finally by date
             return (a.nextDueDate?.getTime() || 0) - (b.nextDueDate?.getTime() || 0);
         });
 
