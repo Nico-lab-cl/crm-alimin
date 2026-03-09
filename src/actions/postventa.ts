@@ -106,9 +106,22 @@ export async function getPostventaData() {
             const cuotasAmount = res.receipts.filter(r => r.scope === 'INSTALLMENT').reduce((acc, r) => acc + r.amount_clp, 0);
 
             let isGracePeriod = false;
-            // If they are past their due date but have 0 penalty, they are in grace (5th to 10th)
+            // A person is in grace only if:
+            // 1. They are past due date
+            // 2. Penalty is 0 (day 6-10)
+            // 3. They DON'T have an approved payment for this specific installment
             if (nextDueDate && currentDate >= nextDueDate && penaltyAmount === 0) {
-                isGracePeriod = true;
+                // Check if there's an approved receipt that covers this nextDueDate
+                const hasPaidCurrent = res.receipts.some(r => {
+                    if (r.scope !== 'INSTALLMENT') return false;
+                    // If the receipt was created in the same month as the nextDueDate, they paid it
+                    const rDate = new Date(r.created_at);
+                    return rDate.getMonth() === nextDueDate.getMonth() && rDate.getFullYear() === nextDueDate.getFullYear();
+                });
+
+                if (!hasPaidCurrent) {
+                    isGracePeriod = true;
+                }
             }
 
             const ledgerEntry = {
@@ -140,13 +153,28 @@ export async function getPostventaData() {
             fiveDaysFromNow.setDate(fiveDaysFromNow.getDate() + 5);
 
             const isLate = penaltyAmount > 0;
-            const isUpToDate = !isPieDebt && !isGracePeriod && !isLate && !(nextDueDate && nextDueDate <= fiveDaysFromNow && nextDueDate > currentDate);
+            const isUpcomingPotential = nextDueDate ? (nextDueDate > currentDate && nextDueDate <= fiveDaysFromNow) : false;
+
+            let isUpcoming = false;
+            if (isUpcomingPotential && nextDueDate) {
+                // Only upcoming if NOT paid
+                const hasPaidCurrent = res.receipts.some(r => {
+                    if (r.scope !== 'INSTALLMENT') return false;
+                    const rDate = new Date(r.created_at);
+                    return rDate.getMonth() === nextDueDate.getMonth() && rDate.getFullYear() === nextDueDate.getFullYear();
+                });
+                if (!hasPaidCurrent) {
+                    isUpcoming = true;
+                }
+            }
+
+            const isUpToDate = !isPieDebt && !isGracePeriod && !isLate && !isUpcoming;
 
             debtAlerts.push({
                 ...ledgerEntry,
                 lateDays,
                 penaltyAmount,
-                isUpcoming: nextDueDate ? (nextDueDate > currentDate && nextDueDate <= fiveDaysFromNow) : false,
+                isUpcoming,
                 displayDueDate: nextDueDate,
                 isLate,
                 isUpToDate
