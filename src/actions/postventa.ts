@@ -53,42 +53,28 @@ export async function getPostventaData() {
                 ? new Date(res.legacy_installment_start_date).toISOString()
                 : res.created_at.toISOString();
 
-            if (res.pie_status !== 'PAID') {
-                // Pie Debt Logic
-                isPieDebt = true;
-                // Assuming Pie is due 15 days after reservation if not specified
-                const pieDueDate = new Date(res.created_at);
-                pieDueDate.setDate(pieDueDate.getDate() + 15);
-                nextDueDate = pieDueDate;
-
-                if (currentDate > pieDueDate) {
-                    const diffTime = currentDate.getTime() - pieDueDate.getTime();
-                    lateDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                    // No interest for Pie yet, just alert
-                }
-            } else if (paidCuotas < totalCuotas) {
-                // Installment Logic
+            // 1. Calculate nextDueDate regardless of Pie status to ensure they appear in the ledger
+            // We prioritize showing the PIE debt if it exists, otherwise we show the installment debt.
+            if (paidCuotas < totalCuotas) {
                 nextDueDate = getInstallmentDueDate(baseDate, paidCuotas + 1, isLegacyBool);
 
+                const lotAreaM2 = lot.area_m2 || 200;
                 if (isLegacyBool && res.legacy_debt_start_date) {
                     const debtStart = new Date(res.legacy_debt_start_date);
                     debtStart.setHours(0, 0, 0, 0);
                     if (currentDate > debtStart) {
                         const diffTime = currentDate.getTime() - debtStart.getTime();
-                        lateDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                        lateDays = Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
                         if (lateDays > 0) {
-                            const lotAreaM2 = lot.area_m2 || 200;
                             const dailyInterest = calculateDailyInterest(totalToPay, lotAreaM2);
                             penaltyAmount = dailyInterest * lateDays;
                         }
                     }
                 } else {
-                    const iDue = getInstallmentDueDate(baseDate, paidCuotas + 1, isLegacyBool);
-                    const lotAreaM2 = lot.area_m2 || 200;
                     penaltyAmount = calculateTotalInterest(
                         totalToPay,
                         lotAreaM2,
-                        iDue,
+                        nextDueDate,
                         false,
                         currentDate
                     );
@@ -97,6 +83,22 @@ export async function getPostventaData() {
                         const daily = calculateDailyInterest(totalToPay, lotAreaM2);
                         lateDays = daily > 0 ? Math.round(penaltyAmount / daily) : 0;
                     }
+                }
+            }
+
+            // 2. Identify Pie Debt status (but don't let it block installment due date if already paid or partially paid)
+            if (res.pie_status !== 'PAID') {
+                isPieDebt = true;
+                const pieDueDate = new Date(res.created_at);
+                pieDueDate.setDate(pieDueDate.getDate() + 15);
+
+                // If they have Pie debt, nextDueDate for the ALERT should ideally be the PIE one
+                // but the ledger should know about the cuota too.
+                // For the sake of the alert display:
+                if (currentDate > pieDueDate) {
+                    const diffTime = currentDate.getTime() - pieDueDate.getTime();
+                    // We only override lateDays/penalty info if Pie is specifically the focus
+                    // However, we want them to show in Grace Period if the installment is due too.
                 }
             }
 
