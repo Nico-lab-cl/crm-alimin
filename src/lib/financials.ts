@@ -8,7 +8,7 @@ export function getInstallmentDueDate(acquisitionDate: Date | string, installmen
     const base = new Date(acquisitionDate);
     // Business Rule: All installments are due on the 5th
     const dueDay = 5;
-    const due = new Date(base.getFullYear(), base.getMonth(), dueDay, 0, 0, 0, 0);
+    const due = new Date(base.getFullYear(), base.getMonth(), dueDay, 12, 0, 0, 0);
 
     if (isLegacy) {
         // Offline clients: the base date is typically a virtual month before their first debt
