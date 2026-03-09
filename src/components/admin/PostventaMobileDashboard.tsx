@@ -108,9 +108,9 @@ export function PostventaMobileDashboard({ initialReceipts, soldLots, activeTab,
                     <h2 className="text-lg font-bold text-white">Estado de Cuentas</h2>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 mt-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 4xl:grid-cols-5 gap-5 mt-4">
                     {paginatedLedger.map(client => (
-                        <div key={client.id} className="bg-[#1a1a1a]/40 backdrop-blur-md border border-white/10 p-5 rounded-2xl space-y-4 relative overflow-hidden transition-all hover:border-indigo-500/30 group">
+                        <div key={client.id} className="bg-[#1a1a1a]/40 backdrop-blur-xl border border-white/10 p-6 rounded-[2rem] space-y-5 relative overflow-hidden transition-all duration-500 hover:border-indigo-500/30 hover:scale-[1.02] active:scale-[0.98] shadow-2xl group">
                             <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500/5 rounded-bl-full -z-10 group-hover:bg-indigo-500/10 transition-colors" />
 
                             <div className="flex justify-between items-start">
@@ -317,7 +317,7 @@ export function PostventaMobileDashboard({ initialReceipts, soldLots, activeTab,
                             {/* Filter: Status */}
                             <div className="space-y-3">
                                 <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest px-1">Estado de Pago</p>
-                                <div className="flex flex-row lg:flex-col gap-2 overflow-x-auto pb-1 no-scrollbar lg:overflow-visible lg:pb-0">
+                                <div className="flex flex-wrap lg:flex-col gap-2">
                                     {(['ALL', 'LATE', 'GRACE', 'UPCOMING', 'OK'] as const).map(f => (
                                         <button
                                             key={f}
@@ -340,7 +340,7 @@ export function PostventaMobileDashboard({ initialReceipts, soldLots, activeTab,
                             {/* Filter: Stage */}
                             <div className="space-y-3">
                                 <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest px-1">Filtrar por Etapa</p>
-                                <div className="flex flex-row lg:flex-wrap gap-2 overflow-x-auto pb-1 no-scrollbar lg:overflow-visible lg:pb-0">
+                                <div className="flex flex-wrap gap-2">
                                     {(['ALL', 1, 2, 3, 4] as const).map(s => (
                                         <button
                                             key={s}
@@ -377,7 +377,7 @@ export function PostventaMobileDashboard({ initialReceipts, soldLots, activeTab,
                         </div>
 
                         {/* Alerts Cards Grid */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 4xl:grid-cols-5 gap-5">
                             {paginatedAlerts.map(alert => {
                                 const isGrace = alert.isGracePeriod;
                                 const isUpcoming = alert.isUpcoming;
@@ -411,7 +411,7 @@ export function PostventaMobileDashboard({ initialReceipts, soldLots, activeTab,
                                 }
 
                                 return (
-                                    <div key={alert.id} className={`${colorClass} p-5 rounded-2xl border backdrop-blur-md transition-all duration-300 hover:scale-[1.02] flex flex-col justify-between relative overflow-hidden shadow-lg`}>
+                                    <div key={alert.id} className={`${colorClass} p-6 rounded-[2rem] border backdrop-blur-xl transition-all duration-500 hover:scale-[1.02] active:scale-[0.98] flex flex-col justify-between relative overflow-hidden shadow-2xl group`}>
                                         <div className={`absolute top-0 right-0 w-32 h-32 ${circleClass} rounded-bl-full -z-10 opacity-40 transition-transform group-hover:scale-110`} />
 
                                         <div className="space-y-4">
@@ -530,7 +530,7 @@ export function PostventaMobileDashboard({ initialReceipts, soldLots, activeTab,
             </div>
 
             {/* Filters */}
-            <div className="flex gap-2 overflow-x-auto pb-1">
+            <div className="flex flex-wrap gap-2">
                 {(['PENDING', 'ALL', 'APPROVED', 'REJECTED'] as const).map(f => (
                     <button
                         key={f}
@@ -546,11 +546,11 @@ export function PostventaMobileDashboard({ initialReceipts, soldLots, activeTab,
             </div>
 
             {/* Receipt Cards Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 4xl:grid-cols-5 gap-5">
                 {filteredReceipts.map(receipt => (
                     <div
                         key={receipt.id}
-                        className={`rounded-2xl border p-5 space-y-4 backdrop-blur-md transition-all duration-300 hover:scale-[1.01] flex flex-col justify-between ${receipt.status === 'PENDING'
+                        className={`rounded-[2rem] border p-6 space-y-5 backdrop-blur-xl transition-all duration-500 hover:scale-[1.02] active:scale-[0.98] flex flex-col justify-between shadow-2xl group ${receipt.status === 'PENDING'
                             ? 'bg-yellow-500/5 border-yellow-500/20'
                             : receipt.status === 'APPROVED'
                                 ? 'bg-green-500/5 border-green-500/20'

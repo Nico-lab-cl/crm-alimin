@@ -65,7 +65,7 @@ export function AdminDashboardClient({
                 <div className="min-h-screen bg-black/95 relative w-full pt-4 md:pt-8 px-2 md:px-4 pb-24 overflow-x-hidden">
                     <div className="absolute inset-0 bg-[url('/terreno-bg.JPG')] bg-cover bg-center opacity-20 blur-sm fixed" />
 
-                    <div className="relative z-10 max-w-[1800px] mx-auto space-y-4 md:space-y-8">
+                    <div className="relative z-10 max-w-[2400px] mx-auto space-y-4 md:space-y-8">
                         {/* Header */}
                         <div className="flex items-center justify-between pt-1 pb-2">
                             <h2 className="text-xl md:text-3xl font-black text-white">
@@ -94,16 +94,16 @@ export function AdminDashboardClient({
                                     </TabsTrigger>
                                 </TabsList>
 
-                                <TabsContent value="recibos" className="mt-6 max-w-3xl">
+                                <TabsContent value="recibos" className="mt-6">
                                     <PostventaMobileDashboard initialReceipts={receipts} soldLots={soldLots} activeTab="recibos" ledger={ledger} debtAlerts={debtAlerts} />
                                 </TabsContent>
-                                <TabsContent value="ledger" className="mt-6 max-w-4xl">
+                                <TabsContent value="ledger" className="mt-6">
                                     <PostventaMobileDashboard initialReceipts={receipts} soldLots={soldLots} activeTab="ledger" ledger={ledger} debtAlerts={debtAlerts} />
                                 </TabsContent>
-                                <TabsContent value="alertas" className="mt-6 max-w-4xl">
+                                <TabsContent value="alertas" className="mt-6">
                                     <PostventaMobileDashboard initialReceipts={receipts} soldLots={soldLots} activeTab="alertas" ledger={ledger} debtAlerts={debtAlerts} />
                                 </TabsContent>
-                                <TabsContent value="mora" className="mt-6 max-w-xl">
+                                <TabsContent value="mora" className="mt-6">
                                     <MoraExplainerCard soldLots={soldLots} />
                                 </TabsContent>
                             </Tabs>
@@ -139,7 +139,7 @@ export function AdminDashboardClient({
             <div className="min-h-screen bg-black/95 relative w-full pt-4 md:pt-8 px-2 md:px-4 pb-12 overflow-x-hidden">
                 <div className="absolute inset-0 bg-[url('/terreno-bg.JPG')] bg-cover bg-center opacity-20 blur-sm fixed" />
 
-                <div className="relative z-10 max-w-[1800px] mx-auto space-y-4 md:space-y-8">
+                <div className="relative z-10 max-w-[2400px] mx-auto space-y-4 md:space-y-8">
                     {/* Desktop header */}
                     <div className="hidden md:flex items-center justify-between">
                         <h2 className="text-3xl font-black text-white bg-white/5 backdrop-blur-md px-6 py-3 rounded-xl border border-white/10 shadow-xl">
