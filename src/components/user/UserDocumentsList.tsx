@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileText, Download, CheckCircle, Clock } from "lucide-react";
+import { FileText, Download, CheckCircle, Clock, Folder } from "lucide-react";
 
 interface Reservation {
     id: string;
@@ -131,47 +131,96 @@ export function UserDocumentsList({ reservations }: { reservations: Reservation[
                                 }
                             })()}
 
-                            {/* ── Recibos de Pago ── */}
-                            {res.receipts && res.receipts.filter((r: any) => r.status === 'APPROVED').length > 0 && (
-                                <>
-                                    <div className="h-px w-full bg-white/10 my-4" />
-                                    <div className="space-y-3">
-                                        <div className="flex justify-between items-center">
-                                            <h3 className="font-semibold text-gray-200 text-base">Comprobantes de Pago</h3>
-                                            <span className="flex items-center text-green-400 text-xs gap-1 bg-green-900/40 px-2 py-1 rounded">
-                                                <CheckCircle className="h-3 w-3" /> Aprobados
-                                            </span>
-                                        </div>
-                                        <p className="text-xs text-gray-400">Recibos oficiales generados tras la aprobación de tus transferencias.</p>
+                            {/* ── Recibos de Pago (Otros) y Cuotas ── */}
+                            {res.receipts && res.receipts.filter((r: any) => r.status === 'APPROVED').length > 0 && (() => {
+                                const allApproved = res.receipts.filter((r: any) => r.status === 'APPROVED');
+                                const installmentReceipts = allApproved.filter((r: any) => r.scope === 'INSTALLMENT' || r.scope === 'CUOTA');
+                                const otherReceipts = allApproved.filter((r: any) => r.scope !== 'INSTALLMENT' && r.scope !== 'CUOTA');
 
-                                        <div className="flex flex-col gap-2 mt-3">
-                                            {res.receipts.filter((r: any) => r.status === 'APPROVED').map((receipt: any) => {
-                                                const isPie = receipt.scope === 'PIE';
-                                                const isInstallment = receipt.scope === 'INSTALLMENT';
-                                                const label = isPie ? "Pago de Pie" : isInstallment ? `Pago de ${receipt.installments_count || 1} Cuota(s)` : "Pago de Reserva";
+                                return (
+                                    <>
+                                        {/* Other Receipts (Pie, Reservation, etc) */}
+                                        {otherReceipts.length > 0 && (
+                                            <>
+                                                <div className="h-px w-full bg-white/10 my-4" />
+                                                <div className="space-y-3">
+                                                    <div className="flex justify-between items-center">
+                                                        <h3 className="font-semibold text-gray-200 text-base">Otros Comprobantes</h3>
+                                                        <span className="flex items-center text-green-400 text-xs gap-1 bg-green-900/40 px-2 py-1 rounded">
+                                                            <CheckCircle className="h-3 w-3" /> Aprobados
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex flex-col gap-2 mt-3">
+                                                        {otherReceipts.map((receipt: any) => {
+                                                            const isPie = receipt.scope === 'PIE';
+                                                            const label = isPie ? "Pago de Pie" : "Pago de Reserva";
+                                                            return (
+                                                                <a
+                                                                    key={receipt.id}
+                                                                    href={`/api/receipt/${receipt.id}/pdf`}
+                                                                    target="_blank"
+                                                                    rel="noopener noreferrer"
+                                                                    className="w-full flex items-center justify-between px-4 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-sm transition-colors"
+                                                                >
+                                                                    <div className="flex flex-col">
+                                                                        <span className="text-gray-200 font-medium">{label}</span>
+                                                                        <span className="text-xs text-gray-500">
+                                                                            {new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(receipt.amount_clp)}
+                                                                        </span>
+                                                                    </div>
+                                                                    <Download className="h-4 w-4 text-gray-400" />
+                                                                </a>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                </div>
+                                            </>
+                                        )}
 
-                                                return (
-                                                    <a
-                                                        key={receipt.id}
-                                                        href={`/api/receipt/${receipt.id}/pdf`}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        className="w-full flex items-center justify-between px-4 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-sm transition-colors"
-                                                    >
-                                                        <div className="flex flex-col">
-                                                            <span className="text-gray-200 font-medium">{label}</span>
-                                                            <span className="text-xs text-gray-500">
-                                                                {new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(receipt.amount_clp)}
-                                                            </span>
+                                        {/* Installment Folder */}
+                                        {installmentReceipts.length > 0 && (
+                                            <>
+                                                <div className="h-px w-full bg-white/10 my-4" />
+                                                <div className="space-y-3">
+                                                    <div className="flex justify-between items-center bg-[#36595F]/20 border border-[#36595F]/40 p-3 rounded-lg">
+                                                        <div className="flex items-center gap-2">
+                                                            <Folder className="h-5 w-5 text-amber-400 fill-amber-400/20" />
+                                                            <h3 className="font-semibold text-gray-200 text-base">Carpeta de Cuotas</h3>
                                                         </div>
-                                                        <Download className="h-4 w-4 text-gray-400" />
-                                                    </a>
-                                                );
-                                            })}
-                                        </div>
-                                    </div>
-                                </>
-                            )}
+                                                        <span className="text-[#84b9c1] text-xs font-bold bg-[#36595F]/30 px-2 py-1 rounded-full">
+                                                            {installmentReceipts.length} recibos
+                                                        </span>
+                                                    </div>
+                                                    <p className="text-xs text-gray-400">Recibos oficiales de las cuotas mensuales que has pagado.</p>
+
+                                                    <div className="flex flex-col gap-2 mt-3 pl-4 border-l-2 border-white/5 ml-2">
+                                                        {installmentReceipts.map((receipt: any) => {
+                                                            const label = `Cuota(s) Pagada(s) - ${receipt.installments_count || 1} Cuota(s)`;
+                                                            return (
+                                                                <a
+                                                                    key={receipt.id}
+                                                                    href={`/api/receipt/${receipt.id}/pdf`}
+                                                                    target="_blank"
+                                                                    rel="noopener noreferrer"
+                                                                    className="w-full flex items-center justify-between px-4 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-sm transition-colors"
+                                                                >
+                                                                    <div className="flex flex-col">
+                                                                        <span className="text-gray-200 font-medium">{label}</span>
+                                                                        <span className="text-xs text-gray-500">
+                                                                            {new Date(receipt.created_at).toLocaleDateString('es-CL')} • {new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(receipt.amount_clp)}
+                                                                        </span>
+                                                                    </div>
+                                                                    <Download className="h-4 w-4 text-gray-400" />
+                                                                </a>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                </div>
+                                            </>
+                                        )}
+                                    </>
+                                );
+                            })()}
 
                         </CardContent>
                     </Card>
