@@ -176,6 +176,7 @@ interface PaymentReceiptPDFProps {
     paymentScope: 'PIE' | 'INSTALLMENT' | string;
     installmentsCount?: number;
     totalInstallments?: number;
+    installmentDueDate?: Date;
     logoPath: string;
 }
 
@@ -191,6 +192,7 @@ export const PaymentReceiptPDF = ({
     paymentScope,
     installmentsCount = 0,
     totalInstallments = 0,
+    installmentDueDate,
     logoPath
 }: PaymentReceiptPDFProps) => {
 
@@ -265,7 +267,14 @@ export const PaymentReceiptPDF = ({
                     </View>
 
                     <View style={styles.tableRow}>
-                        <Text style={styles.tableCellItem}>{itemName} - Lote {lotNumber}</Text>
+                        <View style={{ width: '60%' }}>
+                            <Text style={styles.tableCellItem}>{itemName} - Lote {lotNumber}</Text>
+                            {installmentDueDate && (
+                                <Text style={{ fontSize: 9, color: '#666', marginTop: 4 }}>
+                                    Fecha de vencimiento: {format(installmentDueDate, "dd 'de' MMMM, yyyy", { locale: es })}
+                                </Text>
+                            )}
+                        </View>
                         <Text style={styles.tableCellAmount}>
                             {new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(amountPaid)}
                         </Text>

@@ -3,6 +3,7 @@ import { renderToStream } from "@react-pdf/renderer";
 import { PaymentReceiptPDF } from "@/components/pdf/PaymentReceiptPDF";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
+import { getInstallmentDueDate } from "@/lib/financials";
 
 export async function GET(
     request: Request,
@@ -38,6 +39,23 @@ export async function GET(
 
         const logoPath = 'public/favicon.png';
 
+        let installmentDueDate: Date | undefined;
+        if (receipt.scope === 'INSTALLMENT' && receipt.installments_count) {
+            const baseDate = receipt.reservation.legacy_installment_start_date 
+                ? new Date(receipt.reservation.legacy_installment_start_date)
+                : new Date(receipt.reservation.created_at);
+            
+            const customStart = receipt.reservation.legacy_installment_start_date ? new Date(receipt.reservation.legacy_installment_start_date) : null;
+            const customDueDay = customStart ? customStart.getUTCDate() : null; // Using UTC date to avoid timezone shift
+
+            installmentDueDate = getInstallmentDueDate(
+                baseDate,
+                receipt.installments_count,
+                 Boolean(receipt.reservation.is_legacy),
+                customDueDay
+            );
+        }
+
         const stream = await renderToStream(
             <PaymentReceiptPDF
                 receiptId={receipt.id}
@@ -51,6 +69,7 @@ export async function GET(
                 paymentScope={receipt.scope}
                 installmentsCount={receipt.installments_count || 0}
                 totalInstallments={receipt.lot.cuotas || 0}
+                installmentDueDate={installmentDueDate}
                 logoPath={logoPath}
             />
         );
