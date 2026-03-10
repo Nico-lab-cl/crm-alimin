@@ -6,12 +6,33 @@ interface ProgressBarProps {
 }
 
 export const ProgressBar = ({ lots }: ProgressBarProps) => {
-  const totalLots = lots.length;
-  const soldLots = lots.filter(lot => lot.status === 'sold').length;
-  const reservedLots = lots.filter(lot => lot.status === 'reserved').length;
-  const availableLots = lots.filter(lot => lot.status === 'available').length;
-  const soldPercentage = Math.round((soldLots / totalLots) * 100);
-  const progressPercentage = Math.round(((soldLots + reservedLots) / totalLots) * 100);
+  // Lotes excluidos del conteo en la barra de progreso solicitados por el cliente
+  const excludedLots = [
+    { number: '28', stage: 1 },
+    { number: '29', stage: 2 },
+    { number: '1', stage: 2 },
+    { number: '43', stage: 3 },
+    { number: '27', stage: 3 },
+    { number: '26', stage: 3 },
+    { number: '65', stage: 4 },
+    { number: '25', stage: 4 },
+    { number: '45', stage: 4 },
+    { number: '44', stage: 4 },
+    { number: '41', stage: 4 },
+  ];
+
+  const filteredLots = lots.filter(lot => {
+    const lotNumber = String(lot.number);
+    const lotStage = lot.displayStage || lot.stage;
+    return !excludedLots.some(ex => ex.number === lotNumber && ex.stage === lotStage);
+  });
+
+  const totalLots = filteredLots.length;
+  const soldLots = filteredLots.filter(lot => lot.status === 'sold').length;
+  const reservedLots = filteredLots.filter(lot => lot.status === 'reserved').length;
+  const availableLots = filteredLots.filter(lot => lot.status === 'available').length;
+  const soldPercentage = Math.round((soldLots / totalLots) * 100) || 0;
+  const progressPercentage = Math.round(((soldLots + reservedLots) / totalLots) * 100) || 0;
 
   return (
     <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-alimin-green via-[#2A454A] to-[#1E3337] p-8 md:p-12 shadow-2xl border-2 border-alimin-green/20">
