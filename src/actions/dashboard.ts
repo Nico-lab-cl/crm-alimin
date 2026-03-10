@@ -249,8 +249,11 @@ export async function getAdminUsers() {
                         is_legacy: true,
                         is_promo: true,
                         workflow_activated: true,
+                        uploaded_contract_url: true,
+                        legacy_uploaded_contracts: true,
+                        receipts: true,
                         lot: {
-                            select: { number: true, stage: true }
+                            select: { number: true, stage: true, area_m2: true, price_total_clp: true, cuotas: true, valor_cuota: true, pie: true, reservation_amount_clp: true, last_installment_amount: true }
                         }
                     },
                     orderBy: { created_at: 'desc' }
