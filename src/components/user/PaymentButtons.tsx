@@ -428,7 +428,7 @@ export function PaymentButtons({ reservationId, lot, reservation, acquisitionDat
                                         </div>
                                         {isPromoBool && paidCuotas === 0 && (count === 1 || count === 2) && (
                                             <div className="bg-[#FFF8E1] text-[#B77B00] border-l-4 border-[#FFD54F] p-2 rounded text-xs font-medium mb-2 shadow-sm">
-                                                🌟 <span className="font-bold">Aplica Promoción:</span> Tus primeras 2 cuotas (Marzo y Abril) se pagan juntas hasta el 10 de Abril sin interés.
+                                                🌟 <span className="font-bold">Aplica Promoción:</span> Tus primeras 2 cuotas (Marzo y Abril) se pagan juntas el 5 de Abril.
                                             </div>
                                         )}
                                         {count === 1 ? (
