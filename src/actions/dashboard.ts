@@ -724,7 +724,7 @@ export async function getAllClients() {
     try {
         const users = await prisma.user.findMany({
             where: { role: Role.USER },
-            select: { id: true, name: true, email: true },
+            select: { id: true, name: true, email: true, createdAt: true },
             orderBy: { name: 'asc' }
         })
         return users

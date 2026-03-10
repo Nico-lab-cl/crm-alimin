@@ -1,12 +1,15 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createVerifiedUser, adminResetUserPassword } from '@/actions/dashboard'
+import { cn } from "@/lib/utils"
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Search, Loader2, Plus, FileSignature, AlertCircle, CheckCircle2, Clock, FileDown, CreditCard, ExternalLink, Lock, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Search, Loader2, Plus, FileSignature, AlertCircle, CheckCircle2, Clock, FileDown, CreditCard, ExternalLink, Lock, ChevronLeft, ChevronRight, CalendarIcon, X } from 'lucide-react'
+import { format } from "date-fns"
+import { es } from "date-fns/locale"
 import { toast } from 'sonner'
 import {
     Dialog,
@@ -24,6 +27,12 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select"
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from "@/components/ui/popover"
+import { Calendar } from "@/components/ui/calendar"
 import { Label } from '@/components/ui/label'
 import { AdminForceSignAction } from "@/components/admin/AdminForceSignAction"
 
@@ -60,6 +69,7 @@ const USERS_PER_PAGE = 10;
 export const AdminUserList = ({ users: initialUsers }: AdminUserListProps) => {
     const [users, setUsers] = useState(initialUsers)
     const [filter, setFilter] = useState('')
+    const [dateRange, setDateRange] = useState<{ from: Date | undefined; to: Date | undefined }>({ from: undefined, to: undefined })
     const [isCreateOpen, setIsCreateOpen] = useState(false)
     const [isCreating, setIsCreating] = useState(false)
     const router = useRouter()
@@ -81,10 +91,31 @@ export const AdminUserList = ({ users: initialUsers }: AdminUserListProps) => {
         role: 'USER'
     })
 
-    const filteredUsers = users.filter(user =>
-        user.name?.toLowerCase().includes(filter.toLowerCase()) ||
-        user.email?.toLowerCase().includes(filter.toLowerCase())
-    )
+    const filteredUsers = users.filter(user => {
+        const matchesText = user.name?.toLowerCase().includes(filter.toLowerCase()) || user.email?.toLowerCase().includes(filter.toLowerCase())
+        if (!matchesText) return false
+
+        if (!dateRange.from && !dateRange.to) return true
+
+        const userDate = new Date(user.createdAt)
+        userDate.setHours(0, 0, 0, 0) // Normalize time
+
+        if (dateRange.from && dateRange.to) {
+            const start = new Date(dateRange.from)
+            start.setHours(0, 0, 0, 0)
+            const end = new Date(dateRange.to)
+            end.setHours(23, 59, 59, 999)
+            return userDate >= start && userDate <= end
+        }
+
+        if (dateRange.from) {
+            const start = new Date(dateRange.from)
+            start.setHours(0, 0, 0, 0)
+            return userDate >= start
+        }
+
+        return true
+    })
 
     // Pagination calculations
     const totalPages = Math.ceil(filteredUsers.length / USERS_PER_PAGE)
@@ -95,6 +126,11 @@ export const AdminUserList = ({ users: initialUsers }: AdminUserListProps) => {
         setFilter(value)
         setCurrentPage(1)
     }
+
+    // Effect to reset pagination when date changes
+    useEffect(() => {
+        setCurrentPage(1)
+    }, [dateRange])
 
     const handleCreateUser = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -148,9 +184,113 @@ export const AdminUserList = ({ users: initialUsers }: AdminUserListProps) => {
                         onChange={(e) => handleFilterChange(e.target.value)}
                         className="bg-transparent border-none text-white focus-visible:ring-0 placeholder:text-gray-500 w-full min-w-0"
                     />
+
+                    {/* Date Range Filter */}
+                    <div className="hidden sm:block border-l border-white/10 pl-2 ml-2">
+                        <Popover>
+                            <PopoverTrigger asChild>
+                                <Button
+                                    variant="outline"
+                                    className={cn(
+                                        "w-[240px] justify-start text-left font-normal bg-white/5 border-white/10 hover:bg-white/10 shrink-0",
+                                        !dateRange.from && "text-gray-400",
+                                        dateRange.from && "border-[#36595F] text-[#36595F] bg-[#36595F]/10 hover:bg-[#36595F]/20 font-bold"
+                                    )}
+                                >
+                                    <CalendarIcon className="h-4 w-4 mr-2" />
+                                    <span>
+                                        {dateRange?.from ? (
+                                            dateRange.to ? (
+                                                <>
+                                                    {format(dateRange.from, "dd LLL y", { locale: es })} -{" "}
+                                                    {format(dateRange.to, "dd LLL y", { locale: es })}
+                                                </>
+                                            ) : (
+                                                format(dateRange.from, "dd LLL y", { locale: es })
+                                            )
+                                        ) : (
+                                            "Filtrar por fecha..."
+                                        )}
+                                    </span>
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0 bg-white" align="end">
+                                <Calendar
+                                    initialFocus
+                                    mode="range"
+                                    defaultMonth={dateRange?.from}
+                                    selected={dateRange}
+                                    onSelect={(range) => setDateRange({ from: range?.from, to: range?.to })}
+                                    numberOfMonths={1}
+                                />
+                                <div className="p-3 border-t flex justify-end">
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => setDateRange({ from: undefined, to: undefined })}
+                                        className="text-gray-500 hover:text-gray-700"
+                                    >
+                                        Limpiar Filtro
+                                    </Button>
+                                </div>
+                            </PopoverContent>
+                        </Popover>
+                    </div>
                 </div>
 
-                <div className="flex gap-2 w-full md:w-auto">
+                <div className="flex flex-wrap gap-2 w-full md:w-auto">
+                    {/* Mobile Date Filter (Shown only on small screens) */}
+                    <div className="w-full sm:hidden mb-2">
+                        <Popover>
+                            <PopoverTrigger asChild>
+                                <Button
+                                    variant="outline"
+                                    className={cn(
+                                        "w-full justify-start text-left font-normal bg-white/5 border-white/10 hover:bg-white/10",
+                                        !dateRange.from && "text-gray-400",
+                                        dateRange.from && "border-[#36595F] text-[#36595F] bg-[#36595F]/10 hover:bg-[#36595F]/20 font-bold"
+                                    )}
+                                >
+                                    <CalendarIcon className="h-4 w-4 mr-2" />
+                                    <span>
+                                        {dateRange?.from ? (
+                                            dateRange.to ? (
+                                                <>
+                                                    {format(dateRange.from, "dd LLL y", { locale: es })} -{" "}
+                                                    {format(dateRange.to, "dd LLL y", { locale: es })}
+                                                </>
+                                            ) : (
+                                                format(dateRange.from, "dd LLL y", { locale: es })
+                                            )
+                                        ) : (
+                                            "Filtrar por fecha..."
+                                        )}
+                                    </span>
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0 bg-white" align="start">
+                                <Calendar
+                                    initialFocus
+                                    mode="range"
+                                    defaultMonth={dateRange?.from}
+                                    selected={dateRange}
+                                    onSelect={(range) => setDateRange({ from: range?.from, to: range?.to })}
+                                    numberOfMonths={1}
+                                />
+                                <div className="p-3 border-t flex justify-end">
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => setDateRange({ from: undefined, to: undefined })}
+                                        className="text-gray-500 hover:text-gray-700"
+                                    >
+                                        Limpiar Filtro
+                                    </Button>
+                                </div>
+                            </PopoverContent>
+                        </Popover>
+                    </div>
+
                     {/* Reset Password Dialog */}
                     <Dialog open={isResetOpen} onOpenChange={setIsResetOpen}>
                         <DialogContent className="bg-white text-gray-900 border-none max-w-[90vw] md:max-w-md">
@@ -195,7 +335,7 @@ export const AdminUserList = ({ users: initialUsers }: AdminUserListProps) => {
                     {/* Create User Dialog */}
                     <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
                         <DialogTrigger asChild>
-                            <Button className="bg-[#E0B457] text-[#36595F] hover:bg-[#d4aa52] font-bold w-full md:w-auto min-h-[44px]">
+                            <Button className="bg-[#E0B457] text-[#36595F] hover:bg-[#d4aa52] font-bold flex-1 md:flex-none min-h-[44px]">
                                 <Plus className="w-4 h-4 mr-2" />
                                 Crear Usuario
                             </Button>
