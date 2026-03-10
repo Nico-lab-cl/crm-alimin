@@ -21,13 +21,9 @@ export async function POST(req: NextRequest) {
         const chileNow = new Date(now.toLocaleString("en-US", { timeZone: "America/Santiago" }));
         const dayOfMonth = chileNow.getDate();
 
-        // Rule: Only run from the 11th onwards (unless it's a test)
-        if (!isTest && dayOfMonth < 11) {
-            return NextResponse.json({
-                ok: false,
-                message: `La notificación de mora solo se procesa desde el día 11 de cada mes. Hoy es día ${dayOfMonth}`,
-            }, { status: 200 });
-        }
+        // The cron should be called daily by n8n.
+        // We no longer lock it from the 11th, because custom due dates (e.g. 15th) mean
+        // the mora day could be the 21st, etc.
 
         const month = chileNow.getMonth() + 1;
         const year = chileNow.getFullYear();
@@ -60,10 +56,11 @@ export async function POST(req: NextRequest) {
             const nextInstallmentNum = installmentsPaid + 1;
 
             // Calculate Due Date for this installment
-            const baseDate = res.legacy_installment_start_date
-                ? new Date(res.legacy_installment_start_date)
-                : res.created_at;
-            const dueDate = getInstallmentDueDate(baseDate, nextInstallmentNum, res.is_legacy);
+            const customStart = res.legacy_installment_start_date ? new Date(res.legacy_installment_start_date) : null;
+            const customDueDay = customStart ? customStart.getDate() : null;
+            const baseDate = customStart || res.created_at;
+            
+            const dueDate = getInstallmentDueDate(baseDate, nextInstallmentNum, res.is_legacy, customDueDay);
 
             // Check if this installment's due date is in the CURRENT month (or past)
             // But specifically, if today is the 11th, we are checking if the installment due on the 5th of THIS month is unpaid.
@@ -88,7 +85,7 @@ export async function POST(req: NextRequest) {
             if (interest > 0) {
                 // Determine days late
                 const graceEnd = new Date(dueDate);
-                graceEnd.setDate(10);
+                graceEnd.setDate(dueDate.getDate() + 5);
                 graceEnd.setHours(0, 0, 0, 0);
                 const dNow = new Date(chileNow);
                 dNow.setHours(0, 0, 0, 0);

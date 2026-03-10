@@ -56,7 +56,9 @@ export async function getPostventaData() {
             // 1. Calculate nextDueDate regardless of Pie status to ensure they appear in the ledger
             // We prioritize showing the PIE debt if it exists, otherwise we show the installment debt.
             if (paidCuotas < totalCuotas) {
-                nextDueDate = getInstallmentDueDate(baseDate, paidCuotas + 1, isLegacyBool);
+                const customStart = res.legacy_installment_start_date ? new Date(res.legacy_installment_start_date) : null;
+                const customDueDay = customStart ? customStart.getDate() : null;
+                nextDueDate = getInstallmentDueDate(baseDate, paidCuotas + 1, isLegacyBool, customDueDay);
 
                 const lotAreaM2 = lot.area_m2 || 200;
                 if (isLegacyBool && res.legacy_debt_start_date) {

@@ -91,7 +91,9 @@ export async function POST(request: Request) {
 
             // Calculate Interest
             let totalInterest = 0;
-            const acquisitionDate = reservation.created_at;
+            const customStart = reservation.legacy_installment_start_date ? new Date(reservation.legacy_installment_start_date) : null;
+            const customDueDay = customStart ? customStart.getDate() : null;
+            const acquisitionDate = customStart ? customStart.toISOString() : reservation.created_at.toISOString();
 
             // Iterate over each installment being paid
             for (let i = 0; i < installments; i++) {
@@ -99,7 +101,7 @@ export async function POST(request: Request) {
                 if (i > 0) continue;
 
                 const installmentNum = startInstallment + i;
-                const dueDate = getInstallmentDueDate(acquisitionDate, installmentNum, Boolean(reservation.is_legacy));
+                const dueDate = getInstallmentDueDate(acquisitionDate, installmentNum, Boolean(reservation.is_legacy), customDueDay);
 
                 // Determine amount for THIS specific installment taking ranges into account
                 const instAmount = getInstallmentAmount(

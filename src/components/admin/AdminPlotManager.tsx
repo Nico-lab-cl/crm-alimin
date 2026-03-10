@@ -244,7 +244,9 @@ export function AdminPlotManager({ reservations, allClients, userId, initialUser
                                         // -----------------------------------------------------------------
                                         for (let i = paidCuotas + 1; i <= totalCuotas; i++) {
                                             // Calculate Due Date
-                                            const dueDate = getInstallmentDueDate(acquisitionDate, i, Boolean(res.is_legacy));
+                                            const customStart = res.legacy_installment_start_date ? new Date(res.legacy_installment_start_date) : null;
+                                            const customDueDay = customStart ? customStart.getDate() : null;
+                                            const dueDate = getInstallmentDueDate(acquisitionDate, i, Boolean(res.is_legacy), customDueDay);
 
                                             // Grace Period
                                             const graceEnd = new Date(dueDate);

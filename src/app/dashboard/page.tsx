@@ -127,9 +127,11 @@ export default function UserDashboard() {
                                             // We need acquisition date to be precise, ensuring we align with `getInstallmentDueDate`.
                                             // `res.created_at` is acquisition date.
 
-                                            const baseDate = res.legacy_installment_start_date ? new Date(res.legacy_installment_start_date) : new Date(res.created_at);
+                                            const customStart = res.legacy_installment_start_date ? new Date(res.legacy_installment_start_date) : null;
+                                            const customDueDay = customStart ? customStart.getDate() : null;
+                                            const baseDate = customStart || new Date(res.created_at);
                                             const nextInstNum = (res.installments_paid || 0) + 1;
-                                            const nextDueDate = getInstallmentDueDate(baseDate, nextInstNum, Boolean(res.is_legacy));
+                                            const nextDueDate = getInstallmentDueDate(baseDate, nextInstNum, Boolean(res.is_legacy), customDueDay);
 
                                             const isUrgent = new Date() > nextDueDate; // If past due
 

@@ -20,13 +20,9 @@ export async function POST(req: NextRequest) {
         const chileNow = new Date(now.toLocaleString("en-US", { timeZone: "America/Santiago" }));
         const dayOfMonth = chileNow.getDate();
 
-        // Rule: Only run on the 10th (unless it's a test)
-        if (!isTest && dayOfMonth !== 10) {
-            return NextResponse.json({
-                ok: false,
-                message: `La alerta pre-mora solo se procesa el día 10 de cada mes. Hoy es día ${dayOfMonth}`,
-            }, { status: 200 });
-        }
+        // The cron should be called daily by n8n.
+        // We no longer lock it to the 10th, because custom due dates (e.g. 15th) mean
+        // the pre-mora day could be the 20th, etc.
 
         const month = chileNow.getMonth() + 1;
         const year = chileNow.getFullYear();
@@ -64,10 +60,12 @@ export async function POST(req: NextRequest) {
             }
 
             const nextInstallmentNum = installmentsPaid + 1;
-            const baseDate = res.legacy_installment_start_date
-                ? new Date(res.legacy_installment_start_date)
-                : res.created_at;
-            const dueDate = getInstallmentDueDate(baseDate, nextInstallmentNum, res.is_legacy);
+            
+            const customStart = res.legacy_installment_start_date ? new Date(res.legacy_installment_start_date) : null;
+            const customDueDay = customStart ? customStart.getDate() : null;
+            const baseDate = customStart || res.created_at;
+            
+            const dueDate = getInstallmentDueDate(baseDate, nextInstallmentNum, res.is_legacy, customDueDay);
 
             const dueMonth = dueDate.getMonth() + 1;
             const dueYear = dueDate.getFullYear();
@@ -76,6 +74,18 @@ export async function POST(req: NextRequest) {
             if (dueYear > year || (dueYear === year && dueMonth > month)) {
                 if (isDebug) debugInfo.push({ id: res.id, name: res.buyer.name, reason: 'Due date in future', dueDate, dueMonth, currentMonth: month });
                 continue;
+            }
+
+            // Calculate Grace Period End (Pre-Mora target day)
+            const gracePeriodEnd = new Date(dueDate);
+            gracePeriodEnd.setDate(dueDate.getDate() + 5);
+
+            // If it's not a test, only process users whose exact pre-mora day is TODAY
+            if (!isTest) {
+                if (gracePeriodEnd.getDate() !== dayOfMonth || gracePeriodEnd.getMonth() + 1 !== month || gracePeriodEnd.getFullYear() !== year) {
+                    if (isDebug) debugInfo.push({ id: res.id, name: res.buyer.name, reason: 'Not exactly their pre-mora day', preMoraDate: gracePeriodEnd, today: dayOfMonth });
+                    continue;
+                }
             }
 
             // Avoid duplicate notifications in the SAME month for the same user

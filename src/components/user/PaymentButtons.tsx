@@ -196,12 +196,14 @@ export function PaymentButtons({ reservationId, lot, reservation, acquisitionDat
     let daysLateForDisplay = 0;
     let lateRangeDisplay = "";
 
-    const baseDate = reservation.legacy_installment_start_date
-        ? new Date(reservation.legacy_installment_start_date).toISOString()
+    const customStart = reservation.legacy_installment_start_date ? new Date(reservation.legacy_installment_start_date) : null;
+    const customDueDay = customStart ? customStart.getDate() : null;
+    const baseDate = customStart
+        ? customStart.toISOString()
         : (acquisitionDate || new Date().toISOString());
     const isLegacyBool = Boolean(reservation.is_legacy);
-    const firstDue = getInstallmentDueDate(baseDate, paidCuotas + 1, isLegacyBool);
-    const lastDue = getInstallmentDueDate(baseDate, paidCuotas + count, isLegacyBool);
+    const firstDue = getInstallmentDueDate(baseDate, paidCuotas + 1, isLegacyBool, customDueDay);
+    const lastDue = getInstallmentDueDate(baseDate, paidCuotas + count, isLegacyBool, customDueDay);
 
     if (totalCuotas > 0 && count > 0) {
         const effectiveDate = comparisonDate || simulatedDate || new Date();
@@ -239,7 +241,7 @@ export function PaymentButtons({ reservationId, lot, reservation, acquisitionDat
                 }
             }
             else {
-                const iDue = getInstallmentDueDate(baseDate, instNum, isLegacyBool);
+                const iDue = getInstallmentDueDate(baseDate, instNum, isLegacyBool, customDueDay);
                 const totalPrice = lot.price_total_clp || 0;
                 const lotAreaM2 = lot.area_m2 || 200;
 

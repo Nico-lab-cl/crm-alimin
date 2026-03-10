@@ -4,10 +4,15 @@ export const PENALTY_RATE_300M2 = 0.000227324392; // For lots >= 300m2
 export const GRACE_PERIOD_DAYS = 5; // From day 5 to 10 (inclusive)
 export const PENALTY_START_DATE_WEB = new Date('2026-03-11T00:00:00-03:00'); // March 11, 2026
 
-export function getInstallmentDueDate(acquisitionDate: Date | string, installmentNumber: number, isLegacy: boolean = false): Date {
+export function getInstallmentDueDate(
+    acquisitionDate: Date | string, 
+    installmentNumber: number, 
+    isLegacy: boolean = false, 
+    customDueDay?: number | null
+): Date {
     const base = new Date(acquisitionDate);
-    // Business Rule: All installments are due on the 5th
-    const dueDay = 5;
+    // Business Rule: All installments are due on the 5th, UNLESS a custom date is provided
+    const dueDay = customDueDay || 5;
     const due = new Date(base.getFullYear(), base.getMonth(), dueDay, 12, 0, 0, 0);
 
     if (isLegacy) {
@@ -15,12 +20,17 @@ export function getInstallmentDueDate(acquisitionDate: Date | string, installmen
         due.setMonth(due.getMonth() + installmentNumber);
     } else {
         // Web Users:
-        // Si compraron entre el día 1 y 5 (inclusive), su primera cuota es este mismo mes.
-        // Si compraron después del día 5, su primera cuota es el mes siguiente.
-        if (base.getDate() <= 5) {
+        if (customDueDay) {
+            // When an admin assigns a custom date (e.g. March 15), cuota 1 is exactly in that month.
             due.setMonth(due.getMonth() + (installmentNumber - 1));
         } else {
-            due.setMonth(due.getMonth() + installmentNumber);
+            // Si compraron entre el día 1 y 5 (inclusive), su primera cuota es este mismo mes.
+            // Si compraron después del día 5, su primera cuota es el mes siguiente.
+            if (base.getDate() <= 5) {
+                due.setMonth(due.getMonth() + (installmentNumber - 1));
+            } else {
+                due.setMonth(due.getMonth() + installmentNumber);
+            }
         }
     }
 
@@ -45,9 +55,9 @@ export function calculateTotalInterest(
     // 1. Determine Grace Period End (Dynamic)
     const gracePeriodEnd = new Date(dueDate);
 
-    // Rule: All installments are due on the 5th, and grace period ends on the 10th.
-    // (Penalty starts on the 11th).
-    gracePeriodEnd.setDate(10);
+    // Rule: Grace period ends exactly 5 days after the due date.
+    // If due date is the 5th, grace period ends on the 10th. If 15th, ends on the 20th.
+    gracePeriodEnd.setDate(dueDate.getDate() + 5);
     gracePeriodEnd.setHours(23, 59, 59, 999);
 
     if (paymentDate <= gracePeriodEnd) {
@@ -78,7 +88,7 @@ export function calculateTotalInterest(
         // so that the first day of penalty calculated is March 11.
         if (gDate < webCutoff) {
             gDate.setTime(webCutoff.getTime());
-            gDate.setDate(gDate.getDate() - 1); // Grace period ends on March 10
+            gDate.setDate(gDate.getDate() - 1); 
         }
     }
 
