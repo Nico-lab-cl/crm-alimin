@@ -101,7 +101,7 @@ export async function POST(request: Request) {
                 if (i > 0) continue;
 
                 const installmentNum = startInstallment + i;
-                const dueDate = getInstallmentDueDate(acquisitionDate, installmentNum, Boolean(reservation.is_legacy), customDueDay);
+                const dueDate = getInstallmentDueDate(acquisitionDate, installmentNum, Boolean(reservation.is_legacy), customDueDay, Boolean(reservation.is_promo));
 
                 // Determine amount for THIS specific installment taking ranges into account
                 const instAmount = getInstallmentAmount(

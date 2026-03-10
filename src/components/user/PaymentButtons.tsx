@@ -98,7 +98,13 @@ function getInstallmentAmount(
 
 export function PaymentButtons({ reservationId, lot, reservation, acquisitionDate, isAdminView, simulatedDate, comparisonDate }: PaymentButtonsProps) {
     const [isLoading, setIsLoading] = useState(false);
-    const [selectedCuotas, setSelectedCuotas] = useState<string>("1");
+    
+    // Initial Cuotas Logic: Promo users must pay 2 cuotas initially
+    const isPromoForInit = Boolean(reservation.is_promo);
+    const paidCuotasForInit = reservation.installments_paid || 0;
+    const totalCuotasForInit = lot.cuotas || 0;
+    const defaultCuotas = (isPromoForInit && paidCuotasForInit === 0 && totalCuotasForInit >= 2) ? "2" : "1";
+    const [selectedCuotas, setSelectedCuotas] = useState<string>(defaultCuotas);
     const [isPieModalOpen, setIsPieModalOpen] = useState(false);
     const [isCuotasModalOpen, setIsCuotasModalOpen] = useState(false);
     const [fileBase64, setFileBase64] = useState<string | null>(null);
@@ -397,7 +403,9 @@ export function PaymentButtons({ reservationId, lot, reservation, acquisitionDat
                                         <SelectValue placeholder="Seleccionar cantidad" />
                                     </SelectTrigger>
                                     <SelectContent className="bg-white border-gray-200 text-black">
-                                        {Array.from({ length: remainingCuotas }, (_, i) => i + 1).map((num) => (
+                                        {Array.from({ length: remainingCuotas }, (_, i) => i + 1)
+                                            .filter(num => !(isPromoBool && paidCuotas === 0 && remainingCuotas >= 2 && num === 1))
+                                            .map((num) => (
                                             <SelectItem key={num} value={String(num)} className="hover:bg-gray-100 focus:bg-gray-100 focus:text-black">
                                                 {num} {num === 1 ? 'Cuota' : 'Cuotas'}
                                             </SelectItem>

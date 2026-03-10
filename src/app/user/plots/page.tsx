@@ -28,6 +28,7 @@ interface Reservation {
     signature_ip?: string | null;
     uploaded_contract_url?: string | null;
     is_legacy?: boolean;
+    is_promo?: boolean;
     legacy_uploaded_contracts?: string | null;
     legacy_debt_start_date?: string | null;
     legacy_installment_start_date?: string | null;
@@ -212,6 +213,7 @@ export default function UserPlotsPage() {
                                                     pie_status: res.pie_status,
                                                     installments_paid: res.installments_paid,
                                                     is_legacy: res.is_legacy,
+                                                    is_promo: res.is_promo,
                                                     legacy_debt_start_date: res.legacy_debt_start_date,
                                                     legacy_installment_start_date: res.legacy_installment_start_date,
                                                     legacy_installment_ranges: res.legacy_installment_ranges,
