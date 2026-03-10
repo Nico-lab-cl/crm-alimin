@@ -11,6 +11,7 @@ import { Loader2, CheckCircle, XCircle, Eye, MapPin, CreditCard, Clock, Receipt,
 import { approvePaymentReceipt, rejectPaymentReceipt } from '@/actions/receipts';
 import { toast } from 'sonner';
 import { MoraExplainerCard } from './MoraExplainerCard';
+import { ContractUploadAction } from "@/components/admin/ContractUploadAction";
 
 export type PostventaTab = 'recibos' | 'mora' | 'ledger' | 'alertas';
 
@@ -39,6 +40,7 @@ export function PostventaMobileDashboard({ initialReceipts, soldLots, activeTab,
     const [filter, setFilter] = useState<'ALL' | 'PENDING' | 'APPROVED' | 'REJECTED'>('PENDING');
 
     const [ledgerPage, setLedgerPage] = useState(1);
+    const [ledgerStage, setLedgerStage] = useState<'ALL' | 1 | 2 | 3 | 4>('ALL');
     const [selectedClientLedger, setSelectedClientLedger] = useState<any | null>(null);
     const ledgerItemsPerPage = 10;
 
@@ -98,14 +100,31 @@ export function PostventaMobileDashboard({ initialReceipts, soldLots, activeTab,
     };
 
     if (activeTab === 'ledger') {
-        const totalLedgerPages = Math.ceil(ledger.length / ledgerItemsPerPage);
-        const paginatedLedger = ledger.slice((ledgerPage - 1) * ledgerItemsPerPage, ledgerPage * ledgerItemsPerPage);
+        const filteredLedger = ledger.filter(client => ledgerStage === 'ALL' || client.lotStage === ledgerStage);
+        const totalLedgerPages = Math.ceil(filteredLedger.length / ledgerItemsPerPage);
+        const paginatedLedger = filteredLedger.slice((ledgerPage - 1) * ledgerItemsPerPage, ledgerPage * ledgerItemsPerPage);
 
         return (
             <div className="space-y-4 pb-24">
-                <div className="flex items-center gap-2 mb-4">
-                    <BookOpen className="w-5 h-5 text-indigo-400" />
-                    <h2 className="text-lg font-bold text-white">Estado de Cuentas</h2>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+                    <div className="flex items-center gap-2">
+                        <BookOpen className="w-5 h-5 text-indigo-400" />
+                        <h2 className="text-lg font-bold text-white">Estado de Cuentas</h2>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                        {(['ALL', 1, 2, 3, 4] as const).map(s => (
+                            <button
+                                key={s}
+                                onClick={() => { setLedgerStage(s as any); setLedgerPage(1); }}
+                                className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all border shrink-0 cursor-pointer ${ledgerStage === s
+                                    ? 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30'
+                                    : 'bg-white/5 text-gray-500 border-white/5 hover:border-white/20'
+                                    }`}
+                            >
+                                {s === 'ALL' ? 'Todas las Etapas' : `Etapa ${s}`}
+                            </button>
+                        ))}
+                    </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 4xl:grid-cols-5 gap-5 mt-4">
@@ -217,13 +236,44 @@ export function PostventaMobileDashboard({ initialReceipts, soldLots, activeTab,
                                         <span className="font-medium text-white">{selectedClientLedger.pieStatus === 'PAID' ? 'Sí' : 'No'}</span>
                                     </div>
                                     <div className="flex justify-between text-xs">
-                                        <span className="text-gray-400">Cuotas Pagadas:</span>
-                                        <span className="font-medium text-white">{selectedClientLedger.paidCuotas} de {selectedClientLedger.totalCuotas || 0}</span>
+                                        <span className="text-gray-400">Cuota del Mes:</span>
+                                        <span className="font-medium text-white">
+                                            {selectedClientLedger.paidCuotas < (selectedClientLedger.totalCuotas || 0) ? selectedClientLedger.paidCuotas + 1 : selectedClientLedger.paidCuotas} de {selectedClientLedger.totalCuotas || 0}
+                                        </span>
+                                    </div>
+                                    <div className="flex justify-between text-xs mt-2">
+                                        <span className="text-gray-400">Suma Pagada (Cuotas):</span>
+                                        <span className="font-bold text-green-400">{formatCurrency(selectedClientLedger.cuotasAmount || 0)}</span>
                                     </div>
                                     <div className="flex justify-between text-xs mt-2">
                                         <span className="text-gray-400">Próximo Vencimiento:</span>
                                         <span className="font-medium text-yellow-400">{selectedClientLedger.nextDueDate ? format(new Date(selectedClientLedger.nextDueDate), 'dd MMM yyyy', { locale: es }) : 'N/A'}</span>
                                     </div>
+                                </div>
+
+                                <div className="bg-black/40 rounded-xl p-4 border border-white/5 space-y-3">
+                                    <p className="text-sm font-semibold border-b border-white/10 pb-2 mb-2 text-white">Documentos Legales</p>
+                                    
+                                    {selectedClientLedger.uploaded_contract_url ? (
+                                        <div className="flex flex-col gap-2">
+                                            <div className="flex items-center justify-between text-xs">
+                                                <span className="text-green-400 font-medium flex items-center gap-1.5"><CheckCircle className="w-4 h-4" /> Promesa Subida</span>
+                                                <a href={selectedClientLedger.uploaded_contract_url} target="_blank" rel="noopener noreferrer" className="text-indigo-400 hover:text-indigo-300 underline font-semibold">Ver Documento</a>
+                                            </div>
+                                            <p className="text-[10px] text-gray-400 leading-tight">La promesa de compraventa ya fue subida y está disponible para el cliente.</p>
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-3">
+                                            <p className="text-[10px] text-gray-400 leading-tight block mb-2">Aún no se ha subido la promesa de compraventa. Sube el documento firmado en formato PDF para que el cliente lo vea en su portal.</p>
+                                            <ContractUploadAction 
+                                                reservationId={selectedClientLedger.id} 
+                                                reservationName={selectedClientLedger.clientName} 
+                                                onUploadComplete={() => {
+                                                    toast.success("Promesa subida correctamente. Actualiza la pestaña para verla en el historial.");
+                                                }}
+                                            />
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         )}

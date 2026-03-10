@@ -144,6 +144,7 @@ export async function getPostventaData() {
                 reservaAmount,
                 pieAmount,
                 cuotasAmount,
+                uploaded_contract_url: res.uploaded_contract_url,
                 receipts: res.receipts,
                 isGracePeriod,
                 isPieDebt,
@@ -213,5 +214,23 @@ export async function getPostventaData() {
     } catch (error) {
         console.error("Error getting postventa data:", error);
         return { error: 'Error al cargar datos de postventa', ledger: [], debtAlerts: [] };
+    }
+}
+
+export async function updateReservationContract(reservationId: string, url: string) {
+    const session = await auth()
+    if (!session?.user || session.user.role !== 'ADMIN') {
+        return { success: false, error: 'No autorizado' }
+    }
+
+    try {
+        await prisma.reservation.update({
+            where: { id: reservationId },
+            data: { uploaded_contract_url: url }
+        });
+        return { success: true };
+    } catch (error) {
+        console.error("Error updating contract:", error);
+        return { success: false, error: 'Error al actualizar el contrato' };
     }
 }

@@ -74,6 +74,34 @@ export function UserDocumentsList({ reservations }: { reservations: Reservation[
                                 )}
                             </div>
 
+                            {/* ── Promesa de Compra Venta ── */}
+                            <div className="space-y-2 mt-6">
+                                <div className="flex justify-between items-center">
+                                    <h3 className="font-semibold text-gray-200 text-base">Promesa de Compraventa</h3>
+                                    {hasCompraventa ? (
+                                        <span className="flex items-center text-green-400 text-xs gap-1 bg-green-900/40 px-2 py-1 rounded">
+                                            <CheckCircle className="h-3 w-3" /> Disponible
+                                        </span>
+                                    ) : (
+                                        <span className="flex items-center text-yellow-400 text-xs gap-1 bg-yellow-900/40 px-2 py-1 rounded">
+                                            <Clock className="h-3 w-3" /> Pendiente
+                                        </span>
+                                    )}
+                                </div>
+                                <p className="text-xs text-gray-400">Documento legal firmado por ambas partes que asegura la promesa de compra.</p>
+                                {hasCompraventa && (
+                                    <a
+                                        href={res.uploaded_contract_url!}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="mt-2 inline-flex items-center gap-2 px-4 py-2 bg-indigo-600/20 hover:bg-indigo-600/40 border border-indigo-500/30 text-indigo-300 rounded text-sm transition-colors"
+                                    >
+                                        <Download className="h-4 w-4" />
+                                        Ver Promesa Oficial
+                                    </a>
+                                )}
+                            </div>
+
                             {/* ── Documentos Físicos (Offline) ── */}
                             {res.is_legacy && res.legacy_uploaded_contracts && (() => {
                                 try {
