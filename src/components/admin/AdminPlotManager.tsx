@@ -246,12 +246,14 @@ export function AdminPlotManager({ reservations, allClients, userId, initialUser
                                             // Calculate Due Date
                                             const customStart = res.legacy_installment_start_date ? new Date(res.legacy_installment_start_date) : null;
                                             const customDueDay = customStart ? customStart.getDate() : null;
-                                            const dueDate = getInstallmentDueDate(acquisitionDate, i, Boolean(res.is_legacy), customDueDay);
-
+                                            const acquisitionDate = customStart ? customStart.toISOString() : (res.created_at as any);
+                                            const dueDate = getInstallmentDueDate(acquisitionDate, i, Boolean(res.is_legacy), customDueDay, Boolean(res.is_promo));
+                                            
                                             // Grace Period
                                             const graceEnd = new Date(dueDate);
-                                            graceEnd.setDate(10);
+                                            graceEnd.setDate(dueDate.getDate() + 5);
                                             graceEnd.setHours(23, 59, 59, 999);
+                                            const isLate = new Date() > graceEnd;
 
                                             const totalPrice = res.lot.price_total_clp || 0;
                                             const lotAreaM2 = res.lot.area_m2 || 200;

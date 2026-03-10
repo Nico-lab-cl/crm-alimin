@@ -58,7 +58,7 @@ export async function getPostventaData() {
             if (paidCuotas < totalCuotas) {
                 const customStart = res.legacy_installment_start_date ? new Date(res.legacy_installment_start_date) : null;
                 const customDueDay = customStart ? customStart.getDate() : null;
-                nextDueDate = getInstallmentDueDate(baseDate, paidCuotas + 1, isLegacyBool, customDueDay);
+                nextDueDate = getInstallmentDueDate(baseDate, paidCuotas + 1, isLegacyBool, customDueDay, Boolean(res.is_promo));
 
                 const lotAreaM2 = lot.area_m2 || 200;
                 if (isLegacyBool && res.legacy_debt_start_date) {

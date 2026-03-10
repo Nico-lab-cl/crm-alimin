@@ -52,7 +52,8 @@ export async function GET(
                 baseDate,
                 receipt.installments_count,
                  Boolean(receipt.reservation.is_legacy),
-                customDueDay
+                customDueDay,
+                Boolean(receipt.reservation.is_promo)
             );
         }
 

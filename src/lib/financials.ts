@@ -5,10 +5,11 @@ export const GRACE_PERIOD_DAYS = 5; // From day 5 to 10 (inclusive)
 export const PENALTY_START_DATE_WEB = new Date('2026-03-11T00:00:00-03:00'); // March 11, 2026
 
 export function getInstallmentDueDate(
-    acquisitionDate: Date | string, 
-    installmentNumber: number, 
-    isLegacy: boolean = false, 
-    customDueDay?: number | null
+    acquisitionDate: Date | string,
+    installmentNumber: number,
+    isLegacy: boolean = false,
+    customDueDay?: number | null,
+    isPromo: boolean = false
 ): Date {
     const base = new Date(acquisitionDate);
     // Business Rule: All installments are due on the 5th, UNLESS a custom date is provided
@@ -20,16 +21,30 @@ export function getInstallmentDueDate(
         due.setMonth(due.getMonth() + installmentNumber);
     } else {
         // Web Users:
-        if (customDueDay) {
-            // When an admin assigns a custom date (e.g. March 15), cuota 1 is exactly in that month.
-            due.setMonth(due.getMonth() + (installmentNumber - 1));
+        const isMarchPromoPeriod = base > new Date('2026-03-05T23:59:59-03:00') && base <= new Date('2026-04-05T23:59:59-03:00');
+
+        if (isPromo && isMarchPromoPeriod && !customDueDay) {
+            // PROMO RULE: Buyers between Mar 6 and Apr 5 have BOTH Cuota 1 and Cuota 2 due exactly on April 5, 2026.
+            // April 2026 is month index 3 (0-indexed)
+            if (installmentNumber === 1 || installmentNumber === 2) {
+                due.setFullYear(2026, 3, 5); // April 5, 2026
+            } else {
+                // For installmentNumber 3, month index is 4 (May). So 3 + (installmentNumber - 2)
+                due.setFullYear(2026, 3 + (installmentNumber - 2), 5);
+            }
         } else {
-            // Si compraron entre el día 1 y 5 (inclusive), su primera cuota es este mismo mes.
-            // Si compraron después del día 5, su primera cuota es el mes siguiente.
-            if (base.getDate() <= 5) {
+            // NORMAL CALCULATION
+            if (customDueDay) {
+                // When an admin assigns a custom date (e.g. March 15), cuota 1 is exactly in that month.
                 due.setMonth(due.getMonth() + (installmentNumber - 1));
             } else {
-                due.setMonth(due.getMonth() + installmentNumber);
+                // Si compraron entre el día 1 y 5 (inclusive), su primera cuota es este mismo mes.
+                // Si compraron después del día 5, su primera cuota es el mes siguiente.
+                if (base.getDate() <= 5) {
+                    due.setMonth(due.getMonth() + (installmentNumber - 1));
+                } else {
+                    due.setMonth(due.getMonth() + installmentNumber);
+                }
             }
         }
     }

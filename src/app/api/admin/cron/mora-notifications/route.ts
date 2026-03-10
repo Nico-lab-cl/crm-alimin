@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
             const customDueDay = customStart ? customStart.getDate() : null;
             const baseDate = customStart || res.created_at;
             
-            const dueDate = getInstallmentDueDate(baseDate, nextInstallmentNum, res.is_legacy, customDueDay);
+            const dueDate = getInstallmentDueDate(baseDate, nextInstallmentNum, Boolean(res.is_legacy), customDueDay, Boolean(res.is_promo));
 
             // Check if this installment's due date is in the CURRENT month (or past)
             // But specifically, if today is the 11th, we are checking if the installment due on the 5th of THIS month is unpaid.

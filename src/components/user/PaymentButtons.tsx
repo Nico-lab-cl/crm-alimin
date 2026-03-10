@@ -40,6 +40,7 @@ interface PaymentButtonsProps {
         pie_status: string | null;
         installments_paid: number | null;
         is_legacy?: boolean;
+        is_promo?: boolean;
         legacy_debt_start_date?: Date | string | null;
         legacy_installment_start_date?: Date | string | null;
         legacy_installment_ranges?: any;
@@ -202,8 +203,14 @@ export function PaymentButtons({ reservationId, lot, reservation, acquisitionDat
         ? customStart.toISOString()
         : (acquisitionDate || new Date().toISOString());
     const isLegacyBool = Boolean(reservation.is_legacy);
-    const firstDue = getInstallmentDueDate(baseDate, paidCuotas + 1, isLegacyBool, customDueDay);
-    const lastDue = getInstallmentDueDate(baseDate, paidCuotas + count, isLegacyBool, customDueDay);
+    const isPromoBool = Boolean(reservation.is_promo);
+
+    // Re-calcula para iteración (UI list) usando SIMULATOR DATES SI ES ADMIN
+    // Si isAdmin === false, usar paymentDate real.
+    const effectivePaymentDate = (isAdminView && comparisonDate) ? comparisonDate : new Date();
+
+    const firstDue = getInstallmentDueDate(baseDate, paidCuotas + 1, isLegacyBool, customDueDay, isPromoBool);
+    const lastDue = getInstallmentDueDate(baseDate, paidCuotas + count, isLegacyBool, customDueDay, isPromoBool);
 
     if (totalCuotas > 0 && count > 0) {
         const effectiveDate = comparisonDate || simulatedDate || new Date();
@@ -241,7 +248,7 @@ export function PaymentButtons({ reservationId, lot, reservation, acquisitionDat
                 }
             }
             else {
-                const iDue = getInstallmentDueDate(baseDate, instNum, isLegacyBool, customDueDay);
+                const iDue = getInstallmentDueDate(baseDate, instNum, isLegacyBool, customDueDay, isPromoBool);
                 const totalPrice = lot.price_total_clp || 0;
                 const lotAreaM2 = lot.area_m2 || 200;
 
@@ -419,6 +426,11 @@ export function PaymentButtons({ reservationId, lot, reservation, acquisitionDat
                                         <div className="text-sm font-bold text-[#36595F] mb-1">
                                             Estás pagando:
                                         </div>
+                                        {isPromoBool && paidCuotas === 0 && (count === 1 || count === 2) && (
+                                            <div className="bg-[#FFF8E1] text-[#B77B00] border-l-4 border-[#FFD54F] p-2 rounded text-xs font-medium mb-2 shadow-sm">
+                                                🌟 <span className="font-bold">Aplica Promoción:</span> Tus primeras 2 cuotas (Marzo y Abril) se pagan juntas hasta el 10 de Abril sin interés.
+                                            </div>
+                                        )}
                                         {count === 1 ? (
                                             <div className="flex justify-between text-blue-700 font-medium bg-blue-50 p-2 rounded">
                                                 <span>Cuota {paidCuotas + 1}</span>

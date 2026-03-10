@@ -20,6 +20,7 @@ interface Reservation {
     created_at: string;
     installments_paid: number;
     is_legacy?: boolean;
+    is_promo?: boolean;
     legacy_installment_start_date?: string;
 }
 
@@ -131,7 +132,7 @@ export default function UserDashboard() {
                                             const customDueDay = customStart ? customStart.getDate() : null;
                                             const baseDate = customStart || new Date(res.created_at);
                                             const nextInstNum = (res.installments_paid || 0) + 1;
-                                            const nextDueDate = getInstallmentDueDate(baseDate, nextInstNum, Boolean(res.is_legacy), customDueDay);
+                                            const nextDueDate = getInstallmentDueDate(baseDate, nextInstNum, Boolean(res.is_legacy), customDueDay, Boolean(res.is_promo));
 
                                             const isUrgent = new Date() > nextDueDate; // If past due
 
