@@ -431,7 +431,14 @@ export const AdminUserList = ({ users: initialUsers }: AdminUserListProps) => {
                                                 {user.name.charAt(0).toUpperCase()}
                                             </div>
                                             <div>
-                                                <p className="font-bold text-white text-base">{user.name}</p>
+                                                <div className="flex items-center gap-2">
+                                                    <p className="font-bold text-white text-base">{user.name}</p>
+                                                    {user.purchases?.some((p: any) => p.is_promo) && (
+                                                        <span className="bg-yellow-500/20 text-yellow-400 border border-yellow-500/50 px-2 py-0.5 rounded-full text-[10px] font-black tracking-widest uppercase shadow-[0_0_10px_rgba(234,179,8,0.2)]">
+                                                            Promoción
+                                                        </span>
+                                                    )}
+                                                </div>
                                                 <p className="text-gray-500">{user.email}</p>
                                             </div>
                                         </div>
@@ -583,6 +590,11 @@ export const AdminUserList = ({ users: initialUsers }: AdminUserListProps) => {
                                             <div className="flex-1 min-w-0">
                                                 <div className="flex items-center gap-2">
                                                     <p className="font-bold text-white text-[15px] truncate">{user.name}</p>
+                                                    {user.purchases?.some((p: any) => p.is_promo) && (
+                                                        <span className="bg-yellow-500/20 text-yellow-400 border border-yellow-500/50 px-1.5 py-0.5 rounded-full text-[9px] font-black uppercase shadow-[0_0_10px_rgba(234,179,8,0.2)] shrink-0">
+                                                            Promo
+                                                        </span>
+                                                    )}
                                                     <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold shrink-0 ${user.role === 'ADMIN' ? 'bg-purple-500/20 text-purple-400 ring-1 ring-purple-500/20' :
                                                         user.role === 'SELLER' ? 'bg-blue-500/20 text-blue-400 ring-1 ring-blue-500/20' :
                                                             'bg-white/10 text-gray-400 ring-1 ring-white/5'

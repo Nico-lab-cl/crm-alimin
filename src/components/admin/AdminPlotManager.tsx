@@ -332,7 +332,14 @@ export function AdminPlotManager({ reservations, allClients, userId, initialUser
                                         <CardHeader className="bg-[#36595F]/90 text-white rounded-t-lg border-b border-white/10">
                                             <div className="flex justify-between items-start">
                                                 <div>
-                                                    <CardTitle>Lote {res.lot.number}</CardTitle>
+                                                    <div className="flex items-center gap-2">
+                                                        <CardTitle>Lote {res.lot.number}</CardTitle>
+                                                        {!isUserView && res.is_promo && (
+                                                            <span className="bg-yellow-500/20 text-yellow-400 border border-yellow-500/50 px-2 py-0.5 rounded-full text-[10px] font-black tracking-widest uppercase shadow-[0_0_10px_rgba(234,179,8,0.2)]">
+                                                                Promoción
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                     <CardDescription className="text-white/80">Etapa {res.lot.stage}</CardDescription>
                                                 </div>
                                                 <div className="bg-black/20 px-2 py-1 rounded text-xs flex items-center gap-1" title="Propietario">

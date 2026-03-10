@@ -247,6 +247,7 @@ export async function getAdminUsers() {
                         pie_status: true,
                         installments_paid: true,
                         is_legacy: true,
+                        is_promo: true,
                         workflow_activated: true,
                         lot: {
                             select: { number: true, stage: true }
