@@ -50,6 +50,7 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
         isPiePaid: true,
         reserva_firmada: false,
         compraventa_firmada: false,
+        is_promo: false,
     })
 
     const [hasDebt, setHasDebt] = useState(false)
@@ -81,6 +82,7 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
                 isPiePaid: existingReservation.pie_status !== 'PENDING',
                 reserva_firmada: !!existingReservation.signed_at,
                 compraventa_firmada: !!existingReservation.promesa_signed_at,
+                is_promo: !!existingReservation.is_promo,
             })
             if (existingReservation.legacy_debt_start_date) {
                 setHasDebt(true)
@@ -113,7 +115,7 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
                 marital_status: "", profession: "", nationality: "Chilena",
                 address_street: "", address_number: "", address_commune: "", address_region: "",
                 reservation_amount_clp: 500000, pie: 0, cuotas: 0, valor_cuota: 0, last_installment_amount: 0, price_total_clp: 0, legacy_current_installment: 1, isPiePaid: true,
-                reserva_firmada: false, compraventa_firmada: false
+                reserva_firmada: false, compraventa_firmada: false, is_promo: false
             })
             setHasDebt(false)
             setDebtStartDate(undefined)
@@ -144,7 +146,7 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
                     marital_status: "", profession: "", nationality: "Chilena",
                     address_street: "", address_number: "", address_commune: "", address_region: "",
                     reservation_amount_clp: 500000, pie: 0, cuotas: 0, valor_cuota: 0, last_installment_amount: 0, price_total_clp: 0, legacy_current_installment: 1, isPiePaid: true,
-                    reserva_firmada: false, compraventa_firmada: false
+                    reserva_firmada: false, compraventa_firmada: false, is_promo: false
                 })
                 setHasDebt(false)
                 setDebtStartDate(undefined)
@@ -369,6 +371,27 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
                             </label>
                             <p className="text-[11px] text-gray-500">
                                 Si desmarcas esta opción, el usuario podrá pagar el resto de su Pie desde la plataforma web.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center space-x-2 bg-yellow-50 border border-yellow-200 p-3 rounded-md">
+                        <input
+                            type="checkbox"
+                            id="is_promo"
+                            className="w-4 h-4 text-yellow-600 rounded border-gray-300 focus:ring-yellow-500"
+                            checked={formData.is_promo}
+                            onChange={(e) => setFormData({ ...formData, is_promo: e.target.checked })}
+                        />
+                        <div className="grid gap-1.5 leading-none">
+                            <label
+                                htmlFor="is_promo"
+                                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-yellow-900"
+                            >
+                                Aplica Promoción
+                            </label>
+                            <p className="text-[11px] text-yellow-700">
+                                Marca esta opción si el cliente adquirió el terreno bajo alguna oferta o condición promocional especial.
                             </p>
                         </div>
                     </div>

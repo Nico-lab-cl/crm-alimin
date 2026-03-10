@@ -331,6 +331,7 @@ export async function assignLegacyLotOwner(data: {
     isPiePaid?: boolean;
     reserva_firmada?: boolean;
     compraventa_firmada?: boolean;
+    is_promo?: boolean;
     reservationId?: string;
 }) {
     const session = await auth()
@@ -341,7 +342,7 @@ export async function assignLegacyLotOwner(data: {
         address_street, address_number, address_commune, address_region,
         reservation_amount_clp, pie, cuotas, valor_cuota, last_installment_amount,
         price_total_clp, legacy_current_installment, legacy_debt_start_date, legacy_installment_start_date, legacy_installment_ranges, isPiePaid,
-        reserva_firmada, compraventa_firmada,
+        reserva_firmada, compraventa_firmada, is_promo,
         reservationId
     } = data
 
@@ -425,6 +426,7 @@ export async function assignLegacyLotOwner(data: {
             address_number,
             address_commune,
             address_region,
+            is_promo: is_promo || false,
             is_legacy: existingReservation ? existingReservation.is_legacy : true,
             workflow_activated: existingReservation ? existingReservation.workflow_activated : false,
             legacy_current_installment: legacy_current_installment || (existingReservation?.legacy_current_installment || 1),
