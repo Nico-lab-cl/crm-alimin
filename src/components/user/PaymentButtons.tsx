@@ -99,12 +99,7 @@ function getInstallmentAmount(
 export function PaymentButtons({ reservationId, lot, reservation, acquisitionDate, isAdminView, simulatedDate, comparisonDate }: PaymentButtonsProps) {
     const [isLoading, setIsLoading] = useState(false);
     
-    // Initial Cuotas Logic: Promo users must pay 2 cuotas initially
-    const isPromoForInit = Boolean(reservation.is_promo);
-    const paidCuotasForInit = reservation.installments_paid || 0;
-    const totalCuotasForInit = lot.cuotas || 0;
-    const defaultCuotas = (isPromoForInit && paidCuotasForInit === 0 && totalCuotasForInit >= 2) ? "2" : "1";
-    const [selectedCuotas, setSelectedCuotas] = useState<string>(defaultCuotas);
+    const [selectedCuotas, setSelectedCuotas] = useState<string>("1");
     const [isPieModalOpen, setIsPieModalOpen] = useState(false);
     const [isCuotasModalOpen, setIsCuotasModalOpen] = useState(false);
     const [fileBase64, setFileBase64] = useState<string | null>(null);
@@ -404,7 +399,6 @@ export function PaymentButtons({ reservationId, lot, reservation, acquisitionDat
                                     </SelectTrigger>
                                     <SelectContent className="bg-white border-gray-200 text-black">
                                         {Array.from({ length: remainingCuotas }, (_, i) => i + 1)
-                                            .filter(num => !(isPromoBool && paidCuotas === 0 && remainingCuotas >= 2 && num === 1))
                                             .map((num) => (
                                             <SelectItem key={num} value={String(num)} className="hover:bg-gray-100 focus:bg-gray-100 focus:text-black">
                                                 {num} {num === 1 ? 'Cuota' : 'Cuotas'}
@@ -434,11 +428,6 @@ export function PaymentButtons({ reservationId, lot, reservation, acquisitionDat
                                         <div className="text-sm font-bold text-[#36595F] mb-1">
                                             Estás pagando:
                                         </div>
-                                        {isPromoBool && paidCuotas === 0 && (count === 1 || count === 2) && (
-                                            <div className="bg-[#FFF8E1] text-[#B77B00] border-l-4 border-[#FFD54F] p-2 rounded text-xs font-medium mb-2 shadow-sm">
-                                                🌟 <span className="font-bold">Aplica Promoción:</span> Tus primeras 2 cuotas (Marzo y Abril) se pagan juntas el 5 de Abril.
-                                            </div>
-                                        )}
                                         {count === 1 ? (
                                             <div className="flex justify-between text-blue-700 font-medium bg-blue-50 p-2 rounded">
                                                 <span>Cuota {paidCuotas + 1}</span>
