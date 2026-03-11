@@ -198,8 +198,12 @@ export const PaymentReceiptPDF = ({
 
     // Helper text logic
     const isCuotas = paymentScope === 'INSTALLMENT';
+    const monthYear = (isCuotas && installmentDueDate) 
+        ? ` (${format(installmentDueDate, 'MMMM yyyy', { locale: es }).toUpperCase()})` 
+        : '';
+        
     const itemName = isCuotas
-        ? `Cuota #${String(installmentsCount).padStart(2, '0')}/${totalInstallments}`
+        ? `Cuota #${String(installmentsCount).padStart(2, '0')}/${totalInstallments}${monthYear}`
         : paymentScope === 'PIE'
             ? 'Pago de Pie'
             : 'Pago de Reserva';
