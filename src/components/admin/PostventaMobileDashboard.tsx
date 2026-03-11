@@ -292,12 +292,13 @@ export function PostventaMobileDashboard({ initialReceipts, soldLots, activeTab,
 
     if (activeTab === 'alertas') {
         const filteredAlerts = debtAlerts.filter(alert => {
+            const isFrozen = Boolean(alert.mora_frozen);
             const matchesStage = alertStage === 'ALL' || alert.lotStage === alertStage;
             const matchesStatus = alertFilter === 'ALL' ||
-                (alertFilter === 'UPCOMING' && alert.isUpcoming) ||
-                (alertFilter === 'GRACE' && alert.isGracePeriod) ||
-                (alertFilter === 'LATE' && alert.isLate) ||
-                (alertFilter === 'OK' && alert.isUpToDate);
+                (alertFilter === 'UPCOMING' && alert.isUpcoming && !isFrozen) ||
+                (alertFilter === 'GRACE' && alert.isGracePeriod && !isFrozen) ||
+                (alertFilter === 'LATE' && alert.isLate && !isFrozen) ||
+                (alertFilter === 'OK' && (alert.isUpToDate || isFrozen));
             return matchesStage && matchesStatus;
         });
 
