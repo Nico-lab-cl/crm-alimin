@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileText, Download, CheckCircle, Clock, Folder } from "lucide-react";
+import { FileText, Download, CheckCircle, Clock, Folder, Briefcase } from "lucide-react";
 
 interface Reservation {
     id: string;
@@ -103,68 +103,61 @@ export function UserDocumentsList({ reservations }: { reservations: Reservation[
                             </div>
 
                             {/* ── Documentos Cargados Manualmente (Gastos, Pie, etc) ── */}
-                            {res.legacy_uploaded_contracts && (() => {
-                                try {
-                                    const docs = JSON.parse(res.legacy_uploaded_contracts);
-                                    if (!Array.isArray(docs)) return null;
+                            {(res as any).manual_documents && (() => {
+                                const docs = (res as any).manual_documents;
+                                const categories = [
+                                    { id: 'GASTOS_OPERACIONALES', label: 'Gastos Operacionales', icon: FileText, color: 'text-amber-400' },
+                                    { id: 'COMPROBANTE_PIE', label: 'Comprobantes de Pie', icon: CheckCircle, color: 'text-green-400' },
+                                    { id: 'COMPROBANTE_CUOTA', label: 'Comprobantes de Cuotas', icon: FileText, color: 'text-blue-400' }
+                                ];
 
-                                    const categories = [
-                                        { id: 'GASTOS_OPERACIONALES', label: 'Gastos Operacionales', icon: FileText, color: 'text-amber-400' },
-                                        { id: 'COMPROBANTE_PIE', label: 'Comprobantes de Pie', icon: CheckCircle, color: 'text-green-400' },
-                                        { id: 'COMPROBANTE_CUOTA', label: 'Comprobantes de Cuotas', icon: FileText, color: 'text-blue-400' }
-                                    ];
+                                return categories.map(cat => {
+                                    const catDocs = Array.isArray(docs) ? docs.filter((d: any) => d.category === cat.id) : [];
+                                    if (catDocs.length === 0) return null;
 
-                                    return categories.map(cat => {
-                                        const catDocs = docs.filter((d: any) => d.category === cat.id);
-                                        if (catDocs.length === 0) return null;
-
-                                        return (
-                                            <div key={cat.id} className="space-y-3 mt-6 pt-4 border-t border-white/5">
-                                                <div className="flex justify-between items-center">
-                                                    <h3 className="font-semibold text-gray-200 text-base flex items-center gap-2">
-                                                        <cat.icon className={`h-4 w-4 ${cat.color}`} />
-                                                        {cat.label}
-                                                    </h3>
-                                                </div>
-                                                <div className="flex flex-col gap-2">
-                                                    {catDocs.map((doc: any, i: number) => (
-                                                        <a
-                                                            key={i}
-                                                            href={doc.url}
-                                                            target="_blank"
-                                                            rel="noopener noreferrer"
-                                                            className="w-full flex items-center justify-between px-4 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-sm transition-colors"
-                                                        >
-                                                            <span className="text-gray-300">{doc.name}</span>
-                                                            <Download className="h-4 w-4 text-gray-500" />
-                                                        </a>
-                                                    ))}
-                                                </div>
+                                    return (
+                                        <div key={cat.id} className="space-y-3 mt-6 pt-4 border-t border-white/5">
+                                            <div className="flex justify-between items-center">
+                                                <h3 className="font-semibold text-gray-200 text-base flex items-center gap-2">
+                                                    <cat.icon className={`h-4 w-4 ${cat.color}`} />
+                                                    {cat.label}
+                                                </h3>
                                             </div>
-                                        );
-                                    });
-                                } catch (e) {
-                                    return null;
-                                }
+                                            <div className="flex flex-col gap-2">
+                                                {catDocs.map((doc: any, i: number) => (
+                                                    <a
+                                                        key={i}
+                                                        href={doc.url}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="w-full flex items-center justify-between px-4 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-sm transition-colors"
+                                                    >
+                                                        <span className="text-gray-300">{doc.name}</span>
+                                                        <Download className="h-4 w-4 text-gray-500" />
+                                                    </a>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    );
+                                });
                             })()}
 
-                            {/* ── Contratos Físicos (Legacy/Offline Sin Categoría) ── */}
+                            {/* ── Documentos Físicos (Legacy/Offline Originales) ── */}
                             {res.legacy_uploaded_contracts && (() => {
                                 try {
                                     const docs = JSON.parse(res.legacy_uploaded_contracts);
-                                    if (!Array.isArray(docs)) return null;
+                                    if (!Array.isArray(docs) || docs.length === 0) return null;
                                     
-                                    // Only show those WITHOUT a category (the old legacy ones)
-                                    const legacyDocs = docs.filter((d: any) => !d.category);
-                                    if (legacyDocs.length === 0) return null;
-
                                     return (
                                         <>
                                             <div className="h-px w-full bg-white/10 my-6" />
                                             <div className="space-y-3">
-                                                <h3 className="font-semibold text-gray-200 text-base">Contratos Físicos Originales</h3>
+                                                <h3 className="font-semibold text-gray-200 text-base flex items-center gap-2">
+                                                    <Briefcase className="h-4 w-4 text-indigo-400" />
+                                                    Contratos Físicos Originales
+                                                </h3>
                                                 <p className="text-[10px] text-gray-400">Escaneos de documentos firmados presencialmente.</p>
-                                                {legacyDocs.map((doc: any, i: number) => (
+                                                {docs.map((doc: any, i: number) => (
                                                     <a
                                                         key={i}
                                                         href={doc.url}
