@@ -457,8 +457,8 @@ export function PostventaMobileDashboard({
                                                             const auto = (selectedClientLedger.receipts || []).filter((r: any) => r.status === 'APPROVED');
                                                             
                                                             const all = [
-                                                                ...manual.map(m => ({ name: m.name, url: m.url, type: m.category === 'COMPROBANTE_PIE' ? 'PIE' : 'CUOTA', isAuto: false })),
-                                                                ...auto.map(a => ({ name: `Recibo #${a.id.slice(-4)}`, url: `/api/receipt/${a.id}/pdf`, type: a.scope, isAuto: true }))
+                                                                ...manual.map((m: any) => ({ name: m.name, url: m.url, type: m.category === 'COMPROBANTE_PIE' ? 'PIE' : 'CUOTA', isAuto: false })),
+                                                                ...auto.map((a: any) => ({ name: `Recibo #${a.id.slice(-4)}`, url: `/api/receipt/${a.id}/pdf`, type: a.scope, isAuto: true }))
                                                             ].slice(0, 3); // Top 3
 
                                                             return all.map((p, idx) => (
