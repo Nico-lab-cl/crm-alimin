@@ -55,36 +55,29 @@ export async function getPostventaData() {
 
             // 1. Calculate nextDueDate regardless of Pie status to ensure they appear in the ledger
             // We prioritize showing the PIE debt if it exists, otherwise we show the installment debt.
+            // 1. Calculate Interest and Late Days
             if (paidCuotas < totalCuotas) {
                 const customStart = res.legacy_installment_start_date ? new Date(res.legacy_installment_start_date) : null;
                 const customDueDay = customStart ? customStart.getDate() : null;
                 nextDueDate = getInstallmentDueDate(baseDate, paidCuotas + 1, isLegacyBool, customDueDay, Boolean(res.is_promo));
 
                 const lotAreaM2 = lot.area_m2 || 200;
-                if (isLegacyBool && res.legacy_debt_start_date) {
-                    const debtStart = new Date(res.legacy_debt_start_date);
-                    debtStart.setHours(0, 0, 0, 0);
-                    if (currentDate > debtStart) {
-                        const diffTime = currentDate.getTime() - debtStart.getTime();
-                        lateDays = Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
-                        if (lateDays > 0) {
-                            const dailyInterest = calculateDailyInterest(totalToPay, lotAreaM2);
-                            penaltyAmount = dailyInterest * lateDays;
-                        }
-                    }
-                } else {
-                    penaltyAmount = calculateTotalInterest(
-                        totalToPay,
-                        lotAreaM2,
-                        nextDueDate,
-                        false,
-                        currentDate
-                    );
+                
+                // Unified Interest Calculation
+                penaltyAmount = calculateTotalInterest(
+                    totalToPay,
+                    lotAreaM2,
+                    nextDueDate,
+                    isLegacyBool,
+                    currentDate,
+                    // @ts-ignore
+                    Boolean(res.mora_frozen),
+                    res.legacy_debt_start_date
+                );
 
-                    if (penaltyAmount > 0) {
-                        const daily = calculateDailyInterest(totalToPay, lotAreaM2);
-                        lateDays = daily > 0 ? Math.round(penaltyAmount / daily) : 0;
-                    }
+                if (penaltyAmount > 0) {
+                    const daily = calculateDailyInterest(totalToPay, lotAreaM2);
+                    lateDays = daily > 0 ? Math.round(penaltyAmount / daily) : 0;
                 }
             }
 
@@ -149,7 +142,9 @@ export async function getPostventaData() {
                 isGracePeriod,
                 isPieDebt,
                 valor_cuota: lot.valor_cuota || 0,
-                monto_cuota: lot.valor_cuota || 0
+                monto_cuota: lot.valor_cuota || 0,
+                // @ts-ignore
+                isMoraFrozen: Boolean(res.mora_frozen)
             };
             ledger.push(ledgerEntry);
 

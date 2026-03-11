@@ -228,7 +228,7 @@ export function PaymentButtons({ reservationId, lot, reservation, acquisitionDat
                 const debtStart = new Date(reservation.legacy_debt_start_date);
                 debtStart.setHours(0, 0, 0, 0);
 
-                if (targetDate > debtStart) {
+                if (targetDate > debtStart && !reservation.mora_frozen) {
                     const diffTime = targetDate.getTime() - debtStart.getTime();
                     const lateDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
@@ -260,7 +260,8 @@ export function PaymentButtons({ reservationId, lot, reservation, acquisitionDat
                     iDue,
                     Boolean(reservation.is_legacy),
                     targetDate,
-                    Boolean(reservation.mora_frozen)
+                    Boolean(reservation.mora_frozen),
+                    reservation.legacy_debt_start_date
                 );
 
                 if (interestForThisInstallment > 0) {

@@ -434,10 +434,10 @@ export function PostventaMobileDashboard({ initialReceipts, soldLots, activeTab,
                         {/* Alerts Cards Grid */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 4xl:grid-cols-5 gap-5">
                             {paginatedAlerts.map(alert => {
-                                const isGrace = alert.isGracePeriod;
-                                const isUpcoming = alert.isUpcoming;
-                                const isLate = alert.isLate;
-                                const isOK = alert.isUpToDate;
+                                const isGrace = alert.isGracePeriod && !alert.isMoraFrozen;
+                                const isUpcoming = alert.isUpcoming && !alert.isMoraFrozen;
+                                const isLate = alert.isLate && !alert.isMoraFrozen;
+                                const isOK = alert.isUpToDate || alert.isMoraFrozen;
 
                                 let colorClass = 'bg-red-500/5 hover:bg-red-500/10 border-red-500/20 group';
                                 let accentClass = 'text-red-400';

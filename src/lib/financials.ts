@@ -53,27 +53,32 @@ export function calculateTotalInterest(
     dueDate: Date,
     isLegacy: boolean,
     paymentDate: Date = new Date(),
-    moraFrozen: boolean = false
+    moraFrozen: boolean = false,
+    legacyDebtStartDate?: Date | string | null
 ): number {
     if (moraFrozen) return 0;
 
-    // 1. Determine Grace Period End (Dynamic)
-    const gracePeriodEnd = new Date(dueDate);
-
-    // Rule: Grace period ends exactly 5 days after the due date.
-    // If due date is the 5th, grace period ends on the 10th. If 15th, ends on the 20th.
-    gracePeriodEnd.setDate(dueDate.getDate() + 5);
-    gracePeriodEnd.setHours(23, 59, 59, 999);
-
-    if (paymentDate <= gracePeriodEnd) {
-        return 0;
-    }
-
-    // 2. Calculate days late
+    // 1. Calculate days late
     const pDate = new Date(paymentDate);
     pDate.setHours(0, 0, 0, 0);
 
-    const gDate = new Date(gracePeriodEnd);
+    let gDate: Date;
+
+    if (isLegacy && legacyDebtStartDate) {
+        // For legacy users with a manual debt start date, we use that date directly
+        gDate = new Date(legacyDebtStartDate);
+    } else {
+        // 1. Determine Grace Period End (Dynamic)
+        const gracePeriodEnd = new Date(dueDate);
+        // Rule: Grace period ends exactly 5 days after the due date.
+        gracePeriodEnd.setDate(dueDate.getDate() + 5);
+        gracePeriodEnd.setHours(23, 59, 59, 999);
+        gDate = gracePeriodEnd;
+
+        if (paymentDate <= gracePeriodEnd) {
+            return 0;
+        }
+    }
     gDate.setHours(0, 0, 0, 0);
 
     // 3. Apply Web Rule Cutoff (March 11, 2026) for non-legacy users
