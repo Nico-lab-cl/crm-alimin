@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { calculateTotalInterest, getInstallmentDueDate } from '@/lib/financials';
+import { calculateTotalInterest, getInstallmentDueDate, calculateDailyInterest } from '@/lib/financials';
 import { sendMoraWebhook } from '@/lib/webhooks';
 
 // This endpoint is called by n8n on the 10th of every month
@@ -137,7 +137,8 @@ export async function POST(req: NextRequest) {
             }
 
             const valorCuota = res.lot.valor_cuota || 0;
-            const daysLate = isLate ? Math.max(0, Math.ceil((chileNow.getTime() - (new Date(nextDueDate).getTime() + 5*24*60*60*1000)) / (1000 * 60 * 60 * 24))) : 0;
+            const daily = calculateDailyInterest(res.lot.price_total_clp || 0, res.lot.area_m2 || 200);
+            const daysLate = daily > 0 ? Math.round(penaltyAmount / daily) : 0;
 
             const payload = {
                 reservation_id: res.id,
