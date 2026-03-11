@@ -31,51 +31,27 @@ export async function POST(
             return NextResponse.json({ error: "Reservation not found" }, { status: 404 });
         }
 
-        if (type === "legacy") {
-            // Handle multiple offline contracts
-            let existingContracts: { name: string, url: string }[] = [];
+        if (type === "legacy" || (type && type !== "promesa" && type !== "reserva")) {
+            // Handle multiple manual/offline documents
+            let existingDocs: { name: string, url: string, category?: string, uploadedAt?: string }[] = [];
             if (reservation.legacy_uploaded_contracts) {
                 try {
-                    existingContracts = JSON.parse(reservation.legacy_uploaded_contracts);
+                    existingDocs = JSON.parse(reservation.legacy_uploaded_contracts);
                 } catch (e) {
                     // ignore parse error, start fresh
                 }
             }
 
-            existingContracts.push({
-                name: fileName || `Documento_Offline_${existingContracts.length + 1}.pdf`,
-                url: fileData
-            });
-
-            const updatedReservation = await prisma.reservation.update({
-                where: { id },
-                data: { legacy_uploaded_contracts: JSON.stringify(existingContracts) },
-            });
-
-            return NextResponse.json({ success: true, reservation: updatedReservation });
-        } else if (type && type !== "promesa" && type !== "reserva") {
-            // MANUAL CATEGORIZED DOCUMENTS (Gastos Operacionales, Comprobante Pie, etc)
-            let existingDocs: any[] = [];
-            if (reservation.manual_documents) {
-                try {
-                    existingDocs = Array.isArray(reservation.manual_documents) 
-                        ? reservation.manual_documents 
-                        : JSON.parse(reservation.manual_documents as string);
-                } catch (e) {
-                    // ignore parse error
-                }
-            }
-
             existingDocs.push({
-                name: fileName || `${type.replace(/_/g, ' ')}.pdf`,
+                name: fileName || (type === "legacy" ? `Documento_Offline_${existingDocs.length + 1}.pdf` : `${type.replace(/_/g, ' ')}.pdf`),
                 url: fileData,
-                category: type,
+                category: type !== "legacy" ? type : undefined,
                 uploadedAt: new Date().toISOString()
             });
 
             const updatedReservation = await prisma.reservation.update({
                 where: { id },
-                data: { manual_documents: existingDocs },
+                data: { legacy_uploaded_contracts: JSON.stringify(existingDocs) },
             });
 
             return NextResponse.json({ success: true, reservation: updatedReservation });

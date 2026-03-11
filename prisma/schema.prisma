@@ -63,7 +63,6 @@ model Reservation {
   legacy_uploaded_contracts String? // Stores JSON stringified array of uploaded file URLs for offline sales
   is_promo              Boolean   @default(false)
   mora_frozen           Boolean   @default(false)
-  manual_documents      Json?     // Array of { name: string, url: string, category: string, uploadedAt: DateTime }
 
   // Ad Tracking / Attributions
   utm_source   String?
