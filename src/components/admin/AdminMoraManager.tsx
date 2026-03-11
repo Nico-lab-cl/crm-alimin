@@ -62,9 +62,14 @@ export function AdminMoraManager({ users }: AdminMoraManagerProps) {
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button variant="outline" className="border-cyan-500/30 text-cyan-500 hover:bg-cyan-500/10">
+                <Button variant="outline" className="border-cyan-500/30 text-cyan-500 hover:bg-cyan-500/10 relative">
                     <Snowflake className="w-4 h-4 mr-2" />
                     Gestor de Mora
+                    {frozenReservations.length > 0 && (
+                        <span className="absolute -top-2 -right-2 bg-cyan-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-lg border border-white">
+                            {frozenReservations.length}
+                        </span>
+                    )}
                 </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">
