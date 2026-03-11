@@ -36,8 +36,18 @@ export function ContractUploadAction({
         const file = e.target.files?.[0];
         if (!file) return;
 
-        if (file.type !== "application/pdf") {
-            setError("Solo se permiten archivos PDF.");
+        const allowedTypes = [
+            "application/pdf",
+            "image/jpeg",
+            "image/png",
+            "application/msword",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "application/vnd.ms-excel",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        ];
+
+        if (!allowedTypes.includes(file.type)) {
+            setError("Formato no permitido. Sube PDF, Imagen, Word o Excel.");
             return;
         }
 
@@ -100,7 +110,7 @@ export function ContractUploadAction({
                 <DialogHeader>
                     <DialogTitle>Subir Contrato - {reservationName}</DialogTitle>
                     <DialogDescription className="text-gray-400">
-                        Sube el Contrato de Compraventa físico ya firmado por todas las partes en formato PDF. Esto lo hará visible para el cliente en su portal. (Máx 5MB).
+                        Sube el documento físico (PDF, Imagen, Word o Excel). Esto lo hará visible para el cliente en su portal. (Máx 5MB).
                     </DialogDescription>
                 </DialogHeader>
 
@@ -118,10 +128,11 @@ export function ContractUploadAction({
                     ) : (
                         <label className="flex flex-col items-center w-full cursor-pointer">
                             <UploadCloud className="w-12 h-12 mb-2 text-gray-400" />
-                            <span className="text-sm text-gray-300 font-medium">Haz Clic para seleccionar un PDF</span>
+                            <span className="text-sm text-gray-300 font-medium">Haz Clic para seleccionar un archivo</span>
+                            <div className="text-[10px] text-gray-500 mt-1">PDF, JPG, PNG, Word o Excel</div>
                             <input
                                 type="file"
-                                accept="application/pdf"
+                                accept=".pdf,image/*,.doc,.docx,.xls,.xlsx"
                                 className="hidden"
                                 onChange={handleFileChange}
                             />

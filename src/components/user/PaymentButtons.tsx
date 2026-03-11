@@ -483,7 +483,7 @@ export function PaymentButtons({ reservationId, lot, reservation, acquisitionDat
                                     <div className="relative inline-block w-full">
                                         <Input
                                             type="file"
-                                            accept="image/*,.pdf"
+                                            accept="image/*,.pdf,.doc,.docx,.xls,.xlsx"
                                             onChange={handleFileChange}
                                             className="absolute inset-0 opacity-0 cursor-pointer z-10"
                                         />

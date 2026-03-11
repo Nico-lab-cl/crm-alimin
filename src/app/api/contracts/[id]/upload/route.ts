@@ -21,9 +21,19 @@ export async function POST(
             return NextResponse.json({ error: "No file data provided" }, { status: 400 });
         }
 
-        // Validate base64 prefix
-        if (!fileData.startsWith("data:application/pdf;base64,")) {
-            return NextResponse.json({ error: "Invalid file format. Must be a base64 PDF." }, { status: 400 });
+        // Validate base64 prefix for multiple formats
+        const allowedPrefixes = [
+            "data:application/pdf;base64,",
+            "data:image/jpeg;base64,",
+            "data:image/png;base64,",
+            "data:application/msword;base64,",
+            "data:application/vnd.openxmlformats-officedocument.wordprocessingml.document;base64,",
+            "data:application/vnd.ms-excel;base64,",
+            "data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,"
+        ];
+
+        if (!allowedPrefixes.some(prefix => fileData.startsWith(prefix))) {
+            return NextResponse.json({ error: "Invalid file format. Must be PDF, Image, Word or Excel." }, { status: 400 });
         }
 
         const reservation = await prisma.reservation.findUnique({ where: { id } });
@@ -73,6 +83,7 @@ export async function POST(
                 uploadedAt: new Date().toISOString()
             });
 
+            // @ts-ignore
             const updatedReservation = await prisma.reservation.update({
                 where: { id },
                 data: { manual_documents: existingDocs },

@@ -159,19 +159,44 @@ export function UserDocumentsList({ reservations }: { reservations: Reservation[
                                                 {cat.label}
                                             </h3>
                                             <div className="grid grid-cols-1 gap-3">
-                                                {catDocs.map((doc: any, i: number) => (
-                                                    <div key={i} className="group items-center flex justify-between px-5 py-4 bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/20 rounded-2xl transition-all">
-                                                        <span className="text-[11px] font-bold text-gray-400 group-hover:text-white transition-colors">{doc.name}</span>
-                                                        <div className="flex gap-4">
-                                                            <a href={doc.url} target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-[#8eb2b8] transition-colors" title="Visualizar">
-                                                                <Eye className="h-4 w-4" />
-                                                            </a>
-                                                            <a href={doc.url} download className="text-gray-600 hover:text-[#8eb2b8] transition-colors" title="Descargar">
-                                                                <Download className="h-4 w-4" />
-                                                            </a>
+                                                {catDocs.map((doc: any, i: number) => {
+                                                    const isPdf = doc.url?.toLowerCase().includes('.pdf') || doc.url?.startsWith('data:application/pdf');
+                                                    const isExcel = doc.url?.toLowerCase().includes('.xls') || doc.url?.toLowerCase().includes('.xlsx') || doc.url?.includes('spreadsheetml');
+                                                    const isWord = doc.url?.toLowerCase().includes('.doc') || doc.url?.toLowerCase().includes('.docx') || doc.url?.includes('wordprocessingml');
+                                                    const isImage = doc.url?.includes('image/') || doc.url?.toLowerCase().match(/\.(jpg|jpeg|png|gif|webp)$/);
+
+                                                    const getLabel = () => {
+                                                        if (isPdf) return "Bajar PDF";
+                                                        if (isExcel) return "Bajar Excel";
+                                                        if (isWord) return "Bajar Word";
+                                                        if (isImage) return "Bajar Imagen";
+                                                        return "Descargar";
+                                                    };
+
+                                                    return (
+                                                        <div key={i} className="group items-center flex justify-between px-5 py-4 bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/20 rounded-2xl transition-all">
+                                                            <div className="flex items-center gap-3">
+                                                                <div className="p-2 bg-white/5 rounded-lg group-hover:bg-white/10 transition-colors">
+                                                                    {isExcel ? <Briefcase className="h-4 w-4 text-emerald-500" /> :
+                                                                     isWord ? <FileText className="h-4 w-4 text-blue-500" /> :
+                                                                     isImage ? <FileText className="h-4 w-4 text-amber-500" /> :
+                                                                     <FileText className="h-4 w-4 text-gray-400" />}
+                                                                </div>
+                                                                <span className="text-[11px] font-bold text-gray-400 group-hover:text-white transition-colors">{doc.name}</span>
+                                                            </div>
+                                                            <div className="flex gap-4">
+                                                                {isPdf && (
+                                                                    <a href={doc.url} target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-[#8eb2b8] transition-colors" title="Visualizar">
+                                                                        <Eye className="h-4 w-4" />
+                                                                    </a>
+                                                                )}
+                                                                <a href={doc.url} download={doc.name} className="text-gray-600 hover:text-[#8eb2b8] transition-colors" title={getLabel()}>
+                                                                    <Download className="h-4 w-4" />
+                                                                </a>
+                                                            </div>
                                                         </div>
-                                                    </div>
-                                                ))}
+                                                    );
+                                                })}
                                             </div>
                                         </div>
                                     );
