@@ -36,9 +36,11 @@ export async function getPostventaData() {
             const lot = res.lot;
             const buyer = res.buyer;
 
+            const pieAmount = res.receipts.filter(r => r.scope === 'PIE').reduce((acc, r) => acc + r.amount_clp, 0);
+            const cuotasAmount = res.receipts.filter(r => r.scope === 'INSTALLMENT').reduce((acc, r) => acc + r.amount_clp, 0);
+            const totalPaid = pieAmount + cuotasAmount;
             const totalToPay = lot.price_total_clp || 0;
-            const totalPaid = res.receipts.reduce((acc, r) => acc + r.amount_clp, 0) + (lot.reservation_amount_clp || 0);
-            const pendingBalance = Math.max(0, totalToPay - totalPaid);
+            const pendingBalance = Math.max(0, totalToPay - totalPaid - (lot.reservation_amount_clp || 0));
 
             const totalCuotas = lot.cuotas || 0;
             const paidCuotas = res.installments_paid || 0;
@@ -98,8 +100,7 @@ export async function getPostventaData() {
             }
 
             const reservaAmount = lot.reservation_amount_clp || 0;
-            const pieAmount = res.receipts.filter(r => r.scope === 'PIE').reduce((acc, r) => acc + r.amount_clp, 0);
-            const cuotasAmount = res.receipts.filter(r => r.scope === 'INSTALLMENT').reduce((acc, r) => acc + r.amount_clp, 0);
+            // pieAmount and cuotasAmount are already calculated above
 
             let isGracePeriod = false;
             // A person is in grace only if:
@@ -231,5 +232,78 @@ export async function updateReservationContract(reservationId: string, url: stri
     } catch (error) {
         console.error("Error updating contract:", error);
         return { success: false, error: 'Error al actualizar el contrato' };
+    }
+}
+
+export async function syncLegacyReceipts() {
+    const session = await auth();
+    if (!session?.user || session.user.role !== 'ADMIN') {
+        return { error: 'No autorizado' };
+    }
+
+    try {
+        const reservations = await prisma.reservation.findMany({
+            where: { buyer_id: { not: null } },
+            include: { 
+                lot: true,
+                receipts: true
+            }
+        });
+
+        let syncedCount = 0;
+
+        for (const res of reservations) {
+            // 1. Sync Pie if PAID but no record
+            if (res.pie_status === 'PAID') {
+                const hasPieReceipt = res.receipts.some(r => r.scope === 'PIE');
+                if (!hasPieReceipt) {
+                    await prisma.paymentReceipt.create({
+                        data: {
+                            amount_clp: res.lot.pie || 0,
+                            status: 'APPROVED',
+                            receipt_url: 'LEGACY_SYNC',
+                            scope: 'PIE',
+                            reservation_id: res.id,
+                            lot_id: res.lot_id,
+                            processed_at: res.created_at
+                        }
+                    });
+                    syncedCount++;
+                }
+            }
+
+            // 2. Sync installments_paid
+            const paidCount = res.installments_paid || 0;
+            const existingCuotasReceipts = res.receipts.filter(r => r.scope === 'INSTALLMENT').length;
+            
+            if (paidCount > existingCuotasReceipts) {
+                const toSync = paidCount - existingCuotasReceipts;
+                for (let i = 0; i < toSync; i++) {
+                    const cuotaNum = existingCuotasReceipts + i + 1;
+                    // Estimated date: created_at + cuotaNum months
+                    const processedDate = new Date(res.created_at);
+                    processedDate.setMonth(processedDate.getMonth() + cuotaNum);
+
+                    await prisma.paymentReceipt.create({
+                        data: {
+                            amount_clp: res.lot.valor_cuota || 0,
+                            status: 'APPROVED',
+                            receipt_url: 'LEGACY_SYNC',
+                            scope: 'INSTALLMENT',
+                            installments_count: cuotaNum,
+                            reservation_id: res.id,
+                            lot_id: res.lot_id,
+                            processed_at: processedDate
+                        }
+                    });
+                    syncedCount++;
+                }
+            }
+        }
+
+        return { success: true, syncedCount };
+    } catch (error) {
+        console.error("Error syncing legacy receipts:", error);
+        return { error: 'Error al sincronizar recibos' };
     }
 }

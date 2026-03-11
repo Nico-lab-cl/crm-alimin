@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { approvePaymentReceipt, rejectPaymentReceipt } from '@/actions/receipts';
+import { syncLegacyReceipts } from '@/actions/postventa';
 import { toast } from 'sonner';
 import { MoraExplainerCard } from './MoraExplainerCard';
 import { ContractUploadAction } from "@/components/admin/ContractUploadAction";
@@ -143,6 +144,25 @@ export function PostventaMobileDashboard({
                                 <h2 className="text-xl font-black text-white tracking-tight uppercase">Estado de Cuentas</h2>
                                 <p className="text-[10px] text-[#3f6066] font-black uppercase tracking-widest">Cartera de Clientes Postventa</p>
                             </div>
+                        </div>
+
+                        <div className="flex gap-2">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={async () => {
+                                    const res = await syncLegacyReceipts();
+                                    if ('error' in res) toast.error(res.error);
+                                    else {
+                                        toast.success(`Sincronización completada: ${res.syncedCount} recibos generados.`);
+                                        window.location.reload();
+                                    }
+                                }}
+                                className="bg-[#3f6066]/10 border-[#3f6066]/30 text-[#8eb2b8] hover:bg-[#3f6066]/20 text-[10px] font-black uppercase tracking-widest h-9"
+                            >
+                                <Clock className="w-3.5 h-3.5 mr-2" />
+                                Sincronizar Recibos
+                            </Button>
                         </div>
                         
                         <div className="flex flex-wrap gap-2">
