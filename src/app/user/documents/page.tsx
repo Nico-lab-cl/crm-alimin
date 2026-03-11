@@ -47,11 +47,11 @@ export default function UserDocumentsPage() {
 
     if (status === "loading" || loading) {
         return (
-            <div className="container mx-auto pt-10 pb-12 px-4 space-y-4">
-                <Skeleton className="h-12 w-1/3 mb-8" />
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <Skeleton className="h-48" />
-                    <Skeleton className="h-48" />
+            <div className="min-h-screen bg-black pt-20 px-8 flex flex-col items-center">
+                <Skeleton className="h-10 w-64 bg-white/5 rounded-full mb-12" />
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 w-full max-w-7xl">
+                    <Skeleton className="h-96 bg-white/5 rounded-[2.5rem]" />
+                    <Skeleton className="h-96 bg-white/5 rounded-[2.5rem]" />
                 </div>
             </div>
         );
@@ -59,43 +59,42 @@ export default function UserDocumentsPage() {
 
     if (status === "unauthenticated") {
         return (
-            <div className="container mx-auto p-8 text-center pt-10">
-                <h1 className="text-3xl font-bold mb-4">Acceso Denegado</h1>
-                <p className="mb-4">Por favor inicia sesión para ver tus documentos.</p>
-                <Link href="/login" className="text-blue-600 underline">Ir a Iniciar Sesión</Link>
+            <div className="min-h-screen bg-black flex flex-center items-center justify-center p-8">
+                <div className="max-w-md w-full bg-white/5 backdrop-blur-xl border border-white/10 p-10 rounded-[2rem] text-center space-y-6">
+                    <h1 className="text-white font-black text-2xl uppercase tracking-tighter">Acceso Denegado</h1>
+                    <p className="text-gray-500 text-sm font-medium">Por favor inicia sesión para visualizar sus documentos legales y financieros.</p>
+                    <Link href="/login" className="block w-full py-4 bg-[#36595F] text-white rounded-2xl font-black uppercase text-[11px] tracking-widest hover:bg-[#36595F]/80 transition-all">
+                        Ir a Iniciar Sesión
+                    </Link>
+                </div>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen relative flex flex-col items-center pt-10 pb-12 px-4 bg-black/95">
-            <div className="absolute inset-0 bg-[url('/terreno-bg.JPG')] bg-cover bg-center opacity-20 blur-sm fixed" />
+        <div className="min-h-screen relative flex flex-col items-center pt-20 pb-24 px-6 bg-black">
+            {/* Ambient Background */}
+            <div className="fixed inset-0 pointer-events-none">
+                <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-[#36595F]/10 blur-[120px] rounded-full opacity-50" />
+                <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-[#36595F]/5 blur-[120px] rounded-full opacity-30" />
+            </div>
 
-            <div className="container mx-auto relative z-10 max-w-5xl">
-                <header className="mb-8 text-center">
-                    <h1 className="text-4xl sm:text-5xl font-extrabold mb-3 text-[#36595F] drop-shadow-[0_2px_4px_rgba(255,255,255,0.1)] tracking-tight">
-                        Mis Documentos
+            <div className="container mx-auto relative z-10 max-w-7xl">
+                <header className="mb-20 space-y-4">
+                    <div className="flex items-center gap-3 mb-2 opacity-50">
+                        <div className="h-px w-8 bg-[#8eb2b8]" />
+                        <span className="text-[10px] font-black text-[#8eb2b8] uppercase tracking-[0.4em]">Expediente Digital</span>
+                    </div>
+                    <h1 className="text-5xl md:text-7xl font-black text-white tracking-tighter uppercase leading-[0.9]">
+                        Mis <br />
+                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#8eb2b8] to-[#36595F]">Documentos</span>
                     </h1>
-                    <p className="text-lg sm:text-xl font-medium text-gray-200 drop-shadow-md">
-                        Contratos y documentos legales de tus inversiones.
+                    <p className="max-w-xl text-gray-500 font-medium text-sm md:text-base leading-relaxed pt-2">
+                        Acceda de forma segura a sus contratos de reserva, promesas de compraventa y el historial completo de sus transacciones financieras.
                     </p>
                 </header>
 
-                {/* 48h banner TEMPORARILY DISABLED
-                {reservations.some(r => r.signed_at && !r.uploaded_contract_url) && (
-                    <div className="mb-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
-                        <div className="bg-gradient-to-r from-[#36595F]/60 via-[#2b464a]/60 to-[#36595F]/60 border border-[#36595F]/60 text-white px-6 py-4 rounded-2xl shadow-[0_0_20px_rgba(54,89,95,0.2)] backdrop-blur-md flex flex-col sm:flex-row items-start sm:items-center gap-3">
-                            <span className="text-2xl shrink-0">⚖️</span>
-                            <p className="text-sm sm:text-base font-medium leading-snug">
-                                <span className="font-bold text-[#E0B457]">Nuestros abogados están trabajando en tu contrato de promesa de compra y venta.</span>{" "}
-                                En un plazo de <span className="font-bold">48 horas</span> lo verás reflejado en esta sección.
-                            </p>
-                        </div>
-                    </div>
-                )}
-                */}
-
-                <section>
+                <section className="animate-in fade-in slide-in-from-bottom-5 duration-700">
                     <UserDocumentsList reservations={reservations} />
                 </section>
             </div>
