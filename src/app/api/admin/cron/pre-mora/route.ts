@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { getInstallmentDueDate } from '@/lib/financials';
+import { calculateTotalInterest, getInstallmentDueDate } from '@/lib/financials';
 import { sendMoraWebhook } from '@/lib/webhooks';
 
 // This endpoint is called by n8n on the 10th of every month
@@ -73,40 +73,62 @@ export async function POST(req: NextRequest) {
             
             const dueDate = getInstallmentDueDate(baseDate, nextInstallmentNum, Boolean(res.is_legacy), customDueDay, Boolean(res.is_promo));
 
-            const dueMonth = dueDate.getMonth() + 1;
-            const dueYear = dueDate.getFullYear();
+            // Calculate Interest
+            const interest = calculateTotalInterest(
+                res.lot.price_total_clp || 0,
+                res.lot.area_m2 || 200,
+                dueDate,
+                res.is_legacy,
+                chileNow,
+                // @ts-ignore
+                Boolean(res.mora_frozen),
+                res.legacy_debt_start_date
+            );
 
-            // Check if the due date is in the CURRENT month (or past)
-            if (dueYear > year || (dueYear === year && dueMonth > month)) {
-                if (isDebug) debugInfo.push({ id: res.id, name: res.buyer.name, reason: 'Due date in future', dueDate, dueMonth, currentMonth: month });
+            let isPreMora = false;
+            let daysLate = 0;
+
+            // STATUS 1: PRE-MORA (Last day of grace period)
+            const gracePeriodEnd = new Date(dueDate);
+            gracePeriodEnd.setDate(dueDate.getDate() + 5);
+            gracePeriodEnd.setHours(0, 0, 0, 0);
+
+            const isExactlyGraceEnd = 
+                gracePeriodEnd.getDate() === dayOfMonth && 
+                gracePeriodEnd.getMonth() + 1 === month && 
+                gracePeriodEnd.getFullYear() === year;
+
+            if (isExactlyGraceEnd && interest === 0) {
+                isPreMora = true;
+            } 
+            // STATUS 2: MORA (Interest already accruing)
+            else if (interest > 0) {
+                isPreMora = false;
+                const dNow = new Date(chileNow);
+                dNow.setHours(0, 0, 0, 0);
+                const diffTime = dNow.getTime() - gracePeriodEnd.getTime();
+                daysLate = Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
+            }
+            // OTHERWISE: Not delinquent yet
+            else {
+                if (isDebug) debugInfo.push({ id: res.id, name: res.buyer.name, reason: 'Not in pre-mora nor mora', dueDate, gracePeriodEnd });
                 continue;
             }
 
-            // Calculate Grace Period End (Pre-Mora target day)
-            const gracePeriodEnd = new Date(dueDate);
-            gracePeriodEnd.setDate(dueDate.getDate() + 5);
-
-            // If it's not a test, only process users whose exact pre-mora day is TODAY
+            // Avoid duplicate notifications in the SAME month for the same type
             if (!isTest) {
-                if (gracePeriodEnd.getDate() !== dayOfMonth || gracePeriodEnd.getMonth() + 1 !== month || gracePeriodEnd.getFullYear() !== year) {
-                    if (isDebug) debugInfo.push({ id: res.id, name: res.buyer.name, reason: 'Not exactly their pre-mora day', preMoraDate: gracePeriodEnd, today: dayOfMonth });
-                    continue;
-                }
-            }
-
-            // Avoid duplicate notifications in the SAME month for the same user
-            if (!isTest) {
+                const typeToCheck = isPreMora ? 'payment_warning' : 'payment_late';
                 const existingNotification = await prisma.notification.findFirst({
                     where: {
                         user_id: res.buyer_id,
-                        type: 'payment_warning',
+                        type: typeToCheck,
                         created_at: {
                             gte: new Date(`${year}-${String(month).padStart(2, '0')}-01`),
                         }
                     }
                 });
                 if (existingNotification) {
-                    if (isDebug) debugInfo.push({ id: res.id, name: res.buyer.name, reason: 'Already notified this month' });
+                    if (isDebug) debugInfo.push({ id: res.id, name: res.buyer.name, reason: 'Already notified this month for this status' });
                     continue;
                 }
             }
@@ -120,24 +142,26 @@ export async function POST(req: NextRequest) {
                 lot_stage: res.lot.stage || 0,
                 cuota_numero: nextInstallmentNum,
                 monto_cuota: valorCuota,
-                interes_mora: 0,
-                total_a_pagar: valorCuota,
-                dias_atraso: 0,
-                is_pre_mora: true,
+                interes_mora: interest,
+                total_a_pagar: valorCuota + interest,
+                dias_atraso: daysLate,
+                is_pre_mora: isPreMora,
                 link_gestion_terreno: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://aliminlomasdelmar.com'}/user/plots`
             };
 
             // Trigger Webhook using the existing mora webhook ID
             await sendMoraWebhook(payload);
 
-            // Create Local Notification
+            // Create Local Notification in DB
             if (!isTest) {
                 await prisma.notification.create({
                     data: {
                         user_id: res.buyer_id,
-                        type: 'payment_warning',
-                        title: '⚠️ Aviso Pre-Mora',
-                        message: `Recordatorio: Mañana comienza a aplicar el interés por mora para tu cuota ${nextInstallmentNum}/${totalCuotas}. Tienes hasta el día de hoy para pagar sin que te cobremos multas por atrasos.`,
+                        type: isPreMora ? 'payment_warning' : 'payment_late',
+                        title: isPreMora ? '⚠️ Aviso Pre-Mora' : '⚠️ Alerta de Mora',
+                        message: isPreMora 
+                            ? `Recordatorio: Mañana comienza a aplicar el interés por mora para tu cuota ${nextInstallmentNum}/${totalCuotas}. Tienes hasta hoy para pagar.`
+                            : `Tu cuota ${nextInstallmentNum}/${totalCuotas} está vencida. Se ha generado un interés de $${interest.toLocaleString('es-CL')} por ${daysLate} días de atraso.`,
                     }
                 });
             }
@@ -148,7 +172,7 @@ export async function POST(req: NextRequest) {
 
         return NextResponse.json({
             ok: true,
-            message: `Proceso completado. Alertas pre-mora enviadas: ${notifiedCount}`,
+            message: `Proceso completado. Alertas enviadas: ${notifiedCount}`,
             data: notifiedUsers,
             debug: isDebug ? debugInfo : undefined
         });
