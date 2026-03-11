@@ -292,7 +292,7 @@ export function PostventaMobileDashboard({ initialReceipts, soldLots, activeTab,
 
     if (activeTab === 'alertas') {
         const filteredAlerts = debtAlerts.filter(alert => {
-            const isFrozen = Boolean(alert.mora_frozen);
+            const isFrozen = Boolean(alert.isMoraFrozen);
             const matchesStage = alertStage === 'ALL' || alert.lotStage === alertStage;
             const matchesStatus = alertFilter === 'ALL' ||
                 (alertFilter === 'UPCOMING' && alert.isUpcoming && !isFrozen) ||
@@ -307,10 +307,10 @@ export function PostventaMobileDashboard({ initialReceipts, soldLots, activeTab,
 
         const stats = {
             total: debtAlerts.length,
-            late: debtAlerts.filter(a => a.isLate).length,
-            grace: debtAlerts.filter(a => a.isGracePeriod).length,
-            upcoming: debtAlerts.filter(a => a.isUpcoming).length,
-            ok: debtAlerts.filter(a => a.isUpToDate).length
+            late: debtAlerts.filter(a => a.isLate && !a.isMoraFrozen).length,
+            grace: debtAlerts.filter(a => a.isGracePeriod && !a.isMoraFrozen).length,
+            upcoming: debtAlerts.filter(a => a.isUpcoming && !a.isMoraFrozen).length,
+            ok: debtAlerts.filter(a => a.isUpToDate || a.isMoraFrozen).length
         };
 
         return (
