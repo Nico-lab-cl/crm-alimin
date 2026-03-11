@@ -53,6 +53,32 @@ export async function POST(
             });
 
             return NextResponse.json({ success: true, reservation: updatedReservation });
+        } else if (type && type !== "promesa" && type !== "reserva") {
+            // MANUAL CATEGORIZED DOCUMENTS (Gastos Operacionales, Comprobante Pie, etc)
+            let existingDocs: any[] = [];
+            if (reservation.manual_documents) {
+                try {
+                    existingDocs = Array.isArray(reservation.manual_documents) 
+                        ? reservation.manual_documents 
+                        : JSON.parse(reservation.manual_documents as string);
+                } catch (e) {
+                    // ignore parse error
+                }
+            }
+
+            existingDocs.push({
+                name: fileName || `${type.replace(/_/g, ' ')}.pdf`,
+                url: fileData,
+                category: type,
+                uploadedAt: new Date().toISOString()
+            });
+
+            const updatedReservation = await prisma.reservation.update({
+                where: { id },
+                data: { manual_documents: existingDocs },
+            });
+
+            return NextResponse.json({ success: true, reservation: updatedReservation });
         } else {
             // Traditional Promesa Flow
             const updatedReservation = await prisma.reservation.update({

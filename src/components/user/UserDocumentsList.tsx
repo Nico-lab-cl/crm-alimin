@@ -102,23 +102,64 @@ export function UserDocumentsList({ reservations }: { reservations: Reservation[
                                 )}
                             </div>
 
-                            {/* ── Documentos Físicos (Offline) ── */}
+                            {/* ── Documentos Cargados Manualmente (Gastos, Pie, etc) ── */}
+                            {(res as any).manual_documents && (() => {
+                                const docs = (res as any).manual_documents;
+                                const categories = [
+                                    { id: 'GASTOS_OPERACIONALES', label: 'Gastos Operacionales', icon: FileText, color: 'text-amber-400' },
+                                    { id: 'COMPROBANTE_PIE', label: 'Comprobantes de Pie', icon: CheckCircle, color: 'text-green-400' },
+                                    { id: 'COMPROBANTE_CUOTA', label: 'Comprobantes de Cuotas', icon: FileText, color: 'text-blue-400' }
+                                ];
+
+                                return categories.map(cat => {
+                                    const catDocs = Array.isArray(docs) ? docs.filter((d: any) => d.category === cat.id) : [];
+                                    if (catDocs.length === 0) return null;
+
+                                    return (
+                                        <div key={cat.id} className="space-y-3 mt-6 pt-4 border-t border-white/5">
+                                            <div className="flex justify-between items-center">
+                                                <h3 className="font-semibold text-gray-200 text-base flex items-center gap-2">
+                                                    <cat.icon className={`h-4 w-4 ${cat.color}`} />
+                                                    {cat.label}
+                                                </h3>
+                                            </div>
+                                            <div className="flex flex-col gap-2">
+                                                {catDocs.map((doc: any, i: number) => (
+                                                    <a
+                                                        key={i}
+                                                        href={doc.url}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="w-full flex items-center justify-between px-4 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-sm transition-colors"
+                                                    >
+                                                        <span className="text-gray-300">{doc.name}</span>
+                                                        <Download className="h-4 w-4 text-gray-500" />
+                                                    </a>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    );
+                                });
+                            })()}
+
+                            {/* ── Documentos Físicos (Legacy/Offline) ── */}
                             {res.is_legacy && res.legacy_uploaded_contracts && (() => {
                                 try {
                                     const docs = JSON.parse(res.legacy_uploaded_contracts);
                                     if (!docs || docs.length === 0) return null;
                                     return (
                                         <>
-                                            <div className="h-px w-full bg-white/10" />
-                                            <div className="space-y-3 pt-2">
-                                                <h3 className="font-semibold text-gray-200 text-base">Documentos Físicos (Offline)</h3>
-                                                <p className="text-xs text-gray-400">Contratos firmados presencialmente y respaldados en digital por la inmobiliaria.</p>
+                                            <div className="h-px w-full bg-white/10 my-6" />
+                                            <div className="space-y-3">
+                                                <h3 className="font-semibold text-gray-200 text-base">Contratos Físicos Originales</h3>
+                                                <p className="text-[10px] text-gray-400">Escaneos de documentos firmados presencialmente.</p>
                                                 {docs.map((doc: any, i: number) => (
                                                     <a
                                                         key={i}
                                                         href={doc.url}
-                                                        download={doc.name}
-                                                        className="mt-2 text-center block w-full py-2 px-4 bg-indigo-600/20 hover:bg-indigo-600/40 border border-indigo-500/30 text-indigo-300 rounded text-sm transition-colors"
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="mt-2 text-center block w-full py-2 px-4 bg-indigo-600/10 hover:bg-indigo-600/20 border border-indigo-500/20 text-indigo-300 rounded text-sm transition-colors font-medium"
                                                     >
                                                         Descargar {doc.name.replace(".pdf", "")}
                                                     </a>
@@ -131,7 +172,7 @@ export function UserDocumentsList({ reservations }: { reservations: Reservation[
                                 }
                             })()}
 
-                            {/* ── Recibos de Pago (Otros) y Cuotas ── */}
+                            {/* ── Comprobantes de Pago Automáticos ── */}
                             {res.receipts && res.receipts.filter((r: any) => r.status === 'APPROVED').length > 0 && (() => {
                                 const allApproved = res.receipts.filter((r: any) => r.status === 'APPROVED');
                                 const installmentReceipts = allApproved.filter((r: any) => r.scope === 'INSTALLMENT' || r.scope === 'CUOTA');
@@ -139,21 +180,16 @@ export function UserDocumentsList({ reservations }: { reservations: Reservation[
 
                                 return (
                                     <>
-                                        {/* Other Receipts (Pie, Reservation, etc) */}
+                                        {/* Other Receipts (Pie, Reservation, etc via Payment Gateway) */}
                                         {otherReceipts.length > 0 && (
                                             <>
-                                                <div className="h-px w-full bg-white/10 my-4" />
+                                                <div className="h-px w-full bg-white/10 my-6" />
                                                 <div className="space-y-3">
-                                                    <div className="flex justify-between items-center">
-                                                        <h3 className="font-semibold text-gray-200 text-base">Otros Comprobantes</h3>
-                                                        <span className="flex items-center text-green-400 text-xs gap-1 bg-green-900/40 px-2 py-1 rounded">
-                                                            <CheckCircle className="h-3 w-3" /> Aprobados
-                                                        </span>
-                                                    </div>
-                                                    <div className="flex flex-col gap-2 mt-3">
+                                                    <h3 className="font-semibold text-gray-200 text-base">Comprobantes de Pago Web</h3>
+                                                    <div className="flex flex-col gap-2">
                                                         {otherReceipts.map((receipt: any) => {
                                                             const isPie = receipt.scope === 'PIE';
-                                                            const label = isPie ? "Pago de Pie" : "Pago de Reserva";
+                                                            const label = isPie ? "Pago de Pie (Webpay)" : "Reserva (Webpay)";
                                                             return (
                                                                 <a
                                                                     key={receipt.id}
@@ -164,11 +200,11 @@ export function UserDocumentsList({ reservations }: { reservations: Reservation[
                                                                 >
                                                                     <div className="flex flex-col">
                                                                         <span className="text-gray-200 font-medium">{label}</span>
-                                                                        <span className="text-xs text-gray-500">
+                                                                        <span className="text-[10px] text-gray-500">
                                                                             {new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(receipt.amount_clp)}
                                                                         </span>
                                                                     </div>
-                                                                    <Download className="h-4 w-4 text-gray-400" />
+                                                                    <Download className="h-3 w-3 text-gray-500" />
                                                                 </a>
                                                             );
                                                         })}
@@ -180,37 +216,25 @@ export function UserDocumentsList({ reservations }: { reservations: Reservation[
                                         {/* Installment Folder */}
                                         {installmentReceipts.length > 0 && (
                                             <>
-                                                <div className="h-px w-full bg-white/10 my-4" />
+                                                <div className="h-px w-full bg-white/10 my-6" />
                                                 <div className="space-y-3">
-                                                    <div className="flex justify-between items-center bg-[#36595F]/20 border border-[#36595F]/40 p-3 rounded-lg">
-                                                        <div className="flex items-center gap-2">
-                                                            <Folder className="h-5 w-5 text-amber-400 fill-amber-400/20" />
-                                                            <h3 className="font-semibold text-gray-200 text-base">Carpeta de Cuotas</h3>
-                                                        </div>
-                                                        <span className="text-[#84b9c1] text-xs font-bold bg-[#36595F]/30 px-2 py-1 rounded-full">
-                                                            {installmentReceipts.length} recibos
-                                                        </span>
+                                                    <div className="flex items-center gap-2">
+                                                        <Folder className="h-4 w-4 text-indigo-400" />
+                                                        <h3 className="font-semibold text-gray-200 text-base">Historial de Cuotas</h3>
                                                     </div>
-                                                    <p className="text-xs text-gray-400">Recibos oficiales de las cuotas mensuales que has pagado.</p>
-
-                                                    <div className="flex flex-col gap-2 mt-3 pl-4 border-l-2 border-white/5 ml-2">
+                                                    <div className="grid grid-cols-1 gap-2">
                                                         {installmentReceipts.map((receipt: any) => {
-                                                            const label = `Cuota(s) Pagada(s) - ${receipt.installments_count || 1} Cuota(s)`;
+                                                            const label = `Cuota(s) Pagada(s) (${receipt.installments_count || 1})`;
                                                             return (
                                                                 <a
                                                                     key={receipt.id}
                                                                     href={`/api/receipt/${receipt.id}/pdf`}
                                                                     target="_blank"
                                                                     rel="noopener noreferrer"
-                                                                    className="w-full flex items-center justify-between px-4 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-sm transition-colors"
+                                                                    className="w-full flex items-center justify-between px-3 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded text-xs transition-colors"
                                                                 >
-                                                                    <div className="flex flex-col">
-                                                                        <span className="text-gray-200 font-medium">{label}</span>
-                                                                        <span className="text-xs text-gray-500">
-                                                                            {new Date(receipt.created_at).toLocaleDateString('es-CL')} • {new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(receipt.amount_clp)}
-                                                                        </span>
-                                                                    </div>
-                                                                    <Download className="h-4 w-4 text-gray-400" />
+                                                                    <span className="text-gray-400 font-medium">{label}</span>
+                                                                    <Download className="h-3 w-3 text-gray-600" />
                                                                 </a>
                                                             );
                                                         })}

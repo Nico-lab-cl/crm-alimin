@@ -256,6 +256,7 @@ export function PostventaMobileDashboard({ initialReceipts, soldLots, activeTab,
                                 <div className="bg-black/40 rounded-xl p-4 border border-white/5 space-y-3">
                                     <p className="text-sm font-semibold border-b border-white/10 pb-2 mb-2 text-white">Documentos Legales</p>
                                     
+                                    {/* Promesa de Compraventa */}
                                     {selectedClientLedger.uploaded_contract_url ? (
                                         <div className="flex flex-col gap-2">
                                             <div className="flex items-center justify-between text-xs">
@@ -265,17 +266,50 @@ export function PostventaMobileDashboard({ initialReceipts, soldLots, activeTab,
                                             <p className="text-[10px] text-gray-400 leading-tight">La promesa de compraventa ya fue subida y está disponible para el cliente.</p>
                                         </div>
                                     ) : (
-                                        <div className="space-y-3">
-                                            <p className="text-[10px] text-gray-400 leading-tight block mb-2">Aún no se ha subido la promesa de compraventa. Sube el documento firmado en formato PDF para que el cliente lo vea en su portal.</p>
+                                        <div className="space-y-2">
+                                            <p className="text-[10px] text-gray-400 leading-tight">Promesa de Compraventa:</p>
                                             <ContractUploadAction 
                                                 reservationId={selectedClientLedger.id} 
                                                 reservationName={selectedClientLedger.clientName} 
+                                                label="Subir Promesa (PDF)"
                                                 onUploadComplete={() => {
-                                                    toast.success("Promesa subida correctamente. Actualiza la pestaña para verla en el historial.");
+                                                    toast.success("Promesa subida correctamente.");
                                                 }}
                                             />
                                         </div>
                                     )}
+
+                                    <div className="h-px bg-white/5 my-2" />
+
+                                    {/* Gastos Operacionales */}
+                                    <div className="space-y-2">
+                                        <p className="text-[10px] text-gray-400 leading-tight">Gastos Operacionales / Otros:</p>
+                                        <ContractUploadAction 
+                                            reservationId={selectedClientLedger.id} 
+                                            reservationName={selectedClientLedger.clientName} 
+                                            label="Subir Gastos Operacionales"
+                                            type="GASTOS_OPERACIONALES"
+                                            fileName="Gastos_Operacionales.pdf"
+                                            onUploadComplete={() => {
+                                                toast.success("Documento de gastos subido.");
+                                            }}
+                                        />
+                                    </div>
+
+                                    {/* Comprobante de Pie Manual */}
+                                    <div className="space-y-2">
+                                        <p className="text-[10px] text-gray-400 leading-tight">Comprobante de Pie (Manual):</p>
+                                        <ContractUploadAction 
+                                            reservationId={selectedClientLedger.id} 
+                                            reservationName={selectedClientLedger.clientName} 
+                                            label="Subir Comprobante de Pie"
+                                            type="COMPROBANTE_PIE"
+                                            fileName="Comprobante_Pago_Pie.pdf"
+                                            onUploadComplete={() => {
+                                                toast.success("Comprobante de pie subido.");
+                                            }}
+                                        />
+                                    </div>
                                 </div>
                             </div>
                         )}
