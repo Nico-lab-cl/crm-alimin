@@ -356,7 +356,7 @@ export function PostventaMobileDashboard({
                                             </h3>
                                         </div>
                                         
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                                             {/* Item: Promesa */}
                                             <div className="bg-white/5 rounded-2xl p-5 border border-white/5 flex flex-col h-full group">
                                                 <div className="flex justify-between items-start mb-6">
@@ -364,7 +364,12 @@ export function PostventaMobileDashboard({
                                                         <FileSignature className="w-5 h-5 text-[#8eb2b8]" />
                                                     </div>
                                                     {selectedClientLedger.uploaded_contract_url ? (
-                                                        <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20 font-black text-[8px] uppercase">Cargado</Badge>
+                                                        <div className="flex gap-2">
+                                                            <a href={selectedClientLedger.uploaded_contract_url} target="_blank" rel="noopener noreferrer" className="p-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 rounded-lg transition-colors">
+                                                                <Eye className="w-3 h-3" />
+                                                            </a>
+                                                            <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20 font-black text-[8px] uppercase">Cargado</Badge>
+                                                        </div>
                                                     ) : (
                                                         <Badge variant="outline" className="text-gray-600 border-gray-800 font-black text-[8px] uppercase">Pendiente</Badge>
                                                     )}
@@ -387,11 +392,20 @@ export function PostventaMobileDashboard({
                                                     <div className="p-2.5 bg-[#3f6066]/10 rounded-xl border border-[#3f6066]/20">
                                                         <Gavel className="w-5 h-5 text-[#8eb2b8]" />
                                                     </div>
-                                                    {Array.isArray(selectedClientLedger.manual_documents) && selectedClientLedger.manual_documents.some((d: any) => d.category === 'GASTOS_OPERACIONALES') ? (
-                                                        <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20 font-black text-[8px] uppercase">Cargado</Badge>
-                                                    ) : (
-                                                        <Badge variant="outline" className="text-gray-600 border-gray-800 font-black text-[8px] uppercase">Pendiente</Badge>
-                                                    )}
+                                                    {(() => {
+                                                        const doc = Array.isArray(selectedClientLedger.manual_documents) ? selectedClientLedger.manual_documents.find((d: any) => d.category === 'GASTOS_OPERACIONALES') : null;
+                                                        if (doc) {
+                                                            return (
+                                                                <div className="flex gap-2">
+                                                                    <a href={doc.url} target="_blank" rel="noopener noreferrer" className="p-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 rounded-lg transition-colors">
+                                                                        <Eye className="w-3 h-3" />
+                                                                    </a>
+                                                                    <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20 font-black text-[8px] uppercase">Cargado</Badge>
+                                                                </div>
+                                                            );
+                                                        }
+                                                        return <Badge variant="outline" className="text-gray-600 border-gray-800 font-black text-[8px] uppercase">Pendiente</Badge>;
+                                                    })()}
                                                 </div>
                                                 <div className="flex-1 mb-6">
                                                     <p className="text-white font-black text-sm uppercase tracking-tight">Gastos Operacionales</p>
@@ -412,7 +426,20 @@ export function PostventaMobileDashboard({
                                                     <div className="p-2.5 bg-[#3f6066]/10 rounded-xl border border-[#3f6066]/20">
                                                         <Wallet className="w-5 h-5 text-[#8eb2b8]" />
                                                     </div>
-                                                    <Badge className="bg-[#3f6066]/10 text-[#8eb2b8] border-[#3f6066]/20 font-black text-[8px] uppercase">Registro Manual</Badge>
+                                                    {(() => {
+                                                        const doc = Array.isArray(selectedClientLedger.manual_documents) ? selectedClientLedger.manual_documents.find((d: any) => d.category === 'COMPROBANTE_CUOTA') : null;
+                                                        if (doc) {
+                                                            return (
+                                                                <div className="flex gap-2">
+                                                                    <a href={doc.url} target="_blank" rel="noopener noreferrer" className="p-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 rounded-lg transition-colors">
+                                                                        <Eye className="w-3 h-3" />
+                                                                    </a>
+                                                                    <Badge className="bg-[#3b82f6]/10 text-[#3b82f6] border-[#3b82f6]/20 font-black text-[8px] uppercase">Historial</Badge>
+                                                                </div>
+                                                            );
+                                                        }
+                                                        return <Badge className="bg-[#3f6066]/10 text-[#8eb2b8] border-[#3f6066]/20 font-black text-[8px] uppercase">Registro Manual</Badge>;
+                                                    })()}
                                                 </div>
                                                 <div className="flex-1 mb-6">
                                                     <p className="text-white font-black text-sm uppercase tracking-tight">Pagos Externos</p>

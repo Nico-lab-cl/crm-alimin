@@ -76,15 +76,26 @@ export function UserDocumentsList({ reservations }: { reservations: Reservation[
                                 </div>
                                 <p className="text-[11px] text-gray-500 font-medium leading-relaxed">Documento inicial que garantiza la reserva de su parcela en el proyecto.</p>
                                 {hasReserva && (
-                                    <a
-                                        href={`/api/contracts/${res.id}/pdf`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="inline-flex items-center gap-2 px-6 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest text-[#8eb2b8] transition-all"
-                                    >
-                                        <Download className="h-3 w-3" />
-                                        Descargar Respaldo
-                                    </a>
+                                    <div className="flex flex-wrap gap-2">
+                                        <a
+                                            href={`/api/contracts/${res.id}/pdf`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="inline-flex items-center gap-2 px-6 py-3 bg-[#36595F]/10 hover:bg-[#36595F]/20 border border-[#36595F]/30 rounded-xl text-[10px] font-black uppercase tracking-widest text-white transition-all shadow-lg shadow-[#36595F]/5"
+                                        >
+                                            <Eye className="h-3 w-3" />
+                                            Visualizar
+                                        </a>
+                                        <a
+                                            href={`/api/contracts/${res.id}/pdf?download=true`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="inline-flex items-center gap-2 px-6 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest text-[#8eb2b8] transition-all"
+                                        >
+                                            <Download className="h-3 w-3" />
+                                            Bajar PDF
+                                        </a>
+                                    </div>
                                 )}
                             </div>
 
@@ -106,15 +117,25 @@ export function UserDocumentsList({ reservations }: { reservations: Reservation[
                                 </div>
                                 <p className="text-[11px] text-gray-500 font-medium leading-relaxed">Documento legal certificado por abogados que asegura la promesa oficial de compra.</p>
                                 {hasCompraventa && (
-                                    <a
-                                        href={res.uploaded_contract_url!}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="inline-flex items-center gap-2 px-6 py-3 bg-[#36595F]/10 hover:bg-[#36595F]/20 border border-[#36595F]/30 rounded-xl text-[10px] font-black uppercase tracking-widest text-[#8eb2b8] transition-all"
-                                    >
-                                        <Eye className="h-3 w-3" />
-                                        Visualizar Documento
-                                    </a>
+                                    <div className="flex flex-wrap gap-2">
+                                        <a
+                                            href={res.uploaded_contract_url!}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="inline-flex items-center gap-2 px-6 py-3 bg-[#36595F]/10 hover:bg-[#36595F]/20 border border-[#36595F]/30 rounded-xl text-[10px] font-black uppercase tracking-widest text-white transition-all shadow-lg shadow-[#36595F]/5"
+                                        >
+                                            <Eye className="h-3 w-3" />
+                                            Visualizar
+                                        </a>
+                                        <a
+                                            href={res.uploaded_contract_url!}
+                                            download
+                                            className="inline-flex items-center gap-2 px-6 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest text-[#8eb2b8] transition-all"
+                                        >
+                                            <Download className="h-3 w-3" />
+                                            Bajar PDF
+                                        </a>
+                                    </div>
                                 )}
                             </div>
 
@@ -139,16 +160,17 @@ export function UserDocumentsList({ reservations }: { reservations: Reservation[
                                             </h3>
                                             <div className="grid grid-cols-1 gap-3">
                                                 {catDocs.map((doc: any, i: number) => (
-                                                    <a
-                                                        key={i}
-                                                        href={doc.url}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        className="group items-center flex justify-between px-5 py-4 bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/20 rounded-2xl transition-all"
-                                                    >
+                                                    <div key={i} className="group items-center flex justify-between px-5 py-4 bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/20 rounded-2xl transition-all">
                                                         <span className="text-[11px] font-bold text-gray-400 group-hover:text-white transition-colors">{doc.name}</span>
-                                                        <Download className="h-3 w-3 text-gray-700 group-hover:text-[#8eb2b8]" />
-                                                    </a>
+                                                        <div className="flex gap-4">
+                                                            <a href={doc.url} target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-[#8eb2b8] transition-colors" title="Visualizar">
+                                                                <Eye className="h-4 w-4" />
+                                                            </a>
+                                                            <a href={doc.url} download className="text-gray-600 hover:text-[#8eb2b8] transition-colors" title="Descargar">
+                                                                <Download className="h-4 w-4" />
+                                                            </a>
+                                                        </div>
+                                                    </div>
                                                 ))}
                                             </div>
                                         </div>
@@ -171,19 +193,20 @@ export function UserDocumentsList({ reservations }: { reservations: Reservation[
                                                 </h3>
                                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                                     {installmentReceipts.map((receipt: any) => (
-                                                        <a
-                                                            key={receipt.id}
-                                                            href={`/api/receipt/${receipt.id}/pdf`}
-                                                            target="_blank"
-                                                            rel="noopener noreferrer"
-                                                            className="flex items-center justify-between px-4 py-3 bg-indigo-500/5 hover:bg-indigo-500/10 border border-indigo-500/10 rounded-xl transition-all group/it"
-                                                        >
+                                                        <div key={receipt.id} className="flex items-center justify-between px-4 py-3 bg-indigo-500/5 hover:bg-indigo-500/10 border border-indigo-500/10 rounded-xl transition-all group/it">
                                                             <div className="flex flex-col">
                                                                 <span className="text-[9px] font-black text-indigo-300 uppercase">Recibo #{receipt.id.slice(-4)}</span>
                                                                 <span className="text-[8px] text-gray-500 uppercase font-medium">Cuotas Pagadas</span>
                                                             </div>
-                                                            <Download className="h-3 w-3 text-gray-700 group-hover/it:text-indigo-400" />
-                                                        </a>
+                                                            <div className="flex gap-3">
+                                                                <a href={`/api/receipt/${receipt.id}/pdf`} target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-indigo-400 transition-colors" title="Visualizar">
+                                                                    <Eye className="h-3.5 w-3.5" />
+                                                                </a>
+                                                                <a href={`/api/receipt/${receipt.id}/pdf?download=true`} target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-indigo-400 transition-colors" title="Descargar">
+                                                                    <Download className="h-3.5 w-3.5" />
+                                                                </a>
+                                                            </div>
+                                                        </div>
                                                     ))}
                                                 </div>
                                             </div>
