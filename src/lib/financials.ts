@@ -52,8 +52,11 @@ export function calculateTotalInterest(
     lotAreaM2: number,
     dueDate: Date,
     isLegacy: boolean,
-    paymentDate: Date = new Date()
+    paymentDate: Date = new Date(),
+    moraFrozen: boolean = false
 ): number {
+    if (moraFrozen) return 0;
+
     // 1. Determine Grace Period End (Dynamic)
     const gracePeriodEnd = new Date(dueDate);
 

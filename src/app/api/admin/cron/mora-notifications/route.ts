@@ -78,7 +78,9 @@ export async function POST(req: NextRequest) {
                 res.lot.area_m2 || 200,
                 dueDate,
                 res.is_legacy,
-                chileNow
+                chileNow,
+                // @ts-ignore - Prisma client cache issue
+                Boolean(res.mora_frozen)
             );
 
             // If interest > 0, it means it's past the day 10 cutoff

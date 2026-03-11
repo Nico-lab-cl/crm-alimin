@@ -128,7 +128,9 @@ export async function POST(request: Request) {
                     lotAreaM2,
                     dueDate,
                     Boolean(reservation.is_legacy),
-                    chileNow
+                    chileNow,
+                    // @ts-ignore - Prisma client cache issue
+                    Boolean(reservation.mora_frozen)
                 );
 
                 if (interest > 0) {

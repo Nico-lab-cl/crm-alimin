@@ -59,6 +59,12 @@ export async function POST(req: NextRequest) {
                 continue;
             }
 
+            // @ts-ignore - Prisma client cache issue
+            if (res.mora_frozen) {
+                if (isDebug) debugInfo.push({ id: res.id, name: res.buyer.name, reason: 'Mora is frozen for this client' });
+                continue;
+            }
+
             const nextInstallmentNum = installmentsPaid + 1;
             
             const customStart = res.legacy_installment_start_date ? new Date(res.legacy_installment_start_date) : null;

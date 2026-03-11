@@ -41,6 +41,7 @@ interface PaymentButtonsProps {
         installments_paid: number | null;
         is_legacy?: boolean;
         is_promo?: boolean;
+        mora_frozen?: boolean;
         legacy_debt_start_date?: Date | string | null;
         legacy_installment_start_date?: Date | string | null;
         legacy_installment_ranges?: any;
@@ -258,7 +259,8 @@ export function PaymentButtons({ reservationId, lot, reservation, acquisitionDat
                     lotAreaM2,
                     iDue,
                     Boolean(reservation.is_legacy),
-                    targetDate
+                    targetDate,
+                    Boolean(reservation.mora_frozen)
                 );
 
                 if (interestForThisInstallment > 0) {

@@ -336,6 +336,7 @@ export async function assignLegacyLotOwner(data: {
     reserva_firmada?: boolean;
     compraventa_firmada?: boolean;
     is_promo?: boolean;
+    mora_frozen?: boolean;
     reservationId?: string;
 }) {
     const session = await auth()
@@ -346,7 +347,7 @@ export async function assignLegacyLotOwner(data: {
         address_street, address_number, address_commune, address_region,
         reservation_amount_clp, pie, cuotas, valor_cuota, last_installment_amount,
         price_total_clp, legacy_current_installment, legacy_debt_start_date, legacy_installment_start_date, legacy_installment_ranges, isPiePaid,
-        reserva_firmada, compraventa_firmada, is_promo,
+        reserva_firmada, compraventa_firmada, is_promo, mora_frozen,
         reservationId
     } = data
 
@@ -431,6 +432,8 @@ export async function assignLegacyLotOwner(data: {
             address_commune,
             address_region,
             is_promo: is_promo || false,
+            // @ts-ignore - Prisma Client cache issue
+            mora_frozen: mora_frozen || false,
             is_legacy: existingReservation ? existingReservation.is_legacy : true,
             workflow_activated: existingReservation ? existingReservation.workflow_activated : false,
             legacy_current_installment: legacy_current_installment || (existingReservation?.legacy_current_installment || 1),
@@ -509,6 +512,33 @@ export async function assignLegacyLotOwner(data: {
     } catch (error) {
         console.error("Error linking legacy owner:", error)
         return { error: "Error al asignar dueño al lote" }
+    }
+}
+
+export async function toggleMoraFreeze(reservationId: string, freeze: boolean) {
+    const session = await auth();
+    if (session?.user?.role !== Role.ADMIN) return { error: "No autorizado" };
+
+    try {
+        await prisma.reservation.update({
+            where: { id: reservationId },
+            // @ts-ignore - Prisma Client cache issue
+            data: { mora_frozen: freeze }
+        });
+
+        await logAdminAction({
+            action: 'UPDATE',
+            entity: 'Reservation',
+            entityId: reservationId,
+            details: `Estado de mora manual alternado a: ${freeze ? 'Congelada/Exenta' : 'Normal'}`,
+            pk: reservationId
+        });
+
+        revalidatePath('/admin/dashboard');
+        return { success: true, message: freeze ? "Mora congelada exitosamente." : "Mora activada nuevamente." };
+    } catch (error) {
+        console.error("Error toggling mora freeze:", error);
+        return { error: "Error al actualizar estado de mora" };
     }
 }
 

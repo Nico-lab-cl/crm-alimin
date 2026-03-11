@@ -51,6 +51,7 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
         reserva_firmada: false,
         compraventa_firmada: false,
         is_promo: false,
+        mora_frozen: false,
     })
 
     const [hasDebt, setHasDebt] = useState(false)
@@ -83,6 +84,7 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
                 reserva_firmada: !!existingReservation.signed_at,
                 compraventa_firmada: !!existingReservation.promesa_signed_at,
                 is_promo: !!existingReservation.is_promo,
+                mora_frozen: !!existingReservation.mora_frozen,
             })
             if (existingReservation.legacy_debt_start_date) {
                 setHasDebt(true)
@@ -115,7 +117,7 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
                 marital_status: "", profession: "", nationality: "Chilena",
                 address_street: "", address_number: "", address_commune: "", address_region: "",
                 reservation_amount_clp: 500000, pie: 0, cuotas: 0, valor_cuota: 0, last_installment_amount: 0, price_total_clp: 0, legacy_current_installment: 1, isPiePaid: true,
-                reserva_firmada: false, compraventa_firmada: false, is_promo: false
+                reserva_firmada: false, compraventa_firmada: false, is_promo: false, mora_frozen: false
             })
             setHasDebt(false)
             setDebtStartDate(undefined)
@@ -146,7 +148,7 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
                     marital_status: "", profession: "", nationality: "Chilena",
                     address_street: "", address_number: "", address_commune: "", address_region: "",
                     reservation_amount_clp: 500000, pie: 0, cuotas: 0, valor_cuota: 0, last_installment_amount: 0, price_total_clp: 0, legacy_current_installment: 1, isPiePaid: true,
-                    reserva_firmada: false, compraventa_firmada: false, is_promo: false
+                    reserva_firmada: false, compraventa_firmada: false, is_promo: false, mora_frozen: false
                 })
                 setHasDebt(false)
                 setDebtStartDate(undefined)
@@ -392,6 +394,27 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
                             </label>
                             <p className="text-[11px] text-yellow-700">
                                 Marca esta opción si el cliente adquirió el terreno bajo alguna oferta o condición promocional especial.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center space-x-2 bg-cyan-50 border border-cyan-200 p-3 rounded-md">
+                        <input
+                            type="checkbox"
+                            id="mora_frozen"
+                            className="w-4 h-4 text-cyan-600 rounded border-gray-300 focus:ring-cyan-500"
+                            checked={formData.mora_frozen}
+                            onChange={(e) => setFormData({ ...formData, mora_frozen: e.target.checked })}
+                        />
+                        <div className="grid gap-1.5 leading-none">
+                            <label
+                                htmlFor="mora_frozen"
+                                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-cyan-900"
+                            >
+                                Congelar Mora (Eximir Cliente)
+                            </label>
+                            <p className="text-[11px] text-cyan-700">
+                                Selecciona esto si el cliente está exento del pago de multas por atraso y notificaciones de deuda (Temporal).
                             </p>
                         </div>
                     </div>
