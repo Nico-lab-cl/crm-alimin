@@ -63,8 +63,9 @@ export async function POST(req: NextRequest) {
                 continue;
             }
 
-            // @ts-ignore
-            if (res.mora_frozen) {
+            // STRICT CHECK: If mora is frozen, we skip completely
+            const isFrozenManual = (res as any).mora_frozen === true;
+            if (isFrozenManual) {
                 if (isDebug) debugInfo.push({ id: res.id, name: res.buyer.name, reason: 'Mora is frozen' });
                 continue;
             }
