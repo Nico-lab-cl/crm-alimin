@@ -25,12 +25,14 @@ export function ContractUploadAction({
     onUploadComplete?: () => void,
     label?: string,
     type?: string,
-    fileName?: string
+    fileName?: string,
+    extraCategories?: { id: string, label: string }[]
 }) {
     const [open, setOpen] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState(false);
+    const [selectedType, setSelectedType] = useState(type);
 
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -73,7 +75,7 @@ export function ContractUploadAction({
                     },
                     body: JSON.stringify({
                         fileData: base64,
-                        type: type || undefined,
+                        type: selectedType || undefined,
                         fileName: fileName || file.name
                     }),
                 });
@@ -113,6 +115,27 @@ export function ContractUploadAction({
                         Sube el documento físico (PDF, Imagen, Word o Excel). Esto lo hará visible para el cliente en su portal. (Máx 5MB).
                     </DialogDescription>
                 </DialogHeader>
+
+                {extraCategories && extraCategories.length > 0 && (
+                    <div className="px-6 py-2 space-y-2">
+                        <label className="text-[10px] font-black text-[#3f6066] uppercase tracking-widest">Tipo de documento</label>
+                        <div className="flex flex-wrap gap-2">
+                            {extraCategories.map(cat => (
+                                <button
+                                    key={cat.id}
+                                    onClick={() => setSelectedType(cat.id)}
+                                    className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all border ${
+                                        selectedType === cat.id 
+                                        ? 'bg-[#3f6066] text-white border-[#3f6066] shadow-lg shadow-[#3f6066]/20' 
+                                        : 'bg-white/5 text-gray-500 border-white/10 hover:border-[#3f6066]/40'
+                                    }`}
+                                >
+                                    {cat.label}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                )}
 
                 <div className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-gray-700 rounded-lg bg-gray-800/50 hover:bg-gray-800 transition-colors">
                     {success ? (

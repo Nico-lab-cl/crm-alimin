@@ -420,37 +420,74 @@ export function PostventaMobileDashboard({
                                                 />
                                             </div>
 
-                                            {/* Item: Pagos Manuales */}
+                                            {/* Item: Pagos Externos y Comprobantes */}
                                             <div className="bg-white/5 rounded-2xl p-5 border border-white/5 flex flex-col h-full group sm:col-span-2 lg:col-span-1">
                                                 <div className="flex justify-between items-start mb-6">
                                                     <div className="p-2.5 bg-[#3f6066]/10 rounded-xl border border-[#3f6066]/20">
                                                         <Wallet className="w-5 h-5 text-[#8eb2b8]" />
                                                     </div>
                                                     {(() => {
-                                                        const doc = Array.isArray(selectedClientLedger.manual_documents) ? selectedClientLedger.manual_documents.find((d: any) => d.category === 'COMPROBANTE_CUOTA') : null;
-                                                        if (doc) {
+                                                        const manual = Array.isArray(selectedClientLedger.manual_documents) ? selectedClientLedger.manual_documents.filter((d: any) => d.category === 'COMPROBANTE_CUOTA' || d.category === 'COMPROBANTE_PIE') : [];
+                                                        const auto = (selectedClientLedger.receipts || []).filter((r: any) => r.status === 'APPROVED');
+                                                        const total = manual.length + auto.length;
+                                                        
+                                                        if (total > 0) {
                                                             return (
-                                                                <div className="flex gap-2">
-                                                                    <a href={doc.url} target="_blank" rel="noopener noreferrer" className="p-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 rounded-lg transition-colors">
-                                                                        <Eye className="w-3 h-3" />
-                                                                    </a>
-                                                                    <Badge className="bg-[#3b82f6]/10 text-[#3b82f6] border-[#3b82f6]/20 font-black text-[8px] uppercase">Historial</Badge>
-                                                                </div>
+                                                                <Badge className="bg-[#3b82f6]/10 text-[#3b82f6] border-[#3b82f6]/20 font-black text-[8px] uppercase">
+                                                                    {total} Registros
+                                                                </Badge>
                                                             );
                                                         }
-                                                        return <Badge className="bg-[#3f6066]/10 text-[#8eb2b8] border-[#3f6066]/20 font-black text-[8px] uppercase">Registro Manual</Badge>;
+                                                        return <Badge className="bg-amber-500/10 text-amber-500 border-amber-500/20 font-black text-[8px] uppercase">Sin Registro</Badge>;
                                                     })()}
                                                 </div>
-                                                <div className="flex-1 mb-6">
-                                                    <p className="text-white font-black text-sm uppercase tracking-tight">Pagos Externos</p>
-                                                    <p className="text-[9px] text-gray-500 font-black uppercase mt-1">Transferencias / Efectivo</p>
+                                                
+                                                <div className="flex-1 space-y-4">
+                                                    <div>
+                                                        <p className="text-white font-black text-sm uppercase tracking-tight">Pagos Externos</p>
+                                                        <p className="text-[9px] text-gray-500 font-black uppercase mt-1">Historial de Pie y Cuotas</p>
+                                                    </div>
+                                                    
+                                                    {/* Preview of latest payments (mixture) */}
+                                                    <div className="space-y-2">
+                                                        {(() => {
+                                                            const manual = Array.isArray(selectedClientLedger.manual_documents) 
+                                                                ? selectedClientLedger.manual_documents.filter((d: any) => d.category === 'COMPROBANTE_CUOTA' || d.category === 'COMPROBANTE_PIE')
+                                                                : [];
+                                                            const auto = (selectedClientLedger.receipts || []).filter((r: any) => r.status === 'APPROVED');
+                                                            
+                                                            const all = [
+                                                                ...manual.map(m => ({ name: m.name, url: m.url, type: m.category === 'COMPROBANTE_PIE' ? 'PIE' : 'CUOTA', isAuto: false })),
+                                                                ...auto.map(a => ({ name: `Recibo #${a.id.slice(-4)}`, url: `/api/receipt/${a.id}/pdf`, type: a.scope, isAuto: true }))
+                                                            ].slice(0, 3); // Top 3
+
+                                                            return all.map((p, idx) => (
+                                                                <div key={idx} className="flex justify-between items-center bg-black/20 rounded-lg p-2 border border-white/5">
+                                                                    <div className="flex flex-col">
+                                                                        <span className="text-[8px] font-black text-white truncate max-w-[80px]">{p.name}</span>
+                                                                        <span className={`text-[6px] font-black uppercase ${p.type === 'PIE' ? 'text-amber-500' : 'text-blue-400'}`}>
+                                                                            {p.type === 'PIE' ? 'Pago Pie' : 'Cuota'} {p.isAuto ? '(WEB)' : '(MANUAL)'}
+                                                                        </span>
+                                                                    </div>
+                                                                    <a href={p.url} target="_blank" rel="noopener noreferrer" className="p-1 bg-[#3f6066]/20 hover:bg-[#3f6066]/40 text-[#8eb2b8] rounded-md transition-all">
+                                                                        <Eye className="w-2.5 h-2.5" />
+                                                                    </a>
+                                                                </div>
+                                                            ));
+                                                        })()}
+                                                    </div>
                                                 </div>
+
                                                 <ContractUploadAction 
                                                     reservationId={selectedClientLedger.id} 
                                                     reservationName={selectedClientLedger.clientName}
                                                     type="COMPROBANTE_CUOTA"
                                                     label="Cargar Comprobante"
                                                     onUploadComplete={() => toast.success("Pago registrado")}
+                                                    extraCategories={[
+                                                        { id: 'COMPROBANTE_PIE', label: 'Pago de Pie' },
+                                                        { id: 'COMPROBANTE_CUOTA', label: 'Pago de Cuota' }
+                                                    ]}
                                                 />
                                             </div>
                                         </div>
