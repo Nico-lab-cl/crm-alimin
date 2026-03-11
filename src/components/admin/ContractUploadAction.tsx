@@ -18,7 +18,8 @@ export function ContractUploadAction({
     onUploadComplete,
     label,
     type,
-    fileName
+    fileName,
+    extraCategories
 }: {
     reservationId: string,
     reservationName: string,
@@ -120,7 +121,7 @@ export function ContractUploadAction({
                     <div className="px-6 py-2 space-y-2">
                         <label className="text-[10px] font-black text-[#3f6066] uppercase tracking-widest">Tipo de documento</label>
                         <div className="flex flex-wrap gap-2">
-                            {extraCategories.map(cat => (
+                            {extraCategories.map((cat: any) => (
                                 <button
                                     key={cat.id}
                                     onClick={() => setSelectedType(cat.id)}
