@@ -144,7 +144,8 @@ export async function getPostventaData() {
                 valor_cuota: lot.valor_cuota || 0,
                 monto_cuota: lot.valor_cuota || 0,
                 // @ts-ignore
-                isMoraFrozen: Boolean(res.mora_frozen)
+                isMoraFrozen: Boolean(res.mora_frozen),
+                manual_documents: res.manual_documents
             };
             ledger.push(ledgerEntry);
 

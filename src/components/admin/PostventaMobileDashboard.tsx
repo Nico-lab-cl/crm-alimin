@@ -7,7 +7,10 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, CheckCircle, XCircle, Eye, MapPin, CreditCard, Clock, Receipt, BookOpen, AlertTriangle, Search, Filter } from 'lucide-react';
+import { 
+    Loader2, CheckCircle, XCircle, Eye, MapPin, CreditCard, Clock, Receipt, BookOpen, 
+    AlertTriangle, Search, Filter, FileSignature, Gavel, Wallet, CalendarDays, ArrowRight 
+} from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { approvePaymentReceipt, rejectPaymentReceipt } from '@/actions/receipts';
 import { toast } from 'sonner';
@@ -163,47 +166,98 @@ export function PostventaMobileDashboard({ initialReceipts, soldLots, activeTab,
                 </div>
 
                 {/* Compact Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 4xl:grid-cols-6 gap-3">
-                    {paginatedLedger.map(client => (
-                        <div 
-                            key={client.id} 
-                            onClick={() => setSelectedClientLedger(client)}
-                            className="bg-[#1a1a1a]/40 backdrop-blur-xl border border-white/10 p-4 rounded-2xl flex flex-col justify-between min-h-[140px] relative overflow-hidden transition-all duration-300 hover:border-indigo-500/40 hover:bg-white/5 active:scale-[0.98] shadow-lg group cursor-pointer"
-                        >
-                            <div className="absolute top-0 right-0 w-16 h-16 bg-indigo-500/5 rounded-bl-full -z-10 group-hover:bg-indigo-500/10 transition-colors" />
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 4xl:grid-cols-6 gap-4">
+                    {paginatedLedger.map(client => {
+                        const hasPromesa = !!client.uploaded_contract_url;
+                        const manualDocs = Array.isArray(client.manual_documents) ? client.manual_documents : [];
+                        const hasGastos = manualDocs.some((d: any) => d.category === 'GASTOS_OPERACIONALES');
+                        const hasPie = manualDocs.some((d: any) => d.category === 'COMPROBANTE_PIE');
+                        const hasCuotaDoc = manualDocs.some((d: any) => d.category === 'COMPROBANTE_CUOTA');
 
-                            <div className="space-y-1">
-                                <div className="flex justify-between items-start gap-2">
-                                    <p className="font-bold text-white text-sm tracking-tight truncate flex-1">{client.clientName}</p>
-                                    <Badge variant="outline" className="text-[9px] font-black bg-indigo-500/10 text-indigo-400 border-indigo-500/20 px-1.5 py-0 shrink-0 uppercase">
-                                        T-{client.lotNumber}
-                                    </Badge>
-                                </div>
-                                <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest leading-none">Etapa {client.lotStage}</p>
-                            </div>
+                        return (
+                            <div 
+                                key={client.id} 
+                                onClick={() => setSelectedClientLedger(client)}
+                                className="bg-[#1a1a1a]/40 backdrop-blur-xl border border-white/10 p-5 rounded-3xl flex flex-col gap-4 relative overflow-hidden transition-all duration-300 hover:border-indigo-500/40 hover:bg-white/5 active:scale-[0.98] shadow-xl group cursor-pointer"
+                            >
+                                <div className="absolute top-0 right-0 w-20 h-20 bg-indigo-500/5 rounded-bl-full -z-10 group-hover:bg-indigo-500/10 transition-colors" />
 
-                            <div className="mt-auto pt-3 border-t border-white/5 space-y-2">
-                                <div className="flex justify-between items-end">
-                                    <div className="space-y-0.5">
-                                        <p className="text-gray-600 text-[8px] font-black uppercase tracking-tighter">Total Pagado</p>
-                                        <p className="font-black text-white text-sm leading-none">{formatCurrency(client.totalPaid)}</p>
+                                {/* Header: Name & Lot */}
+                                <div className="space-y-1">
+                                    <div className="flex justify-between items-start gap-2">
+                                        <p className="font-black text-white text-base tracking-tight truncate flex-1 uppercase">{client.clientName}</p>
+                                        <Badge variant="outline" className="text-[10px] font-black bg-indigo-500/10 text-indigo-400 border-indigo-500/20 px-2 py-0.5 shrink-0 uppercase">
+                                            T-{client.lotNumber}
+                                        </Badge>
                                     </div>
-                                    <div className="text-right space-y-0.5">
-                                        <p className="text-gray-600 text-[8px] font-black uppercase tracking-tighter">Progreso</p>
-                                        <p className="font-black text-indigo-400 text-sm leading-none">{client.paidCuotas}/{client.totalCuotas || 0}</p>
+                                    <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest leading-none">Etapa {client.lotStage}</p>
+                                </div>
+
+                                {/* Document Status Icons */}
+                                <div className="flex items-center gap-2 py-1">
+                                    <div className="flex items-center gap-1.5" title="Promesa">
+                                        <FileSignature className={`w-3.5 h-3.5 ${hasPromesa ? 'text-green-400' : 'text-gray-600 opacity-40'}`} />
+                                        <span className={`text-[8px] font-black uppercase tracking-tighter ${hasPromesa ? 'text-green-400/80' : 'text-gray-600 opacity-40'}`}>PRM</span>
+                                    </div>
+                                    <div className="w-px h-3 bg-white/5" />
+                                    <div className="flex items-center gap-1.5" title="Gastos Op.">
+                                        <Gavel className={`w-3.5 h-3.5 ${hasGastos ? 'text-amber-400' : 'text-gray-600 opacity-40'}`} />
+                                        <span className={`text-[8px] font-black uppercase tracking-tighter ${hasGastos ? 'text-amber-400/80' : 'text-gray-600 opacity-40'}`}>GST</span>
+                                    </div>
+                                    <div className="w-px h-3 bg-white/5" />
+                                    <div className="flex items-center gap-1.5" title="Comprobante Pie">
+                                        <Wallet className={`w-3.5 h-3.5 ${hasPie ? 'text-emerald-400' : 'text-gray-600 opacity-40'}`} />
+                                        <span className={`text-[8px] font-black uppercase tracking-tighter ${hasPie ? 'text-emerald-400/80' : 'text-gray-600 opacity-40'}`}>PIE</span>
+                                    </div>
+                                    <div className="w-px h-3 bg-white/5" />
+                                    <div className="flex items-center gap-1.5" title="Comprobante Cuota">
+                                        <Receipt className={`w-3.5 h-3.5 ${hasCuotaDoc ? 'text-blue-400' : 'text-gray-600 opacity-40'}`} />
+                                        <span className={`text-[8px] font-black uppercase tracking-tighter ${hasCuotaDoc ? 'text-blue-400/80' : 'text-gray-600 opacity-40'}`}>CTA</span>
                                     </div>
                                 </div>
-                                
-                                {/* Progress mini bar */}
-                                <div className="w-full h-1 bg-white/5 rounded-full overflow-hidden">
+
+                                {/* Financial Details */}
+                                <div className="grid grid-cols-2 gap-3 bg-black/40 rounded-2xl p-3 border border-white/5">
+                                    <div className="space-y-1">
+                                        <p className="text-gray-600 text-[8px] font-black uppercase tracking-widest leading-none opacity-60">Total Invertido</p>
+                                        <p className="font-black text-white text-[13px] leading-none tracking-tight">{formatCurrency(client.totalPaid)}</p>
+                                    </div>
+                                    <div className="text-right space-y-1">
+                                        <p className="text-gray-600 text-[8px] font-black uppercase tracking-widest leading-none opacity-60">Cuotas</p>
+                                        <p className="font-black text-indigo-400 text-[13px] leading-none tracking-tight">{client.paidCuotas}/{client.totalCuotas || 0}</p>
+                                    </div>
+                                </div>
+
+                                {/* Next Payment Info */}
+                                <div className="flex items-center justify-between text-[10px] px-1">
+                                    <div className="flex flex-col">
+                                        <span className="text-gray-500 font-bold uppercase text-[7px] tracking-widest mb-0.5">Próximo Pago</span>
+                                        <span className="text-white font-black">
+                                            {client.nextDueDate ? format(new Date(client.nextDueDate), 'dd MMM yy', { locale: es }) : 'N/A'}
+                                        </span>
+                                    </div>
+                                    <div className="flex flex-col text-right">
+                                        <span className="text-gray-500 font-bold uppercase text-[7px] tracking-widest mb-0.5">Monto Cuota</span>
+                                        <span className="text-indigo-300 font-black">{formatCurrency(client.valor_cuota || 0)}</span>
+                                    </div>
+                                </div>
+
+                                {/* Click indicator */}
+                                <div className="mt-1 flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                    <span className="text-[9px] font-black text-indigo-400 uppercase tracking-widest">Abrir Registro</span>
+                                    <ArrowRight className="w-3 h-3 text-indigo-400" />
+                                </div>
+
+                                {/* Mini Progress bar backdrop */}
+                                <div className="absolute bottom-0 left-0 w-full h-1 bg-white/5">
                                     <div 
-                                        className="h-full bg-indigo-500/50 group-hover:bg-indigo-500 transition-all duration-700" 
+                                        className="h-full bg-indigo-500 group-hover:bg-indigo-400 transition-all duration-700 shadow-[0_0_10px_rgba(99,102,241,0.5)]" 
                                         style={{ width: `${(client.paidCuotas / (client.totalCuotas || 1)) * 100}%` }}
                                     />
                                 </div>
                             </div>
-                        </div>
-                    ))}
+                        );
+                    })}
 
                     {filteredLedger.length === 0 && (
                         <div className="col-span-full text-center py-20 bg-white/5 border border-dashed border-white/10 rounded-3xl">
@@ -358,6 +412,21 @@ export function PostventaMobileDashboard({ initialReceipts, soldLots, activeTab,
                                             fileName="Comprobante_Pago_Pie.pdf"
                                             onUploadComplete={() => {
                                                 toast.success("Comprobante de pie subido.");
+                                            }}
+                                        />
+                                    </div>
+
+                                    {/* Comprobante de Cuota Manual */}
+                                    <div className="space-y-2">
+                                        <p className="text-[10px] text-gray-400 leading-tight">Comprobante de Cuota (Manual):</p>
+                                        <ContractUploadAction 
+                                            reservationId={selectedClientLedger.id} 
+                                            reservationName={selectedClientLedger.clientName} 
+                                            label="Subir Comprobante de Cuota"
+                                            type="COMPROBANTE_CUOTA"
+                                            fileName="Comprobante_Pago_Cuota.pdf"
+                                            onUploadComplete={() => {
+                                                toast.success("Comprobante de cuota subido.");
                                             }}
                                         />
                                     </div>
@@ -552,33 +621,32 @@ export function PostventaMobileDashboard({ initialReceipts, soldLots, activeTab,
                                 }
 
                                 return (
-                                    <div key={alert.id} className={`${colorClass} p-6 rounded-[2rem] border backdrop-blur-xl transition-all duration-500 hover:scale-[1.02] active:scale-[0.98] flex flex-col justify-between relative overflow-hidden shadow-2xl group`}>
-                                        <div className={`absolute top-0 right-0 w-32 h-32 ${circleClass} rounded-bl-full -z-10 opacity-40 transition-transform group-hover:scale-110`} />
+                                    <div 
+                                        key={alert.id} 
+                                        className={`${colorClass} p-4 rounded-2xl border backdrop-blur-xl transition-all duration-500 hover:scale-[1.02] active:scale-[0.98] flex flex-col justify-between relative overflow-hidden shadow-xl group`}
+                                    >
+                                        <div className={`absolute top-0 right-0 w-24 h-24 ${circleClass} rounded-bl-full -z-10 opacity-30 transition-transform group-hover:scale-110`} />
 
-                                        <div className="space-y-4">
+                                        <div className="space-y-3">
                                             <div className="flex justify-between items-start">
                                                 <div className="min-w-0 pr-2">
-                                                    <p className="font-black text-white text-base truncate tracking-tight">{alert.clientName}</p>
-                                                    <div className="flex items-center gap-2 mt-1">
-                                                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded bg-white/5 border border-white/10 text-gray-300 uppercase`}>T-{alert.lotNumber}</span>
-                                                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded bg-white/5 border border-white/10 text-gray-300 uppercase`}>Etapa {alert.lotStage}</span>
+                                                    <p className="font-bold text-white text-sm truncate tracking-tight">{alert.clientName}</p>
+                                                    <div className="flex items-center gap-1.5 mt-0.5">
+                                                        <span className={`text-[8px] font-black px-1.5 py-0.5 rounded bg-white/5 border border-white/10 text-gray-400 uppercase tracking-tighter`}>T-{alert.lotNumber}</span>
+                                                        <span className={`text-[8px] font-black px-1.5 py-0.5 rounded bg-white/5 border border-white/10 text-gray-400 uppercase tracking-tighter`}>Etapa {alert.lotStage}</span>
                                                     </div>
                                                 </div>
-                                                <Badge className={`bg-black/50 ${accentClass} border-${accentClass.split('-')[1]}-500/30 text-[9px] font-black uppercase tracking-wider px-2 py-1`}>
+                                                <Badge className={`bg-black/50 ${accentClass} border-${accentClass.split('-')[1]}-500/20 text-[8px] font-black uppercase tracking-wider px-1.5 py-0.5`}>
                                                     {badgeLabel}
                                                 </Badge>
                                             </div>
 
-                                            <p className={`text-[11px] ${accentClass} font-bold uppercase tracking-widest mt-2`}>
-                                                {statusText}
-                                            </p>
-
-                                            <div className={`grid grid-cols-2 gap-3 bg-black/40 rounded-xl p-4 border border-white/5`}>
-                                                <div className="space-y-1">
-                                                    <p className="text-[9px] text-gray-500 uppercase font-black tracking-widest">
-                                                        {isUpcoming ? 'Próximo' : isGrace ? 'Por Pagar' : isOK ? 'Invertido' : 'Interest'}
+                                            <div className={`grid grid-cols-2 gap-2 bg-black/40 rounded-xl p-3 border border-white/5`}>
+                                                <div className="space-y-0.5">
+                                                    <p className="text-[7px] text-gray-500 uppercase font-black tracking-widest opacity-60">
+                                                        {isOK ? 'Invertido' : 'Multa/Monto'}
                                                     </p>
-                                                    <p className={`font-black ${accentClass} text-sm leading-tight`}>
+                                                    <p className={`font-black ${accentClass} text-xs leading-none`}>
                                                         {isOK
                                                             ? formatCurrency(alert.cuotasAmount)
                                                             : isUpcoming || isGrace
@@ -587,33 +655,32 @@ export function PostventaMobileDashboard({ initialReceipts, soldLots, activeTab,
                                                         }
                                                     </p>
                                                 </div>
-                                                <div className="text-right space-y-1">
-                                                    <p className="text-[9px] text-gray-500 uppercase font-black tracking-widest">
-                                                        {isOK ? 'Progreso' : isUpcoming ? 'Vence' : 'Fecha'}
+                                                <div className="text-right space-y-0.5">
+                                                    <p className="text-[7px] text-gray-500 uppercase font-black tracking-widest opacity-60">
+                                                        {isOK ? 'Progreso' : 'Fecha'}
                                                     </p>
-                                                    <p className="font-black text-white text-sm leading-tight">
+                                                    <p className="font-black text-white text-xs leading-none">
                                                         {isOK
-                                                            ? `${alert.paidCuotas} / ${alert.totalCuotas}`
-                                                            : alert.displayDueDate ? format(new Date(alert.displayDueDate), 'dd MMM yy', { locale: es }) : 'N/A'
+                                                            ? `${alert.paidCuotas}/${alert.totalCuotas}`
+                                                            : alert.displayDueDate ? format(new Date(alert.displayDueDate), 'dd MMM', { locale: es }) : 'N/A'
                                                         }
                                                     </p>
                                                 </div>
-
-                                                {isOK && (
-                                                    <div className="col-span-2 mt-1 pt-3 border-t border-white/5 flex justify-between items-center">
-                                                        <div className="flex flex-col">
-                                                            <p className="text-[8px] text-gray-400 uppercase font-black tracking-tighter">Próxima</p>
-                                                            <p className="text-[10px] font-black text-green-400">Cuota #{alert.paidCuotas + 1}</p>
-                                                        </div>
-                                                        <div className="flex flex-col text-right">
-                                                            <p className="text-[8px] text-gray-400 uppercase font-black tracking-tighter">Mes</p>
-                                                            <p className="text-[10px] font-black text-white truncate">
-                                                                {alert.displayDueDate ? format(new Date(alert.displayDueDate), 'MMMM', { locale: es }).toUpperCase() : 'N/A'}
-                                                            </p>
-                                                        </div>
-                                                    </div>
-                                                )}
                                             </div>
+
+                                            <div className="flex justify-between items-center text-[9px]">
+                                                <span className={`${accentClass} font-bold uppercase tracking-tight`}>{statusText}</span>
+                                                {isOK && <span className="text-gray-500 font-medium">Cuota #{alert.paidCuotas + 1}</span>}
+                                            </div>
+
+                                            {isOK && (
+                                                <div className="w-full h-1 bg-white/5 rounded-full overflow-hidden">
+                                                    <div 
+                                                        className="h-full bg-green-500/40 group-hover:bg-green-500/60 transition-all duration-700" 
+                                                        style={{ width: `${(alert.paidCuotas / (alert.totalCuotas || 1)) * 100}%` }}
+                                                    />
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 );
