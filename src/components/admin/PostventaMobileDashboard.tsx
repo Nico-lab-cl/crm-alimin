@@ -512,6 +512,21 @@ export function PostventaMobileDashboard({ initialReceipts, soldLots, activeTab,
                                                         }
                                                     </p>
                                                 </div>
+
+                                                {isOK && (
+                                                    <div className="col-span-2 mt-1 pt-3 border-t border-white/5 flex justify-between items-center">
+                                                        <div className="flex flex-col">
+                                                            <p className="text-[8px] text-gray-400 uppercase font-black tracking-tighter">Próxima</p>
+                                                            <p className="text-[10px] font-black text-green-400">Cuota #{alert.paidCuotas + 1}</p>
+                                                        </div>
+                                                        <div className="flex flex-col text-right">
+                                                            <p className="text-[8px] text-gray-400 uppercase font-black tracking-tighter">Mes</p>
+                                                            <p className="text-[10px] font-black text-white truncate">
+                                                                {alert.displayDueDate ? format(new Date(alert.displayDueDate), 'MMMM', { locale: es }).toUpperCase() : 'N/A'}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
                                     </div>
