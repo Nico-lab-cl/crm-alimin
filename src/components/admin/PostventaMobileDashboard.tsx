@@ -181,8 +181,8 @@ export function PostventaMobileDashboard({
                     </div>
                 </div>
 
-                {/* High Density Grid */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-2">
+                {/* Optimized Desktop Grid - Reduced Density for Readability */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
                     {paginatedLedger.map(client => {
                         const hasReserva = !!client.signed_at;
                         const hasReceipts = client.receipts && client.receipts.length > 0;
@@ -194,53 +194,53 @@ export function PostventaMobileDashboard({
                             <div 
                                 key={client.id} 
                                 onClick={() => setSelectedClientLedger(client)}
-                                className="bg-[#0a1622]/80 backdrop-blur-xl border border-[#3f6066]/10 p-3 rounded-2xl flex flex-col gap-2 relative overflow-hidden transition-all duration-500 hover:border-[#3f6066]/40 hover:scale-[1.02] active:scale-[0.98] shadow-2xl group cursor-pointer"
+                                className="bg-[#0a1622]/80 backdrop-blur-xl border border-[#3f6066]/10 p-4 md:p-5 rounded-2xl flex flex-col gap-3 relative overflow-hidden transition-all duration-500 hover:border-[#3f6066]/40 hover:scale-[1.02] active:scale-[0.98] shadow-2xl group cursor-pointer"
                             >
                                 <div className="absolute -top-4 -right-4 w-12 h-12 bg-[#3f6066]/5 rounded-full blur-xl group-hover:bg-[#3f6066]/15 transition-all duration-700" />
 
-                                <div className="space-y-0.5">
-                                    <div className="flex justify-between items-start gap-1">
-                                        <p className="font-black text-white text-[10px] leading-tight tracking-tight truncate flex-1 uppercase">{client.clientName}</p>
-                                        <Badge variant="outline" className="text-[7px] font-black bg-[#3f6066]/10 text-[#8eb2b8] border-[#3f6066]/20 px-1 py-0 shrink-0 uppercase">
+                                <div className="space-y-1">
+                                    <div className="flex justify-between items-start gap-2">
+                                        <p className="font-black text-white text-[11px] md:text-sm leading-tight tracking-tight truncate flex-1 uppercase">{client.clientName}</p>
+                                        <Badge variant="outline" className="text-[8px] md:text-[10px] font-black bg-[#3f6066]/10 text-[#8eb2b8] border-[#3f6066]/20 px-1.5 py-0 shrink-0 uppercase">
                                             T-{client.lotNumber}
                                         </Badge>
                                     </div>
-                                    <p className="text-[7px] text-[#3f6066] font-black uppercase tracking-[0.2em] leading-none">Etapa {client.lotStage}</p>
+                                    <p className="text-[8px] md:text-[10px] text-[#3f6066] font-black uppercase tracking-[0.2em] leading-none">Etapa {client.lotStage}</p>
                                 </div>
 
-                                <div className="flex items-center gap-1.5 py-1 border-y border-white/5">
-                                    <div className="flex items-center gap-1" title="Contrato Reserva (Auto)">
-                                        <CheckCircle className={`w-2 h-2 ${hasReserva ? 'text-emerald-400' : 'text-gray-800'}`} />
-                                        <span className={`text-[5px] font-black ${hasReserva ? 'text-emerald-400/80' : 'text-gray-800'}`}>RES</span>
+                                <div className="flex items-center gap-2 py-2 border-y border-white/5">
+                                    <div className="flex items-center gap-1.5" title="Contrato Reserva (Auto)">
+                                        <CheckCircle className={`w-3 h-3 ${hasReserva ? 'text-emerald-400' : 'text-gray-800'}`} />
+                                        <span className={`text-[7px] md:text-[8px] font-black ${hasReserva ? 'text-emerald-400/80' : 'text-gray-800'}`}>RES</span>
                                     </div>
-                                    <div className="flex items-center gap-1" title="Comprobantes (Auto)">
-                                        <Receipt className={`w-2 h-2 ${hasReceipts ? 'text-blue-400' : 'text-gray-800'}`} />
-                                        <span className={`text-[5px] font-black ${hasReceipts ? 'text-blue-400/80' : 'text-gray-800'}`}>COM</span>
+                                    <div className="flex items-center gap-1.5" title="Comprobantes (Auto)">
+                                        <Receipt className={`w-3 h-3 ${hasReceipts ? 'text-blue-400' : 'text-gray-800'}`} />
+                                        <span className={`text-[7px] md:text-[8px] font-black ${hasReceipts ? 'text-blue-400/80' : 'text-gray-800'}`}>COM</span>
                                     </div>
-                                    <div className="flex items-center gap-1" title="Promesa (Manual)">
-                                        <FileSignature className={`w-2 h-2 ${hasPromesa ? 'text-cyan-400' : 'text-gray-800'}`} />
-                                        <span className={`text-[5px] font-black ${hasPromesa ? 'text-cyan-400/80' : 'text-gray-800'}`}>PRM</span>
+                                    <div className="flex items-center gap-1.5" title="Promesa (Manual)">
+                                        <FileSignature className={`w-3 h-3 ${hasPromesa ? 'text-cyan-400' : 'text-gray-800'}`} />
+                                        <span className={`text-[7px] md:text-[8px] font-black ${hasPromesa ? 'text-cyan-400/80' : 'text-gray-800'}`}>PRM</span>
                                     </div>
-                                    <div className="flex items-center gap-1" title="Gastos (Manual)">
-                                        <Gavel className={`w-2 h-2 ${hasGastos ? 'text-amber-400' : 'text-gray-800'}`} />
-                                        <span className={`text-[5px] font-black ${hasGastos ? 'text-amber-400/80' : 'text-gray-800'}`}>GST</span>
+                                    <div className="flex items-center gap-1.5" title="Gastos (Manual)">
+                                        <Gavel className={`w-3 h-3 ${hasGastos ? 'text-amber-400' : 'text-gray-800'}`} />
+                                        <span className={`text-[7px] md:text-[8px] font-black ${hasGastos ? 'text-amber-400/80' : 'text-gray-800'}`}>GST</span>
                                     </div>
                                 </div>
 
-                                <div className="space-y-1">
+                                <div className="space-y-1.5">
                                     <div className="flex justify-between items-baseline">
-                                        <span className="text-[6px] text-gray-600 font-black uppercase tracking-widest">Total</span>
-                                        <span className="text-[10px] text-white font-black">{formatCurrency(client.totalPaid)}</span>
+                                        <span className="text-[7px] md:text-[8px] text-gray-600 font-black uppercase tracking-widest">Invertido</span>
+                                        <span className="text-[11px] md:text-sm text-white font-black">{formatCurrency(client.totalPaid)}</span>
                                     </div>
                                     <div className="flex justify-between items-baseline">
-                                        <span className="text-[6px] text-gray-600 font-black uppercase tracking-widest">Next</span>
-                                        <span className="text-[8px] text-[#8eb2b8] font-black">
-                                            {client.nextDueDate ? format(new Date(client.nextDueDate), 'dd MMM', { locale: es }) : 'N/A'}
+                                        <span className="text-[7px] md:text-[8px] text-gray-600 font-black uppercase tracking-widest">Próximo</span>
+                                        <span className="text-[9px] md:text-[11px] text-[#8eb2b8] font-black tabular-nums">
+                                            {client.nextDueDate ? format(new Date(client.nextDueDate), 'dd MMM yy', { locale: es }) : 'Finalizado'}
                                         </span>
                                     </div>
                                 </div>
 
-                                <div className="mt-0.5 h-0.5 w-full bg-white/5 rounded-full overflow-hidden">
+                                <div className="mt-1 h-1 w-full bg-white/5 rounded-full overflow-hidden">
                                     <div 
                                         className="h-full bg-[#3f6066] shadow-[0_0_8px_#3f6066] transition-all duration-1000" 
                                         style={{ width: `${(client.paidCuotas / (client.totalCuotas || 1)) * 100}%` }}
