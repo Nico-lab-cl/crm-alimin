@@ -12,6 +12,7 @@ import { approvePaymentReceipt, rejectPaymentReceipt } from '@/actions/receipts'
 import { toast } from 'sonner';
 import { MoraExplainerCard } from './MoraExplainerCard';
 import { ContractUploadAction } from "@/components/admin/ContractUploadAction";
+import { AdminMoraManager } from "@/components/admin/AdminMoraManager"
 
 export type PostventaTab = 'recibos' | 'mora' | 'ledger' | 'alertas';
 
@@ -29,9 +30,10 @@ interface PostventaMobileDashboardProps {
     activeTab: PostventaTab;
     ledger?: any[];
     debtAlerts?: any[];
+    users?: any[];
 }
 
-export function PostventaMobileDashboard({ initialReceipts, soldLots, activeTab, ledger = [], debtAlerts = [] }: PostventaMobileDashboardProps) {
+export function PostventaMobileDashboard({ initialReceipts, soldLots, activeTab, ledger = [], debtAlerts = [], users = [] }: PostventaMobileDashboardProps) {
     const [receipts, setReceipts] = useState(initialReceipts);
     const [selectedImage, setSelectedImage] = useState<string | null>(null);
     const [rejectingId, setRejectingId] = useState<string | null>(null);
@@ -326,10 +328,13 @@ export function PostventaMobileDashboard({ initialReceipts, soldLots, activeTab,
                         </p>
                     </div>
 
-                    {/* Mobile Only: Total Badge */}
-                    <Badge variant="outline" className="md:hidden self-start font-bold bg-white/5 border-white/10 text-white px-3 py-1">
-                        {filteredAlerts.length} Clientes Filtrados
-                    </Badge>
+                    {/* Actions and Badges */}
+                    <div className="flex items-center gap-3 self-start md:self-end">
+                        <Badge variant="outline" className="md:hidden font-bold bg-white/5 border-white/10 text-white px-3 py-1">
+                            {filteredAlerts.length} Clientes Filtrados
+                        </Badge>
+                        <AdminMoraManager users={users} />
+                    </div>
                 </div>
 
                 <div className="lg:grid lg:grid-cols-[280px_1fr] lg:gap-8 items-start">

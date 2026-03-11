@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createVerifiedUser, adminResetUserPassword } from '@/actions/dashboard'
 import { cn } from "@/lib/utils"
-import { AdminMoraManager } from "@/components/admin/AdminMoraManager"
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -332,8 +331,6 @@ export const AdminUserList = ({ users: initialUsers }: AdminUserListProps) => {
                             </form>
                         </DialogContent>
                     </Dialog>
-
-                    <AdminMoraManager users={users} />
 
                     {/* Create User Dialog */}
                     <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>

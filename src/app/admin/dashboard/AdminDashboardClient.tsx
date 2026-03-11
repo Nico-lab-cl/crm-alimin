@@ -95,13 +95,13 @@ export function AdminDashboardClient({
                                 </TabsList>
 
                                 <TabsContent value="recibos" className="mt-6">
-                                    <PostventaMobileDashboard initialReceipts={receipts} soldLots={soldLots} activeTab="recibos" ledger={ledger} debtAlerts={debtAlerts} />
+                                    <PostventaMobileDashboard initialReceipts={receipts} soldLots={soldLots} activeTab="recibos" ledger={ledger} debtAlerts={debtAlerts} users={users} />
                                 </TabsContent>
                                 <TabsContent value="ledger" className="mt-6">
                                     <PostventaMobileDashboard initialReceipts={receipts} soldLots={soldLots} activeTab="ledger" ledger={ledger} debtAlerts={debtAlerts} />
                                 </TabsContent>
                                 <TabsContent value="alertas" className="mt-6">
-                                    <PostventaMobileDashboard initialReceipts={receipts} soldLots={soldLots} activeTab="alertas" ledger={ledger} debtAlerts={debtAlerts} />
+                                    <PostventaMobileDashboard initialReceipts={receipts} soldLots={soldLots} activeTab="alertas" ledger={ledger} debtAlerts={debtAlerts} users={users} />
                                 </TabsContent>
                                 <TabsContent value="mora" className="mt-6">
                                     <MoraExplainerCard soldLots={soldLots} />
@@ -117,6 +117,7 @@ export function AdminDashboardClient({
                                 activeTab={mobileTab as PostventaTab}
                                 ledger={ledger}
                                 debtAlerts={debtAlerts}
+                                users={users}
                             />
                         </div>
                     </div>
