@@ -7,7 +7,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, CheckCircle, XCircle, Eye, MapPin, CreditCard, Clock, Receipt, BookOpen, AlertTriangle } from 'lucide-react';
+import { Loader2, CheckCircle, XCircle, Eye, MapPin, CreditCard, Clock, Receipt, BookOpen, AlertTriangle, Search, Filter } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 import { approvePaymentReceipt, rejectPaymentReceipt } from '@/actions/receipts';
 import { toast } from 'sonner';
 import { MoraExplainerCard } from './MoraExplainerCard';
@@ -43,8 +44,9 @@ export function PostventaMobileDashboard({ initialReceipts, soldLots, activeTab,
 
     const [ledgerPage, setLedgerPage] = useState(1);
     const [ledgerStage, setLedgerStage] = useState<'ALL' | 1 | 2 | 3 | 4>('ALL');
+    const [ledgerSearch, setLedgerSearch] = useState('');
     const [selectedClientLedger, setSelectedClientLedger] = useState<any | null>(null);
-    const ledgerItemsPerPage = 10;
+    const ledgerItemsPerPage = 20; // Increased density
 
     const [alertFilter, setAlertFilter] = useState<'ALL' | 'UPCOMING' | 'GRACE' | 'LATE' | 'OK'>('ALL');
     const [alertStage, setAlertStage] = useState<'ALL' | 1 | 2 | 3 | 4>('ALL');
@@ -102,89 +104,138 @@ export function PostventaMobileDashboard({ initialReceipts, soldLots, activeTab,
     };
 
     if (activeTab === 'ledger') {
-        const filteredLedger = ledger.filter(client => ledgerStage === 'ALL' || client.lotStage === ledgerStage);
+        const filteredLedger = ledger.filter(client => {
+            const matchesStage = ledgerStage === 'ALL' || client.lotStage === ledgerStage;
+            const matchesSearch = client.clientName.toLowerCase().includes(ledgerSearch.toLowerCase()) || 
+                                client.lotNumber?.includes(ledgerSearch);
+            return matchesStage && matchesSearch;
+        });
+
         const totalLedgerPages = Math.ceil(filteredLedger.length / ledgerItemsPerPage);
         const paginatedLedger = filteredLedger.slice((ledgerPage - 1) * ledgerItemsPerPage, ledgerPage * ledgerItemsPerPage);
 
         return (
             <div className="space-y-4 pb-24">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
-                    <div className="flex items-center gap-2">
-                        <BookOpen className="w-5 h-5 text-indigo-400" />
-                        <h2 className="text-lg font-bold text-white">Estado de Cuentas</h2>
+                {/* Header & Controls */}
+                <div className="bg-[#1a1a1a]/60 backdrop-blur-xl border border-white/10 p-4 md:p-6 rounded-2xl md:rounded-[2rem] space-y-4 shadow-2xl">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div className="flex items-center gap-3">
+                            <div className="bg-indigo-500/20 p-2 rounded-lg">
+                                <BookOpen className="w-5 h-5 text-indigo-400" />
+                            </div>
+                            <h2 className="text-xl font-black text-white tracking-tight">Estado de Cuentas</h2>
+                        </div>
+                        
+                        <div className="flex flex-wrap gap-2">
+                            {(['ALL', 1, 2, 3, 4] as const).map(s => (
+                                <button
+                                    key={s}
+                                    onClick={() => { setLedgerStage(s as any); setLedgerPage(1); }}
+                                    className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all border shrink-0 cursor-pointer ${ledgerStage === s
+                                        ? 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30 shadow-lg shadow-indigo-500/10'
+                                        : 'bg-white/5 text-gray-500 border-white/5 hover:border-white/10'
+                                        }`}
+                                >
+                                    {s === 'ALL' ? 'Todas las Etapas' : `Etapa ${s}`}
+                                </button>
+                            ))}
+                        </div>
                     </div>
-                    <div className="flex flex-wrap gap-2">
-                        {(['ALL', 1, 2, 3, 4] as const).map(s => (
-                            <button
-                                key={s}
-                                onClick={() => { setLedgerStage(s as any); setLedgerPage(1); }}
-                                className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all border shrink-0 cursor-pointer ${ledgerStage === s
-                                    ? 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30'
-                                    : 'bg-white/5 text-gray-500 border-white/5 hover:border-white/20'
-                                    }`}
+
+                    {/* Search bar */}
+                    <div className="relative group">
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 group-focus-within:text-indigo-400 transition-colors" />
+                        <Input 
+                            placeholder="Buscar por nombre o número de lote..." 
+                            value={ledgerSearch}
+                            onChange={(e) => { setLedgerSearch(e.target.value); setLedgerPage(1); }}
+                            className="bg-black/40 border-white/10 rounded-xl pl-11 h-12 text-sm text-white placeholder:text-gray-600 focus:ring-indigo-500/20 focus:border-indigo-500/30 transition-all font-medium"
+                        />
+                        {ledgerSearch && (
+                            <button 
+                                onClick={() => setLedgerSearch('')}
+                                className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-gray-500 hover:text-white uppercase transition-colors"
                             >
-                                {s === 'ALL' ? 'Todas las Etapas' : `Etapa ${s}`}
+                                Limpiar
                             </button>
-                        ))}
+                        )}
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 4xl:grid-cols-5 gap-5 mt-4">
+                {/* Compact Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 4xl:grid-cols-6 gap-3">
                     {paginatedLedger.map(client => (
-                        <div key={client.id} className="bg-[#1a1a1a]/40 backdrop-blur-xl border border-white/10 p-6 rounded-[2rem] space-y-5 relative overflow-hidden transition-all duration-500 hover:border-indigo-500/30 hover:scale-[1.02] active:scale-[0.98] shadow-2xl group">
-                            <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500/5 rounded-bl-full -z-10 group-hover:bg-indigo-500/10 transition-colors" />
+                        <div 
+                            key={client.id} 
+                            onClick={() => setSelectedClientLedger(client)}
+                            className="bg-[#1a1a1a]/40 backdrop-blur-xl border border-white/10 p-4 rounded-2xl flex flex-col justify-between min-h-[140px] relative overflow-hidden transition-all duration-300 hover:border-indigo-500/40 hover:bg-white/5 active:scale-[0.98] shadow-lg group cursor-pointer"
+                        >
+                            <div className="absolute top-0 right-0 w-16 h-16 bg-indigo-500/5 rounded-bl-full -z-10 group-hover:bg-indigo-500/10 transition-colors" />
 
-                            <div className="flex justify-between items-start">
-                                <div>
-                                    <p className="font-black text-white text-base tracking-tight">{client.clientName}</p>
-                                    <p className="text-[10px] text-indigo-400 font-black uppercase tracking-widest mt-0.5">Lote T-{client.lotNumber}</p>
+                            <div className="space-y-1">
+                                <div className="flex justify-between items-start gap-2">
+                                    <p className="font-bold text-white text-sm tracking-tight truncate flex-1">{client.clientName}</p>
+                                    <Badge variant="outline" className="text-[9px] font-black bg-indigo-500/10 text-indigo-400 border-indigo-500/20 px-1.5 py-0 shrink-0 uppercase">
+                                        T-{client.lotNumber}
+                                    </Badge>
                                 </div>
-                                <div className="text-right">
-                                    <Button variant="outline" size="sm" onClick={() => setSelectedClientLedger(client)} className="text-[10px] h-8 font-black uppercase tracking-tight bg-indigo-500/10 text-indigo-400 border-indigo-500/20 hover:bg-indigo-500/30 hover:text-indigo-200 cursor-pointer">
-                                        <Eye className="w-3.5 h-3.5 mr-1.5" />
-                                        Detalles
-                                    </Button>
-                                </div>
+                                <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest leading-none">Etapa {client.lotStage}</p>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-3">
-                                <div className="bg-black/40 p-3 rounded-xl border border-white/5">
-                                    <p className="text-gray-500 mb-1 text-[9px] font-black uppercase tracking-widest leading-none">Total Pagado</p>
-                                    <p className="font-black text-white text-sm">{formatCurrency(client.totalPaid)}</p>
+                            <div className="mt-auto pt-3 border-t border-white/5 space-y-2">
+                                <div className="flex justify-between items-end">
+                                    <div className="space-y-0.5">
+                                        <p className="text-gray-600 text-[8px] font-black uppercase tracking-tighter">Total Pagado</p>
+                                        <p className="font-black text-white text-sm leading-none">{formatCurrency(client.totalPaid)}</p>
+                                    </div>
+                                    <div className="text-right space-y-0.5">
+                                        <p className="text-gray-600 text-[8px] font-black uppercase tracking-tighter">Progreso</p>
+                                        <p className="font-black text-indigo-400 text-sm leading-none">{client.paidCuotas}/{client.totalCuotas || 0}</p>
+                                    </div>
                                 </div>
-                                <div className="bg-black/40 p-3 rounded-xl border border-white/5">
-                                    <p className="text-gray-500 mb-1 text-[9px] font-black uppercase tracking-widest leading-none">Progreso</p>
-                                    <p className="font-black text-white text-sm">{client.paidCuotas} / {client.totalCuotas || 0}</p>
+                                
+                                {/* Progress mini bar */}
+                                <div className="w-full h-1 bg-white/5 rounded-full overflow-hidden">
+                                    <div 
+                                        className="h-full bg-indigo-500/50 group-hover:bg-indigo-500 transition-all duration-700" 
+                                        style={{ width: `${(client.paidCuotas / (client.totalCuotas || 1)) * 100}%` }}
+                                    />
                                 </div>
                             </div>
                         </div>
                     ))}
-                    {ledger.length === 0 && (
-                        <div className="col-span-full text-center py-16 bg-white/5 border border-dashed border-white/10 rounded-2xl">
-                            <BookOpen className="w-10 h-10 text-gray-700 mx-auto mb-3" />
-                            <p className="text-gray-500 font-bold">No hay cuentas activas</p>
+
+                    {filteredLedger.length === 0 && (
+                        <div className="col-span-full text-center py-20 bg-white/5 border border-dashed border-white/10 rounded-3xl">
+                            <Search className="w-10 h-10 text-gray-700 mx-auto mb-3 opacity-20" />
+                            <p className="text-gray-500 font-bold text-sm">No encontramos resultados para tu búsqueda</p>
+                            <p className="text-gray-700 text-[10px] uppercase font-black tracking-widest mt-1">Intenta con otros términos</p>
                         </div>
                     )}
                 </div>
 
+                {/* Compact Pagination */}
                 {totalLedgerPages > 1 && (
-                    <div className="flex justify-between items-center bg-black/40 border border-white/10 rounded-xl p-3 mt-6">
+                    <div className="flex justify-between items-center bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl p-3 mt-4">
                         <Button
-                            variant="outline"
+                            variant="ghost"
                             size="sm"
-                            onClick={() => setLedgerPage(p => Math.max(1, p - 1))}
+                            onClick={() => { setLedgerPage(p => Math.max(1, p - 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
                             disabled={ledgerPage === 1}
-                            className="bg-white/5 border-white/10 text-white hover:bg-white/10"
+                            className="text-[10px] font-black uppercase tracking-wider text-gray-400 hover:text-white hover:bg-white/5"
                         >
                             Anterior
                         </Button>
-                        <span className="text-xs text-gray-400 font-medium">Página {ledgerPage} de {totalLedgerPages}</span>
+                        <div className="flex items-center gap-2">
+                            <p className="text-[10px] text-gray-600 font-black uppercase">Página</p>
+                            <span className="text-sm text-white font-black">{ledgerPage} <span className="text-gray-600 text-xs">/ {totalLedgerPages}</span></span>
+                        </div>
                         <Button
-                            variant="outline"
+                            variant="ghost"
                             size="sm"
-                            onClick={() => setLedgerPage(p => Math.min(totalLedgerPages, p + 1))}
+                            onClick={() => { setLedgerPage(p => Math.min(totalLedgerPages, p + 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
                             disabled={ledgerPage === totalLedgerPages}
-                            className="bg-white/5 border-white/10 text-white hover:bg-white/10"
+                            className="text-[10px] font-black uppercase tracking-wider text-gray-400 hover:text-white hover:bg-white/5"
                         >
                             Siguiente
                         </Button>
