@@ -191,7 +191,9 @@ export async function getAdminLots() {
                         signed_at: true,
                         pie_status: true,
                         is_legacy: true,
-                        workflow_activated: true
+                        workflow_activated: true,
+                        // @ts-ignore
+                        mora_frozen: true
                     }
                 }
             }
@@ -249,6 +251,8 @@ export async function getAdminUsers() {
                         is_legacy: true,
                         is_promo: true,
                         workflow_activated: true,
+                        // @ts-ignore
+                        mora_frozen: true,
                         uploaded_contract_url: true,
                         legacy_uploaded_contracts: true,
                         receipts: true,
