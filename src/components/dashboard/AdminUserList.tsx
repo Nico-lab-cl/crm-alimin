@@ -38,6 +38,9 @@ import { AdminForceSignAction } from "@/components/admin/AdminForceSignAction"
 
 type AdminUserListProps = {
     users: any[]
+    totalPages: number
+    currentPage: number
+    currentSearch?: string
 }
 
 const STAGE_LABELS: Record<string, string> = {
@@ -64,18 +67,16 @@ const STAGE_COLORS: Record<string, string> = {
     VENTA_PERDIDA: 'bg-red-900/30 text-red-300',
 }
 
-const USERS_PER_PAGE = 10;
-
-export const AdminUserList = ({ users: initialUsers }: AdminUserListProps) => {
-    const [users, setUsers] = useState(initialUsers)
-    const [filter, setFilter] = useState('')
-    const [dateRange, setDateRange] = useState<{ from: Date | undefined; to: Date | undefined }>({ from: undefined, to: undefined })
+export const AdminUserList = ({ 
+    users, 
+    totalPages, 
+    currentPage, 
+    currentSearch = '' 
+}: AdminUserListProps) => {
+    const [filter, setFilter] = useState(currentSearch)
     const [isCreateOpen, setIsCreateOpen] = useState(false)
     const [isCreating, setIsCreating] = useState(false)
     const router = useRouter()
-
-    // Pagination
-    const [currentPage, setCurrentPage] = useState(1)
 
     // Reset Password State
     const [isResetOpen, setIsResetOpen] = useState(false)
@@ -91,46 +92,22 @@ export const AdminUserList = ({ users: initialUsers }: AdminUserListProps) => {
         role: 'USER'
     })
 
-    const filteredUsers = users.filter(user => {
-        const matchesText = user.name?.toLowerCase().includes(filter.toLowerCase()) || user.email?.toLowerCase().includes(filter.toLowerCase())
-        if (!matchesText) return false
-
-        if (!dateRange.from && !dateRange.to) return true
-
-        const userDate = new Date(user.createdAt)
-        userDate.setHours(0, 0, 0, 0) // Normalize time
-
-        if (dateRange.from && dateRange.to) {
-            const start = new Date(dateRange.from)
-            start.setHours(0, 0, 0, 0)
-            const end = new Date(dateRange.to)
-            end.setHours(23, 59, 59, 999)
-            return userDate >= start && userDate <= end
+    // Navigation logic
+    const navigateToPage = (page: number, search?: string) => {
+        const params = new URLSearchParams(window.location.search)
+        params.set('userPage', page.toString())
+        if (search) {
+            params.set('search', search)
+        } else {
+            params.delete('search')
         }
-
-        if (dateRange.from) {
-            const start = new Date(dateRange.from)
-            start.setHours(0, 0, 0, 0)
-            return userDate >= start
-        }
-
-        return true
-    })
-
-    // Pagination calculations
-    const totalPages = Math.ceil(filteredUsers.length / USERS_PER_PAGE)
-    const paginatedUsers = filteredUsers.slice((currentPage - 1) * USERS_PER_PAGE, currentPage * USERS_PER_PAGE)
-
-    // Reset page when filter changes
-    const handleFilterChange = (value: string) => {
-        setFilter(value)
-        setCurrentPage(1)
+        router.push(`/admin/dashboard?${params.toString()}`, { scroll: false })
     }
 
-    // Effect to reset pagination when date changes
-    useEffect(() => {
-        setCurrentPage(1)
-    }, [dateRange])
+    const handleSearch = (e: React.FormEvent) => {
+        e.preventDefault()
+        navigateToPage(1, filter)
+    }
 
     const handleCreateUser = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -176,121 +153,20 @@ export const AdminUserList = ({ users: initialUsers }: AdminUserListProps) => {
     return (
         <div className="space-y-4 overflow-x-hidden max-w-full">
             <div className="flex flex-col gap-3 md:flex-row md:gap-4 justify-between items-stretch md:items-center bg-white/5 p-3 md:p-4 rounded-xl border border-white/10">
-                <div className="flex items-center gap-2 w-full md:w-auto min-w-0">
+                <form onSubmit={handleSearch} className="flex items-center gap-2 w-full md:w-auto min-w-0">
                     <Search className="w-5 h-5 text-gray-400 shrink-0" />
                     <Input
-                        placeholder="Buscar usuario..."
+                        placeholder="Buscar por nombre o email..."
                         value={filter}
-                        onChange={(e) => handleFilterChange(e.target.value)}
+                        onChange={(e) => setFilter(e.target.value)}
                         className="bg-transparent border-none text-white focus-visible:ring-0 placeholder:text-gray-500 w-full min-w-0"
                     />
-
-                    {/* Date Range Filter */}
-                    <div className="hidden sm:block border-l border-white/10 pl-2 ml-2">
-                        <Popover>
-                            <PopoverTrigger asChild>
-                                <Button
-                                    variant="outline"
-                                    className={cn(
-                                        "w-[240px] justify-start text-left font-normal bg-white/5 border-white/10 hover:bg-white/10 shrink-0",
-                                        !dateRange.from && "text-gray-400",
-                                        dateRange.from && "border-[#36595F] text-[#36595F] bg-[#36595F]/10 hover:bg-[#36595F]/20 font-bold"
-                                    )}
-                                >
-                                    <CalendarIcon className="h-4 w-4 mr-2" />
-                                    <span>
-                                        {dateRange?.from ? (
-                                            dateRange.to ? (
-                                                <>
-                                                    {format(dateRange.from, "dd LLL y", { locale: es })} -{" "}
-                                                    {format(dateRange.to, "dd LLL y", { locale: es })}
-                                                </>
-                                            ) : (
-                                                format(dateRange.from, "dd LLL y", { locale: es })
-                                            )
-                                        ) : (
-                                            "Filtrar por fecha..."
-                                        )}
-                                    </span>
-                                </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0 bg-white" align="end">
-                                <Calendar
-                                    initialFocus
-                                    mode="range"
-                                    defaultMonth={dateRange?.from}
-                                    selected={dateRange}
-                                    onSelect={(range) => setDateRange({ from: range?.from, to: range?.to })}
-                                    numberOfMonths={1}
-                                />
-                                <div className="p-3 border-t flex justify-end">
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => setDateRange({ from: undefined, to: undefined })}
-                                        className="text-gray-500 hover:text-gray-700"
-                                    >
-                                        Limpiar Filtro
-                                    </Button>
-                                </div>
-                            </PopoverContent>
-                        </Popover>
-                    </div>
-                </div>
+                    <Button type="submit" size="sm" className="hidden md:flex bg-white/10 hover:bg-white/20 text-white">
+                        Buscar
+                    </Button>
+                </form>
 
                 <div className="flex flex-wrap gap-2 w-full md:w-auto">
-                    {/* Mobile Date Filter (Shown only on small screens) */}
-                    <div className="w-full sm:hidden mb-2">
-                        <Popover>
-                            <PopoverTrigger asChild>
-                                <Button
-                                    variant="outline"
-                                    className={cn(
-                                        "w-full justify-start text-left font-normal bg-white/5 border-white/10 hover:bg-white/10",
-                                        !dateRange.from && "text-gray-400",
-                                        dateRange.from && "border-[#36595F] text-[#36595F] bg-[#36595F]/10 hover:bg-[#36595F]/20 font-bold"
-                                    )}
-                                >
-                                    <CalendarIcon className="h-4 w-4 mr-2" />
-                                    <span>
-                                        {dateRange?.from ? (
-                                            dateRange.to ? (
-                                                <>
-                                                    {format(dateRange.from, "dd LLL y", { locale: es })} -{" "}
-                                                    {format(dateRange.to, "dd LLL y", { locale: es })}
-                                                </>
-                                            ) : (
-                                                format(dateRange.from, "dd LLL y", { locale: es })
-                                            )
-                                        ) : (
-                                            "Filtrar por fecha..."
-                                        )}
-                                    </span>
-                                </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0 bg-white" align="start">
-                                <Calendar
-                                    initialFocus
-                                    mode="range"
-                                    defaultMonth={dateRange?.from}
-                                    selected={dateRange}
-                                    onSelect={(range) => setDateRange({ from: range?.from, to: range?.to })}
-                                    numberOfMonths={1}
-                                />
-                                <div className="p-3 border-t flex justify-end">
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => setDateRange({ from: undefined, to: undefined })}
-                                        className="text-gray-500 hover:text-gray-700"
-                                    >
-                                        Limpiar Filtro
-                                    </Button>
-                                </div>
-                            </PopoverContent>
-                        </Popover>
-                    </div>
-
                     {/* Reset Password Dialog */}
                     <Dialog open={isResetOpen} onOpenChange={setIsResetOpen}>
                         <DialogContent className="bg-white text-gray-900 border-none max-w-[90vw] md:max-w-md">
@@ -420,7 +296,7 @@ export const AdminUserList = ({ users: initialUsers }: AdminUserListProps) => {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-white/5">
-                        {filteredUsers.map(user => {
+                        {users.map(user => {
                             const res = user.purchases?.[0] ?? null
 
                             return (
@@ -428,7 +304,7 @@ export const AdminUserList = ({ users: initialUsers }: AdminUserListProps) => {
                                     <td className="p-4">
                                         <div className="flex items-center gap-3">
                                             <div className="w-10 h-10 rounded-full bg-[#36595F] flex items-center justify-center text-[#E0B457] font-bold text-lg">
-                                                {user.name.charAt(0).toUpperCase()}
+                                                {user.name?.charAt(0).toUpperCase() || '?'}
                                             </div>
                                             <div>
                                                 <div className="flex items-center gap-2">
@@ -552,7 +428,7 @@ export const AdminUserList = ({ users: initialUsers }: AdminUserListProps) => {
                         })}
                     </tbody>
                 </table>
-                {filteredUsers.length === 0 && (
+                {users.length === 0 && (
                     <div className="p-8 text-center text-gray-500">
                         No se encontraron usuarios.
                     </div>
@@ -561,7 +437,7 @@ export const AdminUserList = ({ users: initialUsers }: AdminUserListProps) => {
 
             {/* ===== MOBILE CARD LIST (<md) ===== */}
             <div className="md:hidden space-y-3">
-                {filteredUsers.length === 0 ? (
+                {users.length === 0 ? (
                     <div className="py-16 text-center">
                         <Search className="w-10 h-10 text-gray-600 mx-auto mb-3" />
                         <p className="text-gray-500 text-sm">No se encontraron usuarios.</p>
@@ -569,10 +445,9 @@ export const AdminUserList = ({ users: initialUsers }: AdminUserListProps) => {
                 ) : (
                     <>
                         <p className="text-[11px] text-gray-500 font-medium px-1">
-                            {filteredUsers.length} usuario{filteredUsers.length !== 1 ? 's' : ''}
-                            {totalPages > 1 && ` · Pág ${currentPage} de ${totalPages}`}
+                            Mostrando página {currentPage} de {totalPages}
                         </p>
-                        {paginatedUsers.map(user => {
+                        {users.map(user => {
                             const res = user.purchases?.[0] ?? null
                             const roleLabel = user.role === 'ADMIN' ? 'Admin' : user.role === 'SELLER' ? 'Vendedor' : 'Cliente'
 
@@ -699,7 +574,7 @@ export const AdminUserList = ({ users: initialUsers }: AdminUserListProps) => {
                 {totalPages > 1 && (
                     <div className="flex items-center justify-between gap-3 pt-2 pb-4">
                         <button
-                            onClick={() => { setCurrentPage(p => Math.max(1, p - 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                            onClick={() => { navigateToPage(currentPage - 1, filter); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
                             disabled={currentPage === 1}
                             className="flex items-center justify-center gap-1 min-h-[44px] px-4 rounded-xl bg-white/5 border border-white/10 text-white text-xs font-bold disabled:opacity-30 disabled:cursor-not-allowed active:scale-[0.95] transition-all"
                         >
@@ -710,7 +585,7 @@ export const AdminUserList = ({ users: initialUsers }: AdminUserListProps) => {
                             {currentPage}/{totalPages}
                         </span>
                         <button
-                            onClick={() => { setCurrentPage(p => Math.min(totalPages, p + 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                            onClick={() => { navigateToPage(currentPage + 1, filter); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
                             disabled={currentPage === totalPages}
                             className="flex items-center justify-center gap-1 min-h-[44px] px-4 rounded-xl bg-white/5 border border-white/10 text-white text-xs font-bold disabled:opacity-30 disabled:cursor-not-allowed active:scale-[0.95] transition-all"
                         >

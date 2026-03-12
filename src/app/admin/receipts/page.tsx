@@ -38,6 +38,7 @@ export default async function ReceiptsPage({
                 </div>
 
                 <ReceiptsClient 
+                    key={`receipts-${page}-${status}`}
                     initialReceipts={(result as any).receipts || []} 
                     totalPages={(result as any).totalPages || 1}
                     currentPage={page}

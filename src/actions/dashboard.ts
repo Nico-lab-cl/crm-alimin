@@ -59,24 +59,21 @@ export async function getAdminPipeline() {
             select: {
                 id: true,
                 name: true,
-                email: true,
-                phone: true,
+                phone: true, // Restored
+                notes: true, // Restored
                 pipeline_stage: true,
-                status: true,
                 created_at: true,
                 signed_at: true,
-                notes: true,
                 seller_id: true,
-                installments_paid: true,
                 pie_status: true,
                 lot: {
                     select: { id: true, number: true, stage: true }
                 },
                 buyer: {
-                    select: { id: true, name: true, email: true }
+                    select: { id: true, name: true }
                 },
                 seller: {
-                    select: { id: true, name: true, email: true }
+                    select: { id: true, name: true }
                 }
             },
             orderBy: { created_at: 'desc' }
@@ -232,7 +229,11 @@ export async function getAdminLots() {
                 stage: true,
                 status: true,
                 price_total_clp: true,
-                area_m2: true,
+                cuotas: true,
+                valor_cuota: true,
+                pie: true,
+                reservation_amount_clp: true,
+                last_installment_amount: true,
                 reservations: {
                     where: { status: { in: ['paid', 'confirmed'] } },
                     orderBy: { created_at: 'desc' },
@@ -244,8 +245,6 @@ export async function getAdminLots() {
                         pie_status: true,
                         is_legacy: true,
                         workflow_activated: true,
-                        // @ts-ignore
-                        mora_frozen: true
                     }
                 }
             }
@@ -286,50 +285,69 @@ export async function updateLotStatus(lotId: number, status: string) {
 }
 
 // ADMIN: GESTIÓN DE USUARIOS
-export async function getAdminUsers() {
+export async function getPaginatedAdminUsers(page: number = 1, pageSize: number = 20, search?: string) {
     const session = await auth()
     if (session?.user?.role !== Role.ADMIN) return { error: "No autorizado" }
 
+    const skip = (page - 1) * pageSize;
+    const cacheKey = `${ADMIN_USERS_CACHE_KEY}_p${page}_s${search || 'none'}`;
+
     try {
-        const cached = memoryCache.get(ADMIN_USERS_CACHE_KEY);
-        if (cached) return { success: true, data: cached };
+        const cached = memoryCache.get(cacheKey);
+        if (cached) return { success: true, ...cached };
 
-        const users = await prisma.user.findMany({
-            where: { role: Role.USER }, // Only fetch clients for this view
-            orderBy: { createdAt: 'desc' },
-            take: 1000, // Safe limit for current scale
-            select: {
-                id: true,
-                name: true,
-                email: true,
-                role: true,
-                createdAt: true,
-                purchases: {
-                    where: { status: { in: ['paid', 'confirmed'] } },
-                    select: {
-                        id: true,
-                        pipeline_stage: true,
-                        signed_at: true,
-                        promesa_signed_at: true,
-                        pie_status: true,
-                        installments_paid: true,
-                        is_legacy: true,
-                        is_promo: true,
-                        workflow_activated: true,
-                        // @ts-ignore
-                        mora_frozen: true,
-                        uploaded_contract_url: true,
-                        lot: {
-                            select: { number: true, stage: true, area_m2: true, price_total_clp: true, cuotas: true, valor_cuota: true, pie: true, reservation_amount_clp: true, last_installment_amount: true }
-                        }
-                    },
-                    orderBy: { created_at: 'desc' }
+        const where: any = { role: Role.USER };
+        if (search) {
+            where.OR = [
+                { name: { contains: search, mode: 'insensitive' } },
+                { email: { contains: search, mode: 'insensitive' } }
+            ];
+        }
+
+        const [users, totalCount] = await Promise.all([
+            prisma.user.findMany({
+                where,
+                orderBy: { createdAt: 'desc' },
+                skip,
+                take: pageSize,
+                select: {
+                    id: true,
+                    name: true,
+                    email: true,
+                    role: true,
+                    createdAt: true,
+                    purchases: {
+                        where: { status: { in: ['paid', 'confirmed'] } },
+                        select: {
+                            id: true,
+                            pipeline_stage: true,
+                            signed_at: true,
+                            promesa_signed_at: true,
+                            pie_status: true,
+                            installments_paid: true,
+                            is_legacy: true,
+                            is_promo: true,
+                            workflow_activated: true,
+                            lot: {
+                                select: { number: true, stage: true }
+                            }
+                        },
+                        orderBy: { created_at: 'desc' }
+                    }
                 }
-            }
-        })
+            }),
+            prisma.user.count({ where })
+        ]);
 
-        memoryCache.set(ADMIN_USERS_CACHE_KEY, users, CACHE_TTL_SHORT);
-        return { success: true, data: users }
+        const result = {
+            users,
+            totalPages: Math.ceil(totalCount / pageSize),
+            currentPage: page,
+            totalCount
+        };
+
+        memoryCache.set(cacheKey, result, CACHE_TTL_SHORT);
+        return { success: true, ...result };
     } catch (error) {
         console.error("Error getting users:", error)
         return { error: "Error al cargar usuarios" }

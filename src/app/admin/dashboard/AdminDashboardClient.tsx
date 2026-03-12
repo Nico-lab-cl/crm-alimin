@@ -20,6 +20,9 @@ interface AdminDashboardClientProps {
     sellers: any[]
     lots: any[]
     users: any[]
+    userTotalPages?: number
+    userCurrentPage?: number
+    userSearch?: string
     userEmail?: string
     receipts?: any[]
     paymentStats: {
@@ -38,6 +41,9 @@ export function AdminDashboardClient({
     sellers,
     lots,
     users,
+    userTotalPages = 1,
+    userCurrentPage = 1,
+    userSearch = '',
     userEmail,
     receipts = [],
     paymentStats,
@@ -199,7 +205,12 @@ export function AdminDashboardClient({
                             <TabsContent value="users" className="mt-6">
                                 <div className="bg-black/40 backdrop-blur-md rounded-xl p-6 border border-white/10 shadow-xl">
                                     <h3 className="text-xl font-bold text-white mb-4">Gestión de Usuarios</h3>
-                                    <AdminUserList users={users} />
+                                    <AdminUserList 
+                                        users={users} 
+                                        totalPages={userTotalPages}
+                                        currentPage={userCurrentPage}
+                                        currentSearch={userSearch}
+                                    />
                                 </div>
                             </TabsContent>
 
@@ -219,7 +230,12 @@ export function AdminDashboardClient({
 
                         {mobileTab === 'usuarios' && (
                             <div className="animate-fade-in">
-                                <AdminUserList users={users} />
+                                <AdminUserList 
+                                    users={users} 
+                                    totalPages={userTotalPages}
+                                    currentPage={userCurrentPage}
+                                    currentSearch={userSearch}
+                                />
                             </div>
                         )}
                     </div>

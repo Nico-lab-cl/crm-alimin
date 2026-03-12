@@ -1,22 +1,27 @@
 import { auth } from "@/auth"
-import { prisma } from "@/lib/prisma"
-import { getAdminPipeline, getSellers, getAdminLots, getAdminUsers, getAdminStats } from "@/actions/dashboard"
+import { getAdminPipeline, getSellers, getAdminLots, getPaginatedAdminUsers, getAdminStats } from "@/actions/dashboard"
 import { getPostventaData } from "@/actions/postventa"
 import { AdminDashboardClient } from "./AdminDashboardClient"
 
 const POSTVENTA_EMAIL = 'postventa@lomasdelmar.cl';
 
-export default async function AdminDashboard() {
+export default async function AdminDashboard({ 
+    searchParams 
+}: { 
+    searchParams: { userPage?: string, search?: string } 
+}) {
     const session = await auth()
     const userEmail = session?.user?.email || ''
-
     const isPostventa = userEmail === POSTVENTA_EMAIL
+
+    const userPage = parseInt(searchParams.userPage || '1')
+    const search = searchParams.search || ''
 
     const [pipelineResult, sellersResult, lotsResult, usersResult, statsResult, postventaData] = await Promise.all([
         getAdminPipeline(),
         getSellers(),
         getAdminLots(),
-        getAdminUsers(),
+        getPaginatedAdminUsers(userPage, 20, search),
         getAdminStats(),
         isPostventa ? getPostventaData() : Promise.resolve({ success: false, ledger: [], debtAlerts: [] })
     ])
@@ -41,7 +46,6 @@ export default async function AdminDashboard() {
     if (isPostventa && postventaData?.success) {
         ledger = (postventaData as any).ledger || []
         debtAlerts = (postventaData as any).debtAlerts || []
-        // Extract receipts from ledger to avoid duplicate queries
         receipts = ledger.flatMap(entry => entry.receipts || [])
     }
 
@@ -50,7 +54,10 @@ export default async function AdminDashboard() {
             pipelineData={(pipelineResult as any).data || []}
             sellers={(sellersResult as any).data || []}
             lots={(lotsResult as any).data || []}
-            users={(usersResult as any).data || []}
+            users={(usersResult as any).users || []}
+            userTotalPages={(usersResult as any).totalPages || 1}
+            userCurrentPage={userPage}
+            userSearch={search}
             userEmail={userEmail}
             receipts={receipts}
             paymentStats={paymentStats as any}
