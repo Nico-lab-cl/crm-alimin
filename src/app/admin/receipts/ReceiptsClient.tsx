@@ -9,12 +9,29 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Loader2, CheckCircle, XCircle, Eye, MapPin, CreditCard, Clock, Download } from "lucide-react";
+import { Loader2, CheckCircle, XCircle, Eye, MapPin, CreditCard, Clock, Download, ChevronLeft, ChevronRight, Filter } from "lucide-react";
 import { approvePaymentReceipt, rejectPaymentReceipt } from "@/actions/receipts";
 import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
+import { useRouter } from "next/navigation";
+import {
+    Select, SelectContent, SelectItem, SelectTrigger, SelectValue
+} from "@/components/ui/select";
 
-export default function ReceiptsClient({ initialReceipts }: { initialReceipts: any[] }) {
+interface ReceiptsClientProps {
+    initialReceipts: any[];
+    totalPages: number;
+    currentPage: number;
+    currentStatus: string;
+}
+
+export default function ReceiptsClient({ 
+    initialReceipts,
+    totalPages,
+    currentPage,
+    currentStatus
+}: ReceiptsClientProps) {
+    const router = useRouter();
     const [receipts, setReceipts] = useState(initialReceipts);
     const [selectedImage, setSelectedImage] = useState<string | null>(null);
     const [rejectingId, setRejectingId] = useState<string | null>(null);
@@ -22,6 +39,10 @@ export default function ReceiptsClient({ initialReceipts }: { initialReceipts: a
     const [isProcessing, setIsProcessing] = useState<string | null>(null);
 
     const pendingCount = receipts.filter(r => r.status === 'PENDING').length;
+
+    const navigate = (page: number, status: string) => {
+        router.push(`/admin/receipts?page=${page}&status=${status}`);
+    };
 
     const handleApprove = async (id: string) => {
         setIsProcessing(id);
@@ -70,13 +91,33 @@ export default function ReceiptsClient({ initialReceipts }: { initialReceipts: a
 
     return (
         <div className="bg-white rounded-lg shadow border p-3 md:p-6">
-            <div className="flex justify-between items-center mb-4 md:mb-6">
-                <h2 className="text-lg md:text-xl font-bold flex gap-2 items-center">
+            <div className="flex flex-col md:flex-row justify-between items-center mb-4 md:mb-6 gap-4">
+                <h2 className="text-lg md:text-xl font-bold flex gap-2 items-center w-full md:w-auto">
                     Comprobantes
                     {pendingCount > 0 && (
                         <Badge variant="destructive" className="ml-1 font-bold text-[10px] md:text-xs">{pendingCount} Pendientes</Badge>
                     )}
                 </h2>
+
+                <div className="flex items-center gap-2 w-full md:w-auto">
+                   <Select 
+                     value={currentStatus} 
+                     onValueChange={(val) => navigate(1, val)}
+                   >
+                       <SelectTrigger className="w-full md:w-[180px] bg-gray-50">
+                           <div className="flex items-center gap-2">
+                               <Filter className="w-4 h-4 text-gray-500" />
+                               <SelectValue placeholder="Estado" />
+                           </div>
+                       </SelectTrigger>
+                       <SelectContent>
+                           <SelectItem value="ALL">Todos</SelectItem>
+                           <SelectItem value="PENDING">Pendientes</SelectItem>
+                           <SelectItem value="APPROVED">Aprobados</SelectItem>
+                           <SelectItem value="REJECTED">Rechazados</SelectItem>
+                       </SelectContent>
+                   </Select>
+                </div>
             </div>
 
             {/* ===== DESKTOP TABLE (md+) ===== */}
@@ -318,12 +359,36 @@ export default function ReceiptsClient({ initialReceipts }: { initialReceipts: a
                 )}
             </div>
 
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+                <div className="flex items-center justify-between gap-3 pt-6 border-t mt-6">
+                    <Button
+                        variant="outline"
+                        onClick={() => navigate(currentPage - 1, currentStatus)}
+                        disabled={currentPage === 1}
+                        className="flex-1 md:flex-none min-h-[44px]"
+                    >
+                        <ChevronLeft className="w-4 h-4 mr-1" />
+                        Anterior
+                    </Button>
+                    <span className="text-sm font-medium text-gray-500">
+                        {currentPage} / {totalPages}
+                    </span>
+                    <Button
+                        variant="outline"
+                        onClick={() => navigate(currentPage + 1, currentStatus)}
+                        disabled={currentPage === totalPages}
+                        className="flex-1 md:flex-none min-h-[44px]"
+                    >
+                        Siguiente
+                        <ChevronRight className="w-4 h-4 ml-1" />
+                    </Button>
+                </div>
+            )}
+
             {/* Image Viewer Dialog */}
             <Dialog open={!!selectedImage} onOpenChange={() => setSelectedImage(null)}>
-                <DialogContent className="max-w-[95vw] md:max-w-4xl p-0 overflow-hidden bg-black/5">
-                    <DialogHeader className="p-4 bg-white border-b absolute top-0 w-full z-10 hidden">
-                        <DialogTitle>Comprobante de Transferencia</DialogTitle>
-                    </DialogHeader>
+                <DialogContent className="max-w-[95vw] md:max-w-4xl p-0 overflow-hidden bg-black/5 border-none">
                     {selectedImage && (
                         <div className="w-full h-[70vh] md:h-[80vh] flex items-center justify-center bg-gray-900 overflow-auto">
                             {selectedImage.startsWith('data:application/pdf') ? (

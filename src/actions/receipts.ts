@@ -7,6 +7,79 @@ import { sendPaymentReceiptWebhook } from '@/lib/webhooks';
 import { memoryCache } from '@/lib/cache';
 
 const POSTVENTA_CACHE_KEY = 'postventa_data';
+const RECEIPTS_PAGINATED_CACHE_KEY = 'receipts_paginated_';
+
+export async function getPaginatedReceipts({
+    page = 1,
+    pageSize = 20,
+    status
+}: {
+    page?: number;
+    pageSize?: number;
+    status?: string | null;
+} = {}) {
+    const session = await auth();
+    if (!session?.user || session.user.role !== 'ADMIN') {
+        throw new Error("Unauthorized");
+    }
+
+    const cacheKey = `${RECEIPTS_PAGINATED_CACHE_KEY}${page}_${pageSize}_${status || 'all'}`;
+    const cached = memoryCache.get(cacheKey);
+    if (cached) return cached;
+
+    try {
+        const where: any = {};
+        if (status && status !== 'ALL') {
+            where.status = status;
+        }
+
+        const [receipts, totalCount] = await Promise.all([
+            prisma.paymentReceipt.findMany({
+                where,
+                skip: (page - 1) * pageSize,
+                take: pageSize,
+                orderBy: { created_at: 'desc' },
+                select: {
+                    id: true,
+                    amount_clp: true,
+                    receipt_url: true,
+                    status: true,
+                    scope: true,
+                    installments_count: true,
+                    created_at: true,
+                    rejection_reason: true,
+                    reservation: {
+                        select: {
+                            id: true,
+                            buyer: {
+                                select: { name: true, email: true }
+                            },
+                            lot: {
+                                select: { number: true, stage: true }
+                            }
+                        }
+                    }
+                }
+            }),
+            prisma.paymentReceipt.count({ where })
+        ]);
+
+        const result = {
+            success: true,
+            receipts,
+            totalCount,
+            totalPages: Math.ceil(totalCount / pageSize),
+            currentPage: page
+        };
+
+        memoryCache.set(cacheKey, result, 60); // 1 minute cache
+        return result;
+
+    } catch (error) {
+        console.error("Error fetching paginated receipts:", error);
+        throw new Error("Error al cargar comprobantes");
+    }
+}
 
 export async function uploadPaymentReceipt({
     reservationId,
