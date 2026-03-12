@@ -559,33 +559,43 @@ export function PostventaMobileDashboard({
                                                                             : selectedClientLedger.legacy_uploaded_contracts;
                                                                     } catch (e) {}
                                                                 }
-                                                                const reservaDoc = legacyDocs?.[0]; // Assume first one is the main reserva if multiple
+
+                                                                if (!Array.isArray(legacyDocs) || legacyDocs.length === 0) {
+                                                                    return <Badge variant="outline" className="text-amber-500 border-amber-500/30 font-black text-[7px] uppercase">Falta Archivo</Badge>;
+                                                                }
                                                                 
-                                                                return reservaDoc ? (
-                                                                    <div className="flex gap-2">
-                                                                        <Button
-                                                                            size="icon"
-                                                                            variant="ghost"
-                                                                            onClick={() => setViewerConfig({
-                                                                                isOpen: true,
-                                                                                url: reservaDoc.url,
-                                                                                name: reservaDoc.name,
-                                                                                category: "Contrato Manual"
-                                                                            })}
-                                                                            className="h-10 w-10 bg-white/5 hover:bg-white/10 text-white rounded-xl"
-                                                                        >
-                                                                            <Eye className="w-5 h-5" />
-                                                                        </Button>
-                                                                        <Button
-                                                                            size="icon"
-                                                                            variant="ghost"
-                                                                            onClick={() => handleDeleteDocument(selectedClientLedger.id, 'legacy', reservaDoc.url)}
-                                                                            className="h-10 w-10 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-xl transition-all"
-                                                                        >
-                                                                            <Trash2 className="w-5 h-5" />
-                                                                        </Button>
+                                                                return (
+                                                                    <div className="flex flex-col gap-2 w-full">
+                                                                        {legacyDocs.map((doc: any, i: number) => (
+                                                                            <div key={i} className="flex items-center justify-between p-2 bg-white/5 rounded-xl border border-white/5 group/file">
+                                                                                <span className="text-[10px] font-bold text-gray-400 truncate max-w-[100px] group-hover/file:text-white transition-colors">{doc.name}</span>
+                                                                                <div className="flex gap-1">
+                                                                                    <Button
+                                                                                        size="icon"
+                                                                                        variant="ghost"
+                                                                                        onClick={() => setViewerConfig({
+                                                                                            isOpen: true,
+                                                                                            url: doc.url,
+                                                                                            name: doc.name,
+                                                                                            category: "Contrato Manual"
+                                                                                        })}
+                                                                                        className="h-8 w-8 bg-white/5 hover:bg-white/10 text-white rounded-lg"
+                                                                                    >
+                                                                                        <Eye className="w-4 h-4" />
+                                                                                    </Button>
+                                                                                    <Button
+                                                                                        size="icon"
+                                                                                        variant="ghost"
+                                                                                        onClick={() => handleDeleteDocument(selectedClientLedger.id, 'legacy', doc.url)}
+                                                                                        className="h-8 w-8 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg transition-all"
+                                                                                    >
+                                                                                        <Trash2 className="w-4 h-4" />
+                                                                                    </Button>
+                                                                                </div>
+                                                                            </div>
+                                                                        ))}
                                                                     </div>
-                                                                ) : <Badge variant="outline" className="text-amber-500 border-amber-500/30 font-black text-[7px] uppercase">Falta Archivo</Badge>;
+                                                                );
                                                             })()}
                                                         </div>
                                                         <div className="flex-1 mb-6">
