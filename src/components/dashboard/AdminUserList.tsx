@@ -157,17 +157,28 @@ export const AdminUserList = ({
     return (
         <div className="space-y-4 overflow-x-hidden max-w-full">
             <div className="flex flex-col gap-3 md:flex-row md:gap-4 justify-between items-stretch md:items-center bg-white/5 p-3 md:p-4 rounded-xl border border-white/10">
-                <form onSubmit={handleSearch} className="flex items-center gap-2 w-full md:w-auto min-w-0">
-                    <Search className="w-5 h-5 text-gray-400 shrink-0" />
+                <form onSubmit={handleSearch} className="flex items-center gap-2 w-full md:w-auto min-w-0 bg-black/20 p-1.5 rounded-lg border border-white/5">
+                    <Search className="w-4 h-4 text-gray-500 ml-2 shrink-0" />
                     <Input
-                        placeholder="Buscar por nombre o email..."
+                        placeholder="Buscar cliente (Nombre o Email)..."
                         value={filter}
                         onChange={(e) => setFilter(e.target.value)}
-                        className="bg-transparent border-none text-white focus-visible:ring-0 placeholder:text-gray-500 w-full min-w-0"
+                        className="bg-transparent border-none text-white focus-visible:ring-0 placeholder:text-gray-600 w-full min-w-0 h-8 text-sm"
                     />
-                    <Button type="submit" size="sm" className="hidden md:flex bg-white/10 hover:bg-white/20 text-white">
+                    <Button type="submit" size="sm" className="bg-[#36595F] hover:bg-[#2A464B] text-white font-bold h-8 px-4 text-xs">
                         Buscar
                     </Button>
+                    {filter && (
+                        <Button 
+                            type="button" 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={() => { setFilter(''); navigateToPage(1, ''); }}
+                            className="text-gray-500 hover:text-white h-8"
+                        >
+                            <X className="w-4 h-4" />
+                        </Button>
+                    )}
                 </form>
 
                 <div className="flex flex-wrap gap-2 w-full md:w-auto">

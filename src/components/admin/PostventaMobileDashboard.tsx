@@ -264,13 +264,14 @@ export function PostventaMobileDashboard({
                             }}
                             className="bg-black/60 border-white/5 rounded-2xl pl-11 h-12 text-sm text-white placeholder:text-gray-700 focus:ring-[#3f6066]/20 focus:border-[#3f6066]/40 transition-all font-medium"
                         />
-                        <div className="absolute right-4 top-1/2 -translate-y-1/2 flex gap-2">
-                             {ledgerSearch !== search && (
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                             {ledgerSearch && (
                                 <Button 
                                     size="sm"
                                     onClick={() => navigate(1, ledgerSearch, ledgerStage, status)}
-                                    className="bg-[#3f6066]/20 text-[#8eb2b8] hover:bg-[#3f6066]/40 h-8 rounded-xl text-[9px] font-black"
+                                    className="bg-[#3f6066] text-white hover:bg-[#3f6066]/80 h-8 rounded-xl text-[9px] font-black uppercase tracking-tighter"
                                 >
+                                    <Search className="w-3 h-3 mr-1.5" />
                                     Buscar
                                 </Button>
                              )}
@@ -279,7 +280,7 @@ export function PostventaMobileDashboard({
                                     variant="ghost" 
                                     size="sm"
                                     onClick={() => { setLedgerSearch(''); navigate(1, '', ledgerStage, status); }}
-                                    className="text-[10px] font-black text-[#3f6066] hover:text-white uppercase transition-colors h-8"
+                                    className="text-[9px] font-black text-[#3f6066] hover:text-white uppercase transition-colors h-8"
                                 >
                                     Limpiar
                                 </Button>
@@ -891,6 +892,27 @@ export function PostventaMobileDashboard({
                                 }}
                                 className="bg-[#1a1a1a]/40 border-white/5 rounded-2xl pl-11 h-12 text-sm text-white placeholder:text-gray-700 focus:ring-[#3f6066]/20 focus:border-[#3f6066]/40 transition-all font-medium"
                             />
+                            <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                                {ledgerSearch && (
+                                    <Button 
+                                        size="sm"
+                                        variant="ghost"
+                                        onClick={() => { setLedgerSearch(''); navigate(1, '', alertStage, alertFilter); }}
+                                        className="h-8 text-[9px] font-black text-gray-500 hover:text-white uppercase"
+                                    >
+                                        Limpiar
+                                    </Button>
+                                )}
+                                {ledgerSearch && (
+                                    <Button 
+                                        size="sm"
+                                        onClick={() => navigate(1, ledgerSearch, alertStage, alertFilter)}
+                                        className="bg-[#3f6066] text-white hover:bg-[#3f6066]/80 h-8 rounded-xl text-[9px] font-black px-3"
+                                    >
+                                        Buscar
+                                    </Button>
+                                )}
+                            </div>
                         </div>
 
                         {/* Filter Sections */}
@@ -1090,7 +1112,7 @@ export function PostventaMobileDashboard({
                     )}
                 </div>
                 
-                <div className="relative group w-full md:w-64">
+                <div className="relative group w-full md:w-80">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 group-focus-within:text-[#3f6066] transition-colors" />
                     <Input 
                         placeholder="Buscar por lote o nombre..." 
@@ -1099,8 +1121,19 @@ export function PostventaMobileDashboard({
                         onKeyDown={(e) => {
                             if (e.key === 'Enter') navigate(1, ledgerSearch, ledgerStage, status);
                         }}
-                        className="bg-white/5 border-white/10 rounded-xl pl-10 h-10 text-xs text-white placeholder:text-gray-600 focus:ring-[#3f6066]/20 focus:border-[#3f6066]/40 transition-all font-medium"
+                        className="bg-white/5 border-white/10 rounded-xl pl-9 h-10 text-sm text-white placeholder:text-gray-600 focus:ring-alimin-gold/20 focus:border-alimin-gold/40 transition-all font-medium"
                     />
+                    <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                        {ledgerSearch && (
+                            <Button 
+                                size="sm"
+                                onClick={() => navigate(1, ledgerSearch, ledgerStage, status)}
+                                className="bg-alimin-gold text-black hover:bg-alimin-gold/80 h-7 rounded-lg text-[9px] font-bold px-2"
+                            >
+                                Buscar
+                            </Button>
+                        )}
+                    </div>
                 </div>
             </div>
 
