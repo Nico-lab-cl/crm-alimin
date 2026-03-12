@@ -511,7 +511,7 @@ export async function assignLegacyLotOwner(data: {
             where: { id: lotId },
             data: {
                 price_total_clp: price_total_clp || 0,
-                reservation_amount_clp: reservation_amount_clp || 500000,
+                reservation_amount_clp: reservation_amount_clp ?? 500000,
                 pie: pie || 0,
                 cuotas: cuotas || 0,
                 valor_cuota: valor_cuota || 0,

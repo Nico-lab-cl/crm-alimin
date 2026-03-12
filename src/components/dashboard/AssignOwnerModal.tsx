@@ -73,7 +73,7 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
                 address_number: existingReservation.address_number || "",
                 address_commune: existingReservation.address_commune || "",
                 address_region: existingReservation.address_region || "",
-                reservation_amount_clp: existingReservation.lot?.reservation_amount_clp || 500000,
+                reservation_amount_clp: existingReservation.lot?.reservation_amount_clp ?? 500000,
                 pie: existingReservation.lot?.pie || 0,
                 cuotas: existingReservation.lot?.cuotas || 0,
                 valor_cuota: existingReservation.lot?.valor_cuota || 0,

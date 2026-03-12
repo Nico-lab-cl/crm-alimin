@@ -126,9 +126,9 @@ export const ReservationContract = ({ reservation, lot, logoPath, signaturePath 
     const pieLote = lotAny.pie || 0; // Default or null check
     const valorPieLote = formatCurrency(pieLote);
 
-    const reservaAmount = lotAny.reservation_amount_clp || 500000;
+    const reservaAmount = lotAny.reservation_amount_clp || 0;
     const calculoReservaAmount = formatCurrency(reservaAmount);
-    const saldoPie = Math.max(0, pieLote - (lotAny.reservation_amount_clp ?? 500000));
+    const saldoPie = Math.max(0, pieLote - reservaAmount);
     const calculoSaldoPie = formatCurrency(saldoPie);
 
     let textoCuotas = '';
