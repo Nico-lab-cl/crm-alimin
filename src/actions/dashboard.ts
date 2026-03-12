@@ -10,6 +10,12 @@ import { sendPieWebhook, sendContractSignedWebhook } from "@/lib/webhooks"
 import { memoryCache } from "@/lib/cache"
 
 const POSTVENTA_CACHE_KEY = 'postventa_data';
+const ADMIN_STATS_CACHE_KEY = 'admin_stats_data';
+const ADMIN_PIPELINE_CACHE_KEY = 'admin_pipeline_data';
+const ADMIN_LOTS_CACHE_KEY = 'admin_lots_data';
+const ADMIN_USERS_CACHE_KEY = 'admin_users_data';
+const CACHE_TTL_SHORT = 60; // 1 minute for global admin
+const CACHE_TTL_POSTVENTA = 300; // 5 minutes
 
 export async function getSellerPipeline() {
     const session = await auth()
@@ -36,14 +42,47 @@ export async function getAdminPipeline() {
     if (session?.user?.role !== Role.ADMIN) return { error: "No autorizado" }
 
     try {
+        const cached = memoryCache.get(ADMIN_PIPELINE_CACHE_KEY);
+        if (cached) return { success: true, data: cached };
+
+        // Optimization: Only fetch active reservations or recent closed wins (last 30 days)
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
         const reservations = await prisma.reservation.findMany({
-            include: {
-                lot: true,
-                buyer: true,
-                seller: true
+            where: {
+                OR: [
+                    { pipeline_stage: { notIn: ['VENTA_CERRADA', 'VENTA_PERDIDA'] } },
+                    { created_at: { gte: thirtyDaysAgo } }
+                ]
+            },
+            select: {
+                id: true,
+                name: true,
+                email: true,
+                phone: true,
+                pipeline_stage: true,
+                status: true,
+                created_at: true,
+                signed_at: true,
+                notes: true,
+                seller_id: true,
+                installments_paid: true,
+                pie_status: true,
+                lot: {
+                    select: { id: true, number: true, stage: true }
+                },
+                buyer: {
+                    select: { id: true, name: true, email: true }
+                },
+                seller: {
+                    select: { id: true, name: true, email: true }
+                }
             },
             orderBy: { created_at: 'desc' }
         })
+
+        memoryCache.set(ADMIN_PIPELINE_CACHE_KEY, reservations, CACHE_TTL_SHORT);
         return { success: true, data: reservations }
     } catch (error) {
         console.error("Error getting admin pipeline:", error)
@@ -182,9 +221,18 @@ export async function getAdminLots() {
     if (session?.user?.role !== Role.ADMIN) return { error: "No autorizado" }
 
     try {
+        const cached = memoryCache.get(ADMIN_LOTS_CACHE_KEY);
+        if (cached) return { success: true, data: cached };
+
         const lots = await prisma.lot.findMany({
             orderBy: { number: 'asc' },
-            include: {
+            select: {
+                id: true,
+                number: true,
+                stage: true,
+                status: true,
+                price_total_clp: true,
+                area_m2: true,
                 reservations: {
                     where: { status: { in: ['paid', 'confirmed'] } },
                     orderBy: { created_at: 'desc' },
@@ -202,6 +250,8 @@ export async function getAdminLots() {
                 }
             }
         })
+        
+        memoryCache.set(ADMIN_LOTS_CACHE_KEY, lots, CACHE_TTL_SHORT);
         return { success: true, data: lots }
     } catch (error) {
         console.error("Error getting lots:", error)
@@ -241,15 +291,26 @@ export async function getAdminUsers() {
     if (session?.user?.role !== Role.ADMIN) return { error: "No autorizado" }
 
     try {
+        const cached = memoryCache.get(ADMIN_USERS_CACHE_KEY);
+        if (cached) return { success: true, data: cached };
+
         const users = await prisma.user.findMany({
+            where: { role: Role.USER }, // Only fetch clients for this view
             orderBy: { createdAt: 'desc' },
-            include: {
+            take: 1000, // Safe limit for current scale
+            select: {
+                id: true,
+                name: true,
+                email: true,
+                role: true,
+                createdAt: true,
                 purchases: {
                     where: { status: { in: ['paid', 'confirmed'] } },
                     select: {
                         id: true,
                         pipeline_stage: true,
                         signed_at: true,
+                        promesa_signed_at: true,
                         pie_status: true,
                         installments_paid: true,
                         is_legacy: true,
@@ -258,8 +319,6 @@ export async function getAdminUsers() {
                         // @ts-ignore
                         mora_frozen: true,
                         uploaded_contract_url: true,
-                        legacy_uploaded_contracts: true,
-                        receipts: true,
                         lot: {
                             select: { number: true, stage: true, area_m2: true, price_total_clp: true, cuotas: true, valor_cuota: true, pie: true, reservation_amount_clp: true, last_installment_amount: true }
                         }
@@ -268,10 +327,51 @@ export async function getAdminUsers() {
                 }
             }
         })
+
+        memoryCache.set(ADMIN_USERS_CACHE_KEY, users, CACHE_TTL_SHORT);
         return { success: true, data: users }
     } catch (error) {
         console.error("Error getting users:", error)
         return { error: "Error al cargar usuarios" }
+    }
+}
+
+export async function getAdminStats() {
+    const session = await auth()
+    if (session?.user?.role !== Role.ADMIN) return { error: "No autorizado" }
+
+    try {
+        const cached = memoryCache.get(ADMIN_STATS_CACHE_KEY);
+        if (cached) return { success: true, data: cached };
+
+        const [totalLots, soldLots, lotsWithPiePaid, totalInstallments] = await Promise.all([
+            prisma.lot.count(),
+            prisma.lot.count({ where: { status: 'sold' } }),
+            prisma.reservation.count({
+                where: {
+                    status: { in: ['paid', 'confirmed'] },
+                    pie_status: 'PAID'
+                }
+            }),
+            prisma.reservation.aggregate({
+                where: { status: { in: ['paid', 'confirmed'] } },
+                _sum: { installments_paid: true }
+            })
+        ]);
+
+        const stats = {
+            totalLots,
+            soldLots,
+            lotsWithPiePaid,
+            lotsWithPiePending: Math.max(0, soldLots - lotsWithPiePaid),
+            totalInstallmentsPaid: totalInstallments._sum.installments_paid || 0,
+        };
+
+        memoryCache.set(ADMIN_STATS_CACHE_KEY, stats, CACHE_TTL_SHORT);
+        return { success: true, data: stats };
+    } catch (error) {
+        console.error("Error getting admin stats:", error);
+        return { error: "Error al cargar estadísticas" };
     }
 }
 
