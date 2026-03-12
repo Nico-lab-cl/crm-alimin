@@ -9,7 +9,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Textarea } from '@/components/ui/textarea';
 import { 
     Loader2, CheckCircle, XCircle, Eye, MapPin, CreditCard, Clock, Receipt, BookOpen, 
-    AlertTriangle, Search, Filter, FileSignature, Gavel, Wallet, CalendarDays, ArrowRight, ShieldAlert, RefreshCw
+    AlertTriangle, Search, Filter, FileSignature, Gavel, Wallet, CalendarDays, ArrowRight, ShieldAlert, RefreshCw,
+    FileText, Download
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { approvePaymentReceipt, rejectPaymentReceipt } from '@/actions/receipts';
@@ -50,7 +51,6 @@ export function PostventaMobileDashboard({
     onTabChange 
 }: PostventaMobileDashboardProps) {
     const [receipts, setReceipts] = useState(initialReceipts);
-    const [selectedImage, setSelectedImage] = useState<string | null>(null);
     const [rejectingId, setRejectingId] = useState<string | null>(null);
     const [rejectionReason, setRejectionReason] = useState('');
     const [isProcessing, setIsProcessing] = useState<string | null>(null);
@@ -442,6 +442,44 @@ export function PostventaMobileDashboard({
                                                 />
                                             </div>
 
+                                            {/* Item: Reserva PDF */}
+                                            <div className="bg-white/5 rounded-2xl p-5 border border-white/5 flex flex-col h-full group">
+                                                <div className="flex justify-between items-start mb-6">
+                                                    <div className="p-2.5 bg-[#3f6066]/10 rounded-xl border border-[#3f6066]/20">
+                                                        <FileText className="w-5 h-5 text-[#8eb2b8]" />
+                                                    </div>
+                                                    <div className="flex gap-2">
+                                                        <Button
+                                                            size="icon"
+                                                            variant="ghost"
+                                                            onClick={() => setViewerConfig({
+                                                                isOpen: true,
+                                                                url: `/api/contracts/${selectedClientLedger.id}/pdf`,
+                                                                name: "Contrato de Reserva",
+                                                                category: "Documento Oficial"
+                                                            })}
+                                                            className="h-8 w-8 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 rounded-lg"
+                                                        >
+                                                            <Eye className="w-4 h-4" />
+                                                        </Button>
+                                                        <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20 font-black text-[8px] uppercase">Digital</Badge>
+                                                    </div>
+                                                </div>
+                                                <div className="flex-1 mb-6">
+                                                    <p className="text-white font-black text-sm uppercase tracking-tight">Contrato de Reserva</p>
+                                                    <p className="text-[9px] text-gray-500 font-black uppercase mt-1">Generado automáticamente</p>
+                                                </div>
+                                                <Button 
+                                                    variant="outline" 
+                                                    size="sm"
+                                                    onClick={() => window.open(`/api/contracts/${selectedClientLedger.id}/pdf?download=true`, '_blank')}
+                                                    className="w-full mt-2 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 border-indigo-500/30 font-black text-[10px] uppercase"
+                                                >
+                                                    <Download className="w-4 h-4 mr-2" />
+                                                    Descargar PDF
+                                                </Button>
+                                            </div>
+
                                             {/* Item: Gastos Op */}
                                             <div className="bg-white/5 rounded-2xl p-5 border border-white/5 flex flex-col h-full group">
                                                 <div className="flex justify-between items-start mb-6">
@@ -453,9 +491,17 @@ export function PostventaMobileDashboard({
                                                         if (doc) {
                                                             return (
                                                                 <div className="flex gap-2">
-                                                                    <a href={doc.url} target="_blank" rel="noopener noreferrer" className="p-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 rounded-lg transition-colors">
-                                                                        <Eye className="w-3 h-3" />
-                                                                    </a>
+                                                                    <button 
+                                                                        onClick={() => setViewerConfig({
+                                                                            isOpen: true,
+                                                                            url: doc.url,
+                                                                            name: "Gastos Operacionales",
+                                                                            category: "Comprobante Notarial"
+                                                                        })}
+                                                                        className="p-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 rounded-lg transition-colors"
+                                                                    >
+                                                                        <Eye className="w-4 h-4" />
+                                                                    </button>
                                                                     <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20 font-black text-[8px] uppercase">Cargado</Badge>
                                                                 </div>
                                                             );
@@ -1042,7 +1088,12 @@ export function PostventaMobileDashboard({
                         {/* Actions */}
                         <div className="flex gap-2 pt-2">
                             <button
-                                onClick={() => setSelectedImage(receipt.receipt_url)}
+                                onClick={() => setViewerConfig({
+                                    isOpen: true,
+                                    url: receipt.receipt_url,
+                                    name: `Recibo #${receipt.id.slice(-4)}`,
+                                    category: receipt.reservation?.buyer?.name
+                                })}
                                 className="flex items-center justify-center gap-1.5 flex-1 min-h-[44px] rounded-lg bg-white/10 text-white text-xs font-semibold hover:bg-white/20 transition-colors active:scale-[0.97]"
                             >
                                 <Eye className="w-4 h-4" />
@@ -1078,25 +1129,13 @@ export function PostventaMobileDashboard({
                         {filter === 'PENDING' ? 'No hay comprobantes pendientes 🎉' : 'No hay comprobantes en esta categoría.'}
                     </div>
                 )}
-            </div>
 
-            {/* Image Viewer */}
-            <Dialog open={!!selectedImage} onOpenChange={() => setSelectedImage(null)}>
-                <DialogContent className="max-w-[95vw] md:max-w-4xl p-0 overflow-hidden bg-black/5">
-                    <DialogHeader className="p-4 bg-white border-b absolute top-0 w-full z-10 hidden">
-                        <DialogTitle>Comprobante</DialogTitle>
-                    </DialogHeader>
-                    {selectedImage && (
-                        <div className="w-full h-[70vh] flex items-center justify-center bg-gray-900 overflow-auto">
-                            {selectedImage.startsWith('data:application/pdf') ? (
-                                <iframe src={selectedImage} className="w-full h-full" />
-                            ) : (
-                                <img src={selectedImage} alt="Comprobante" className="max-w-full max-h-full object-contain" />
-                            )}
-                        </div>
-                    )}
-                </DialogContent>
-            </Dialog>
+                {/* Universal Document Viewer Integration */}
+                <UniversalDocumentViewer
+                    {...viewerConfig}
+                    onClose={() => setViewerConfig(prev => ({ ...prev, isOpen: false }))}
+                />
+            </div>
 
             {/* Reject Dialog */}
             <Dialog open={!!rejectingId} onOpenChange={(open) => !open && setRejectingId(null)}>
