@@ -71,33 +71,9 @@ export function AdminDashboardClient({
                     <div className="relative z-10 max-w-[2400px] mx-auto space-y-4 md:space-y-8">
                         {/* Header */}
                         <div className="flex items-center justify-between pt-1 pb-2">
-                            <div className="flex items-center gap-4">
-                                <h2 className="text-xl md:text-3xl font-black text-white">
-                                    Postventa
-                                </h2>
-                                <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={async () => {
-                                        const { syncAllFinancials } = await import('@/actions/postventa');
-                                        const toastId = toast.loading('Sincronizando datos financieros...');
-                                        try {
-                                            const res = await syncAllFinancials();
-                                            if (res.success) {
-                                                toast.success(`Sincronización completada: ${res.count} registros actualizados.`, { id: toastId });
-                                                window.location.reload();
-                                            } else {
-                                                toast.error(res.error || 'Error al sincronizar', { id: toastId });
-                                            }
-                                        } catch (e) {
-                                            toast.error('Error de conexión', { id: toastId });
-                                        }
-                                    }}
-                                    className="h-8 bg-[#3f6066]/20 border-[#3f6066]/40 text-[#3f6066] hover:bg-[#3f6066] hover:text-white transition-all text-[10px] font-bold uppercase tracking-widest px-3 rounded-lg"
-                                >
-                                    🔄 Sincronizar Datos
-                                </Button>
-                            </div>
+                            <h2 className="text-xl md:text-3xl font-black text-white">
+                                Postventa
+                            </h2>
                             <span className="text-xs text-gray-500 font-medium">
                                 Lomas del Mar
                             </span>

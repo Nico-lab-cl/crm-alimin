@@ -106,17 +106,6 @@ model Reservation {
 
   buyer_id String?
   buyer    User?   @relation("BuyerReservations", fields: [buyer_id], references: [id])
-
-  // Optimization Fields
-  cached_mora_amount Int?      @default(0)
-  cached_late_days   Int?      @default(0)
-  last_financial_sync DateTime?
-
-  @@index([lot_id])
-  @@index([buyer_id])
-  @@index([status])
-  @@index([pipeline_stage])
-  @@index([pie_status])
 }
 
 model LotLock {

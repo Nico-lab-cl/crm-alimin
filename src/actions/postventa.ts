@@ -55,55 +55,32 @@ export async function getPostventaData() {
             let penaltyAmount = 0;
             let isPieDebt = false;
 
-            // Use cached values for the list view if updated in the last 24h
-            // ONLY if this is NOT a detail request (getPostventaData is used for lists)
-            const isCacheValid = res.last_financial_sync && 
-                               (new Date().getTime() - new Date(res.last_financial_sync).getTime() < 24 * 60 * 60 * 1000);
+            const isLegacyBool = Boolean(res.is_legacy);
+            const baseDate = res.legacy_installment_start_date
+                ? new Date(res.legacy_installment_start_date).toISOString()
+                : res.created_at.toISOString();
 
-            if (isCacheValid) {
-                penaltyAmount = res.cached_mora_amount || 0;
-                lateDays = res.cached_late_days || 0;
+            if (paidCuotas < totalCuotas) {
+                const customStart = res.legacy_installment_start_date ? new Date(res.legacy_installment_start_date) : null;
+                const customDueDay = customStart ? customStart.getDate() : null;
+                nextDueDate = getInstallmentDueDate(baseDate, paidCuotas + 1, isLegacyBool, customDueDay, Boolean(res.is_promo));
+
+                const lotAreaM2 = lot.area_m2 || 200;
                 
-                // We still need nextDueDate for display
-                const isLegacyBool = Boolean(res.is_legacy);
-                const baseDate = res.legacy_installment_start_date
-                    ? new Date(res.legacy_installment_start_date).toISOString()
-                    : res.created_at.toISOString();
-                
-                if (paidCuotas < totalCuotas) {
-                    const customStart = res.legacy_installment_start_date ? new Date(res.legacy_installment_start_date) : null;
-                    const customDueDay = customStart ? customStart.getDate() : null;
-                    nextDueDate = getInstallmentDueDate(baseDate, paidCuotas + 1, isLegacyBool, customDueDay, Boolean(res.is_promo));
-                }
-            } else {
-                // FALLBACK TO REAL-TIME CALCULATION (Slow, but ensures correctness if sync failed)
-                const isLegacyBool = Boolean(res.is_legacy);
-                const baseDate = res.legacy_installment_start_date
-                    ? new Date(res.legacy_installment_start_date).toISOString()
-                    : res.created_at.toISOString();
+                penaltyAmount = calculateTotalInterest(
+                    totalToPay,
+                    lotAreaM2,
+                    nextDueDate,
+                    isLegacyBool,
+                    currentDate,
+                    // @ts-ignore
+                    Boolean(res.mora_frozen),
+                    res.legacy_debt_start_date
+                );
 
-                if (paidCuotas < totalCuotas) {
-                    const customStart = res.legacy_installment_start_date ? new Date(res.legacy_installment_start_date) : null;
-                    const customDueDay = customStart ? customStart.getDate() : null;
-                    nextDueDate = getInstallmentDueDate(baseDate, paidCuotas + 1, isLegacyBool, customDueDay, Boolean(res.is_promo));
-
-                    const lotAreaM2 = lot.area_m2 || 200;
-                    
-                    penaltyAmount = calculateTotalInterest(
-                        totalToPay,
-                        lotAreaM2,
-                        nextDueDate,
-                        isLegacyBool,
-                        currentDate,
-                        // @ts-ignore
-                        Boolean(res.mora_frozen),
-                        res.legacy_debt_start_date
-                    );
-
-                    if (penaltyAmount > 0) {
-                        const daily = calculateDailyInterest(totalToPay, lotAreaM2);
-                        lateDays = daily > 0 ? Math.round(penaltyAmount / daily) : 0;
-                    }
+                if (penaltyAmount > 0) {
+                    const daily = calculateDailyInterest(totalToPay, lotAreaM2);
+                    lateDays = daily > 0 ? Math.round(penaltyAmount / daily) : 0;
                 }
             }
 
@@ -161,8 +138,7 @@ export async function getPostventaData() {
                 // @ts-ignore
                 manual_documents: res.manual_documents,
                 signed_at: res.signed_at,
-                is_legacy: Boolean(res.is_legacy),
-                last_financial_sync: res.last_financial_sync
+                is_legacy: Boolean(res.is_legacy)
             };
             ledger.push(ledgerEntry);
 
@@ -215,91 +191,6 @@ export async function getPostventaData() {
     } catch (error) {
         console.error("Error getting postventa data:", error);
         return { error: 'Error al cargar datos de postventa', ledger: [], debtAlerts: [] };
-    }
-}
-
-/**
- * Syncs financial fields (mora, late days) for all active reservations.
- * This is intended to be called by a cron job once a day.
- */
-export async function syncAllFinancials() {
-    const session = await auth()
-    if (!session?.user || session.user.role !== 'ADMIN') {
-        return { error: 'No autorizado' }
-    }
-
-    try {
-        const reservations = await prisma.reservation.findMany({
-            where: {
-                buyer_id: { not: null },
-                lot: { status: { in: ['sold', 'reserved'] } }
-            },
-            include: {
-                lot: true,
-                receipts: {
-                    where: { status: 'APPROVED' }
-                }
-            }
-        });
-
-        const currentDate = new Date();
-        currentDate.setHours(0, 0, 0, 0);
-
-        let count = 0;
-
-        for (const res of reservations) {
-            const lot = res.lot;
-            const paidCuotas = res.installments_paid || 0;
-            const totalCuotas = lot.cuotas || 0;
-            const totalToPay = lot.price_total_clp || 0;
-
-            let lateDays = 0;
-            let penaltyAmount = 0;
-
-            if (paidCuotas < totalCuotas) {
-                const isLegacyBool = Boolean(res.is_legacy);
-                const baseDate = res.legacy_installment_start_date
-                    ? new Date(res.legacy_installment_start_date).toISOString()
-                    : res.created_at.toISOString();
-
-                const customStart = res.legacy_installment_start_date ? new Date(res.legacy_installment_start_date) : null;
-                const customDueDay = customStart ? customStart.getDate() : null;
-                
-                const nextDueDate = getInstallmentDueDate(baseDate, paidCuotas + 1, isLegacyBool, customDueDay, Boolean(res.is_promo));
-                const lotAreaM2 = lot.area_m2 || 200;
-
-                penaltyAmount = calculateTotalInterest(
-                    totalToPay,
-                    lotAreaM2,
-                    nextDueDate,
-                    isLegacyBool,
-                    currentDate,
-                    // @ts-ignore
-                    Boolean(res.mora_frozen),
-                    res.legacy_debt_start_date
-                );
-
-                if (penaltyAmount > 0) {
-                    const daily = calculateDailyInterest(totalToPay, lotAreaM2);
-                    lateDays = daily > 0 ? Math.round(penaltyAmount / daily) : 0;
-                }
-            }
-
-            await prisma.reservation.update({
-                where: { id: res.id },
-                data: {
-                    cached_mora_amount: penaltyAmount,
-                    cached_late_days: lateDays,
-                    last_financial_sync: new Date()
-                }
-            });
-            count++;
-        }
-
-        return { success: true, count };
-    } catch (error) {
-        console.error("Error syncing all financials:", error);
-        return { error: 'Error al sincronizar datos financieros' };
     }
 }
 
