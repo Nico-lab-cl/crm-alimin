@@ -15,6 +15,7 @@ import { Input } from '@/components/ui/input';
 import { approvePaymentReceipt, rejectPaymentReceipt } from '@/actions/receipts';
 import { syncLegacyReceipts } from '@/actions/postventa';
 import { toast } from 'sonner';
+import { UniversalDocumentViewer } from "@/components/shared/UniversalDocumentViewer";
 import { MoraExplainerCard } from './MoraExplainerCard';
 import { ContractUploadAction } from "@/components/admin/ContractUploadAction";
 import { AdminMoraManager } from "@/components/admin/AdminMoraManager"
@@ -60,6 +61,11 @@ export function PostventaMobileDashboard({
     const [ledgerSearch, setLedgerSearch] = useState('');
     const [selectedClientLedger, setSelectedClientLedger] = useState<any | null>(null);
     const [showPaymentsModal, setShowPaymentsModal] = useState(false);
+    const [viewerConfig, setViewerConfig] = useState<{ isOpen: boolean, url: string, name: string, category?: string }>({ 
+        isOpen: false, 
+        url: '', 
+        name: '' 
+    });
     const ledgerItemsPerPage = 20; // Increased density
 
     const [alertFilter, setAlertFilter] = useState<'ALL' | 'UPCOMING' | 'GRACE' | 'LATE' | 'OK'>('ALL');
@@ -400,12 +406,24 @@ export function PostventaMobileDashboard({
                                                 <div className="flex justify-between items-start mb-6">
                                                     <div className="p-2.5 bg-[#3f6066]/10 rounded-xl border border-[#3f6066]/20">
                                                         <FileSignature className="w-5 h-5 text-[#8eb2b8]" />
-                                                    </div>
+                                                    </div>                                            <div className="flex gap-2">
+                                                <Button
+                                                    size="icon"
+                                                    variant="ghost"
+                                                    disabled={!selectedClientLedger.uploaded_contract_url}
+                                                    onClick={() => setViewerConfig({
+                                                        isOpen: true,
+                                                        url: selectedClientLedger.uploaded_contract_url,
+                                                        name: "Promesa de Compraventa",
+                                                        category: "Documento Legal"
+                                                    })}
+                                                    className="h-8 w-8 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 rounded-lg"
+                                                >
+                                                    <Eye className="w-4 h-4" />
+                                                </Button>
+                                            </div>
                                                     {selectedClientLedger.uploaded_contract_url ? (
                                                         <div className="flex gap-2">
-                                                            <a href={selectedClientLedger.uploaded_contract_url} target="_blank" rel="noopener noreferrer" className="p-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 rounded-lg transition-colors">
-                                                                <Eye className="w-3 h-3" />
-                                                            </a>
                                                             <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20 font-black text-[8px] uppercase">Cargado</Badge>
                                                         </div>
                                                     ) : (
@@ -640,14 +658,20 @@ export function PostventaMobileDashboard({
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    <a 
-                                                        href={p.url} 
-                                                        target="_blank" 
-                                                        rel="noopener noreferrer" 
-                                                        className="p-2 bg-[#3f6066]/20 hover:bg-[#3f6066]/40 text-[#8eb2b8] rounded-lg transition-all ml-2"
-                                                    >
-                                                        <Eye className="w-3.5 h-3.5" />
-                                                    </a>
+                                                                                           <div className="flex gap-1">
+                                            <button
+                                                onClick={() => setViewerConfig({
+                                                    isOpen: true,
+                                                    url: p.url,
+                                                    name: p.name,
+                                                    category: p.type === 'PIE' ? 'Pago Pie' : 'Cuota'
+                                                })}
+                                                className="p-2 bg-[#3f6066]/20 hover:bg-[#3f6066]/40 text-[#8eb2b8] rounded-lg transition-all"
+                                                title="Visualizar"
+                                            >
+                                                <Eye className="w-4 h-4" />
+                                            </button>
+                                        </div>
                                                 </div>
                                             ))
                                         )}
@@ -666,6 +690,12 @@ export function PostventaMobileDashboard({
                         </div>
                     </DialogContent>
                 </Dialog>
+
+                {/* Universal Document Viewer Integration */}
+                <UniversalDocumentViewer 
+                    {...viewerConfig} 
+                    onClose={() => setViewerConfig(prev => ({ ...prev, isOpen: false }))}
+                />
             </div>
         );
     }

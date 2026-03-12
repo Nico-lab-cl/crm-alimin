@@ -1,5 +1,8 @@
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileText, Download, CheckCircle, Clock, Folder, Briefcase, Eye, FileSignature, Receipt, CreditCard } from "lucide-react";
+import { FileText, Download, CheckCircle, Clock, Folder, Briefcase, Eye, FileSignature, Receipt, CreditCard, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { UniversalDocumentViewer } from "@/components/shared/UniversalDocumentViewer";
 
 interface Reservation {
     id: string;
@@ -19,6 +22,12 @@ interface Reservation {
 }
 
 export function UserDocumentsList({ reservations }: { reservations: Reservation[] }) {
+    const [viewerConfig, setViewerConfig] = useState<{ isOpen: boolean, url: string, name: string, category?: string }>({ 
+        isOpen: false, 
+        url: '', 
+        name: '' 
+    });
+
     if (reservations.length === 0) {
         return (
             <Card className="bg-black/60 border-white/10 text-white backdrop-blur-xl rounded-[2rem] overflow-hidden">
@@ -77,15 +86,18 @@ export function UserDocumentsList({ reservations }: { reservations: Reservation[
                                 <p className="text-[11px] text-gray-500 font-medium leading-relaxed">Documento inicial que garantiza la reserva de su parcela en el proyecto.</p>
                                 {hasReserva && (
                                     <div className="flex flex-wrap gap-2">
-                                        <a
-                                            href={`/api/contracts/${res.id}/pdf`}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
+                                        <button
+                                            onClick={() => setViewerConfig({
+                                                isOpen: true,
+                                                url: `/api/contracts/${res.id}/pdf`,
+                                                name: "Contrato de Reserva",
+                                                category: "Documento Legal"
+                                            })}
                                             className="inline-flex items-center gap-2 px-6 py-3 bg-[#36595F]/10 hover:bg-[#36595F]/20 border border-[#36595F]/30 rounded-xl text-[10px] font-black uppercase tracking-widest text-white transition-all shadow-lg shadow-[#36595F]/5"
                                         >
                                             <Eye className="h-3 w-3" />
                                             Visualizar
-                                        </a>
+                                        </button>
                                         <a
                                             href={`/api/contracts/${res.id}/pdf?download=true`}
                                             target="_blank"
@@ -118,15 +130,18 @@ export function UserDocumentsList({ reservations }: { reservations: Reservation[
                                 <p className="text-[11px] text-gray-500 font-medium leading-relaxed">Documento legal certificado por abogados que asegura la promesa oficial de compra.</p>
                                 {hasCompraventa && (
                                     <div className="flex flex-wrap gap-2">
-                                        <a
-                                            href={res.uploaded_contract_url!}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
+                                        <button
+                                            onClick={() => setViewerConfig({
+                                                isOpen: true,
+                                                url: res.uploaded_contract_url!,
+                                                name: "Promesa de Compraventa",
+                                                category: "Documento Legal"
+                                            })}
                                             className="inline-flex items-center gap-2 px-6 py-3 bg-[#36595F]/10 hover:bg-[#36595F]/20 border border-[#36595F]/30 rounded-xl text-[10px] font-black uppercase tracking-widest text-white transition-all shadow-lg shadow-[#36595F]/5"
                                         >
                                             <Eye className="h-3 w-3" />
                                             Visualizar
-                                        </a>
+                                        </button>
                                         <a
                                             href={res.uploaded_contract_url!}
                                             download
@@ -185,11 +200,18 @@ export function UserDocumentsList({ reservations }: { reservations: Reservation[
                                                                 <span className="text-[11px] font-bold text-gray-400 group-hover:text-white transition-colors">{doc.name}</span>
                                                             </div>
                                                             <div className="flex gap-4">
-                                                                {isPdf && (
-                                                                    <a href={doc.url} target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-[#8eb2b8] transition-colors" title="Visualizar">
+                                                                    <button 
+                                                                        onClick={() => setViewerConfig({
+                                                                            isOpen: true,
+                                                                            url: doc.url,
+                                                                            name: doc.name,
+                                                                            category: cat.label
+                                                                        })}
+                                                                        className="text-gray-600 hover:text-[#8eb2b8] transition-colors" 
+                                                                        title="Visualizar"
+                                                                    >
                                                                         <Eye className="h-4 w-4" />
-                                                                    </a>
-                                                                )}
+                                                                    </button>
                                                                 <a href={doc.url} download={doc.name} className="text-gray-600 hover:text-[#8eb2b8] transition-colors" title={getLabel()}>
                                                                     <Download className="h-4 w-4" />
                                                                 </a>
@@ -224,9 +246,18 @@ export function UserDocumentsList({ reservations }: { reservations: Reservation[
                                                                 <span className="text-[8px] text-gray-500 uppercase font-medium">Cuotas Pagadas</span>
                                                             </div>
                                                             <div className="flex gap-3">
-                                                                <a href={`/api/receipt/${receipt.id}/pdf`} target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-indigo-400 transition-colors" title="Visualizar">
+                                                                <button 
+                                                                    onClick={() => setViewerConfig({
+                                                                        isOpen: true,
+                                                                        url: `/api/receipt/${receipt.id}/pdf`,
+                                                                        name: `Comprobante Official #${receipt.id.slice(-4)}`,
+                                                                        category: "Recibo de Pago"
+                                                                    })}
+                                                                    className="text-gray-600 hover:text-indigo-400 transition-colors" 
+                                                                    title="Visualizar"
+                                                                >
                                                                     <Eye className="h-3.5 w-3.5" />
-                                                                </a>
+                                                                </button>
                                                                 <a href={`/api/receipt/${receipt.id}/pdf?download=true`} target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-indigo-400 transition-colors" title="Descargar">
                                                                     <Download className="h-3.5 w-3.5" />
                                                                 </a>
@@ -243,6 +274,12 @@ export function UserDocumentsList({ reservations }: { reservations: Reservation[
                     </Card>
                 );
             })}
+
+            {/* Universal Document Viewer Integration */}
+            <UniversalDocumentViewer 
+                {...viewerConfig} 
+                onClose={() => setViewerConfig(prev => ({ ...prev, isOpen: false }))}
+            />
         </div>
     );
 }
