@@ -270,7 +270,7 @@ export async function syncLegacyReceipts() {
                             scope: 'PIE',
                             reservation_id: res.id,
                             lot_id: res.lot_id,
-                            processed_at: res.created_at
+                            processed_at: new Date('2026-03-11')
                         }
                     });
                     syncedCount++;
@@ -285,10 +285,7 @@ export async function syncLegacyReceipts() {
                 const toSync = paidCount - existingCuotasReceipts;
                 for (let i = 0; i < toSync; i++) {
                     const cuotaNum = existingCuotasReceipts + i + 1;
-                    // Estimated date: created_at + cuotaNum months
-                    const processedDate = new Date(res.created_at);
-                    processedDate.setMonth(processedDate.getMonth() + cuotaNum);
-
+                    
                     await prisma.paymentReceipt.create({
                         data: {
                             amount_clp: res.lot.valor_cuota || 0,
@@ -298,7 +295,7 @@ export async function syncLegacyReceipts() {
                             installments_count: cuotaNum,
                             reservation_id: res.id,
                             lot_id: res.lot_id,
-                            processed_at: processedDate
+                            processed_at: new Date('2026-03-11')
                         }
                     });
                     syncedCount++;
