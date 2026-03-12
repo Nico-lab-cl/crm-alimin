@@ -1,6 +1,6 @@
 import { auth } from "@/auth"
 import { getAdminPipeline, getSellers, getAdminLots, getPaginatedAdminUsers, getAdminStats } from "@/actions/dashboard"
-import { getPostventaData } from "@/actions/postventa"
+import { getPaginatedPostventaData } from "@/actions/postventa"
 import { AdminDashboardClient } from "./AdminDashboardClient"
 
 const POSTVENTA_EMAIL = 'postventa@lomasdelmar.cl';
@@ -8,7 +8,11 @@ const POSTVENTA_EMAIL = 'postventa@lomasdelmar.cl';
 export default async function AdminDashboard({ 
     searchParams 
 }: { 
-    searchParams: { userPage?: string, search?: string } 
+    searchParams: { 
+        userPage?: string, search?: string, 
+        postventaPage?: string, postventaSearch?: string, postventaStage?: string, postventaStatus?: string,
+        mobileTab?: string
+    } 
 }) {
     const session = await auth()
     const userEmail = session?.user?.email || ''
@@ -17,13 +21,24 @@ export default async function AdminDashboard({
     const userPage = parseInt(searchParams.userPage || '1')
     const search = searchParams.search || ''
 
-    const [pipelineResult, sellersResult, lotsResult, usersResult, statsResult, postventaData] = await Promise.all([
+    const postventaPage = parseInt(searchParams.postventaPage || '1')
+    const postventaSearch = searchParams.postventaSearch || ''
+    const postventaStage = searchParams.postventaStage || 'ALL'
+    const postventaStatus = (searchParams.postventaStatus as any) || 'ALL'
+
+    const [pipelineResult, sellersResult, lotsResult, usersResult, statsResult, postventaResult] = await Promise.all([
         getAdminPipeline(),
         getSellers(),
         getAdminLots(),
         getPaginatedAdminUsers(userPage, 20, search),
         getAdminStats(),
-        isPostventa ? getPostventaData() : Promise.resolve({ success: false, ledger: [], debtAlerts: [] })
+        isPostventa ? getPaginatedPostventaData({
+            page: postventaPage,
+            pageSize: 20,
+            search: postventaSearch,
+            stage: postventaStage,
+            status: postventaStatus
+        }) : Promise.resolve({ success: false, data: [], totalPages: 0 })
     ])
 
     if (pipelineResult.error || statsResult.error) {
@@ -39,14 +54,14 @@ export default async function AdminDashboard({
     }
 
     // Fetch receipts and ledger for postventa user
-    let receipts: any[] = []
-    let ledger: any[] = []
-    let debtAlerts: any[] = []
+    let postventaLedger: any[] = []
+    let postventaTotalPages = 1
+    let postventaStats = { total: 0, late: 0, grace: 0, upcoming: 0, ok: 0 }
 
-    if (isPostventa && postventaData?.success) {
-        ledger = (postventaData as any).ledger || []
-        debtAlerts = (postventaData as any).debtAlerts || []
-        receipts = ledger.flatMap(entry => entry.receipts || [])
+    if (isPostventa && (postventaResult as any)?.success) {
+        postventaLedger = (postventaResult as any).data || []
+        postventaTotalPages = (postventaResult as any).totalPages || 1
+        postventaStats = (postventaResult as any).stats || postventaStats
     }
 
     return (
@@ -59,10 +74,17 @@ export default async function AdminDashboard({
             userCurrentPage={userPage}
             userSearch={search}
             userEmail={userEmail}
-            receipts={receipts}
+            receipts={[]} // Obsolete, receipts are inside ledger now
             paymentStats={paymentStats as any}
-            ledger={ledger}
-            debtAlerts={debtAlerts}
+            ledger={postventaLedger}
+            debtAlerts={[]} // Obsolete, combined in ledger or handled in client
+            postventaTotalPages={postventaTotalPages}
+            postventaCurrentPage={postventaPage}
+            postventaSearch={postventaSearch}
+            postventaStage={postventaStage}
+            postventaStatus={postventaStatus}
+            postventaStats={postventaStats}
+            initialMobileTab={searchParams.mobileTab}
         />
     )
 }

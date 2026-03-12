@@ -9,87 +9,111 @@ import { revalidatePath } from "next/cache"
 const POSTVENTA_CACHE_KEY = 'postventa_data';
 const CACHE_TTL = 300; // 5 minutes
 
-export async function getPostventaData() {
+export async function getPaginatedPostventaData({
+    page = 1,
+    pageSize = 20,
+    search = '',
+    stage = 'ALL',
+    status = 'ALL'
+}: {
+    page?: number;
+    pageSize?: number;
+    search?: string;
+    stage?: string | number;
+    status?: 'ALL' | 'UPCOMING' | 'GRACE' | 'LATE' | 'OK';
+} = {}) {
     const session = await auth()
     if (!session?.user || session.user.role !== 'ADMIN') {
-        return { error: 'No autorizado', ledger: [], debtAlerts: [] }
+        return { error: 'No autorizado', data: [], totalPages: 0 }
     }
 
+    const cacheKey = `postventa_paginated_${page}_${pageSize}_${search}_${stage}_${status}`;
+    const cached = memoryCache.get(cacheKey);
+    if (cached) return cached;
+
     try {
-        // 1. Check Cache
-        const cachedData = memoryCache.get(POSTVENTA_CACHE_KEY);
-        if (cachedData) {
-            return { success: true, ...cachedData as any };
+        const where: any = {
+            buyer_id: { not: null },
+            lot: { status: { in: ['sold', 'reserved'] } }
+        };
+
+        if (search) {
+            where.OR = [
+                { name: { contains: search, mode: 'insensitive' } },
+                { lot: { number: { contains: search, mode: 'insensitive' } } }
+            ];
         }
 
-        const reservations = await prisma.reservation.findMany({
-            where: {
-                buyer_id: { not: null },
-                lot: { status: { in: ['sold', 'reserved'] } }
-            },
-            select: {
-                id: true,
-                phone: true,
-                installments_paid: true,
-                pie_status: true,
-                uploaded_contract_url: true,
-                created_at: true,
-                is_legacy: true,
-                legacy_installment_start_date: true,
-                legacy_debt_start_date: true,
-                // @ts-ignore
-                mora_frozen: true,
-                // @ts-ignore
-                manual_documents: true,
-                // @ts-ignore
-                signed_at: true,
-                // @ts-ignore
-                is_promo: true,
-                lot: {
-                    select: {
-                        number: true,
-                        stage: true,
-                        price_total_clp: true,
-                        reservation_amount_clp: true,
-                        cuotas: true,
-                        valor_cuota: true,
-                        area_m2: true,
-                        pie: true
-                    }
-                },
-                buyer: {
-                    select: {
-                        name: true,
-                        email: true
-                    }
-                },
-                receipts: {
-                    where: { status: 'APPROVED' },
-                    orderBy: { created_at: 'desc' },
-                    select: {
-                        id: true,
-                        amount_clp: true,
-                        scope: true,
-                        created_at: true
+        if (stage !== 'ALL') {
+            where.lot.stage = parseInt(stage.toString());
+        }
+
+        const skip = (page - 1) * pageSize;
+
+        const [reservations, totalCount] = await Promise.all([
+            prisma.reservation.findMany({
+                where,
+                skip,
+                take: pageSize,
+                orderBy: { created_at: 'desc' },
+                select: {
+                    id: true,
+                    phone: true,
+                    installments_paid: true,
+                    pie_status: true,
+                    uploaded_contract_url: true,
+                    created_at: true,
+                    is_legacy: true,
+                    legacy_installment_start_date: true,
+                    legacy_debt_start_date: true,
+                    // @ts-ignore
+                    mora_frozen: true,
+                    // @ts-ignore
+                    manual_documents: true,
+                    // @ts-ignore
+                    signed_at: true,
+                    // @ts-ignore
+                    is_promo: true,
+                    lot: {
+                        select: {
+                            number: true,
+                            stage: true,
+                            price_total_clp: true,
+                            reservation_amount_clp: true,
+                            cuotas: true,
+                            valor_cuota: true,
+                            area_m2: true,
+                            pie: true
+                        }
+                    },
+                    buyer: {
+                        select: {
+                            name: true,
+                            email: true
+                        }
+                    },
+                    receipts: {
+                        where: { status: 'APPROVED' },
+                        orderBy: { created_at: 'desc' },
+                        select: {
+                            id: true,
+                            amount_clp: true,
+                            scope: true,
+                            created_at: true
+                        }
                     }
                 }
-            }
-        });
+            }),
+            prisma.reservation.count({ where })
+        ]);
 
-        const ledger = [];
-        const debtAlerts = [];
-
-        const currentDate = new Date();
-        currentDate.setHours(0, 0, 0, 0);
-
-        for (const res of reservations) {
+        const processedData = reservations.map(res => {
             const lot = res.lot;
             const buyer = res.buyer;
 
             const pieAmount = res.receipts.filter(r => r.scope === 'PIE').reduce((acc, r) => acc + r.amount_clp, 0);
             const cuotasAmount = res.receipts.filter(r => r.scope === 'INSTALLMENT').reduce((acc, r) => acc + r.amount_clp, 0);
             
-            // Fallback for legacy/manual data if receipts are not synced yet
             const effectivePieAmount = pieAmount || (res.pie_status === 'PAID' ? (lot.pie || 0) : 0);
             const effectiveCuotasAmount = cuotasAmount || ((res.installments_paid || 0) * (lot.valor_cuota || 0));
             
@@ -109,6 +133,9 @@ export async function getPostventaData() {
             const baseDate = res.legacy_installment_start_date
                 ? new Date(res.legacy_installment_start_date).toISOString()
                 : res.created_at.toISOString();
+
+            const currentDate = new Date();
+            currentDate.setHours(0, 0, 0, 0);
 
             if (paidCuotas < totalCuotas) {
                 const customStart = res.legacy_installment_start_date ? new Date(res.legacy_installment_start_date) : null;
@@ -134,25 +161,18 @@ export async function getPostventaData() {
                 }
             }
 
-            // identify Pie Debt status
             if (res.pie_status !== 'PAID') {
                 isPieDebt = true;
-                const pieDueDate = new Date(res.created_at);
-                pieDueDate.setDate(pieDueDate.getDate() + 15);
             }
 
             const reservaAmount = lot.reservation_amount_clp || 0;
 
             let isGracePeriod = false;
-            // A person is in grace only if:
-            // 1. They are past due date
-            // 2. Penalty is 0 (day 6-10)
-            // 3. They DON'T have an approved payment for this specific installment
             if (nextDueDate && currentDate >= nextDueDate && penaltyAmount === 0) {
                 const hasPaidCurrent = res.receipts.some(r => {
                     if (r.scope !== 'INSTALLMENT') return false;
                     const rDate = new Date(r.created_at);
-                    return rDate.getMonth() === nextDueDate.getMonth() && rDate.getFullYear() === nextDueDate.getFullYear();
+                    return rDate.getUTCMonth() === nextDueDate.getUTCMonth() && rDate.getUTCFullYear() === nextDueDate.getUTCFullYear();
                 });
 
                 if (!hasPaidCurrent) {
@@ -160,7 +180,23 @@ export async function getPostventaData() {
                 }
             }
 
-            const ledgerEntry = {
+            const fiveDaysFromNow = new Date(currentDate);
+            fiveDaysFromNow.setDate(fiveDaysFromNow.getDate() + 5);
+
+            const isUpcomingPotential = nextDueDate ? (nextDueDate > currentDate && nextDueDate <= fiveDaysFromNow) : false;
+            let isUpcoming = false;
+            if (isUpcomingPotential && nextDueDate) {
+                const hasPaidCurrent = res.receipts.some(r => {
+                    if (r.scope !== 'INSTALLMENT') return false;
+                    const rDate = new Date(r.created_at);
+                    return rDate.getUTCMonth() === nextDueDate.getUTCMonth() && rDate.getUTCFullYear() === nextDueDate.getUTCFullYear();
+                });
+                if (!hasPaidCurrent) {
+                    isUpcoming = true;
+                }
+            }
+
+            return {
                 id: res.id,
                 clientName: buyer?.name || 'Sin nombre',
                 clientEmail: buyer?.email,
@@ -188,64 +224,62 @@ export async function getPostventaData() {
                 // @ts-ignore
                 manual_documents: res.manual_documents,
                 signed_at: res.signed_at,
-                is_legacy: Boolean(res.is_legacy)
-            };
-            ledger.push(ledgerEntry);
-
-            const fiveDaysFromNow = new Date(currentDate);
-            fiveDaysFromNow.setDate(fiveDaysFromNow.getDate() + 5);
-
-            const isLate = penaltyAmount > 0;
-            const isUpcomingPotential = nextDueDate ? (nextDueDate > currentDate && nextDueDate <= fiveDaysFromNow) : false;
-
-            let isUpcoming = false;
-            if (isUpcomingPotential && nextDueDate) {
-                const hasPaidCurrent = res.receipts.some(r => {
-                    if (r.scope !== 'INSTALLMENT') return false;
-                    const rDate = new Date(r.created_at);
-                    return rDate.getMonth() === nextDueDate.getMonth() && rDate.getFullYear() === nextDueDate.getFullYear();
-                });
-                if (!hasPaidCurrent) {
-                    isUpcoming = true;
-                }
-            }
-
-            const isUpToDate = !isGracePeriod && !isLate && !isUpcoming;
-
-            debtAlerts.push({
-                ...ledgerEntry,
+                is_legacy: Boolean(res.is_legacy),
                 lateDays,
                 penaltyAmount,
                 isUpcoming,
-                displayDueDate: nextDueDate,
-                isLate,
-                isUpToDate
+                isLate: penaltyAmount > 0,
+                isUpToDate: !isGracePeriod && penaltyAmount <= 0 && !isUpcoming
+            };
+        });
+
+        const filteredByStatus = status === 'ALL' 
+            ? processedData 
+            : processedData.filter(d => {
+                const isFrozen = Boolean(d.isMoraFrozen);
+                if (status === 'LATE') return d.isLate && !isFrozen;
+                if (status === 'GRACE') return d.isGracePeriod && !isFrozen;
+                if (status === 'UPCOMING') return d.isUpcoming && !isFrozen;
+                if (status === 'OK') return d.isUpToDate || isFrozen;
+                return true;
+            });
+
+        // Priority sorting for alerts tab
+        if (status !== 'ALL') {
+            filteredByStatus.sort((a, b) => {
+                if (a.isLate && !b.isLate) return -1;
+                if (b.isLate && !a.isLate) return 1;
+                if (a.isGracePeriod && !b.isGracePeriod) return -1;
+                if (b.isGracePeriod && !a.isGracePeriod) return 1;
+                return (a.nextDueDate?.getTime() || 0) - (b.nextDueDate?.getTime() || 0);
             });
         }
 
-        // Priority sorting: Mora > Grace > Pie > Upcoming
-        debtAlerts.sort((a, b) => {
-            if (a.penaltyAmount > 0 && b.penaltyAmount <= 0) return -1;
-            if (b.penaltyAmount > 0 && a.penaltyAmount <= 0) return 1;
-            if (a.isGracePeriod && !b.isGracePeriod) return -1;
-            if (b.isGracePeriod && !a.isGracePeriod) return 1;
-            if (a.isUpcoming && !b.isUpcoming) return -1;
-            if (b.isUpcoming && !a.isUpcoming) return 1;
-            if (a.isUpToDate && !b.isUpToDate) return 1;
-            if (b.isUpToDate && !a.isUpToDate) return -1;
-            if (b.lateDays !== a.lateDays) return b.lateDays - a.lateDays;
-            return (a.nextDueDate?.getTime() || 0) - (b.nextDueDate?.getTime() || 0);
-        });
+        const finalTotalCount = filteredByStatus.length;
+        // Re-paginate the filtered results
+        const paginatedData = filteredByStatus.slice(skip, skip + pageSize);
 
-        const result = { ledger, debtAlerts };
-        
-        // 3. Store in Cache
-        memoryCache.set(POSTVENTA_CACHE_KEY, result, CACHE_TTL);
+        const result = {
+            success: true,
+            data: paginatedData,
+            totalCount: finalTotalCount,
+            totalPages: Math.ceil(finalTotalCount / pageSize),
+            currentPage: page,
+            stats: {
+                total: processedData.length,
+                late: processedData.filter(d => d.isLate && !d.isMoraFrozen).length,
+                grace: processedData.filter(d => d.isGracePeriod && !d.isMoraFrozen).length,
+                upcoming: processedData.filter(d => d.isUpcoming && !d.isMoraFrozen).length,
+                ok: processedData.filter(d => d.isUpToDate || d.isMoraFrozen).length
+            }
+        };
 
-        return { success: true, ...result };
+        memoryCache.set(cacheKey, result, 60); // 1 minute cache
+        return result;
+
     } catch (error) {
-        console.error("Error getting postventa data:", error);
-        return { error: 'Error al cargar datos de postventa', ledger: [], debtAlerts: [] };
+        console.error("Error getting paginated postventa data:", error);
+        return { error: 'Error al cargar datos de postventa', data: [], totalPages: 0 };
     }
 }
 

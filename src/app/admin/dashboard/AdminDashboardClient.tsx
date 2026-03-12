@@ -34,6 +34,13 @@ interface AdminDashboardClientProps {
     }
     ledger?: any[]
     debtAlerts?: any[]
+    postventaTotalPages?: number
+    postventaCurrentPage?: number
+    postventaSearch?: string
+    postventaStage?: string
+    postventaStatus?: string
+    postventaStats?: { total: number, late: number, grace: number, upcoming: number, ok: number }
+    initialMobileTab?: string
 }
 
 export function AdminDashboardClient({
@@ -49,6 +56,13 @@ export function AdminDashboardClient({
     paymentStats,
     ledger = [],
     debtAlerts = [],
+    postventaTotalPages = 1,
+    postventaCurrentPage = 1,
+    postventaSearch = '',
+    postventaStage = 'ALL',
+    postventaStatus = 'ALL',
+    postventaStats = { total: 0, late: 0, grace: 0, upcoming: 0, ok: 0 },
+    initialMobileTab,
 }: AdminDashboardClientProps) {
     const isPostventa = userEmail === POSTVENTA_EMAIL;
 
@@ -104,13 +118,54 @@ export function AdminDashboardClient({
                                 </TabsList>
 
                                 <TabsContent value="recibos" className="mt-6">
-                                    <PostventaMobileDashboard onTabChange={setDesktopTab} initialReceipts={receipts} soldLots={soldLots} activeTab="recibos" ledger={ledger} debtAlerts={debtAlerts} users={users} />
+                                    <PostventaMobileDashboard 
+                                        onTabChange={setDesktopTab} 
+                                        initialReceipts={receipts} 
+                                        soldLots={soldLots} 
+                                        activeTab="recibos" 
+                                        ledger={ledger} 
+                                        debtAlerts={debtAlerts} 
+                                        users={users} 
+                                        totalPages={postventaTotalPages}
+                                        currentPage={postventaCurrentPage}
+                                        search={postventaSearch}
+                                        stage={postventaStage}
+                                        status={postventaStatus}
+                                        stats={postventaStats}
+                                    />
                                 </TabsContent>
                                 <TabsContent value="ledger" className="mt-6">
-                                    <PostventaMobileDashboard onTabChange={setDesktopTab} initialReceipts={receipts} soldLots={soldLots} activeTab="ledger" ledger={ledger} debtAlerts={debtAlerts} />
+                                    <PostventaMobileDashboard 
+                                        onTabChange={setDesktopTab} 
+                                        initialReceipts={receipts} 
+                                        soldLots={soldLots} 
+                                        activeTab="ledger" 
+                                        ledger={ledger} 
+                                        debtAlerts={debtAlerts} 
+                                        totalPages={postventaTotalPages}
+                                        currentPage={postventaCurrentPage}
+                                        search={postventaSearch}
+                                        stage={postventaStage}
+                                        status={postventaStatus}
+                                        stats={postventaStats}
+                                    />
                                 </TabsContent>
                                 <TabsContent value="alertas" className="mt-6">
-                                    <PostventaMobileDashboard onTabChange={setDesktopTab} initialReceipts={receipts} soldLots={soldLots} activeTab="alertas" ledger={ledger} debtAlerts={debtAlerts} users={users} />
+                                    <PostventaMobileDashboard 
+                                        onTabChange={setDesktopTab} 
+                                        initialReceipts={receipts} 
+                                        soldLots={soldLots} 
+                                        activeTab="alertas" 
+                                        ledger={ledger} 
+                                        debtAlerts={debtAlerts} 
+                                        users={users} 
+                                        totalPages={postventaTotalPages}
+                                        currentPage={postventaCurrentPage}
+                                        search={postventaSearch}
+                                        stage={postventaStage}
+                                        status={postventaStatus}
+                                        stats={postventaStats}
+                                    />
                                 </TabsContent>
                                 <TabsContent value="mora" className="mt-6">
                                     <MoraExplainerCard soldLots={soldLots} />
@@ -120,15 +175,21 @@ export function AdminDashboardClient({
 
                         {/* Mobile: tab-switched via bottom nav */}
                         <div className="md:hidden overflow-x-hidden">
-                            <PostventaMobileDashboard
-                                initialReceipts={receipts}
-                                soldLots={soldLots}
-                                activeTab={mobileTab as PostventaTab}
-                                onTabChange={(t) => setMobileTab(t as any)}
-                                ledger={ledger}
-                                debtAlerts={debtAlerts}
-                                users={users}
-                            />
+                                <PostventaMobileDashboard
+                                    initialReceipts={receipts}
+                                    soldLots={soldLots}
+                                    activeTab={mobileTab as PostventaTab}
+                                    onTabChange={(t) => setMobileTab(t as any)}
+                                    ledger={ledger}
+                                    debtAlerts={debtAlerts}
+                                    users={users}
+                                    totalPages={postventaTotalPages}
+                                    currentPage={postventaCurrentPage}
+                                    search={postventaSearch}
+                                    stage={postventaStage}
+                                    status={postventaStatus}
+                                    stats={postventaStats}
+                                />
                         </div>
                     </div>
                 </div>
@@ -232,7 +293,7 @@ export function AdminDashboardClient({
                             <div className="animate-fade-in">
                                 <AdminUserList 
                                     users={users} 
-                                    totalPages={userTotalPages}
+                                    totalPages={userTotalPages} 
                                     currentPage={userCurrentPage}
                                     currentSearch={userSearch}
                                 />

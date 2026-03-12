@@ -42,6 +42,10 @@ export default function ReceiptsClient({
 
     const navigate = (page: number, status: string) => {
         router.push(`/admin/receipts?page=${page}&status=${status}`);
+        setTimeout(() => {
+            router.refresh();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }, 100);
     };
 
     const handleApprove = async (id: string) => {
