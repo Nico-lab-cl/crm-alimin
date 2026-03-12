@@ -38,9 +38,6 @@ import { AdminForceSignAction } from "@/components/admin/AdminForceSignAction"
 
 type AdminUserListProps = {
     users: any[]
-    totalPages: number
-    currentPage: number
-    currentSearch?: string
 }
 
 const STAGE_LABELS: Record<string, string> = {
@@ -68,19 +65,14 @@ const STAGE_COLORS: Record<string, string> = {
 }
 
 export const AdminUserList = ({ 
-    users, 
-    totalPages, 
-    currentPage, 
-    currentSearch = '' 
+    users
 }: AdminUserListProps) => {
-    const [filter, setFilter] = useState(currentSearch)
+    const [filter, setFilter] = useState('')
+    const [currentPage, setCurrentPage] = useState(1)
     const [isCreateOpen, setIsCreateOpen] = useState(false)
     const [isCreating, setIsCreating] = useState(false)
     const router = useRouter()
-
-    useEffect(() => {
-        setFilter(currentSearch)
-    }, [currentSearch])
+    const USERS_PER_PAGE = 20
 
     // Reset Password State
     const [isResetOpen, setIsResetOpen] = useState(false)
@@ -96,21 +88,19 @@ export const AdminUserList = ({
         role: 'USER'
     })
 
-    // Navigation logic
-    const navigateToPage = (page: number, search?: string) => {
-        const params = new URLSearchParams(window.location.search)
-        params.set('userPage', page.toString())
-        if (search) {
-            params.set('search', search)
-        } else {
-            params.delete('search')
-        }
-        router.push(`/admin/dashboard?${params.toString()}`, { scroll: false })
-    }
+    // Client-side filtering
+    const filteredUsers = users.filter(user => {
+        const s = filter.toLowerCase()
+        return (user.name?.toLowerCase().includes(s) || 
+                user.email?.toLowerCase().includes(s))
+    })
+
+    const totalPages = Math.ceil(filteredUsers.length / USERS_PER_PAGE)
+    const paginatedUsers = filteredUsers.slice((currentPage - 1) * USERS_PER_PAGE, currentPage * USERS_PER_PAGE)
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault()
-        navigateToPage(1, filter)
+        setCurrentPage(1)
     }
 
     const handleCreateUser = async (e: React.FormEvent) => {
@@ -162,7 +152,10 @@ export const AdminUserList = ({
                     <Input
                         placeholder="Buscar cliente (Nombre o Email)..."
                         value={filter}
-                        onChange={(e) => setFilter(e.target.value)}
+                        onChange={(e) => {
+                            setFilter(e.target.value)
+                            setCurrentPage(1)
+                        }}
                         className="bg-transparent border-none text-white focus-visible:ring-0 placeholder:text-gray-600 w-full min-w-0 h-8 text-sm"
                     />
                     <Button type="submit" size="sm" className="bg-[#36595F] hover:bg-[#2A464B] text-white font-bold h-8 px-4 text-xs">
@@ -173,7 +166,7 @@ export const AdminUserList = ({
                             type="button" 
                             variant="ghost" 
                             size="sm" 
-                            onClick={() => { setFilter(''); navigateToPage(1, ''); }}
+                            onClick={() => { setFilter(''); setCurrentPage(1); }}
                             className="text-gray-500 hover:text-white h-8"
                         >
                             <X className="w-4 h-4" />
@@ -311,7 +304,7 @@ export const AdminUserList = ({
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-white/5">
-                        {users.map(user => {
+                        {paginatedUsers.map(user => {
                             const res = user.purchases?.[0] ?? null
 
                             return (
@@ -443,7 +436,7 @@ export const AdminUserList = ({
                         })}
                     </tbody>
                 </table>
-                {users.length === 0 && (
+                {filteredUsers.length === 0 && (
                     <div className="p-8 text-center text-gray-500">
                         No se encontraron usuarios.
                     </div>
@@ -452,7 +445,7 @@ export const AdminUserList = ({
 
             {/* ===== MOBILE CARD LIST (<md) ===== */}
             <div className="md:hidden space-y-3">
-                {users.length === 0 ? (
+                {paginatedUsers.length === 0 ? (
                     <div className="py-16 text-center">
                         <Search className="w-10 h-10 text-gray-600 mx-auto mb-3" />
                         <p className="text-gray-500 text-sm">No se encontraron usuarios.</p>
@@ -462,7 +455,7 @@ export const AdminUserList = ({
                         <p className="text-[11px] text-gray-500 font-medium px-1">
                             Mostrando página {currentPage} de {totalPages}
                         </p>
-                        {users.map(user => {
+                        {paginatedUsers.map(user => {
                             const res = user.purchases?.[0] ?? null
                             const roleLabel = user.role === 'ADMIN' ? 'Admin' : user.role === 'SELLER' ? 'Vendedor' : 'Cliente'
 
@@ -589,7 +582,7 @@ export const AdminUserList = ({
                 {totalPages > 1 && (
                     <div className="flex items-center justify-between gap-3 pt-2 pb-4">
                         <button
-                            onClick={() => { navigateToPage(currentPage - 1, filter); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                            onClick={() => setCurrentPage(prev => prev - 1)}
                             disabled={currentPage === 1}
                             className="flex items-center justify-center gap-1 min-h-[44px] px-4 rounded-xl bg-white/5 border border-white/10 text-white text-xs font-bold disabled:opacity-30 disabled:cursor-not-allowed active:scale-[0.95] transition-all"
                         >
@@ -600,7 +593,7 @@ export const AdminUserList = ({
                             {currentPage}/{totalPages}
                         </span>
                         <button
-                            onClick={() => { navigateToPage(currentPage + 1, filter); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                            onClick={() => setCurrentPage(prev => prev + 1)}
                             disabled={currentPage === totalPages}
                             className="flex items-center justify-center gap-1 min-h-[44px] px-4 rounded-xl bg-white/5 border border-white/10 text-white text-xs font-bold disabled:opacity-30 disabled:cursor-not-allowed active:scale-[0.95] transition-all"
                         >
@@ -610,6 +603,6 @@ export const AdminUserList = ({
                     </div>
                 )}
             </div>
-        </div >
+        </div>
     )
 }

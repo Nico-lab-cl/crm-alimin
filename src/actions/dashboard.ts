@@ -285,69 +285,48 @@ export async function updateLotStatus(lotId: number, status: string) {
 }
 
 // ADMIN: GESTIÓN DE USUARIOS
-export async function getPaginatedAdminUsers(page: number = 1, pageSize: number = 20, search?: string) {
+export async function getAdminUsersList() {
     const session = await auth()
     if (session?.user?.role !== Role.ADMIN) return { error: "No autorizado" }
 
-    const skip = (page - 1) * pageSize;
-    const cacheKey = `${ADMIN_USERS_CACHE_KEY}_p${page}_s${search || 'none'}`;
+    const cacheKey = `${ADMIN_USERS_CACHE_KEY}_full`;
 
     try {
         const cached = memoryCache.get(cacheKey);
-        if (cached) return { success: true, ...cached };
+        if (cached) return { success: true, users: cached };
 
-        const where: any = { role: Role.USER };
-        if (search) {
-            where.OR = [
-                { name: { contains: search, mode: 'insensitive' } },
-                { email: { contains: search, mode: 'insensitive' } }
-            ];
-        }
-
-        const [users, totalCount] = await Promise.all([
-            prisma.user.findMany({
-                where,
-                orderBy: { createdAt: 'desc' },
-                skip,
-                take: pageSize,
-                select: {
-                    id: true,
-                    name: true,
-                    email: true,
-                    role: true,
-                    createdAt: true,
-                    purchases: {
-                        where: { status: { in: ['paid', 'confirmed'] } },
-                        select: {
-                            id: true,
-                            pipeline_stage: true,
-                            signed_at: true,
-                            promesa_signed_at: true,
-                            pie_status: true,
-                            installments_paid: true,
-                            is_legacy: true,
-                            is_promo: true,
-                            workflow_activated: true,
-                            lot: {
-                                select: { number: true, stage: true }
-                            }
-                        },
-                        orderBy: { created_at: 'desc' }
-                    }
+        const users = await prisma.user.findMany({
+            where: { role: Role.USER },
+            orderBy: { createdAt: 'desc' },
+            select: {
+                id: true,
+                name: true,
+                email: true,
+                role: true,
+                createdAt: true,
+                purchases: {
+                    where: { status: { in: ['paid', 'confirmed'] } },
+                    select: {
+                        id: true,
+                        pipeline_stage: true,
+                        signed_at: true,
+                        promesa_signed_at: true,
+                        pie_status: true,
+                        installments_paid: true,
+                        is_legacy: true,
+                        is_promo: true,
+                        workflow_activated: true,
+                        lot: {
+                            select: { number: true, stage: true }
+                        }
+                    },
+                    orderBy: { created_at: 'desc' }
                 }
-            }),
-            prisma.user.count({ where })
-        ]);
+            }
+        });
 
-        const result = {
-            users,
-            totalPages: Math.ceil(totalCount / pageSize),
-            currentPage: page,
-            totalCount
-        };
-
-        memoryCache.set(cacheKey, result, CACHE_TTL_SHORT);
-        return { success: true, ...result };
+        memoryCache.set(cacheKey, users, CACHE_TTL_SHORT);
+        return { success: true, users };
     } catch (error) {
         console.error("Error getting users:", error)
         return { error: "Error al cargar usuarios" }

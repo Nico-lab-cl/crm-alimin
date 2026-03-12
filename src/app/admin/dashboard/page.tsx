@@ -1,6 +1,6 @@
 import { auth } from "@/auth"
-import { getAdminPipeline, getSellers, getAdminLots, getPaginatedAdminUsers, getAdminStats } from "@/actions/dashboard"
-import { getPaginatedPostventaData } from "@/actions/postventa"
+import { getAdminPipeline, getSellers, getAdminLots, getAdminUsersList, getAdminStats } from "@/actions/dashboard"
+import { getFullPostventaData } from "@/actions/postventa"
 import { getPaginatedReceipts } from "@/actions/receipts"
 import { AdminDashboardClient } from "./AdminDashboardClient"
 
@@ -10,8 +10,7 @@ export default async function AdminDashboard({
     searchParams 
 }: { 
     searchParams: { 
-        userPage?: string, search?: string, 
-        postventaPage?: string, postventaSearch?: string, postventaStage?: string, postventaStatus?: string,
+        stage?: string,
         mobileTab?: string
     } 
 }) {
@@ -19,28 +18,18 @@ export default async function AdminDashboard({
     const userEmail = session?.user?.email || ''
     const isPostventa = userEmail === POSTVENTA_EMAIL
 
-    const userPage = parseInt(searchParams.userPage || '1')
-    const search = searchParams.search || ''
-
-    const postventaPage = parseInt(searchParams.postventaPage || '1')
-    const postventaSearch = searchParams.postventaSearch || ''
-    const postventaStage = searchParams.postventaStage || 'ALL'
-    const postventaStatus = (searchParams.postventaStatus as any) || 'ALL'
+    const postventaStage = searchParams.stage || 'ALL'
 
     const [pipelineResult, sellersResult, lotsResult, usersResult, statsResult, postventaResult, receiptsResult] = await Promise.all([
         getAdminPipeline(),
         getSellers(),
         getAdminLots(),
-        getPaginatedAdminUsers(userPage, 20, search),
+        getAdminUsersList(),
         getAdminStats(),
-        isPostventa ? getPaginatedPostventaData({
-            page: postventaPage,
-            pageSize: 20,
-            search: postventaSearch,
-            stage: postventaStage,
-            status: postventaStatus
-        }) : Promise.resolve({ success: false, data: [], totalPages: 0 }),
-        isPostventa ? getPaginatedReceipts({ page: 1, pageSize: 100, search: postventaSearch }) : Promise.resolve({ success: false, receipts: [] })
+        isPostventa ? getFullPostventaData({
+            stage: postventaStage
+        }) : Promise.resolve({ success: false, data: [] }),
+        isPostventa ? getPaginatedReceipts({ page: 1, pageSize: 1000 }) : Promise.resolve({ success: false, receipts: [] })
     ])
 
     if (pipelineResult.error || statsResult.error) {
@@ -57,12 +46,10 @@ export default async function AdminDashboard({
 
     // Fetch receipts and ledger for postventa user
     let postventaLedger: any[] = []
-    let postventaTotalPages = 1
     let postventaStats = { total: 0, late: 0, grace: 0, upcoming: 0, ok: 0 }
 
     if (isPostventa && (postventaResult as any)?.success) {
         postventaLedger = (postventaResult as any).data || []
-        postventaTotalPages = (postventaResult as any).totalPages || 1
         postventaStats = (postventaResult as any).stats || postventaStats
     }
 
@@ -72,21 +59,14 @@ export default async function AdminDashboard({
             sellers={(sellersResult as any).data || []}
             lots={(lotsResult as any).data || []}
             users={(usersResult as any).users || []}
-            userTotalPages={(usersResult as any).totalPages || 1}
-            userCurrentPage={userPage}
-            userSearch={search}
             userEmail={userEmail}
             receipts={(receiptsResult as any).receipts || []}
             paymentStats={paymentStats as any}
             ledger={postventaLedger}
-            debtAlerts={[]} // Obsolete, combined in ledger or handled in client
-            postventaTotalPages={postventaTotalPages}
-            postventaCurrentPage={postventaPage}
-            postventaSearch={postventaSearch}
-            postventaStage={postventaStage}
-            postventaStatus={postventaStatus}
+            debtAlerts={[]} 
             postventaStats={postventaStats}
             initialMobileTab={searchParams.mobileTab}
+            postventaStage={postventaStage}
         />
     )
 }

@@ -40,13 +40,8 @@ interface PostventaMobileDashboardProps {
     debtAlerts?: any[];
     users?: any[];
     onTabChange?: (tab: PostventaTab) => void;
-    // Server-side state
-    totalPages?: number;
-    currentPage?: number;
-    search?: string;
-    stage?: string | number;
-    status?: string;
     stats?: { total: number, late: number, grace: number, upcoming: number, ok: number };
+    stage?: string | number;
 }
 
 export function PostventaMobileDashboard({ 
@@ -57,12 +52,8 @@ export function PostventaMobileDashboard({
     debtAlerts = [], 
     users = [],
     onTabChange,
-    totalPages = 1,
-    currentPage = 1,
-    search = '',
-    stage = 'ALL',
-    status = 'ALL',
-    stats = { total: 0, late: 0, grace: 0, upcoming: 0, ok: 0 }
+    stats = { total: 0, late: 0, grace: 0, upcoming: 0, ok: 0 },
+    stage = 'ALL'
 }: PostventaMobileDashboardProps) {
     const [receipts, setReceipts] = useState(initialReceipts);
     const [rejectingId, setRejectingId] = useState<string | null>(null);
@@ -70,48 +61,13 @@ export function PostventaMobileDashboard({
     const [isProcessing, setIsProcessing] = useState<string | null>(null);
     const [filter, setFilter] = useState<'ALL' | 'PENDING' | 'APPROVED' | 'REJECTED'>('PENDING');
 
-    const [ledgerPage, setLedgerPage] = useState(currentPage);
-    const [ledgerStage, setLedgerStage] = useState(stage);
-    const [ledgerSearch, setLedgerSearch] = useState(search);
-    const [alertFilter, setAlertFilter] = useState<'ALL' | 'UPCOMING' | 'GRACE' | 'LATE' | 'OK'>(status as any);
-    const router = useRouter();
+    const [ledgerPage, setLedgerPage] = useState(1);
+    const [ledgerSearch, setLedgerSearch] = useState('');
+    const [ledgerStage, setLedgerStage] = useState<number | 'ALL'>('ALL');
+    const [ledgerStatus, setLedgerStatus] = useState<'ALL' | 'PAID' | 'PENDING'>('ALL');
+    const LEDGER_ITEMS_PER_PAGE = 20;
 
-    // Sync state with props when they change (URL driven)
-    useEffect(() => {
-        setLedgerSearch(search);
-    }, [search]);
-
-    useEffect(() => {
-        setAlertFilter(status as any);
-    }, [status]);
-
-    useEffect(() => {
-        setLedgerStage(stage);
-    }, [stage]);
-
-    useEffect(() => {
-        setLedgerPage(currentPage);
-    }, [currentPage]);
-
-    const navigate = (p: number, s: string, st: string | number, stStatus: string = alertFilter) => {
-        const params = new URLSearchParams(window.location.search);
-        
-        // Use provided values or fallbacks to ensure consistency
-        params.set('postventaPage', p.toString());
-        params.set('postventaSearch', s);
-        params.set('postventaStage', st.toString());
-        params.set('postventaStatus', stStatus);
-        params.set('mobileTab', activeTab);
-        
-        // If we are searching for a NEW term, reset to page 1
-        if (s !== search) {
-            params.set('postventaPage', '1');
-        }
-
-        const url = `/admin/dashboard?${params.toString()}`;
-        router.push(url, { scroll: false });
-        setTimeout(() => router.refresh(), 100);
-    };
+    const [alertFilter, setAlertFilter] = useState<'ALL' | 'UPCOMING' | 'GRACE' | 'LATE' | 'OK'>('ALL');
     const [selectedClientLedger, setSelectedClientLedger] = useState<any | null>(null);
     const [showPaymentsModal, setShowPaymentsModal] = useState(false);
     const [viewerConfig, setViewerConfig] = useState<{ isOpen: boolean, url: string, name: string, category?: string }>({ 
@@ -119,11 +75,11 @@ export function PostventaMobileDashboard({
         url: '', 
         name: '' 
     });
-    const ledgerItemsPerPage = 20; // Increased density
 
-    const [alertStage, setAlertStage] = useState<'ALL' | 1 | 2 | 3 | 4>(stage as any);
-    const [alertPage, setAlertPage] = useState(currentPage);
-    const alertsPerPage = 10;
+    const [alertStage, setAlertStage] = useState<number | 'ALL'>('ALL');
+    const [alertSearch, setAlertSearch] = useState('');
+    const [alertPage, setAlertPage] = useState(1);
+    const ALERTS_PER_PAGE = 10;
 
     const today = new Date();
 
@@ -196,8 +152,21 @@ export function PostventaMobileDashboard({
     };
 
     if (activeTab === 'ledger') {
-        const paginatedLedger = ledger;
-        const totalLedgerPages = totalPages;
+        const filteredLedger = ledger.filter(client => {
+            const matchesSearch = !ledgerSearch || 
+                client.clientName?.toLowerCase().includes(ledgerSearch.toLowerCase()) ||
+                client.lotNumber?.includes(ledgerSearch);
+            
+            const matchesStage = ledgerStage === 'ALL' || Number(client.lotStage) === Number(ledgerStage);
+            
+            return matchesSearch && matchesStage;
+        });
+
+        const totalLedgerPages = Math.ceil(filteredLedger.length / LEDGER_ITEMS_PER_PAGE);
+        const paginatedLedger = filteredLedger.slice(
+            (ledgerPage - 1) * LEDGER_ITEMS_PER_PAGE,
+            ledgerPage * LEDGER_ITEMS_PER_PAGE
+        );
 
         return (
             <div className="space-y-4 pb-24 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -241,7 +210,7 @@ export function PostventaMobileDashboard({
                             {(['ALL', 1, 2, 3, 4] as const).map(s => (
                                 <button
                                     key={s}
-                                    onClick={() => navigate(1, ledgerSearch, s, status)}
+                                    onClick={() => { setLedgerStage(s); setLedgerPage(1); }}
                                     className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all border shrink-0 cursor-pointer ${ledgerStage === s
                                         ? 'bg-[#3f6066] text-white border-[#3f6066] shadow-[0_0_15px_rgba(63,96,102,0.3)]'
                                         : 'bg-white/5 text-gray-500 border-white/5 hover:border-[#3f6066]/40 hover:text-gray-300'
@@ -260,7 +229,7 @@ export function PostventaMobileDashboard({
                             value={ledgerSearch}
                             onChange={(e) => setLedgerSearch(e.target.value)}
                             onKeyDown={(e) => {
-                                if (e.key === 'Enter') navigate(1, ledgerSearch, ledgerStage, status);
+                                if (e.key === 'Enter') setLedgerPage(1);
                             }}
                             className="bg-black/60 border-white/5 rounded-2xl pl-11 h-12 text-sm text-white placeholder:text-gray-700 focus:ring-[#3f6066]/20 focus:border-[#3f6066]/40 transition-all font-medium"
                         />
@@ -268,7 +237,7 @@ export function PostventaMobileDashboard({
                              {ledgerSearch && (
                                 <Button 
                                     size="sm"
-                                    onClick={() => navigate(1, ledgerSearch, ledgerStage, status)}
+                                    onClick={() => setLedgerPage(1)}
                                     className="bg-[#3f6066] text-white hover:bg-[#3f6066]/80 h-8 rounded-xl text-[9px] font-black uppercase tracking-tighter"
                                 >
                                     <Search className="w-3 h-3 mr-1.5" />
@@ -279,7 +248,7 @@ export function PostventaMobileDashboard({
                                 <Button 
                                     variant="ghost" 
                                     size="sm"
-                                    onClick={() => { setLedgerSearch(''); navigate(1, '', ledgerStage, status); }}
+                                    onClick={() => { setLedgerSearch(''); setLedgerPage(1); }}
                                     className="text-[9px] font-black text-[#3f6066] hover:text-white uppercase transition-colors h-8"
                                 >
                                     Limpiar
@@ -374,7 +343,7 @@ export function PostventaMobileDashboard({
                         <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => navigate(ledgerPage - 1, ledgerSearch, ledgerStage)}
+                            onClick={() => setLedgerPage(ledgerPage - 1)}
                             disabled={ledgerPage === 1}
                             className="text-[10px] font-black uppercase tracking-widest text-[#3f6066] hover:text-white"
                         >
@@ -390,7 +359,7 @@ export function PostventaMobileDashboard({
                         <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => navigate(ledgerPage + 1, ledgerSearch, ledgerStage)}
+                            onClick={() => setLedgerPage(ledgerPage + 1)}
                             disabled={ledgerPage === totalLedgerPages}
                             className="text-[10px] font-black uppercase tracking-widest text-[#3f6066] hover:text-white"
                         >
@@ -821,9 +790,20 @@ export function PostventaMobileDashboard({
     }
 
     if (activeTab === 'alertas') {
-        const filteredAlerts = ledger;
-        const totalAlertPages = totalPages;
-        const alertPage = currentPage;
+        const filteredAlerts = debtAlerts.filter(alert => {
+            const matchesStage = alertStage === 'ALL' || alert.lotStage === alertStage;
+            const matchesStatus = alertFilter === 'ALL' || alert.status === alertFilter;
+            const matchesSearch = !alertSearch || 
+                alert.name.toLowerCase().includes(alertSearch.toLowerCase()) ||
+                alert.lotNumber.toString().includes(alertSearch);
+            return matchesStage && matchesStatus && matchesSearch;
+        });
+
+        const totalAlertPages = Math.ceil(filteredAlerts.length / ALERTS_PER_PAGE);
+        const paginatedAlerts = filteredAlerts.slice(
+            (alertPage - 1) * ALERTS_PER_PAGE,
+            alertPage * ALERTS_PER_PAGE
+        );
 
         return (
             <div className="space-y-6 pb-24">
@@ -885,31 +865,19 @@ export function PostventaMobileDashboard({
                             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 group-focus-within:text-[#3f6066] transition-colors" />
                             <Input 
                                 placeholder="Buscar cliente..." 
-                                value={ledgerSearch}
-                                onChange={(e) => setLedgerSearch(e.target.value)}
-                                onKeyDown={(e) => {
-                                    if (e.key === 'Enter') navigate(1, ledgerSearch, alertStage, alertFilter);
-                                }}
+                                value={alertSearch}
+                                onChange={(e) => { setAlertSearch(e.target.value); setAlertPage(1); }}
                                 className="bg-[#1a1a1a]/40 border-white/5 rounded-2xl pl-11 h-12 text-sm text-white placeholder:text-gray-700 focus:ring-[#3f6066]/20 focus:border-[#3f6066]/40 transition-all font-medium"
                             />
                             <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
-                                {ledgerSearch && (
+                                {alertSearch && (
                                     <Button 
                                         size="sm"
                                         variant="ghost"
-                                        onClick={() => { setLedgerSearch(''); navigate(1, '', alertStage, alertFilter); }}
+                                        onClick={() => { setAlertSearch(''); setAlertPage(1); }}
                                         className="h-8 text-[9px] font-black text-gray-500 hover:text-white uppercase"
                                     >
                                         Limpiar
-                                    </Button>
-                                )}
-                                {ledgerSearch && (
-                                    <Button 
-                                        size="sm"
-                                        onClick={() => navigate(1, ledgerSearch, alertStage, alertFilter)}
-                                        className="bg-[#3f6066] text-white hover:bg-[#3f6066]/80 h-8 rounded-xl text-[9px] font-black px-3"
-                                    >
-                                        Buscar
                                     </Button>
                                 )}
                             </div>
@@ -924,7 +892,7 @@ export function PostventaMobileDashboard({
                                     {(['ALL', 'LATE', 'GRACE', 'UPCOMING', 'OK'] as const).map(f => (
                                         <button
                                             key={f}
-                                            onClick={() => navigate(1, ledgerSearch, alertStage, f)}
+                                            onClick={() => { setAlertFilter(f); setAlertPage(1); }}
                                             className={`px-4 py-2.5 rounded-xl text-[11px] font-bold whitespace-nowrap transition-all border flex items-center gap-2 flex-grow lg:flex-grow-0 cursor-pointer ${alertFilter === f
                                                 ? 'bg-[#36595F] text-white border-[#36595F] shadow-lg shadow-[#36595F]/20 translate-x-1'
                                                 : 'bg-white/5 text-gray-400 border-white/10 hover:bg-white/10 hover:border-white/20'
@@ -947,7 +915,7 @@ export function PostventaMobileDashboard({
                                     {(['ALL', 1, 2, 3, 4] as const).map(s => (
                                         <button
                                             key={s}
-                                            onClick={() => navigate(1, ledgerSearch, s, alertFilter)}
+                                            onClick={() => { setAlertStage(s); setAlertPage(1); }}
                                             className={`px-4 py-2.5 rounded-xl text-[11px] font-bold transition-all border shrink-0 cursor-pointer ${alertStage === s
                                                 ? 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30'
                                                 : 'bg-white/5 text-gray-500 border-white/5 hover:border-white/20'
@@ -981,7 +949,7 @@ export function PostventaMobileDashboard({
 
                         {/* Alerts Cards Grid */}
                         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3">
-                            {filteredAlerts.map((alert: any) => {
+                            {paginatedAlerts.map((alert: any) => {
                                 const isLate = alert.isLate && !alert.isMoraFrozen;
                                 const isGrace = alert.isGracePeriod && !alert.isMoraFrozen;
                                 const isUpcoming = alert.isUpcoming && !alert.isMoraFrozen;
@@ -1062,7 +1030,7 @@ export function PostventaMobileDashboard({
                                 <Button
                                     variant="outline"
                                     size="sm"
-                                    onClick={() => navigate(alertPage - 1, ledgerSearch, alertStage, alertFilter)}
+                                    onClick={() => setAlertPage(alertPage - 1)}
                                     disabled={alertPage === 1}
                                     className="h-9 px-4 text-[11px] font-black uppercase bg-white/5 border-white/10 text-white hover:bg-white/10 transition-all cursor-pointer"
                                 >
@@ -1075,7 +1043,7 @@ export function PostventaMobileDashboard({
                                 <Button
                                     variant="outline"
                                     size="sm"
-                                    onClick={() => navigate(alertPage + 1, ledgerSearch, alertStage, alertFilter)}
+                                    onClick={() => setAlertPage(alertPage + 1)}
                                     disabled={alertPage === totalAlertPages}
                                     className="h-9 px-4 text-[11px] font-black uppercase bg-white/5 border-white/10 text-white hover:bg-white/10 transition-all cursor-pointer"
                                 >
@@ -1117,17 +1085,14 @@ export function PostventaMobileDashboard({
                     <Input 
                         placeholder="Buscar por lote o nombre..." 
                         value={ledgerSearch}
-                        onChange={(e) => setLedgerSearch(e.target.value)}
-                        onKeyDown={(e) => {
-                            if (e.key === 'Enter') navigate(1, ledgerSearch, ledgerStage, status);
-                        }}
+                        onChange={(e) => { setLedgerSearch(e.target.value); setLedgerPage(1); }}
                         className="bg-white/5 border-white/10 rounded-xl pl-9 h-10 text-sm text-white placeholder:text-gray-600 focus:ring-alimin-gold/20 focus:border-alimin-gold/40 transition-all font-medium"
                     />
                     <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
                         {ledgerSearch && (
                             <Button 
                                 size="sm"
-                                onClick={() => navigate(1, ledgerSearch, ledgerStage, status)}
+                                onClick={() => setLedgerPage(1)}
                                 className="bg-alimin-gold text-black hover:bg-alimin-gold/80 h-7 rounded-lg text-[9px] font-bold px-2"
                             >
                                 Buscar

@@ -20,9 +20,6 @@ interface AdminDashboardClientProps {
     sellers: any[]
     lots: any[]
     users: any[]
-    userTotalPages?: number
-    userCurrentPage?: number
-    userSearch?: string
     userEmail?: string
     receipts?: any[]
     paymentStats: {
@@ -34,13 +31,9 @@ interface AdminDashboardClientProps {
     }
     ledger?: any[]
     debtAlerts?: any[]
-    postventaTotalPages?: number
-    postventaCurrentPage?: number
-    postventaSearch?: string
-    postventaStage?: string
-    postventaStatus?: string
     postventaStats?: { total: number, late: number, grace: number, upcoming: number, ok: number }
     initialMobileTab?: string
+    postventaStage?: string | number
 }
 
 export function AdminDashboardClient({
@@ -48,21 +41,14 @@ export function AdminDashboardClient({
     sellers,
     lots,
     users,
-    userTotalPages = 1,
-    userCurrentPage = 1,
-    userSearch = '',
     userEmail,
     receipts = [],
     paymentStats,
     ledger = [],
     debtAlerts = [],
-    postventaTotalPages = 1,
-    postventaCurrentPage = 1,
-    postventaSearch = '',
-    postventaStage = 'ALL',
-    postventaStatus = 'ALL',
     postventaStats = { total: 0, late: 0, grace: 0, upcoming: 0, ok: 0 },
     initialMobileTab,
+    postventaStage = 'ALL',
 }: AdminDashboardClientProps) {
     const isPostventa = userEmail === POSTVENTA_EMAIL;
 
@@ -126,11 +112,7 @@ export function AdminDashboardClient({
                                         ledger={ledger} 
                                         debtAlerts={debtAlerts} 
                                         users={users} 
-                                        totalPages={postventaTotalPages}
-                                        currentPage={postventaCurrentPage}
-                                        search={postventaSearch}
                                         stage={postventaStage}
-                                        status={postventaStatus}
                                         stats={postventaStats}
                                     />
                                 </TabsContent>
@@ -142,12 +124,8 @@ export function AdminDashboardClient({
                                         activeTab="ledger" 
                                         ledger={ledger} 
                                         debtAlerts={debtAlerts} 
-                                        totalPages={postventaTotalPages}
-                                        currentPage={postventaCurrentPage}
-                                        search={postventaSearch}
-                                        stage={postventaStage}
-                                        status={postventaStatus}
                                         stats={postventaStats}
+                                        stage={postventaStage}
                                     />
                                 </TabsContent>
                                 <TabsContent value="alertas" className="mt-6">
@@ -159,12 +137,8 @@ export function AdminDashboardClient({
                                         ledger={ledger} 
                                         debtAlerts={debtAlerts} 
                                         users={users} 
-                                        totalPages={postventaTotalPages}
-                                        currentPage={postventaCurrentPage}
-                                        search={postventaSearch}
-                                        stage={postventaStage}
-                                        status={postventaStatus}
                                         stats={postventaStats}
+                                        stage={postventaStage}
                                     />
                                 </TabsContent>
                                 <TabsContent value="mora" className="mt-6">
@@ -183,12 +157,8 @@ export function AdminDashboardClient({
                                     ledger={ledger}
                                     debtAlerts={debtAlerts}
                                     users={users}
-                                    totalPages={postventaTotalPages}
-                                    currentPage={postventaCurrentPage}
-                                    search={postventaSearch}
-                                    stage={postventaStage}
-                                    status={postventaStatus}
                                     stats={postventaStats}
+                                    stage={postventaStage}
                                 />
                         </div>
                     </div>
@@ -268,9 +238,6 @@ export function AdminDashboardClient({
                                     <h3 className="text-xl font-bold text-white mb-4">Gestión de Usuarios</h3>
                                     <AdminUserList 
                                         users={users} 
-                                        totalPages={userTotalPages}
-                                        currentPage={userCurrentPage}
-                                        currentSearch={userSearch}
                                     />
                                 </div>
                             </TabsContent>
@@ -293,9 +260,6 @@ export function AdminDashboardClient({
                             <div className="animate-fade-in">
                                 <AdminUserList 
                                     users={users} 
-                                    totalPages={userTotalPages} 
-                                    currentPage={userCurrentPage}
-                                    currentSearch={userSearch}
                                 />
                             </div>
                         )}

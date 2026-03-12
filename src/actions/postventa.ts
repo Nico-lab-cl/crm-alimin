@@ -9,25 +9,17 @@ import { revalidatePath } from "next/cache"
 const POSTVENTA_CACHE_KEY = 'postventa_data';
 const CACHE_TTL = 300; // 5 minutes
 
-export async function getPaginatedPostventaData({
-    page = 1,
-    pageSize = 20,
-    search = '',
-    stage = 'ALL',
-    status = 'ALL'
+export async function getFullPostventaData({
+    stage = 'ALL'
 }: {
-    page?: number;
-    pageSize?: number;
-    search?: string;
     stage?: string | number;
-    status?: 'ALL' | 'UPCOMING' | 'GRACE' | 'LATE' | 'OK';
 } = {}) {
     const session = await auth()
     if (!session?.user || session.user.role !== 'ADMIN') {
         return { error: 'No autorizado', data: [], totalPages: 0 }
     }
 
-    const cacheKey = `postventa_paginated_${page}_${pageSize}_${search}_${stage}_${status}`;
+    const cacheKey = `postventa_full_${stage}`;
     const cached = memoryCache.get(cacheKey);
     if (cached) return cached;
 
@@ -40,7 +32,6 @@ export async function getPaginatedPostventaData({
             }
         };
 
-        // Fetch ALL relevant reservations for this stage to calculate accurate project stats
         const allReservations = await prisma.reservation.findMany({
             where: whereStats,
             orderBy: { created_at: 'desc' },
@@ -221,7 +212,7 @@ export async function getPaginatedPostventaData({
             };
         });
 
-        // Statistics are based on the full STAGE-filtered dataset (ignoring search string)
+        // Statistics are based on the full dataset for this stage
         const stats = {
             total: processedData.length,
             late: processedData.filter(d => d.isLate && !d.isMoraFrozen).length,
@@ -230,49 +221,9 @@ export async function getPaginatedPostventaData({
             ok: processedData.filter(d => d.isUpToDate || d.isMoraFrozen).length
         };
 
-        // NOW apply the search filter for display purposes
-        let filteredBySearch = processedData;
-        if (search) {
-            const s = search.toLowerCase();
-            filteredBySearch = processedData.filter(d => 
-                d.clientName.toLowerCase().includes(s) || 
-                d.lotNumber?.toLowerCase().includes(s) ||
-                d.clientEmail?.toLowerCase().includes(s)
-            );
-        }
-
-        const filteredByStatus = status === 'ALL' 
-            ? filteredBySearch 
-            : filteredBySearch.filter(d => {
-                const isFrozen = Boolean(d.isMoraFrozen);
-                if (status === 'LATE') return d.isLate && !isFrozen;
-                if (status === 'GRACE') return d.isGracePeriod && !isFrozen;
-                if (status === 'UPCOMING') return d.isUpcoming && !isFrozen;
-                if (status === 'OK') return d.isUpToDate || isFrozen;
-                return true;
-            });
-
-        // Priority sorting for alerts tab
-        if (status !== 'ALL') {
-            filteredByStatus.sort((a, b) => {
-                if (a.isLate && !b.isLate) return -1;
-                if (b.isLate && !a.isLate) return 1;
-                if (a.isGracePeriod && !b.isGracePeriod) return -1;
-                if (b.isGracePeriod && !a.isGracePeriod) return 1;
-                return (a.nextDueDate?.getTime() || 0) - (b.nextDueDate?.getTime() || 0);
-            });
-        }
-
-        const skip = (page - 1) * pageSize;
-        const subTotalCount = filteredByStatus.length;
-        const paginatedData = filteredByStatus.slice(skip, skip + pageSize);
-
         const result = {
             success: true,
-            data: paginatedData,
-            totalCount: subTotalCount,
-            totalPages: Math.ceil(subTotalCount / pageSize),
-            currentPage: page,
+            data: processedData,
             stats
         };
 
@@ -280,7 +231,7 @@ export async function getPaginatedPostventaData({
         return result;
 
     } catch (error) {
-        console.error("Error getting paginated postventa data:", error);
+        console.error("Error getting full postventa data:", error);
         return { error: 'Error al cargar datos de postventa', data: [], totalPages: 0 };
     }
 }
