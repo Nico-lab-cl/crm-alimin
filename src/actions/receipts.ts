@@ -12,11 +12,13 @@ const RECEIPTS_PAGINATED_CACHE_KEY = 'receipts_paginated_';
 export async function getPaginatedReceipts({
     page = 1,
     pageSize = 20,
-    status
+    status,
+    search
 }: {
     page?: number;
     pageSize?: number;
     status?: string | null;
+    search?: string;
 } = {}) {
     const session = await auth();
     if (!session?.user || session.user.role !== 'ADMIN') {
@@ -24,7 +26,7 @@ export async function getPaginatedReceipts({
     }
 
 /*
-    const cacheKey = `${RECEIPTS_PAGINATED_CACHE_KEY}${page}_${pageSize}_${status || 'all'}`;
+    const cacheKey = `${RECEIPTS_PAGINATED_CACHE_KEY}${page}_${pageSize}_${status || 'all'}_${search || ''}`;
     const cached = memoryCache.get(cacheKey);
     if (cached) return cached;
 */
@@ -33,6 +35,13 @@ export async function getPaginatedReceipts({
         const where: any = {};
         if (status && status !== 'ALL') {
             where.status = status;
+        }
+
+        if (search) {
+            where.OR = [
+                { reservation: { buyer: { name: { contains: search, mode: 'insensitive' } } } },
+                { reservation: { lot: { number: { contains: search, mode: 'insensitive' } } } }
+            ];
         }
 
         const [receipts, totalCount] = await Promise.all([

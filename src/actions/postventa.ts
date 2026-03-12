@@ -48,64 +48,59 @@ export async function getPaginatedPostventaData({
             where.lot.stage = parseInt(stage.toString());
         }
 
-        const skip = (page - 1) * pageSize;
-
-        const [reservations, totalCount] = await Promise.all([
-            prisma.reservation.findMany({
-                where,
-                skip,
-                take: pageSize,
-                orderBy: { created_at: 'desc' },
-                select: {
-                    id: true,
-                    phone: true,
-                    installments_paid: true,
-                    pie_status: true,
-                    uploaded_contract_url: true,
-                    created_at: true,
-                    is_legacy: true,
-                    legacy_installment_start_date: true,
-                    legacy_debt_start_date: true,
-                    // @ts-ignore
-                    mora_frozen: true,
-                    // @ts-ignore
-                    manual_documents: true,
-                    // @ts-ignore
-                    signed_at: true,
-                    // @ts-ignore
-                    is_promo: true,
-                    lot: {
-                        select: {
-                            number: true,
-                            stage: true,
-                            price_total_clp: true,
-                            reservation_amount_clp: true,
-                            cuotas: true,
-                            valor_cuota: true,
-                            area_m2: true,
-                            pie: true
-                        }
-                    },
-                    buyer: {
-                        select: {
-                            name: true,
-                            email: true
-                        }
-                    },
-                    receipts: {
-                        where: { status: 'APPROVED' },
-                        orderBy: { created_at: 'desc' },
-                        select: {
-                            id: true,
-                            amount_clp: true,
-                            scope: true,
-                            created_at: true
-                        }
+        // We MUST fetch all relevant reservations to calculate status and stats correctly
+        // status is a calculated field, so we can't paginate at the DB level efficiently for complex filters
+        const reservations = await prisma.reservation.findMany({
+            where,
+            orderBy: { created_at: 'desc' },
+            select: {
+                id: true,
+                phone: true,
+                installments_paid: true,
+                pie_status: true,
+                uploaded_contract_url: true,
+                created_at: true,
+                is_legacy: true,
+                legacy_installment_start_date: true,
+                legacy_debt_start_date: true,
+                // @ts-ignore
+                mora_frozen: true,
+                // @ts-ignore
+                manual_documents: true,
+                // @ts-ignore
+                signed_at: true,
+                // @ts-ignore
+                is_promo: true,
+                lot: {
+                    select: {
+                        number: true,
+                        stage: true,
+                        price_total_clp: true,
+                        reservation_amount_clp: true,
+                        cuotas: true,
+                        valor_cuota: true,
+                        area_m2: true,
+                        pie: true
+                    }
+                },
+                buyer: {
+                    select: {
+                        name: true,
+                        email: true
+                    }
+                },
+                receipts: {
+                    where: { status: 'APPROVED' },
+                    orderBy: { created_at: 'desc' },
+                    select: {
+                        id: true,
+                        amount_clp: true,
+                        scope: true,
+                        created_at: true
                     }
                 }
-            }),
-            prisma.reservation.count({ where })
-        ]);
+            }
+        });
 
         const processedData = reservations.map(res => {
             const lot = res.lot;
@@ -233,6 +228,15 @@ export async function getPaginatedPostventaData({
             };
         });
 
+        // Statistics are based on the full filtered dataset (search + stage)
+        const stats = {
+            total: processedData.length,
+            late: processedData.filter(d => d.isLate && !d.isMoraFrozen).length,
+            grace: processedData.filter(d => d.isGracePeriod && !d.isMoraFrozen).length,
+            upcoming: processedData.filter(d => d.isUpcoming && !d.isMoraFrozen).length,
+            ok: processedData.filter(d => d.isUpToDate || d.isMoraFrozen).length
+        };
+
         const filteredByStatus = status === 'ALL' 
             ? processedData 
             : processedData.filter(d => {
@@ -255,23 +259,17 @@ export async function getPaginatedPostventaData({
             });
         }
 
-        const finalTotalCount = filteredByStatus.length;
-        // Re-paginate the filtered results
+        const skip = (page - 1) * pageSize;
+        const subTotalCount = filteredByStatus.length;
         const paginatedData = filteredByStatus.slice(skip, skip + pageSize);
 
         const result = {
             success: true,
             data: paginatedData,
-            totalCount: finalTotalCount,
-            totalPages: Math.ceil(finalTotalCount / pageSize),
+            totalCount: subTotalCount,
+            totalPages: Math.ceil(subTotalCount / pageSize),
             currentPage: page,
-            stats: {
-                total: processedData.length,
-                late: processedData.filter(d => d.isLate && !d.isMoraFrozen).length,
-                grace: processedData.filter(d => d.isGracePeriod && !d.isMoraFrozen).length,
-                upcoming: processedData.filter(d => d.isUpcoming && !d.isMoraFrozen).length,
-                ok: processedData.filter(d => d.isUpToDate || d.isMoraFrozen).length
-            }
+            stats
         };
 
         memoryCache.set(cacheKey, result, 60); // 1 minute cache

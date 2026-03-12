@@ -1,6 +1,7 @@
 import { auth } from "@/auth"
 import { getAdminPipeline, getSellers, getAdminLots, getPaginatedAdminUsers, getAdminStats } from "@/actions/dashboard"
 import { getPaginatedPostventaData } from "@/actions/postventa"
+import { getPaginatedReceipts } from "@/actions/receipts"
 import { AdminDashboardClient } from "./AdminDashboardClient"
 
 const POSTVENTA_EMAIL = 'postventa@lomasdelmar.cl';
@@ -26,7 +27,7 @@ export default async function AdminDashboard({
     const postventaStage = searchParams.postventaStage || 'ALL'
     const postventaStatus = (searchParams.postventaStatus as any) || 'ALL'
 
-    const [pipelineResult, sellersResult, lotsResult, usersResult, statsResult, postventaResult] = await Promise.all([
+    const [pipelineResult, sellersResult, lotsResult, usersResult, statsResult, postventaResult, receiptsResult] = await Promise.all([
         getAdminPipeline(),
         getSellers(),
         getAdminLots(),
@@ -38,7 +39,8 @@ export default async function AdminDashboard({
             search: postventaSearch,
             stage: postventaStage,
             status: postventaStatus
-        }) : Promise.resolve({ success: false, data: [], totalPages: 0 })
+        }) : Promise.resolve({ success: false, data: [], totalPages: 0 }),
+        isPostventa ? getPaginatedReceipts({ page: 1, pageSize: 100, search: postventaSearch }) : Promise.resolve({ success: false, receipts: [] })
     ])
 
     if (pipelineResult.error || statsResult.error) {
@@ -74,7 +76,7 @@ export default async function AdminDashboard({
             userCurrentPage={userPage}
             userSearch={search}
             userEmail={userEmail}
-            receipts={[]} // Obsolete, receipts are inside ledger now
+            receipts={(receiptsResult as any).receipts || []}
             paymentStats={paymentStats as any}
             ledger={postventaLedger}
             debtAlerts={[]} // Obsolete, combined in ledger or handled in client

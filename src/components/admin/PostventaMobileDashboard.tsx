@@ -76,13 +76,17 @@ export function PostventaMobileDashboard({
     const [alertFilter, setAlertFilter] = useState<'ALL' | 'UPCOMING' | 'GRACE' | 'LATE' | 'OK'>(status as any);
     const router = useRouter();
 
-    const navigate = (p: number, s: string, st: string | number, stStatus: string = 'ALL') => {
+    const navigate = (p: number, s: string, st: string | number, stStatus: string = alertFilter) => {
         const params = new URLSearchParams(window.location.search);
         params.set('postventaPage', p.toString());
         params.set('postventaSearch', s);
         params.set('postventaStage', st.toString());
         params.set('postventaStatus', stStatus);
         params.set('mobileTab', activeTab);
+        
+        // If we search, reset to page 1
+        if (s !== search) params.set('postventaPage', '1');
+
         router.push(`/admin/dashboard?${params.toString()}`);
         setTimeout(() => router.refresh(), 100);
     };
@@ -215,7 +219,7 @@ export function PostventaMobileDashboard({
                             {(['ALL', 1, 2, 3, 4] as const).map(s => (
                                 <button
                                     key={s}
-                                    onClick={() => navigate(1, ledgerSearch, s)}
+                                    onClick={() => navigate(1, ledgerSearch, s, status)}
                                     className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all border shrink-0 cursor-pointer ${ledgerStage === s
                                         ? 'bg-[#3f6066] text-white border-[#3f6066] shadow-[0_0_15px_rgba(63,96,102,0.3)]'
                                         : 'bg-white/5 text-gray-500 border-white/5 hover:border-[#3f6066]/40 hover:text-gray-300'
@@ -234,7 +238,7 @@ export function PostventaMobileDashboard({
                             value={ledgerSearch}
                             onChange={(e) => setLedgerSearch(e.target.value)}
                             onKeyDown={(e) => {
-                                if (e.key === 'Enter') navigate(1, ledgerSearch, ledgerStage);
+                                if (e.key === 'Enter') navigate(1, ledgerSearch, ledgerStage, status);
                             }}
                             className="bg-black/60 border-white/5 rounded-2xl pl-11 h-12 text-sm text-white placeholder:text-gray-700 focus:ring-[#3f6066]/20 focus:border-[#3f6066]/40 transition-all font-medium"
                         />
@@ -242,7 +246,7 @@ export function PostventaMobileDashboard({
                              {ledgerSearch !== search && (
                                 <Button 
                                     size="sm"
-                                    onClick={() => navigate(1, ledgerSearch, ledgerStage)}
+                                    onClick={() => navigate(1, ledgerSearch, ledgerStage, status)}
                                     className="bg-[#3f6066]/20 text-[#8eb2b8] hover:bg-[#3f6066]/40 h-8 rounded-xl text-[9px] font-black"
                                 >
                                     Buscar
@@ -252,7 +256,7 @@ export function PostventaMobileDashboard({
                                 <Button 
                                     variant="ghost" 
                                     size="sm"
-                                    onClick={() => { setLedgerSearch(''); navigate(1, '', ledgerStage); }}
+                                    onClick={() => { setLedgerSearch(''); navigate(1, '', ledgerStage, status); }}
                                     className="text-[10px] font-black text-[#3f6066] hover:text-white uppercase transition-colors h-8"
                                 >
                                     Limpiar
@@ -853,6 +857,20 @@ export function PostventaMobileDashboard({
                             </div>
                         </div>
 
+                        {/* Universal Search in Alertas Tab */}
+                        <div className="relative group">
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 group-focus-within:text-[#3f6066] transition-colors" />
+                            <Input 
+                                placeholder="Buscar cliente..." 
+                                value={ledgerSearch}
+                                onChange={(e) => setLedgerSearch(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') navigate(1, ledgerSearch, alertStage, alertFilter);
+                                }}
+                                className="bg-[#1a1a1a]/40 border-white/5 rounded-2xl pl-11 h-12 text-sm text-white placeholder:text-gray-700 focus:ring-[#3f6066]/20 focus:border-[#3f6066]/40 transition-all font-medium"
+                            />
+                        </div>
+
                         {/* Filter Sections */}
                         <div className="space-y-6 bg-[#1a1a1a]/40 lg:bg-transparent p-4 lg:p-0 rounded-2xl border border-white/5 lg:border-none backdrop-blur-md lg:backdrop-blur-none transition-all">
                             {/* Filter: Status */}
@@ -862,7 +880,7 @@ export function PostventaMobileDashboard({
                                     {(['ALL', 'LATE', 'GRACE', 'UPCOMING', 'OK'] as const).map(f => (
                                         <button
                                             key={f}
-                                            onClick={() => { setAlertFilter(f); setAlertPage(1); }}
+                                            onClick={() => navigate(1, ledgerSearch, alertStage, f)}
                                             className={`px-4 py-2.5 rounded-xl text-[11px] font-bold whitespace-nowrap transition-all border flex items-center gap-2 flex-grow lg:flex-grow-0 cursor-pointer ${alertFilter === f
                                                 ? 'bg-[#36595F] text-white border-[#36595F] shadow-lg shadow-[#36595F]/20 translate-x-1'
                                                 : 'bg-white/5 text-gray-400 border-white/10 hover:bg-white/10 hover:border-white/20'
@@ -885,7 +903,7 @@ export function PostventaMobileDashboard({
                                     {(['ALL', 1, 2, 3, 4] as const).map(s => (
                                         <button
                                             key={s}
-                                            onClick={() => { setAlertStage(s as any); setAlertPage(1); }}
+                                            onClick={() => navigate(1, ledgerSearch, s, alertFilter)}
                                             className={`px-4 py-2.5 rounded-xl text-[11px] font-bold transition-all border shrink-0 cursor-pointer ${alertStage === s
                                                 ? 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30'
                                                 : 'bg-white/5 text-gray-500 border-white/5 hover:border-white/20'
@@ -1000,7 +1018,7 @@ export function PostventaMobileDashboard({
                                 <Button
                                     variant="outline"
                                     size="sm"
-                                    onClick={() => { setAlertPage(p => Math.max(1, p - 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                                    onClick={() => navigate(alertPage - 1, ledgerSearch, alertStage, alertFilter)}
                                     disabled={alertPage === 1}
                                     className="h-9 px-4 text-[11px] font-black uppercase bg-white/5 border-white/10 text-white hover:bg-white/10 transition-all cursor-pointer"
                                 >
@@ -1013,7 +1031,7 @@ export function PostventaMobileDashboard({
                                 <Button
                                     variant="outline"
                                     size="sm"
-                                    onClick={() => { setAlertPage(p => Math.min(totalAlertPages, p + 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                                    onClick={() => navigate(alertPage + 1, ledgerSearch, alertStage, alertFilter)}
                                     disabled={alertPage === totalAlertPages}
                                     className="h-9 px-4 text-[11px] font-black uppercase bg-white/5 border-white/10 text-white hover:bg-white/10 transition-all cursor-pointer"
                                 >
@@ -1039,15 +1057,28 @@ export function PostventaMobileDashboard({
     return (
         <div className="space-y-4 pb-24">
             {/* Header */}
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
                 <div className="flex items-center gap-2">
                     <Receipt className="w-5 h-5 text-alimin-gold" />
-                    <h2 className="text-lg font-bold text-white">Recibos</h2>
+                    <h2 className="text-lg font-bold text-white uppercase tracking-tight">Recibos por Aprobar</h2>
                     {pendingCount > 0 && (
-                        <Badge variant="destructive" className="text-[10px] font-bold animate-pulse">
+                        <Badge variant="destructive" className="bg-red-500/20 text-red-500 border-red-500/30 text-[10px] font-bold animate-pulse">
                             {pendingCount}
                         </Badge>
                     )}
+                </div>
+                
+                <div className="relative group w-full md:w-64">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 group-focus-within:text-[#3f6066] transition-colors" />
+                    <Input 
+                        placeholder="Buscar por lote o nombre..." 
+                        value={ledgerSearch}
+                        onChange={(e) => setLedgerSearch(e.target.value)}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter') navigate(1, ledgerSearch, ledgerStage, status);
+                        }}
+                        className="bg-white/5 border-white/10 rounded-xl pl-10 h-10 text-xs text-white placeholder:text-gray-600 focus:ring-[#3f6066]/20 focus:border-[#3f6066]/40 transition-all font-medium"
+                    />
                 </div>
             </div>
 
