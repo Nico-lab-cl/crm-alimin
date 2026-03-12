@@ -166,7 +166,7 @@ export default function UserPlotsPage() {
                                         <div className="space-y-3 pt-2">
                                             {/* Base Contract button removed as requested */}
 
-                                            {res.signed_at && res.signature_ip !== 'Firma Offline' ? (
+                                            {res.signed_at && !res.is_legacy && res.signature_ip !== 'Firma Offline' ? (
                                                 <a
                                                     href={`/api/contracts/${res.id}/pdf`}
                                                     target="_blank"

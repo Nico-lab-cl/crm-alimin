@@ -708,22 +708,25 @@ export function PostventaMobileDashboard({
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
-                                    
-                                    <div className="p-12 pt-0 flex justify-center">
-                                        <Button 
-                                            variant="ghost" 
-                                            onClick={() => setSelectedClientLedger(null)} 
-                                            className="w-full sm:w-auto px-20 h-16 rounded-3xl text-xs font-black uppercase tracking-[0.5em] text-gray-600 hover:text-white hover:bg-white/5 border border-transparent hover:border-white/10 transition-all shadow-2xl hover:shadow-[#3f6066]/10"
-                                        >
-                                            Cerrar Expediente
-                                        </Button>
-                                    </div>
+                                    </>
+                                );
+                            })()}
+                        </div>
+                                
+                                <div className="p-12 pt-0 flex justify-center">
+                                    <Button 
+                                        variant="ghost" 
+                                        onClick={() => setSelectedClientLedger(null)} 
+                                        className="w-full sm:w-auto px-20 h-16 rounded-3xl text-xs font-black uppercase tracking-[0.5em] text-gray-600 hover:text-white hover:bg-white/5 border border-transparent hover:border-white/10 transition-all shadow-2xl hover:shadow-[#3f6066]/10"
+                                    >
+                                        Cerrar Expediente
+                                    </Button>
                                 </div>
-                            </>
-                        )}
-                    </DialogContent>
-                </Dialog>
+                            </div>
+                        </>
+                    )}
+                </DialogContent>
+            </Dialog>
                 
                 {/* Payments Detail Modal - Focused View */}
                 <Dialog open={showPaymentsModal} onOpenChange={setShowPaymentsModal}>
