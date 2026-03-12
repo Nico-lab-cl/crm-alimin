@@ -10,11 +10,14 @@ export default async function AdminDashboard() {
     const session = await auth()
     const userEmail = session?.user?.email || ''
 
-    const [pipelineResult, sellersResult, lotsResult, usersResult] = await Promise.all([
+    const isPostventa = userEmail === POSTVENTA_EMAIL
+
+    const [pipelineResult, sellersResult, lotsResult, usersResult, postventaData] = await Promise.all([
         getAdminPipeline(),
         getSellers(),
         getAdminLots(),
-        getAdminUsers()
+        getAdminUsers(),
+        isPostventa ? getPostventaData() : Promise.resolve({ success: false, ledger: [], debtAlerts: [] })
     ])
 
     if (pipelineResult.error) {
@@ -52,21 +55,11 @@ export default async function AdminDashboard() {
     let ledger: any[] = []
     let debtAlerts: any[] = []
 
-    if (userEmail === POSTVENTA_EMAIL) {
-        try {
-            const postventaData = await getPostventaData()
-
-            if (postventaData.success) {
-                ledger = postventaData.ledger || []
-                debtAlerts = postventaData.debtAlerts || []
-
-                // Extract receipts from ledger to avoid duplicate queries
-                const allReceipts = ledger.flatMap(entry => entry.receipts || [])
-                receipts = allReceipts
-            }
-        } catch (e) {
-            console.error('Error fetching data for postventa:', e)
-        }
+    if (isPostventa && postventaData?.success) {
+        ledger = (postventaData as any).ledger || []
+        debtAlerts = (postventaData as any).debtAlerts || []
+        // Extract receipts from ledger to avoid duplicate queries
+        receipts = ledger.flatMap(entry => entry.receipts || [])
     }
 
     return (
