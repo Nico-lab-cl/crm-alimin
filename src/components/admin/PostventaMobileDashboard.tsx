@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Textarea } from '@/components/ui/textarea';
 import { 
     Loader2, CheckCircle, XCircle, Eye, MapPin, CreditCard, Clock, Receipt, BookOpen, 
-    AlertTriangle, Search, Filter, FileSignature, Gavel, Wallet, CalendarDays, ArrowRight, ShieldAlert 
+    AlertTriangle, Search, Filter, FileSignature, Gavel, Wallet, CalendarDays, ArrowRight, ShieldAlert, RefreshCw
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { approvePaymentReceipt, rejectPaymentReceipt } from '@/actions/receipts';
@@ -334,11 +334,28 @@ export function PostventaMobileDashboard({
                                                 <span className="text-[10px] text-[#8eb2b8] font-black uppercase tracking-[0.3em]">Etapa {selectedClientLedger.lotStage}</span>
                                             </div>
                                         </div>
-                                        <div className="bg-black/40 backdrop-blur-md rounded-2xl p-4 border border-white/5 text-right flex flex-col justify-center">
+                                        <div className="bg-black/40 backdrop-blur-md rounded-2xl p-4 border border-white/5 text-right flex flex-col justify-center min-w-[140px]">
                                             <p className="text-[10px] text-[#3f6066] font-black uppercase tracking-[0.2em]">Total Invertido</p>
                                             <p className="text-3xl font-black text-white leading-none mt-1.5 tabular-nums">
                                                 {formatCurrency(selectedClientLedger.totalPaid)}
                                             </p>
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={async (e) => {
+                                                    e.stopPropagation();
+                                                    const res = await syncLegacyReceipts();
+                                                    if ('error' in res) toast.error(res.error);
+                                                    else {
+                                                        toast.success(`Sincronización completada: ${res.syncedCount} recibos.`);
+                                                        window.location.reload();
+                                                    }
+                                                }}
+                                                className="h-6 mt-2 text-[8px] font-black text-[#8eb2b8] hover:text-white uppercase tracking-widest bg-white/5 hover:bg-[#3f6066]/20 border-white/5"
+                                            >
+                                                <RefreshCw className="w-2.5 h-2.5 mr-1" />
+                                                Sincronizar
+                                            </Button>
                                         </div>
                                     </div>
                                 </div>
@@ -551,15 +568,15 @@ export function PostventaMobileDashboard({
                 
                 {/* Payments Detail Modal - Focused View */}
                 <Dialog open={showPaymentsModal} onOpenChange={setShowPaymentsModal}>
-                    <DialogContent className="max-w-md bg-[#0a1622] border-[#3f6066]/20 p-0 overflow-hidden rounded-[2rem] shadow-2xl">
-                        <DialogHeader className="p-6 bg-[#3f6066]/10 border-b border-white/5">
-                            <DialogTitle className="flex items-center gap-2 text-white font-black uppercase tracking-tight">
+                    <DialogContent className="max-w-sm bg-[#0a1622] border-[#3f6066]/20 p-0 overflow-hidden rounded-[2rem] shadow-2xl">
+                        <DialogHeader className="p-5 bg-[#3f6066]/10 border-b border-white/5">
+                            <DialogTitle className="flex items-center gap-2 text-white font-black uppercase tracking-tight text-sm">
                                 <Wallet className="w-4 h-4 text-[#8eb2b8]" />
                                 Historial de Pagos
                             </DialogTitle>
                         </DialogHeader>
                         
-                        <div className="p-6 max-h-[60vh] overflow-y-auto no-scrollbar space-y-3">
+                        <div className="p-5 max-h-[50vh] overflow-y-auto no-scrollbar space-y-3">
                             {(() => {
                                 if (!selectedClientLedger) return null;
                                 const manual = Array.isArray(selectedClientLedger.manual_documents) 
@@ -576,7 +593,7 @@ export function PostventaMobileDashboard({
                                         date: m.uploadedAt ? new Date(m.uploadedAt) : new Date()
                                     })),
                                     ...auto.map((a: any) => ({ 
-                                        name: `Recibo #${a.id.slice(-4)}`, 
+                                        name: `Comprobante Oficial #${a.id.slice(-4)}`, 
                                         url: `/api/receipt/${a.id}/pdf`, 
                                         type: a.scope, 
                                         isAuto: true,
@@ -584,45 +601,58 @@ export function PostventaMobileDashboard({
                                     }))
                                 ].sort((a, b) => b.date.getTime() - a.date.getTime());
 
-                                if (all.length === 0) {
-                                    return (
-                                        <div className="text-center py-10 opacity-50">
-                                            <Receipt className="w-8 h-8 mx-auto mb-2" />
-                                            <p className="text-[10px] font-black uppercase">Sin registros aún</p>
-                                        </div>
-                                    );
-                                }
+                                const hasAuto = auto.length > 0;
 
-                                return all.map((p, idx) => (
-                                    <div key={idx} className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/5 group hover:bg-white/10 transition-all">
-                                        <div className="flex items-center gap-3">
-                                            <div className={`p-2 rounded-lg ${p.type === 'PIE' ? 'bg-amber-500/10' : 'bg-blue-500/10'}`}>
-                                                <Receipt className={`w-4 h-4 ${p.type === 'PIE' ? 'text-amber-500' : 'text-blue-400'}`} />
+                                return (
+                                    <>
+                                        {!hasAuto && all.length > 0 && (
+                                            <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 mb-4">
+                                                <p className="text-[9px] text-amber-500 font-black uppercase leading-tight">
+                                                    Nota: No se han generado comprobantes PDF oficiales todavía. 
+                                                    Usa el botón "Sincronizar" para crearlos.
+                                                </p>
                                             </div>
-                                            <div>
-                                                <p className="text-[11px] font-black text-white leading-tight uppercase truncate max-w-[150px]">{p.name}</p>
-                                                <div className="flex items-center gap-2 mt-0.5">
-                                                    <span className={`text-[7px] font-black uppercase px-1 rounded ${p.type === 'PIE' ? 'bg-amber-500/20 text-amber-500' : 'bg-blue-500/20 text-blue-400'}`}>
-                                                        {p.type === 'PIE' ? 'Pie' : 'Cuota'}
-                                                    </span>
-                                                    <span className="text-[7px] text-gray-500 font-bold uppercase">{format(p.date, 'dd MMM yyyy', { locale: es })}</span>
-                                                    {p.isAuto && <span className="text-[7px] text-emerald-500 font-black uppercase">WEB</span>}
+                                        )}
+                                        {all.length === 0 ? (
+                                            <div className="text-center py-8 opacity-30">
+                                                <Receipt className="w-8 h-8 mx-auto mb-2" />
+                                                <p className="text-[10px] font-black uppercase">Sin registros</p>
+                                            </div>
+                                        ) : (
+                                            all.map((p, idx) => (
+                                                <div key={idx} className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/5 group hover:bg-white/10 transition-all">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className={`p-2 rounded-lg ${p.type === 'PIE' ? 'bg-amber-500/10' : 'bg-blue-500/10'}`}>
+                                                            <Receipt className={`w-3.5 h-3.5 ${p.type === 'PIE' ? 'text-amber-500' : 'text-blue-400'}`} />
+                                                        </div>
+                                                        <div className="min-w-0">
+                                                            <p className="text-[10px] font-black text-white leading-tight uppercase truncate max-w-[120px]">{p.name}</p>
+                                                            <div className="flex items-center gap-2 mt-0.5">
+                                                                <span className={`text-[6px] font-black uppercase px-1 rounded ${p.type === 'PIE' ? 'bg-amber-500/20 text-amber-500' : 'bg-blue-500/20 text-blue-400'}`}>
+                                                                    {p.type === 'PIE' ? 'Pie' : 'Cuota'}
+                                                                </span>
+                                                                <span className="text-[6px] text-gray-500 font-bold uppercase">{format(p.date, 'dd MMM yy', { locale: es })}</span>
+                                                                {p.isAuto ? (
+                                                                    <span className="text-[6px] text-emerald-500 font-black uppercase bg-emerald-500/10 px-1 rounded">PDF Oficial</span>
+                                                                ) : (
+                                                                    <span className="text-[6px] text-gray-600 font-bold uppercase">Manual</span>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <a 
+                                                        href={p.url} 
+                                                        target="_blank" 
+                                                        rel="noopener noreferrer" 
+                                                        className="p-2 bg-[#3f6066]/20 hover:bg-[#3f6066]/40 text-[#8eb2b8] rounded-lg transition-all ml-2"
+                                                    >
+                                                        <Eye className="w-3.5 h-3.5" />
+                                                    </a>
                                                 </div>
-                                            </div>
-                                        </div>
-                                        <div className="flex gap-1">
-                                            <a 
-                                                href={p.url} 
-                                                target="_blank" 
-                                                rel="noopener noreferrer" 
-                                                className="p-2 bg-[#3f6066]/20 hover:bg-[#3f6066]/40 text-[#8eb2b8] rounded-lg transition-all"
-                                                title="Ver Documento"
-                                            >
-                                                <Eye className="w-4 h-4" />
-                                            </a>
-                                        </div>
-                                    </div>
-                                ));
+                                            ))
+                                        )}
+                                    </>
+                                );
                             })()}
                         </div>
                         
