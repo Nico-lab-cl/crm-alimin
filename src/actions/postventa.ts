@@ -3,6 +3,11 @@
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import { getInstallmentDueDate, calculateTotalInterest, calculateDailyInterest } from "@/lib/financials"
+import { memoryCache } from "@/lib/cache"
+import { revalidatePath } from "next/cache"
+
+const POSTVENTA_CACHE_KEY = 'postventa_data';
+const CACHE_TTL = 300; // 5 minutes
 
 export async function getPostventaData() {
     const session = await auth()
@@ -11,17 +16,62 @@ export async function getPostventaData() {
     }
 
     try {
+        // 1. Check Cache
+        const cachedData = memoryCache.get(POSTVENTA_CACHE_KEY);
+        if (cachedData) {
+            return { success: true, ...cachedData as any };
+        }
+
         const reservations = await prisma.reservation.findMany({
             where: {
                 buyer_id: { not: null },
                 lot: { status: { in: ['sold', 'reserved'] } }
             },
-            include: {
-                lot: true,
-                buyer: true,
+            select: {
+                id: true,
+                phone: true,
+                installments_paid: true,
+                pie_status: true,
+                uploaded_contract_url: true,
+                created_at: true,
+                is_legacy: true,
+                legacy_installment_start_date: true,
+                legacy_debt_start_date: true,
+                // @ts-ignore
+                mora_frozen: true,
+                // @ts-ignore
+                manual_documents: true,
+                // @ts-ignore
+                signed_at: true,
+                // @ts-ignore
+                is_promo: true,
+                lot: {
+                    select: {
+                        number: true,
+                        stage: true,
+                        price_total_clp: true,
+                        reservation_amount_clp: true,
+                        cuotas: true,
+                        valor_cuota: true,
+                        area_m2: true,
+                        pie: true
+                    }
+                },
+                buyer: {
+                    select: {
+                        name: true,
+                        email: true
+                    }
+                },
                 receipts: {
                     where: { status: 'APPROVED' },
-                    orderBy: { created_at: 'desc' }
+                    orderBy: { created_at: 'desc' },
+                    select: {
+                        id: true,
+                        amount_clp: true,
+                        scope: true,
+                        created_at: true
+                    }
                 }
             }
         });
@@ -187,7 +237,12 @@ export async function getPostventaData() {
             return (a.nextDueDate?.getTime() || 0) - (b.nextDueDate?.getTime() || 0);
         });
 
-        return { success: true, ledger, debtAlerts }
+        const result = { ledger, debtAlerts };
+        
+        // 3. Store in Cache
+        memoryCache.set(POSTVENTA_CACHE_KEY, result, CACHE_TTL);
+
+        return { success: true, ...result };
     } catch (error) {
         console.error("Error getting postventa data:", error);
         return { error: 'Error al cargar datos de postventa', ledger: [], debtAlerts: [] };
@@ -205,6 +260,10 @@ export async function updateReservationContract(reservationId: string, url: stri
             where: { id: reservationId },
             data: { uploaded_contract_url: url }
         });
+        
+        memoryCache.delete(POSTVENTA_CACHE_KEY);
+        revalidatePath('/admin/dashboard');
+        
         return { success: true };
     } catch (error) {
         console.error("Error updating contract:", error);
@@ -274,6 +333,9 @@ export async function syncLegacyReceipts() {
                 }
             }
         }
+
+        memoryCache.delete(POSTVENTA_CACHE_KEY);
+        revalidatePath('/admin/dashboard');
 
         return { success: true, syncedCount };
     } catch (error) {

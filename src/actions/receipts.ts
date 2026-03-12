@@ -4,6 +4,9 @@ import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 import { sendPaymentReceiptWebhook } from '@/lib/webhooks';
+import { memoryCache } from '@/lib/cache';
+
+const POSTVENTA_CACHE_KEY = 'postventa_data';
 
 export async function uploadPaymentReceipt({
     reservationId,
@@ -111,6 +114,7 @@ export async function approvePaymentReceipt(receiptId: string) {
         // We do this non-blocking to prevent slow UI response
         sendPaymentReceiptWebhook(receiptId).catch((e) => console.error("Webhook Error on Receipt Approval:", e));
 
+        memoryCache.delete(POSTVENTA_CACHE_KEY);
         revalidatePath('/admin/receipts');
         revalidatePath('/user/plots');
         return { success: true };
@@ -138,6 +142,7 @@ export async function rejectPaymentReceipt(receiptId: string, reason: string) {
             }
         });
 
+        memoryCache.delete(POSTVENTA_CACHE_KEY);
         revalidatePath('/admin/receipts');
         revalidatePath('/user/plots');
         return { success: true };
