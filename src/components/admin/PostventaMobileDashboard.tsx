@@ -10,7 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { 
     Loader2, CheckCircle, XCircle, Eye, MapPin, CreditCard, Clock, Receipt, BookOpen, 
     AlertTriangle, Search, Filter, FileSignature, Gavel, Wallet, CalendarDays, ArrowRight, ShieldAlert, RefreshCw,
-    FileText, Download
+    FileText, Download, Trash2
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { approvePaymentReceipt, rejectPaymentReceipt } from '@/actions/receipts';
@@ -110,6 +110,26 @@ export function PostventaMobileDashboard({
             toast.error('Error al rechazar el pago');
         } finally {
             setIsProcessing(null);
+        }
+    };
+
+    const handleDeleteDocument = async (reservationId: string, type: string, url?: string) => {
+        if (!confirm('¿Estás seguro de que deseas eliminar este documento?')) return;
+        
+        try {
+            const res = await fetch(`/api/contracts/${reservationId}/upload`, {
+                method: "DELETE",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ type, url }),
+            });
+
+            if (!res.ok) throw new Error("Error al eliminar");
+            
+            toast.success("Documento eliminado correctamente");
+            window.location.reload();
+        } catch (error) {
+            console.error(error);
+            toast.error("No se pudo eliminar el documento");
         }
     };
 
@@ -414,20 +434,32 @@ export function PostventaMobileDashboard({
                                                         <div className="p-3 bg-blue-500/10 rounded-2xl border border-blue-500/20">
                                                             <FileSignature className="w-6 h-6 text-blue-400" />
                                                         </div>                                            
-                                                        <Button
-                                                            size="icon"
-                                                            variant="ghost"
-                                                            disabled={!selectedClientLedger.uploaded_contract_url}
-                                                            onClick={() => setViewerConfig({
-                                                                isOpen: true,
-                                                                url: selectedClientLedger.uploaded_contract_url,
-                                                                name: "Promesa de Compraventa",
-                                                                category: "Documento Legal"
-                                                            })}
-                                                            className="h-10 w-10 bg-white/5 hover:bg-white/10 text-white rounded-xl"
-                                                        >
-                                                            <Eye className="w-5 h-5" />
-                                                        </Button>
+                                                        <div className="flex gap-2">
+                                                            <Button
+                                                                size="icon"
+                                                                variant="ghost"
+                                                                disabled={!selectedClientLedger.uploaded_contract_url}
+                                                                onClick={() => setViewerConfig({
+                                                                    isOpen: true,
+                                                                    url: selectedClientLedger.uploaded_contract_url,
+                                                                    name: "Promesa de Compraventa",
+                                                                    category: "Documento Legal"
+                                                                })}
+                                                                className="h-10 w-10 bg-white/5 hover:bg-white/10 text-white rounded-xl"
+                                                            >
+                                                                <Eye className="w-5 h-5" />
+                                                            </Button>
+                                                            {selectedClientLedger.uploaded_contract_url && (
+                                                                <Button
+                                                                    size="icon"
+                                                                    variant="ghost"
+                                                                    onClick={() => handleDeleteDocument(selectedClientLedger.id, 'promesa')}
+                                                                    className="h-10 w-10 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-xl transition-all"
+                                                                >
+                                                                    <Trash2 className="w-5 h-5" />
+                                                                </Button>
+                                                            )}
+                                                        </div>
                                                     </div>
                                                     <div className="flex-1 mb-6">
                                                         <p className="text-white font-black text-sm uppercase tracking-tight">Promesa de Compra</p>
@@ -486,19 +518,29 @@ export function PostventaMobileDashboard({
                                                             const doc = Array.isArray(selectedClientLedger.manual_documents) ? selectedClientLedger.manual_documents.find((d: any) => d.category === 'GASTOS_OPERACIONALES') : null;
                                                             if (doc) {
                                                                 return (
-                                                                    <Button 
-                                                                        size="icon"
-                                                                        variant="ghost"
-                                                                        onClick={() => setViewerConfig({
-                                                                            isOpen: true,
-                                                                            url: doc.url,
-                                                                            name: "Gastos Operacionales",
-                                                                            category: "Legal"
-                                                                        })}
-                                                                        className="h-10 w-10 bg-white/5 hover:bg-white/10 text-white rounded-xl"
-                                                                    >
-                                                                        <Eye className="w-5 h-5" />
-                                                                    </Button>
+                                                                    <div className="flex gap-2">
+                                                                        <Button 
+                                                                            size="icon"
+                                                                            variant="ghost"
+                                                                            onClick={() => setViewerConfig({
+                                                                                isOpen: true,
+                                                                                url: doc.url,
+                                                                                name: "Gastos Operacionales",
+                                                                                category: "Legal"
+                                                                            })}
+                                                                            className="h-10 w-10 bg-white/5 hover:bg-white/10 text-white rounded-xl"
+                                                                        >
+                                                                            <Eye className="w-5 h-5" />
+                                                                        </Button>
+                                                                        <Button 
+                                                                            size="icon"
+                                                                            variant="ghost"
+                                                                            onClick={() => handleDeleteDocument(selectedClientLedger.id, 'GASTOS_OPERACIONALES', doc.url)}
+                                                                            className="h-10 w-10 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-xl transition-all"
+                                                                        >
+                                                                            <Trash2 className="w-5 h-5" />
+                                                                        </Button>
+                                                                    </div>
                                                                 );
                                                             }
                                                             return <Badge variant="outline" className="text-gray-600 border-gray-800 font-black text-[7px] uppercase">Pendiente</Badge>;
@@ -612,6 +654,7 @@ export function PostventaMobileDashboard({
                                         name: m.name, 
                                         url: m.url, 
                                         type: m.category === 'COMPROBANTE_PIE' ? 'PIE' : 'CUOTA', 
+                                        category: m.category,
                                         isAuto: false,
                                         date: m.uploadedAt ? new Date(m.uploadedAt) : new Date()
                                     })),
@@ -664,19 +707,28 @@ export function PostventaMobileDashboard({
                                                         </div>
                                                     </div>
                                                                                            <div className="flex gap-1">
-                                            <button
-                                                onClick={() => setViewerConfig({
-                                                    isOpen: true,
-                                                    url: p.url,
-                                                    name: p.name,
-                                                    category: p.type === 'PIE' ? 'Pago Pie' : 'Cuota'
-                                                })}
-                                                className="p-2 bg-[#3f6066]/20 hover:bg-[#3f6066]/40 text-[#8eb2b8] rounded-lg transition-all"
-                                                title="Visualizar"
-                                            >
-                                                <Eye className="w-4 h-4" />
-                                            </button>
-                                        </div>
+                                                                    <button
+                                                                        onClick={() => setViewerConfig({
+                                                                            isOpen: true,
+                                                                            url: p.url,
+                                                                            name: p.name,
+                                                                            category: p.type === 'PIE' ? 'Pago Pie' : 'Cuota'
+                                                                        })}
+                                                                        className="p-2 bg-[#3f6066]/20 hover:bg-[#3f6066]/40 text-[#8eb2b8] rounded-lg transition-all"
+                                                                        title="Visualizar"
+                                                                    >
+                                                                        <Eye className="w-4 h-4" />
+                                                                    </button>
+                                                                    {!p.isAuto && (
+                                                                        <button
+                                                                            onClick={() => handleDeleteDocument(selectedClientLedger.id, p.category, p.url)}
+                                                                            className="p-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg transition-all"
+                                                                            title="Eliminar"
+                                                                        >
+                                                                            <Trash2 className="w-4 h-4" />
+                                                                        </button>
+                                                                    )}
+                                                                </div>
                                                 </div>
                                             ))
                                         )}

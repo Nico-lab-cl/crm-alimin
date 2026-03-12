@@ -106,3 +106,60 @@ export async function POST(
         return NextResponse.json({ error: "Failed to upload contract" }, { status: 500 });
     }
 }
+
+export async function DELETE(
+    request: Request,
+    { params }: { params: Promise<{ id: string }> }
+) {
+    try {
+        const session = await auth();
+
+        if (!session || (session.user?.role !== "ADMIN" && session.user?.role !== "SELLER")) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+
+        const { id } = await params;
+        const { type, url } = await request.json();
+
+        const reservation = await prisma.reservation.findUnique({ where: { id } });
+        if (!reservation) {
+            return NextResponse.json({ error: "Reservation not found" }, { status: 404 });
+        }
+
+        let updateData: any = {};
+
+        if (!type || type === "promesa") {
+            updateData.uploaded_contract_url = null;
+        } else if (type === "legacy") {
+            let docs: any[] = [];
+            if (reservation.legacy_uploaded_contracts) {
+                try {
+                    docs = JSON.parse(reservation.legacy_uploaded_contracts);
+                } catch (e) {}
+            }
+            updateData.legacy_uploaded_contracts = JSON.stringify(docs.filter(d => d.url !== url));
+        } else {
+            // manual_documents
+            let docs: any[] = [];
+            if (reservation.manual_documents) {
+                try {
+                    docs = Array.isArray(reservation.manual_documents) 
+                        ? (reservation.manual_documents as any[]) 
+                        : JSON.parse(reservation.manual_documents as string);
+                } catch (e) {}
+            }
+            // Filter by URL if provided, otherwise by type (for single-item categories like GASTOS_OPERACIONALES)
+            updateData.manual_documents = docs.filter(d => url ? d.url !== url : d.category !== type);
+        }
+
+        await prisma.reservation.update({
+            where: { id },
+            data: updateData,
+        });
+
+        return NextResponse.json({ success: true });
+    } catch (error) {
+        console.error("Error deleting contract:", error);
+        return NextResponse.json({ error: "Failed to delete contract" }, { status: 500 });
+    }
+}
