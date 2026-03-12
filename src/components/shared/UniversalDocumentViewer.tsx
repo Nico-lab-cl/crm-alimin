@@ -37,7 +37,9 @@ export function UniversalDocumentViewer({
     const [blobUrl, setBlobUrl] = useState<string | null>(null);
     const [isGenerating, setIsGenerating] = useState(false);
 
-    const isPdf = url?.toLowerCase().includes('.pdf') || url?.startsWith('data:application/pdf');
+    const isPdf = url?.toLowerCase().includes('.pdf') || 
+                  url?.startsWith('data:application/pdf') || 
+                  url?.includes('/pdf');
     const isImage = url?.includes('image/') || url?.toLowerCase().match(/\.(jpg|jpeg|png|gif|webp)$/);
     const isBase64 = url?.startsWith('data:');
 

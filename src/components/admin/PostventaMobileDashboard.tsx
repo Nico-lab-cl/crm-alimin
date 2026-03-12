@@ -319,136 +319,134 @@ export function PostventaMobileDashboard({
 
                 {/* Main Client Detail Modal - The SINGLE source of truth */}
                 <Dialog open={!!selectedClientLedger} onOpenChange={(open) => !open && setSelectedClientLedger(null)}>
-                    <DialogContent className="max-w-[95vw] sm:max-w-3xl bg-[#0a1622] border-[#3f6066]/20 p-0 overflow-hidden rounded-[2.5rem] shadow-[0_0_80px_rgba(0,0,0,0.8)]">
+                    <DialogContent className="max-w-5xl w-[95vw] h-[90vh] bg-[#0a1622] border-[#3f6066]/20 p-0 overflow-hidden rounded-[2.5rem] shadow-[0_0_80px_rgba(0,0,0,0.8)] flex flex-col">
                         {selectedClientLedger && (
-                            <div className="flex flex-col h-[85vh] sm:h-auto overflow-y-auto no-scrollbar">
-                                {/* Modal Header - Brand Immersive */}
-                                <div className="bg-[#3f6066]/10 p-8 border-b border-white/5 relative overflow-hidden">
-                                    <div className="absolute top-0 right-0 w-64 h-64 bg-[#3f6066]/10 rounded-full blur-[100px] -mr-32 -mt-32" />
-                                    <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
-                                        <div className="space-y-2">
-                                            <div className="flex items-center gap-3">
-                                                <h2 className="text-3xl font-black text-white uppercase tracking-tight leading-none">{selectedClientLedger.clientName}</h2>
-                                                {selectedClientLedger.is_legacy && (
-                                                    <Badge className="bg-amber-500/20 text-amber-500 border-amber-500/30 text-[8px] font-black uppercase tracking-tighter">Legacy</Badge>
-                                                )}
-                                            </div>
-                                            <div className="flex items-center gap-4">
-                                                <div className="bg-[#3f6066] text-white px-4 py-1.5 rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-[#3f6066]/20">
-                                                    Terreno {selectedClientLedger.lotNumber}
+                            <>
+                                <div className="flex-1 overflow-y-auto no-scrollbar">
+                                    {/* Modal Header - Brand Immersive */}
+                                    <div className="bg-gradient-to-br from-[#3f6066]/20 to-transparent p-8 border-b border-white/5 relative overflow-hidden">
+                                        <div className="absolute top-0 right-0 w-80 h-80 bg-[#3f6066]/10 rounded-full blur-[100px] -mr-40 -mt-40" />
+                                        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-8">
+                                            <div className="flex items-center gap-6">
+                                                <div className="w-16 h-16 rounded-2xl bg-[#3f6066] flex items-center justify-center shadow-2xl shadow-[#3f6066]/20 flex-shrink-0 border border-white/10">
+                                                    <span className="text-2xl font-black text-white">
+                                                        {selectedClientLedger.clientName?.charAt(0)}
+                                                    </span>
                                                 </div>
-                                                <span className="text-[10px] text-[#8eb2b8] font-black uppercase tracking-[0.3em]">Etapa {selectedClientLedger.lotStage}</span>
+                                                <div className="space-y-2">
+                                                    <div className="flex items-center gap-3">
+                                                        <h2 className="text-2xl font-black text-white uppercase tracking-tight leading-none">{selectedClientLedger.clientName}</h2>
+                                                        {selectedClientLedger.is_legacy && (
+                                                            <Badge className="bg-amber-500/20 text-amber-500 border-amber-500/30 text-[8px] font-black uppercase">Legacy</Badge>
+                                                        )}
+                                                    </div>
+                                                    <div className="flex items-center gap-4">
+                                                        <Badge className="bg-black/50 text-[#8eb2b8] border-[#3f6066]/30 text-[9px] font-black uppercase px-2 py-0.5">Lote {selectedClientLedger.lotNumber}</Badge>
+                                                        <Badge className="bg-black/50 text-[#8eb2b8] border-[#3f6066]/30 text-[9px] font-black uppercase px-2 py-0.5">Etapa {selectedClientLedger.lotStage}</Badge>
+                                                    </div>
+                                                </div>
                                             </div>
-                                        </div>
-                                        <div className="bg-black/40 backdrop-blur-md rounded-2xl p-4 border border-white/5 text-right flex flex-col justify-center min-w-[140px]">
-                                            <p className="text-[10px] text-[#3f6066] font-black uppercase tracking-[0.2em]">Total Invertido</p>
-                                            <p className="text-3xl font-black text-white leading-none mt-1.5 tabular-nums">
-                                                {formatCurrency(selectedClientLedger.totalPaid)}
-                                            </p>
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                onClick={async (e) => {
-                                                    e.stopPropagation();
-                                                    const res = await syncLegacyReceipts();
-                                                    if ('error' in res) toast.error(res.error);
-                                                    else {
-                                                        toast.success(`Sincronización completada: ${res.syncedCount} recibos.`);
-                                                        window.location.reload();
-                                                    }
-                                                }}
-                                                className="h-6 mt-2 text-[8px] font-black text-[#8eb2b8] hover:text-white uppercase tracking-widest bg-white/5 hover:bg-[#3f6066]/20 border-white/5"
-                                            >
-                                                <RefreshCw className="w-2.5 h-2.5 mr-1" />
-                                                Sincronizar
-                                            </Button>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="p-8 space-y-8">
-                                    {/* Core Stats - High Visibility */}
-                                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                                        {[
-                                            { label: 'Cuotas Pagadas', value: `${selectedClientLedger.paidCuotas} / ${selectedClientLedger.totalCuotas}`, icon: Wallet },
-                                            { label: 'Próximo Pago', value: selectedClientLedger.nextDueDate ? format(new Date(selectedClientLedger.nextDueDate), 'dd MMM yy', { locale: es }) : 'N/A', icon: CalendarDays, color: 'text-[#8eb2b8]' },
-                                            { label: 'Monto Cuota', value: formatCurrency(selectedClientLedger.valor_cuota || 0), icon: CreditCard },
-                                            { label: 'Estado Pie', value: selectedClientLedger.pieStatus, badge: true }
-                                        ].map((stat, i) => (
-                                            <div key={i} className="bg-white/5 rounded-[1.5rem] p-5 border border-white/5 flex flex-col justify-between group hover:border-[#3f6066]/30 transition-all">
-                                                <p className="text-[9px] text-gray-500 font-black uppercase tracking-widest mb-3 flex items-center gap-2">
-                                                    {stat.icon && <stat.icon className="w-3 h-3 text-[#3f6066]" />}
-                                                    {stat.label}
-                                                </p>
-                                                {stat.badge ? (
-                                                    <Badge className={`${selectedClientLedger.pieStatus === 'PAID' ? 'bg-emerald-500 shadow-emerald-500/20' : 'bg-amber-500 shadow-amber-500/20'} text-white font-black text-[10px] px-3 py-1 rounded-lg uppercase tracking-wider`}>
-                                                        {stat.value}
-                                                    </Badge>
-                                                ) : (
-                                                    <p className={`text-lg font-black text-white ${stat.color || ''} leading-none`}>{stat.value}</p>
-                                                )}
-                                            </div>
-                                        ))}
-                                    </div>
-
-                                    {/* Documentation Section - Interactive Grid */}
-                                    <div className="space-y-5">
-                                        <div className="flex items-center justify-between">
-                                            <h3 className="text-xs font-black text-white uppercase tracking-[0.2em] flex items-center gap-3">
-                                                <div className="w-2 h-2 rounded-full bg-[#3f6066] shadow-[0_0_10px_#3f6066]" />
-                                                Expediente Digital
-                                            </h3>
-                                        </div>
-                                        
-                                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                                            {/* Item: Promesa */}
-                                            <div className="bg-white/5 rounded-2xl p-5 border border-white/5 flex flex-col h-full group">
-                                                <div className="flex justify-between items-start mb-6">
-                                                    <div className="p-2.5 bg-[#3f6066]/10 rounded-xl border border-[#3f6066]/20">
-                                                        <FileSignature className="w-5 h-5 text-[#8eb2b8]" />
-                                                    </div>                                            <div className="flex gap-2">
-                                                <Button
-                                                    size="icon"
-                                                    variant="ghost"
-                                                    disabled={!selectedClientLedger.uploaded_contract_url}
-                                                    onClick={() => setViewerConfig({
-                                                        isOpen: true,
-                                                        url: selectedClientLedger.uploaded_contract_url,
-                                                        name: "Promesa de Compraventa",
-                                                        category: "Documento Legal"
-                                                    })}
-                                                    className="h-8 w-8 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 rounded-lg"
+                                            <div className="flex flex-col items-end gap-3">
+                                                <div className="bg-black/40 backdrop-blur-md rounded-2xl p-5 border border-white/5 text-right min-w-[200px]">
+                                                    <p className="text-[10px] text-[#3f6066] font-black uppercase tracking-[0.2em]">Total Invertido</p>
+                                                    <p className="text-3xl font-black text-white leading-none mt-1.5 tabular-nums">
+                                                        {formatCurrency(selectedClientLedger.totalPaid)}
+                                                    </p>
+                                                </div>
+                                                <Button 
+                                                    variant="outline" 
+                                                    size="sm"
+                                                    onClick={async (e) => {
+                                                        e.stopPropagation();
+                                                        const res = await syncLegacyReceipts();
+                                                        if ('error' in res) toast.error(res.error);
+                                                        else {
+                                                            toast.success(`Sincronización completada: ${res.syncedCount} recibos.`);
+                                                            window.location.reload();
+                                                        }
+                                                    }}
+                                                    className="h-8 text-[9px] font-black text-[#8eb2b8] hover:text-white uppercase tracking-widest bg-white/5 hover:bg-[#3f6066]/20 border-white/5 rounded-xl px-4"
                                                 >
-                                                    <Eye className="w-4 h-4" />
+                                                    <RefreshCw className="w-3 h-3 mr-2" />
+                                                    Sincronizar Datos
                                                 </Button>
                                             </div>
-                                                    {selectedClientLedger.uploaded_contract_url ? (
-                                                        <div className="flex gap-2">
-                                                            <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20 font-black text-[8px] uppercase">Cargado</Badge>
-                                                        </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="p-8 space-y-10">
+                                        {/* Core Stats - High Visibility Grid */}
+                                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
+                                            {[
+                                                { label: 'Cuotas Pagadas', value: `${selectedClientLedger.paidCuotas} / ${selectedClientLedger.totalCuotas}`, icon: Wallet },
+                                                { label: 'Próximo Pago', value: selectedClientLedger.nextDueDate ? format(new Date(selectedClientLedger.nextDueDate), 'dd MMM yy', { locale: es }) : 'N/A', icon: CalendarDays, color: 'text-[#8eb2b8]' },
+                                                { label: 'Monto Cuota', value: formatCurrency(selectedClientLedger.valor_cuota || 0), icon: CreditCard },
+                                                { label: 'Estado Pie', value: selectedClientLedger.pieStatus, badge: true }
+                                            ].map((stat, i) => (
+                                                <div key={i} className="bg-white/5 rounded-3xl p-5 border border-white/5 flex flex-col items-center text-center group hover:bg-[#3f6066]/5 hover:border-[#3f6066]/20 transition-all">
+                                                    <p className="text-[9px] text-gray-500 font-black uppercase tracking-widest mb-3 flex items-center gap-2">
+                                                        {stat.icon && <stat.icon className="w-3.5 h-3.5 text-[#3f6066]" />}
+                                                        {stat.label}
+                                                    </p>
+                                                    {stat.badge ? (
+                                                        <Badge className={`${selectedClientLedger.pieStatus === 'PAID' ? 'bg-emerald-500 shadow-emerald-500/20' : 'bg-amber-500 shadow-amber-500/20'} text-white font-black text-[10px] px-3 py-1 rounded-xl uppercase`}>
+                                                            {stat.value}
+                                                        </Badge>
                                                     ) : (
-                                                        <Badge variant="outline" className="text-gray-600 border-gray-800 font-black text-[8px] uppercase">Pendiente</Badge>
+                                                        <p className={`text-xl font-black text-white ${stat.color || ''} leading-none`}>{stat.value}</p>
                                                     )}
                                                 </div>
-                                                <div className="flex-1 mb-6">
-                                                    <p className="text-white font-black text-sm uppercase tracking-tight">Promesa de Compra</p>
-                                                    <p className="text-[9px] text-gray-500 font-black uppercase mt-1">Contrato Legal Firmado</p>
-                                                </div>
-                                                <ContractUploadAction 
-                                                    reservationId={selectedClientLedger.id} 
-                                                    reservationName={selectedClientLedger.clientName}
-                                                    label={selectedClientLedger.uploaded_contract_url ? "Actualizar Archivo" : "Subir PDF Firmado"}
-                                                    onUploadComplete={() => toast.success("Expediente actualizado")}
-                                                />
-                                            </div>
+                                            ))}
+                                        </div>
 
-                                            {/* Item: Reserva PDF */}
-                                            <div className="bg-white/5 rounded-2xl p-5 border border-white/5 flex flex-col h-full group">
-                                                <div className="flex justify-between items-start mb-6">
-                                                    <div className="p-2.5 bg-[#3f6066]/10 rounded-xl border border-[#3f6066]/20">
-                                                        <FileText className="w-5 h-5 text-[#8eb2b8]" />
+                                        {/* Documentation Section - Interactive Grid */}
+                                        <div className="space-y-6">
+                                            <div className="flex items-center gap-4">
+                                                <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent via-[#3f6066]/20 to-transparent" />
+                                                <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] px-4 whitespace-nowrap">Expediente Digital</h3>
+                                                <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent via-[#3f6066]/20 to-transparent" />
+                                            </div>
+                                            
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                                                {/* Item: Promesa */}
+                                                <div className="bg-white/[0.03] rounded-3xl p-6 border border-white/5 flex flex-col group hover:bg-white/[0.08] transition-all">
+                                                    <div className="flex justify-between items-start mb-6">
+                                                        <div className="p-3 bg-blue-500/10 rounded-2xl border border-blue-500/20">
+                                                            <FileSignature className="w-6 h-6 text-blue-400" />
+                                                        </div>                                            
+                                                        <Button
+                                                            size="icon"
+                                                            variant="ghost"
+                                                            disabled={!selectedClientLedger.uploaded_contract_url}
+                                                            onClick={() => setViewerConfig({
+                                                                isOpen: true,
+                                                                url: selectedClientLedger.uploaded_contract_url,
+                                                                name: "Promesa de Compraventa",
+                                                                category: "Documento Legal"
+                                                            })}
+                                                            className="h-10 w-10 bg-white/5 hover:bg-white/10 text-white rounded-xl"
+                                                        >
+                                                            <Eye className="w-5 h-5" />
+                                                        </Button>
                                                     </div>
-                                                    <div className="flex gap-2">
+                                                    <div className="flex-1 mb-6">
+                                                        <p className="text-white font-black text-sm uppercase tracking-tight">Promesa de Compra</p>
+                                                        <p className="text-[9px] text-gray-500 font-black uppercase mt-1">Status: {selectedClientLedger.uploaded_contract_url ? 'Cargado' : 'Pendiente'}</p>
+                                                    </div>
+                                                    <ContractUploadAction 
+                                                        reservationId={selectedClientLedger.id} 
+                                                        reservationName={selectedClientLedger.clientName}
+                                                        label={selectedClientLedger.uploaded_contract_url ? "Actualizar" : "Subir PDF"}
+                                                        onUploadComplete={() => toast.success("Expediente actualizado")}
+                                                    />
+                                                </div>
+
+                                                {/* Item: Reserva PDF */}
+                                                <div className="bg-white/[0.03] rounded-3xl p-6 border border-white/5 flex flex-col group hover:bg-white/[0.08] transition-all">
+                                                    <div className="flex justify-between items-start mb-6">
+                                                        <div className="p-3 bg-emerald-500/10 rounded-2xl border border-emerald-500/20">
+                                                            <FileText className="w-6 h-6 text-emerald-400" />
+                                                        </div>
                                                         <Button
                                                             size="icon"
                                                             variant="ghost"
@@ -456,176 +454,137 @@ export function PostventaMobileDashboard({
                                                                 isOpen: true,
                                                                 url: `/api/contracts/${selectedClientLedger.id}/pdf`,
                                                                 name: "Contrato de Reserva",
-                                                                category: "Documento Oficial"
+                                                                category: "Documento Sistema"
                                                             })}
-                                                            className="h-8 w-8 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 rounded-lg"
+                                                            className="h-10 w-10 bg-white/5 hover:bg-white/10 text-white rounded-xl"
                                                         >
-                                                            <Eye className="w-4 h-4" />
+                                                            <Eye className="w-5 h-5" />
                                                         </Button>
-                                                        <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20 font-black text-[8px] uppercase">Digital</Badge>
                                                     </div>
+                                                    <div className="flex-1 mb-6">
+                                                        <p className="text-white font-black text-sm uppercase tracking-tight">Reserva Digital</p>
+                                                        <p className="text-[9px] text-gray-500 font-black uppercase mt-1">Generado por Alimin</p>
+                                                    </div>
+                                                    <Button 
+                                                        variant="outline" 
+                                                        size="sm"
+                                                        onClick={() => window.open(`/api/contracts/${selectedClientLedger.id}/pdf?download=true`, '_blank')}
+                                                        className="w-full h-11 text-[10px] font-black uppercase border-white/5 bg-white/5 hover:bg-emerald-500/10 hover:text-emerald-400 rounded-2xl transition-all"
+                                                    >
+                                                        <Download className="w-4 h-4 mr-2" />
+                                                        Bajar PDF
+                                                    </Button>
                                                 </div>
-                                                <div className="flex-1 mb-6">
-                                                    <p className="text-white font-black text-sm uppercase tracking-tight">Contrato de Reserva</p>
-                                                    <p className="text-[9px] text-gray-500 font-black uppercase mt-1">Generado automáticamente</p>
-                                                </div>
-                                                <Button 
-                                                    variant="outline" 
-                                                    size="sm"
-                                                    onClick={() => window.open(`/api/contracts/${selectedClientLedger.id}/pdf?download=true`, '_blank')}
-                                                    className="w-full mt-2 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 border-indigo-500/30 font-black text-[10px] uppercase"
-                                                >
-                                                    <Download className="w-4 h-4 mr-2" />
-                                                    Descargar PDF
-                                                </Button>
-                                            </div>
 
-                                            {/* Item: Gastos Op */}
-                                            <div className="bg-white/5 rounded-2xl p-5 border border-white/5 flex flex-col h-full group">
-                                                <div className="flex justify-between items-start mb-6">
-                                                    <div className="p-2.5 bg-[#3f6066]/10 rounded-xl border border-[#3f6066]/20">
-                                                        <Gavel className="w-5 h-5 text-[#8eb2b8]" />
-                                                    </div>
-                                                    {(() => {
-                                                        const doc = Array.isArray(selectedClientLedger.manual_documents) ? selectedClientLedger.manual_documents.find((d: any) => d.category === 'GASTOS_OPERACIONALES') : null;
-                                                        if (doc) {
-                                                            return (
-                                                                <div className="flex gap-2">
-                                                                    <button 
+                                                {/* Item: Gastos Op */}
+                                                <div className="bg-white/[0.03] rounded-3xl p-6 border border-white/5 flex flex-col group hover:bg-white/[0.08] transition-all">
+                                                    <div className="flex justify-between items-start mb-6">
+                                                        <div className="p-3 bg-amber-500/10 rounded-2xl border border-amber-500/20">
+                                                            <Gavel className="w-6 h-6 text-amber-500" />
+                                                        </div>
+                                                        {(() => {
+                                                            const doc = Array.isArray(selectedClientLedger.manual_documents) ? selectedClientLedger.manual_documents.find((d: any) => d.category === 'GASTOS_OPERACIONALES') : null;
+                                                            if (doc) {
+                                                                return (
+                                                                    <Button 
+                                                                        size="icon"
+                                                                        variant="ghost"
                                                                         onClick={() => setViewerConfig({
                                                                             isOpen: true,
                                                                             url: doc.url,
                                                                             name: "Gastos Operacionales",
-                                                                            category: "Comprobante Notarial"
+                                                                            category: "Legal"
                                                                         })}
-                                                                        className="p-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 rounded-lg transition-colors"
+                                                                        className="h-10 w-10 bg-white/5 hover:bg-white/10 text-white rounded-xl"
                                                                     >
-                                                                        <Eye className="w-4 h-4" />
-                                                                    </button>
-                                                                    <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20 font-black text-[8px] uppercase">Cargado</Badge>
-                                                                </div>
-                                                            );
-                                                        }
-                                                        return <Badge variant="outline" className="text-gray-600 border-gray-800 font-black text-[8px] uppercase">Pendiente</Badge>;
-                                                    })()}
-                                                </div>
-                                                <div className="flex-1 mb-6">
-                                                    <p className="text-white font-black text-sm uppercase tracking-tight">Gastos Operacionales</p>
-                                                    <p className="text-[9px] text-gray-500 font-black uppercase mt-1">Comprobante Notarial</p>
-                                                </div>
-                                                <ContractUploadAction 
-                                                    reservationId={selectedClientLedger.id} 
-                                                    reservationName={selectedClientLedger.clientName}
-                                                    type="GASTOS_OPERACIONALES"
-                                                    label="Registrar Gastos"
-                                                    onUploadComplete={() => toast.success("Expediente actualizado")}
-                                                />
-                                            </div>
-
-                                            {/* Item: Pagos Externos y Comprobantes */}
-                                            <div className="bg-white/5 rounded-2xl p-5 border border-white/5 flex flex-col h-full group sm:col-span-2 lg:col-span-1">
-                                                <div className="flex justify-between items-start mb-6">
-                                                    <div className="p-2.5 bg-[#3f6066]/10 rounded-xl border border-[#3f6066]/20">
-                                                        <Wallet className="w-5 h-5 text-[#8eb2b8]" />
+                                                                        <Eye className="w-5 h-5" />
+                                                                    </Button>
+                                                                );
+                                                            }
+                                                            return <Badge variant="outline" className="text-gray-600 border-gray-800 font-black text-[7px] uppercase">Pendiente</Badge>;
+                                                        })()}
                                                     </div>
-                                                    {(() => {
-                                                        const manual = Array.isArray(selectedClientLedger.manual_documents) ? selectedClientLedger.manual_documents.filter((d: any) => d.category === 'COMPROBANTE_CUOTA' || d.category === 'COMPROBANTE_PIE') : [];
-                                                        const auto = (selectedClientLedger.receipts || []).filter((r: any) => r.status === 'APPROVED');
-                                                        const total = manual.length + auto.length;
-                                                        
-                                                        if (total > 0) {
-                                                            return (
-                                                                <Badge className="bg-[#3b82f6]/10 text-[#3b82f6] border-[#3b82f6]/20 font-black text-[8px] uppercase">
-                                                                    {total} Registros
-                                                                </Badge>
-                                                            );
-                                                        }
-                                                        return <Badge className="bg-amber-500/10 text-amber-500 border-amber-500/20 font-black text-[8px] uppercase">Sin Registro</Badge>;
-                                                    })()}
+                                                    <div className="flex-1 mb-6">
+                                                        <p className="text-white font-black text-sm uppercase tracking-tight">Gastos Op.</p>
+                                                        <p className="text-[9px] text-gray-500 font-black uppercase mt-1">Comprobante Notarial</p>
+                                                    </div>
+                                                    <ContractUploadAction 
+                                                        reservationId={selectedClientLedger.id} 
+                                                        reservationName={selectedClientLedger.clientName}
+                                                        type="GASTOS_OPERACIONALES"
+                                                        label="Registrar"
+                                                        onUploadComplete={() => toast.success("Expediente actualizado")}
+                                                    />
                                                 </div>
-                                                
-                                                <div 
-                                                    className="flex-1 space-y-4 cursor-pointer hover:bg-white/5 rounded-xl p-2 -m-2 transition-colors"
-                                                    onClick={() => setShowPaymentsModal(true)}
-                                                >
-                                                    <div>
+
+                                                {/* Item: Pagos Externos */}
+                                                <div className="bg-white/[0.03] rounded-3xl p-6 border border-white/5 flex flex-col group hover:bg-white/[0.08] transition-all">
+                                                    <div className="flex justify-between items-start mb-6">
+                                                        <div className="p-3 bg-indigo-500/10 rounded-2xl border border-indigo-500/20">
+                                                            <Wallet className="w-6 h-6 text-indigo-400" />
+                                                        </div>
+                                                        <Button 
+                                                            size="icon"
+                                                            variant="ghost"
+                                                            onClick={() => setShowPaymentsModal(true)}
+                                                            className="h-10 w-10 bg-white/5 hover:bg-white/10 text-white rounded-xl"
+                                                        >
+                                                            <Eye className="w-5 h-5" />
+                                                        </Button>
+                                                    </div>
+                                                    <div className="flex-1 mb-6">
                                                         <p className="text-white font-black text-sm uppercase tracking-tight">Pagos Externos</p>
-                                                        <p className="text-[9px] text-gray-500 font-black uppercase mt-1">Historial completo de pagos</p>
+                                                        <p className="text-[9px] text-gray-500 font-black uppercase mt-1">Comprobantes Manuales</p>
                                                     </div>
-                                                    
-                                                    {/* Simplified Preview */}
-                                                    <div className="flex -space-x-2 overflow-hidden">
-                                                        {(() => {
-                                                            const manual = Array.isArray(selectedClientLedger.manual_documents) 
-                                                                ? selectedClientLedger.manual_documents.filter((d: any) => d.category === 'COMPROBANTE_CUOTA' || d.category === 'COMPROBANTE_PIE')
-                                                                : [];
-                                                            const auto = (selectedClientLedger.receipts || []).filter((r: any) => r.status === 'APPROVED');
-                                                            const total = manual.length + auto.length;
-                                                            
-                                                            return Array.from({ length: Math.min(total, 5) }).map((_, i) => (
-                                                                <div key={i} className="inline-block h-6 w-6 rounded-full ring-2 ring-[#0a1622] bg-[#3f6066] flex items-center justify-center">
-                                                                    <Receipt className="w-3 h-3 text-white/70" />
-                                                                </div>
-                                                            ));
-                                                        })()}
-                                                        {(() => {
-                                                            const manual = Array.isArray(selectedClientLedger.manual_documents) ? selectedClientLedger.manual_documents.filter((d: any) => d.category === 'COMPROBANTE_CUOTA' || d.category === 'COMPROBANTE_PIE') : [];
-                                                            const auto = (selectedClientLedger.receipts || []).filter((r: any) => r.status === 'APPROVED');
-                                                            const total = manual.length + auto.length;
-                                                            return total > 5 ? <span className="flex items-center justify-center h-6 w-6 rounded-full ring-2 ring-[#0a1622] bg-gray-800 text-[8px] font-black text-white pl-1">+{total-5}</span> : null;
-                                                        })()}
-                                                    </div>
-                                                    <p className="text-[8px] font-black text-[#8eb2b8] uppercase">Ver todos los comprobantes →</p>
+                                                    <ContractUploadAction 
+                                                        reservationId={selectedClientLedger.id} 
+                                                        reservationName={selectedClientLedger.clientName}
+                                                        type="COMPROBANTE_CUOTA"
+                                                        label="Cargar Pago"
+                                                        onUploadComplete={() => toast.success("Pago registrado")}
+                                                        extraCategories={[
+                                                            { id: 'COMPROBANTE_PIE', label: 'Pago de Pie' },
+                                                            { id: 'COMPROBANTE_CUOTA', label: 'Pago de Cuota' }
+                                                        ]}
+                                                    />
                                                 </div>
+                                            </div>
+                                        </div>
 
-                                                <ContractUploadAction 
-                                                    reservationId={selectedClientLedger.id} 
-                                                    reservationName={selectedClientLedger.clientName}
-                                                    type="COMPROBANTE_CUOTA"
-                                                    label="Cargar Comprobante"
-                                                    onUploadComplete={() => toast.success("Pago registrado")}
-                                                    extraCategories={[
-                                                        { id: 'COMPROBANTE_PIE', label: 'Pago de Pie' },
-                                                        { id: 'COMPROBANTE_CUOTA', label: 'Pago de Cuota' }
-                                                    ]}
-                                                />
+                                        {/* Mora Control Panel - Immersive Dark Mode */}
+                                        <div className="bg-black/60 rounded-[2.5rem] p-10 border border-red-500/10 relative overflow-hidden group">
+                                            <div className="absolute top-0 right-0 p-12 opacity-[0.03] group-hover:scale-125 transition-all duration-1000 grayscale">
+                                                <ShieldAlert className="w-64 h-64 text-red-500" />
+                                            </div>
+                                            <div className="relative z-10 flex flex-col lg:flex-row lg:items-center gap-10">
+                                                <div className="flex-1 space-y-4">
+                                                    <h3 className="text-[10px] font-black text-red-500/60 uppercase tracking-[0.4em] flex items-center gap-2">
+                                                        <Clock className="w-4 h-4 text-red-500" />
+                                                        Gestión de Morosidad
+                                                    </h3>
+                                                    <p className="text-white font-black text-2xl uppercase tracking-tight">Exención y Congelación</p>
+                                                    <p className="text-[11px] text-gray-500 leading-relaxed font-medium max-w-xl">
+                                                        Controla la aplicación de multas automáticas e intereses diarios. Congelar la mora eximirá al cliente de notificaciones de cobranza y mantendrá su deuda en $0 temporalmente.
+                                                    </p>
+                                                </div>
+                                                <div className="shrink-0">
+                                                    <AdminMoraManager users={users} />
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
-
-                                    {/* Mora Control Panel - Immersive Dark Mode */}
-                                    <div className="bg-black/60 rounded-[2rem] p-8 border border-red-500/10 relative overflow-hidden group">
-                                        <div className="absolute top-0 right-0 p-12 opacity-[0.02] group-hover:scale-125 transition-all duration-1000 grayscale">
-                                            <ShieldAlert className="w-48 h-48 text-red-500" />
-                                        </div>
-                                        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center gap-8">
-                                            <div className="flex-1 space-y-3">
-                                                <h3 className="text-xs font-black text-red-500/60 uppercase tracking-[0.3em] flex items-center gap-2">
-                                                    <Clock className="w-4 h-4" />
-                                                    Gestión de Morosidad
-                                                </h3>
-                                                <p className="text-white font-black text-lg uppercase tracking-tight">Exención y Congelación de Intereses</p>
-                                                <p className="text-[11px] text-gray-500 leading-relaxed font-medium max-w-lg">
-                                                    Controla la aplicación de multas automáticas e intereses diarios. Congelar la mora eximirá al cliente de notificaciones de cobranza y mantendrá su deuda en $0 temporalmente.
-                                                </p>
-                                            </div>
-                                            <div className="shrink-0">
-                                                <AdminMoraManager users={users} />
-                                            </div>
-                                        </div>
+                                    
+                                    <div className="p-12 pt-0 flex justify-center">
+                                        <Button 
+                                            variant="ghost" 
+                                            onClick={() => setSelectedClientLedger(null)} 
+                                            className="w-full sm:w-auto px-20 h-16 rounded-3xl text-xs font-black uppercase tracking-[0.5em] text-gray-600 hover:text-white hover:bg-white/5 border border-transparent hover:border-white/10 transition-all shadow-2xl hover:shadow-[#3f6066]/10"
+                                        >
+                                            Cerrar Expediente
+                                        </Button>
                                     </div>
                                 </div>
-                                
-                                <div className="p-8 pt-0 flex justify-center">
-                                    <Button 
-                                        variant="ghost" 
-                                        onClick={() => setSelectedClientLedger(null)} 
-                                        className="w-full sm:w-auto px-12 h-12 rounded-2xl text-[10px] font-black uppercase tracking-[0.3em] text-gray-600 hover:text-white hover:bg-white/5 border border-transparent hover:border-white/10 transition-all"
-                                    >
-                                        Cerrar Vista Detallada
-                                    </Button>
-                                </div>
-                            </div>
+                            </>
                         )}
                     </DialogContent>
                 </Dialog>
