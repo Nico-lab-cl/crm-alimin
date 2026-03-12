@@ -744,7 +744,8 @@ export async function getUserReservations(userId: string) {
                         name: true,
                         email: true
                     }
-                }
+                },
+                receipts: true
             },
             orderBy: { created_at: 'desc' }
         })

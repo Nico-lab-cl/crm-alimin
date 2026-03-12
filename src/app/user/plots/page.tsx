@@ -187,10 +187,10 @@ export default function UserPlotsPage() {
                                                 />
                                             )}
 
-                                            {res.is_legacy && res.legacy_uploaded_contracts && JSON.parse(res.legacy_uploaded_contracts).length > 0 && (
+                                            {res.is_legacy && res.legacy_uploaded_contracts && (typeof res.legacy_uploaded_contracts === 'string' ? JSON.parse(res.legacy_uploaded_contracts) : res.legacy_uploaded_contracts)?.length > 0 && (
                                                 <div className="space-y-2 pb-2">
                                                     <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Documentos Físicos (Offline)</h4>
-                                                    {JSON.parse(res.legacy_uploaded_contracts).map((doc: any, i: number) => (
+                                                    {(typeof res.legacy_uploaded_contracts === 'string' ? JSON.parse(res.legacy_uploaded_contracts) : res.legacy_uploaded_contracts).map((doc: any, i: number) => (
                                                         <a
                                                             key={i}
                                                             href={doc.url}
@@ -203,6 +203,33 @@ export default function UserPlotsPage() {
                                                     ))}
                                                 </div>
                                             )}
+
+                                            {/* Manual Documents (Receipts / Operating Expenses) */}
+                                            {(() => {
+                                                const rawManual = (res as any).manual_documents;
+                                                const manualList = Array.isArray(rawManual) 
+                                                    ? rawManual 
+                                                    : (typeof rawManual === 'string' ? JSON.parse(rawManual) : []);
+                                                
+                                                if (manualList.length === 0) return null;
+
+                                                return (
+                                                    <div className="space-y-2 pb-2 mt-2 pt-2 border-t border-white/5">
+                                                        <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Documentos Adjuntos</h4>
+                                                        {manualList.map((doc: any, i: number) => (
+                                                            <a
+                                                                key={i}
+                                                                href={doc.url}
+                                                                download={doc.name}
+                                                                className="w-full py-2 px-4 bg-white/5 text-gray-400 border border-white/10 rounded-xl text-center text-xs flex items-center justify-between hover:bg-white/10 transition-colors cursor-pointer group"
+                                                            >
+                                                                <span className="truncate max-w-[180px]">{doc.name}</span>
+                                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="opacity-50 group-hover:opacity-100 transition-opacity"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" x2="12" y1="15" y2="3" /></svg>
+                                                            </a>
+                                                        ))}
+                                                    </div>
+                                                );
+                                            })()}
 
 
 

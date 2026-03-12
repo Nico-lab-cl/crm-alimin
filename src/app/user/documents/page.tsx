@@ -22,6 +22,7 @@ export interface Reservation {
     };
     is_legacy?: boolean;
     legacy_uploaded_contracts?: string | null;
+    manual_documents?: any;
     receipts?: any[];
 }
 

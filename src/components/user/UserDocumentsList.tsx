@@ -18,6 +18,7 @@ interface Reservation {
     };
     is_legacy?: boolean;
     legacy_uploaded_contracts?: string | null;
+    manual_documents?: any; // JSON field
     receipts?: any[];
 }
 
@@ -164,7 +165,12 @@ export function UserDocumentsList({ reservations }: { reservations: Reservation[
                                 ];
 
                                 return categories.map(cat => {
-                                    const catDocs = Array.isArray(docs) ? docs.filter((d: any) => d.category === cat.id) : [];
+                                    const rawDocs = res.manual_documents;
+                                    const docsList = Array.isArray(rawDocs) 
+                                        ? rawDocs 
+                                        : (typeof rawDocs === 'string' ? JSON.parse(rawDocs) : []);
+                                    
+                                    const catDocs = docsList.filter((d: any) => d.category === cat.id);
                                     if (catDocs.length === 0) return null;
 
                                     return (
@@ -225,32 +231,34 @@ export function UserDocumentsList({ reservations }: { reservations: Reservation[
                                 });
                             })()}
 
-                            {/* ── Recibos Automáticos ── */}
                             {res.receipts && res.receipts.filter((r: any) => r.status === 'APPROVED').length > 0 && (() => {
                                 const allApproved = res.receipts.filter((r: any) => r.status === 'APPROVED');
-                                const installmentReceipts = allApproved.filter((r: any) => r.scope === 'INSTALLMENT' || r.scope === 'CUOTA');
+                                // Include all types of approved receipts (PIE, INSTALLMENT, RESERVATION)
+                                const validReceipts = allApproved; 
 
                                 return (
                                     <>
-                                        {installmentReceipts.length > 0 && (
+                                        {validReceipts.length > 0 && (
                                             <div className="space-y-4 pt-8 border-t border-white/5">
                                                 <h3 className="text-white font-black text-[10px] uppercase tracking-[0.2em] flex items-center gap-2">
                                                     <CreditCard className="h-3 w-3 text-indigo-500" />
-                                                    Historial de Pagos Web
+                                                    Historial de Pagos Digitales
                                                 </h3>
                                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                                    {installmentReceipts.map((receipt: any) => (
+                                                    {validReceipts.map((receipt: any) => (
                                                         <div key={receipt.id} className="flex items-center justify-between px-4 py-3 bg-indigo-500/5 hover:bg-indigo-500/10 border border-indigo-500/10 rounded-xl transition-all group/it">
                                                             <div className="flex flex-col">
                                                                 <span className="text-[9px] font-black text-indigo-300 uppercase">Recibo #{receipt.id.slice(-4)}</span>
-                                                                <span className="text-[8px] text-gray-500 uppercase font-medium">Cuotas Pagadas</span>
+                                                                <span className="text-[8px] text-gray-500 uppercase font-medium">
+                                                                    {receipt.scope === 'PIE' ? 'Pago de Pie' : receipt.scope === 'RESERVATION' ? 'Reserva' : 'Cuota Pagada'}
+                                                                </span>
                                                             </div>
                                                             <div className="flex gap-3">
                                                                 <button 
                                                                     onClick={() => setViewerConfig({
                                                                         isOpen: true,
                                                                         url: `/api/receipt/${receipt.id}/pdf`,
-                                                                        name: `Comprobante Official #${receipt.id.slice(-4)}`,
+                                                                        name: `Comprobante Oficial #${receipt.id.slice(-4)}`,
                                                                         category: "Recibo de Pago"
                                                                     })}
                                                                     className="text-gray-600 hover:text-indigo-400 transition-colors" 
