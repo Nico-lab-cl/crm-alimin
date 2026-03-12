@@ -165,12 +165,14 @@ export const Header = ({ projectName }: HeaderProps) => {
                           <span>Panel de Administración</span>
                         </Link>
                       </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <Link href="/admin/lots" className="cursor-pointer">
-                          <MapIcon className="mr-2 h-4 w-4" />
-                          <span>Gestión de Lotes</span>
-                        </Link>
-                      </DropdownMenuItem>
+                      {session.user?.email !== 'postventa@lomasdelmar.cl' && (
+                        <DropdownMenuItem asChild>
+                          <Link href="/admin/lots" className="cursor-pointer">
+                            <MapIcon className="mr-2 h-4 w-4" />
+                            <span>Gestión de Lotes</span>
+                          </Link>
+                        </DropdownMenuItem>
+                      )}
                     </>
                   )}
 
