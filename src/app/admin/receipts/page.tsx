@@ -33,7 +33,7 @@ export default async function ReceiptsPage({
                         Verificación de Pagos
                     </h1>
                     <p className="text-gray-600 text-sm md:text-base text-center md:text-left">
-                        Revisa los comprobantes del día. Mostrando página {page} de {result.totalPages}.
+                        Revisa los comprobantes del día. Mostrando página {page} de {(result as any).totalPages}.
                     </p>
                 </div>
 
