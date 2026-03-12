@@ -38,7 +38,12 @@ export async function getPostventaData() {
 
             const pieAmount = res.receipts.filter(r => r.scope === 'PIE').reduce((acc, r) => acc + r.amount_clp, 0);
             const cuotasAmount = res.receipts.filter(r => r.scope === 'INSTALLMENT').reduce((acc, r) => acc + r.amount_clp, 0);
-            const totalPaid = pieAmount + cuotasAmount;
+            
+            // Fallback for legacy/manual data if receipts are not synced yet
+            const effectivePieAmount = pieAmount || (res.pie_status === 'PAID' ? (lot.pie || 0) : 0);
+            const effectiveCuotasAmount = cuotasAmount || ((res.installments_paid || 0) * (lot.valor_cuota || 0));
+            
+            const totalPaid = effectivePieAmount + effectiveCuotasAmount;
             const totalToPay = lot.price_total_clp || 0;
             const pendingBalance = Math.max(0, totalToPay - totalPaid - (lot.reservation_amount_clp || 0));
 

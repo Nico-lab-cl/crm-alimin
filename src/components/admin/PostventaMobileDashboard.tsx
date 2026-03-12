@@ -59,6 +59,7 @@ export function PostventaMobileDashboard({
     const [ledgerStage, setLedgerStage] = useState<'ALL' | 1 | 2 | 3 | 4>('ALL');
     const [ledgerSearch, setLedgerSearch] = useState('');
     const [selectedClientLedger, setSelectedClientLedger] = useState<any | null>(null);
+    const [showPaymentsModal, setShowPaymentsModal] = useState(false);
     const ledgerItemsPerPage = 20; // Increased density
 
     const [alertFilter, setAlertFilter] = useState<'ALL' | 'UPCOMING' | 'GRACE' | 'LATE' | 'OK'>('ALL');
@@ -462,40 +463,38 @@ export function PostventaMobileDashboard({
                                                     })()}
                                                 </div>
                                                 
-                                                <div className="flex-1 space-y-4">
+                                                <div 
+                                                    className="flex-1 space-y-4 cursor-pointer hover:bg-white/5 rounded-xl p-2 -m-2 transition-colors"
+                                                    onClick={() => setShowPaymentsModal(true)}
+                                                >
                                                     <div>
                                                         <p className="text-white font-black text-sm uppercase tracking-tight">Pagos Externos</p>
-                                                        <p className="text-[9px] text-gray-500 font-black uppercase mt-1">Historial de Pie y Cuotas</p>
+                                                        <p className="text-[9px] text-gray-500 font-black uppercase mt-1">Historial completo de pagos</p>
                                                     </div>
                                                     
-                                                    {/* Preview of latest payments (mixture) */}
-                                                    <div className="space-y-2">
+                                                    {/* Simplified Preview */}
+                                                    <div className="flex -space-x-2 overflow-hidden">
                                                         {(() => {
                                                             const manual = Array.isArray(selectedClientLedger.manual_documents) 
                                                                 ? selectedClientLedger.manual_documents.filter((d: any) => d.category === 'COMPROBANTE_CUOTA' || d.category === 'COMPROBANTE_PIE')
                                                                 : [];
                                                             const auto = (selectedClientLedger.receipts || []).filter((r: any) => r.status === 'APPROVED');
+                                                            const total = manual.length + auto.length;
                                                             
-                                                            const all = [
-                                                                ...manual.map((m: any) => ({ name: m.name, url: m.url, type: m.category === 'COMPROBANTE_PIE' ? 'PIE' : 'CUOTA', isAuto: false })),
-                                                                ...auto.map((a: any) => ({ name: `Recibo #${a.id.slice(-4)}`, url: `/api/receipt/${a.id}/pdf`, type: a.scope, isAuto: true }))
-                                                            ].slice(0, 3); // Top 3
-
-                                                            return all.map((p, idx) => (
-                                                                <div key={idx} className="flex justify-between items-center bg-black/20 rounded-lg p-2 border border-white/5">
-                                                                    <div className="flex flex-col">
-                                                                        <span className="text-[8px] font-black text-white truncate max-w-[80px]">{p.name}</span>
-                                                                        <span className={`text-[6px] font-black uppercase ${p.type === 'PIE' ? 'text-amber-500' : 'text-blue-400'}`}>
-                                                                            {p.type === 'PIE' ? 'Pago Pie' : 'Cuota'} {p.isAuto ? '(WEB)' : '(MANUAL)'}
-                                                                        </span>
-                                                                    </div>
-                                                                    <a href={p.url} target="_blank" rel="noopener noreferrer" className="p-1 bg-[#3f6066]/20 hover:bg-[#3f6066]/40 text-[#8eb2b8] rounded-md transition-all">
-                                                                        <Eye className="w-2.5 h-2.5" />
-                                                                    </a>
+                                                            return Array.from({ length: Math.min(total, 5) }).map((_, i) => (
+                                                                <div key={i} className="inline-block h-6 w-6 rounded-full ring-2 ring-[#0a1622] bg-[#3f6066] flex items-center justify-center">
+                                                                    <Receipt className="w-3 h-3 text-white/70" />
                                                                 </div>
                                                             ));
                                                         })()}
+                                                        {(() => {
+                                                            const manual = Array.isArray(selectedClientLedger.manual_documents) ? selectedClientLedger.manual_documents.filter((d: any) => d.category === 'COMPROBANTE_CUOTA' || d.category === 'COMPROBANTE_PIE') : [];
+                                                            const auto = (selectedClientLedger.receipts || []).filter((r: any) => r.status === 'APPROVED');
+                                                            const total = manual.length + auto.length;
+                                                            return total > 5 ? <span className="flex items-center justify-center h-6 w-6 rounded-full ring-2 ring-[#0a1622] bg-gray-800 text-[8px] font-black text-white pl-1">+{total-5}</span> : null;
+                                                        })()}
                                                     </div>
+                                                    <p className="text-[8px] font-black text-[#8eb2b8] uppercase">Ver todos los comprobantes →</p>
                                                 </div>
 
                                                 <ContractUploadAction 
@@ -547,6 +546,94 @@ export function PostventaMobileDashboard({
                                 </div>
                             </div>
                         )}
+                    </DialogContent>
+                </Dialog>
+                
+                {/* Payments Detail Modal - Focused View */}
+                <Dialog open={showPaymentsModal} onOpenChange={setShowPaymentsModal}>
+                    <DialogContent className="max-w-md bg-[#0a1622] border-[#3f6066]/20 p-0 overflow-hidden rounded-[2rem] shadow-2xl">
+                        <DialogHeader className="p-6 bg-[#3f6066]/10 border-b border-white/5">
+                            <DialogTitle className="flex items-center gap-2 text-white font-black uppercase tracking-tight">
+                                <Wallet className="w-4 h-4 text-[#8eb2b8]" />
+                                Historial de Pagos
+                            </DialogTitle>
+                        </DialogHeader>
+                        
+                        <div className="p-6 max-h-[60vh] overflow-y-auto no-scrollbar space-y-3">
+                            {(() => {
+                                if (!selectedClientLedger) return null;
+                                const manual = Array.isArray(selectedClientLedger.manual_documents) 
+                                    ? selectedClientLedger.manual_documents.filter((d: any) => d.category === 'COMPROBANTE_CUOTA' || d.category === 'COMPROBANTE_PIE')
+                                    : [];
+                                const auto = (selectedClientLedger.receipts || []).filter((r: any) => r.status === 'APPROVED');
+                                
+                                const all = [
+                                    ...manual.map((m: any) => ({ 
+                                        name: m.name, 
+                                        url: m.url, 
+                                        type: m.category === 'COMPROBANTE_PIE' ? 'PIE' : 'CUOTA', 
+                                        isAuto: false,
+                                        date: m.uploadedAt ? new Date(m.uploadedAt) : new Date()
+                                    })),
+                                    ...auto.map((a: any) => ({ 
+                                        name: `Recibo #${a.id.slice(-4)}`, 
+                                        url: `/api/receipt/${a.id}/pdf`, 
+                                        type: a.scope, 
+                                        isAuto: true,
+                                        date: new Date(a.processed_at || a.created_at)
+                                    }))
+                                ].sort((a, b) => b.date.getTime() - a.date.getTime());
+
+                                if (all.length === 0) {
+                                    return (
+                                        <div className="text-center py-10 opacity-50">
+                                            <Receipt className="w-8 h-8 mx-auto mb-2" />
+                                            <p className="text-[10px] font-black uppercase">Sin registros aún</p>
+                                        </div>
+                                    );
+                                }
+
+                                return all.map((p, idx) => (
+                                    <div key={idx} className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/5 group hover:bg-white/10 transition-all">
+                                        <div className="flex items-center gap-3">
+                                            <div className={`p-2 rounded-lg ${p.type === 'PIE' ? 'bg-amber-500/10' : 'bg-blue-500/10'}`}>
+                                                <Receipt className={`w-4 h-4 ${p.type === 'PIE' ? 'text-amber-500' : 'text-blue-400'}`} />
+                                            </div>
+                                            <div>
+                                                <p className="text-[11px] font-black text-white leading-tight uppercase truncate max-w-[150px]">{p.name}</p>
+                                                <div className="flex items-center gap-2 mt-0.5">
+                                                    <span className={`text-[7px] font-black uppercase px-1 rounded ${p.type === 'PIE' ? 'bg-amber-500/20 text-amber-500' : 'bg-blue-500/20 text-blue-400'}`}>
+                                                        {p.type === 'PIE' ? 'Pie' : 'Cuota'}
+                                                    </span>
+                                                    <span className="text-[7px] text-gray-500 font-bold uppercase">{format(p.date, 'dd MMM yyyy', { locale: es })}</span>
+                                                    {p.isAuto && <span className="text-[7px] text-emerald-500 font-black uppercase">WEB</span>}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="flex gap-1">
+                                            <a 
+                                                href={p.url} 
+                                                target="_blank" 
+                                                rel="noopener noreferrer" 
+                                                className="p-2 bg-[#3f6066]/20 hover:bg-[#3f6066]/40 text-[#8eb2b8] rounded-lg transition-all"
+                                                title="Ver Documento"
+                                            >
+                                                <Eye className="w-4 h-4" />
+                                            </a>
+                                        </div>
+                                    </div>
+                                ));
+                            })()}
+                        </div>
+                        
+                        <div className="p-4 bg-black/20 border-t border-white/5">
+                            <Button
+                                onClick={() => setShowPaymentsModal(false)}
+                                className="w-full bg-[#3f6066] hover:bg-[#3f6066]/80 text-white font-black uppercase text-[10px] tracking-widest h-10 rounded-xl"
+                            >
+                                Cerrar Historial
+                            </Button>
+                        </div>
                     </DialogContent>
                 </Dialog>
             </div>
