@@ -428,6 +428,10 @@ export function PostventaMobileDashboard({
 
                                     <div className="p-8 space-y-10">
                                         {/* Core Stats - High Visibility Grid */}
+                                        {(() => {
+                                            const isOffline = selectedClientLedger.is_legacy || selectedClientLedger.signatureIp === 'Firma Offline';
+                                            return (
+                                                <>
                                         <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
                                             {[
                                                 { label: 'Cuotas Pagadas', value: `${selectedClientLedger.paidCuotas} / ${selectedClientLedger.totalCuotas}`, icon: Wallet },
@@ -505,40 +509,98 @@ export function PostventaMobileDashboard({
                                                     />
                                                 </div>
 
-                                                {/* Item: Reserva PDF */}
-                                                <div className="bg-white/[0.03] rounded-3xl p-6 border border-white/5 flex flex-col group hover:bg-white/[0.08] transition-all">
-                                                    <div className="flex justify-between items-start mb-6">
-                                                        <div className="p-3 bg-emerald-500/10 rounded-2xl border border-emerald-500/20">
-                                                            <FileText className="w-6 h-6 text-emerald-400" />
+                                                {/* Item: Reserva PDF / Manual Reserva for Offline */}
+                                                {!isOffline ? (
+                                                    <div className="bg-white/[0.03] rounded-3xl p-6 border border-white/5 flex flex-col group hover:bg-white/[0.08] transition-all">
+                                                        <div className="flex justify-between items-start mb-6">
+                                                            <div className="p-3 bg-emerald-500/10 rounded-2xl border border-emerald-500/20">
+                                                                <FileText className="w-6 h-6 text-emerald-400" />
+                                                            </div>
+                                                            <Button
+                                                                size="icon"
+                                                                variant="ghost"
+                                                                onClick={() => setViewerConfig({
+                                                                    isOpen: true,
+                                                                    url: `/api/contracts/${selectedClientLedger.id}/pdf`,
+                                                                    name: "Contrato de Reserva",
+                                                                    category: "Documento Sistema"
+                                                                })}
+                                                                className="h-10 w-10 bg-white/5 hover:bg-white/10 text-white rounded-xl"
+                                                            >
+                                                                <Eye className="w-5 h-5" />
+                                                            </Button>
                                                         </div>
-                                                        <Button
-                                                            size="icon"
-                                                            variant="ghost"
-                                                            onClick={() => setViewerConfig({
-                                                                isOpen: true,
-                                                                url: `/api/contracts/${selectedClientLedger.id}/pdf`,
-                                                                name: "Contrato de Reserva",
-                                                                category: "Documento Sistema"
-                                                            })}
-                                                            className="h-10 w-10 bg-white/5 hover:bg-white/10 text-white rounded-xl"
+                                                        <div className="flex-1 mb-6">
+                                                            <p className="text-white font-black text-sm uppercase tracking-tight">Reserva Digital</p>
+                                                            <p className="text-[9px] text-gray-500 font-black uppercase mt-1">Generado por Alimin</p>
+                                                        </div>
+                                                        <Button 
+                                                            variant="outline" 
+                                                            size="sm"
+                                                            onClick={() => window.open(`/api/contracts/${selectedClientLedger.id}/pdf?download=true`, '_blank')}
+                                                            className="w-full h-11 text-[10px] font-black uppercase border-white/5 bg-white/5 hover:bg-emerald-500/10 hover:text-emerald-400 rounded-2xl transition-all"
                                                         >
-                                                            <Eye className="w-5 h-5" />
+                                                            <Download className="w-4 h-4 mr-2" />
+                                                            Bajar PDF
                                                         </Button>
                                                     </div>
-                                                    <div className="flex-1 mb-6">
-                                                        <p className="text-white font-black text-sm uppercase tracking-tight">Reserva Digital</p>
-                                                        <p className="text-[9px] text-gray-500 font-black uppercase mt-1">Generado por Alimin</p>
+                                                ) : (
+                                                    <div className="bg-amber-900/10 rounded-3xl p-6 border border-amber-500/20 flex flex-col group hover:bg-amber-900/20 transition-all">
+                                                        <div className="flex justify-between items-start mb-6">
+                                                            <div className="p-3 bg-amber-500/20 rounded-2xl border border-amber-500/30">
+                                                                <FileText className="w-6 h-6 text-amber-500" />
+                                                            </div>
+                                                            {(() => {
+                                                                let legacyDocs = [];
+                                                                if (selectedClientLedger.legacy_uploaded_contracts) {
+                                                                    try {
+                                                                        legacyDocs = typeof selectedClientLedger.legacy_uploaded_contracts === 'string' 
+                                                                            ? JSON.parse(selectedClientLedger.legacy_uploaded_contracts) 
+                                                                            : selectedClientLedger.legacy_uploaded_contracts;
+                                                                    } catch (e) {}
+                                                                }
+                                                                const reservaDoc = legacyDocs?.[0]; // Assume first one is the main reserva if multiple
+                                                                
+                                                                return reservaDoc ? (
+                                                                    <div className="flex gap-2">
+                                                                        <Button
+                                                                            size="icon"
+                                                                            variant="ghost"
+                                                                            onClick={() => setViewerConfig({
+                                                                                isOpen: true,
+                                                                                url: reservaDoc.url,
+                                                                                name: reservaDoc.name,
+                                                                                category: "Contrato Manual"
+                                                                            })}
+                                                                            className="h-10 w-10 bg-white/5 hover:bg-white/10 text-white rounded-xl"
+                                                                        >
+                                                                            <Eye className="w-5 h-5" />
+                                                                        </Button>
+                                                                        <Button
+                                                                            size="icon"
+                                                                            variant="ghost"
+                                                                            onClick={() => handleDeleteDocument(selectedClientLedger.id, 'legacy', reservaDoc.url)}
+                                                                            className="h-10 w-10 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-xl transition-all"
+                                                                        >
+                                                                            <Trash2 className="w-5 h-5" />
+                                                                        </Button>
+                                                                    </div>
+                                                                ) : <Badge variant="outline" className="text-amber-500 border-amber-500/30 font-black text-[7px] uppercase">Falta Archivo</Badge>;
+                                                            })()}
+                                                        </div>
+                                                        <div className="flex-1 mb-6">
+                                                            <p className="text-amber-500 font-black text-sm uppercase tracking-tight">Reserva Offline</p>
+                                                            <p className="text-[9px] text-gray-400 font-black uppercase mt-1">Manual / Escaneado</p>
+                                                        </div>
+                                                        <ContractUploadAction 
+                                                            reservationId={selectedClientLedger.id} 
+                                                            reservationName={selectedClientLedger.clientName}
+                                                            type="legacy"
+                                                            label={selectedClientLedger.legacy_uploaded_contracts?.length > 0 ? "Actualizar" : "Subir Reserva"}
+                                                            onUploadComplete={() => toast.success("Reserva física actualizada")}
+                                                        />
                                                     </div>
-                                                    <Button 
-                                                        variant="outline" 
-                                                        size="sm"
-                                                        onClick={() => window.open(`/api/contracts/${selectedClientLedger.id}/pdf?download=true`, '_blank')}
-                                                        className="w-full h-11 text-[10px] font-black uppercase border-white/5 bg-white/5 hover:bg-emerald-500/10 hover:text-emerald-400 rounded-2xl transition-all"
-                                                    >
-                                                        <Download className="w-4 h-4 mr-2" />
-                                                        Bajar PDF
-                                                    </Button>
-                                                </div>
+                                                )}
 
                                                 {/* Item: Gastos Op */}
                                                 <div className="bg-white/[0.03] rounded-3xl p-6 border border-white/5 flex flex-col group hover:bg-white/[0.08] transition-all">

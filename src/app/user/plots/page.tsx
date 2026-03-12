@@ -176,7 +176,7 @@ export default function UserPlotsPage() {
                                                     <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
                                                     Firmado Digitalmente (Ver)
                                                 </a>
-                                            ) : res.is_legacy ? null : (
+                                            ) : (res.is_legacy || res.signature_ip === 'Firma Offline') ? null : (
                                                 <SignContractModal
                                                     reservationId={res.id}
                                                     lotNumber={res.lot.number}
