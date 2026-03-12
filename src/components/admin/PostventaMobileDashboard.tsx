@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Badge } from '@/components/ui/badge';
@@ -76,18 +76,40 @@ export function PostventaMobileDashboard({
     const [alertFilter, setAlertFilter] = useState<'ALL' | 'UPCOMING' | 'GRACE' | 'LATE' | 'OK'>(status as any);
     const router = useRouter();
 
+    // Sync state with props when they change (URL driven)
+    useEffect(() => {
+        setLedgerSearch(search);
+    }, [search]);
+
+    useEffect(() => {
+        setAlertFilter(status as any);
+    }, [status]);
+
+    useEffect(() => {
+        setLedgerStage(stage);
+    }, [stage]);
+
+    useEffect(() => {
+        setLedgerPage(currentPage);
+    }, [currentPage]);
+
     const navigate = (p: number, s: string, st: string | number, stStatus: string = alertFilter) => {
         const params = new URLSearchParams(window.location.search);
+        
+        // Use provided values or fallbacks to ensure consistency
         params.set('postventaPage', p.toString());
         params.set('postventaSearch', s);
         params.set('postventaStage', st.toString());
         params.set('postventaStatus', stStatus);
         params.set('mobileTab', activeTab);
         
-        // If we search, reset to page 1
-        if (s !== search) params.set('postventaPage', '1');
+        // If we are searching for a NEW term, reset to page 1
+        if (s !== search) {
+            params.set('postventaPage', '1');
+        }
 
-        router.push(`/admin/dashboard?${params.toString()}`);
+        const url = `/admin/dashboard?${params.toString()}`;
+        router.push(url, { scroll: false });
         setTimeout(() => router.refresh(), 100);
     };
     const [selectedClientLedger, setSelectedClientLedger] = useState<any | null>(null);

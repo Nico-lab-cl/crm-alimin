@@ -78,6 +78,10 @@ export const AdminUserList = ({
     const [isCreating, setIsCreating] = useState(false)
     const router = useRouter()
 
+    useEffect(() => {
+        setFilter(currentSearch)
+    }, [currentSearch])
+
     // Reset Password State
     const [isResetOpen, setIsResetOpen] = useState(false)
     const [resetUser, setResetUser] = useState<{ id: string, name: string } | null>(null)

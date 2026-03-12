@@ -32,29 +32,21 @@ export async function getPaginatedPostventaData({
     if (cached) return cached;
 
     try {
-        const where: any = {
+        const whereStats: any = {
             buyer_id: { not: null },
-            lot: { status: { in: ['sold', 'reserved'] } }
+            lot: { 
+                status: { in: ['sold', 'reserved'] },
+                ...(stage !== 'ALL' ? { stage: parseInt(stage.toString()) } : {})
+            }
         };
 
-        if (search) {
-            where.OR = [
-                { name: { contains: search, mode: 'insensitive' } },
-                { lot: { number: { contains: search, mode: 'insensitive' } } }
-            ];
-        }
-
-        if (stage !== 'ALL') {
-            where.lot.stage = parseInt(stage.toString());
-        }
-
-        // We MUST fetch all relevant reservations to calculate status and stats correctly
-        // status is a calculated field, so we can't paginate at the DB level efficiently for complex filters
-        const reservations = await prisma.reservation.findMany({
-            where,
+        // Fetch ALL relevant reservations for this stage to calculate accurate project stats
+        const allReservations = await prisma.reservation.findMany({
+            where: whereStats,
             orderBy: { created_at: 'desc' },
             select: {
                 id: true,
+                name: true,
                 phone: true,
                 installments_paid: true,
                 pie_status: true,
@@ -85,6 +77,7 @@ export async function getPaginatedPostventaData({
                 },
                 buyer: {
                     select: {
+                        id: true,
                         name: true,
                         email: true
                     }
@@ -102,7 +95,7 @@ export async function getPaginatedPostventaData({
             }
         });
 
-        const processedData = reservations.map(res => {
+        const processedData = allReservations.map(res => {
             const lot = res.lot;
             const buyer = res.buyer;
 
@@ -193,7 +186,7 @@ export async function getPaginatedPostventaData({
 
             return {
                 id: res.id,
-                clientName: buyer?.name || 'Sin nombre',
+                clientName: buyer?.name || res.name || 'Sin nombre',
                 clientEmail: buyer?.email,
                 clientPhone: res.phone,
                 lotNumber: lot.number,
@@ -228,7 +221,7 @@ export async function getPaginatedPostventaData({
             };
         });
 
-        // Statistics are based on the full filtered dataset (search + stage)
+        // Statistics are based on the full STAGE-filtered dataset (ignoring search string)
         const stats = {
             total: processedData.length,
             late: processedData.filter(d => d.isLate && !d.isMoraFrozen).length,
@@ -237,9 +230,20 @@ export async function getPaginatedPostventaData({
             ok: processedData.filter(d => d.isUpToDate || d.isMoraFrozen).length
         };
 
+        // NOW apply the search filter for display purposes
+        let filteredBySearch = processedData;
+        if (search) {
+            const s = search.toLowerCase();
+            filteredBySearch = processedData.filter(d => 
+                d.clientName.toLowerCase().includes(s) || 
+                d.lotNumber?.toLowerCase().includes(s) ||
+                d.clientEmail?.toLowerCase().includes(s)
+            );
+        }
+
         const filteredByStatus = status === 'ALL' 
-            ? processedData 
-            : processedData.filter(d => {
+            ? filteredBySearch 
+            : filteredBySearch.filter(d => {
                 const isFrozen = Boolean(d.isMoraFrozen);
                 if (status === 'LATE') return d.isLate && !isFrozen;
                 if (status === 'GRACE') return d.isGracePeriod && !isFrozen;
