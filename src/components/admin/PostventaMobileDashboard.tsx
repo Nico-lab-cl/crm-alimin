@@ -10,7 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { 
     Loader2, CheckCircle, XCircle, Eye, MapPin, CreditCard, Clock, Receipt, BookOpen, 
     AlertTriangle, Search, Filter, FileSignature, Gavel, Wallet, CalendarDays, ArrowRight, ShieldAlert, RefreshCw,
-    FileText, Download, Trash2
+    FileText, Download, Trash2, Edit
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { approvePaymentReceipt, rejectPaymentReceipt } from '@/actions/receipts';
@@ -21,6 +21,7 @@ import { UniversalDocumentViewer } from "@/components/shared/UniversalDocumentVi
 import { MoraExplainerCard } from './MoraExplainerCard';
 import { ContractUploadAction } from "@/components/admin/ContractUploadAction";
 import { AdminMoraManager } from "@/components/admin/AdminMoraManager"
+import { AssignOwnerModal } from "@/components/dashboard/AssignOwnerModal";
 
 export type PostventaTab = 'recibos' | 'mora' | 'ledger' | 'alertas';
 
@@ -67,6 +68,7 @@ export function PostventaMobileDashboard({
     const [ledgerStatus, setLedgerStatus] = useState<'ALL' | 'PAID' | 'PENDING'>('ALL');
     const [ledgerMonth, setLedgerMonth] = useState<number | 'ALL'>(new Date().getMonth());
     const [ledgerYear, setLedgerYear] = useState<number>(new Date().getFullYear());
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const LEDGER_ITEMS_PER_PAGE = 20;
 
     const [alertFilter, setAlertFilter] = useState<'ALL' | 'UPCOMING' | 'GRACE' | 'LATE' | 'OK'>('ALL');
@@ -500,6 +502,16 @@ export function PostventaMobileDashboard({
                                                 >
                                                     <RefreshCw className="w-3 h-3 mr-2" />
                                                     Sincronizar Datos
+                                                </Button>
+
+                                                <Button 
+                                                    variant="outline" 
+                                                    size="sm"
+                                                    onClick={() => setIsEditModalOpen(true)}
+                                                    className="h-8 text-[9px] font-black text-[#8eb2b8] hover:text-white uppercase tracking-widest bg-white/5 hover:bg-[#3f6066]/20 border-white/5 rounded-xl px-4"
+                                                >
+                                                    <Edit className="w-3 h-3 mr-2" />
+                                                    Editar Cliente
                                                 </Button>
                                             </div>
                                         </div>
@@ -943,11 +955,24 @@ export function PostventaMobileDashboard({
                     </DialogContent>
                 </Dialog>
 
-                {/* Universal Document Viewer Integration */}
                 <UniversalDocumentViewer 
                     {...viewerConfig} 
                     onClose={() => setViewerConfig(prev => ({ ...prev, isOpen: false }))}
                 />
+
+                {selectedClientLedger && (
+                    <AssignOwnerModal
+                        open={isEditModalOpen}
+                        onOpenChange={setIsEditModalOpen}
+                        lotId={selectedClientLedger.lotId}
+                        lotNumber={selectedClientLedger.lotNumber}
+                        existingReservation={selectedClientLedger}
+                        onSuccess={() => {
+                            toast.success("Cliente actualizado exitosamente");
+                            window.location.reload();
+                        }}
+                    />
+                )}
             </div>
         );
     }
@@ -1404,6 +1429,20 @@ export function PostventaMobileDashboard({
                     </div>
                 </DialogContent>
             </Dialog>
+
+            {selectedClientLedger && (
+                <AssignOwnerModal
+                    open={isEditModalOpen}
+                    onOpenChange={setIsEditModalOpen}
+                    lotId={selectedClientLedger.lotId}
+                    lotNumber={selectedClientLedger.lotNumber}
+                    existingReservation={selectedClientLedger}
+                    onSuccess={() => {
+                        toast.success("Cliente actualizado exitosamente");
+                        window.location.reload();
+                    }}
+                />
+            )}
         </div>
     );
 }

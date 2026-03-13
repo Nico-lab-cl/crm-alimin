@@ -54,8 +54,10 @@ export async function getFullPostventaData({
                 signed_at: true,
                 // @ts-ignore
                 is_promo: true,
+                notes: true,
                 lot: {
                     select: {
+                        id: true,
                         number: true,
                         stage: true,
                         price_total_clp: true,
@@ -63,7 +65,8 @@ export async function getFullPostventaData({
                         cuotas: true,
                         valor_cuota: true,
                         area_m2: true,
-                        pie: true
+                        pie: true,
+                        last_installment_amount: true
                     }
                 },
                 buyer: {
@@ -82,7 +85,19 @@ export async function getFullPostventaData({
                         scope: true,
                         created_at: true
                     }
-                }
+                },
+                rut: true,
+                address_street: true,
+                address_number: true,
+                address_commune: true,
+                address_region: true,
+                marital_status: true,
+                profession: true,
+                nationality: true,
+                legacy_installment_ranges: true,
+                legacy_current_installment: true,
+                promesa_signed_at: true,
+                legacy_uploaded_contracts: true
             }
         });
 
@@ -176,6 +191,7 @@ export async function getFullPostventaData({
                 totalPaid,
                 pendingBalance,
                 paidCuotas,
+                installments_paid: paidCuotas,
                 totalCuotas,
                 pieStatus: res.pie_status,
                 nextDueDate,
@@ -199,7 +215,27 @@ export async function getFullPostventaData({
                 isUpToDate: !isGracePeriod && penaltyAmount <= 0 && !isUpcoming,
                 status: (penaltyAmount > 0 && !Boolean(res.mora_frozen)) ? 'LATE' : 
                         (isGracePeriod && !Boolean(res.mora_frozen)) ? 'GRACE' : 
-                        (isUpcoming && !Boolean(res.mora_frozen)) ? 'UPCOMING' : 'OK'
+                        (isUpcoming && !Boolean(res.mora_frozen)) ? 'UPCOMING' : 'OK',
+                // Additional fields for editing
+                lotId: lot.id,
+                buyer: buyer,
+                lot: lot,
+                rut: res.rut,
+                address_street: res.address_street,
+                address_number: res.address_number,
+                address_commune: res.address_commune,
+                address_region: res.address_region,
+                marital_status: res.marital_status,
+                profession: res.profession,
+                nationality: res.nationality,
+                legacy_installment_ranges: res.legacy_installment_ranges,
+                legacy_installment_start_date: res.legacy_installment_start_date,
+                legacy_debt_start_date: res.legacy_debt_start_date,
+                legacy_uploaded_contracts: res.legacy_uploaded_contracts,
+                promesa_signed_at: res.promesa_signed_at,
+                is_promo: res.is_promo,
+                notes: res.notes,
+                pie_status: res.pie_status
             };
         });
 
