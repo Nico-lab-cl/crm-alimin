@@ -186,7 +186,7 @@ export function PostventaMobileDashboard({
                 // A client has "paid March" if their next payment is in April (or later)
                 // OR if they have already paid all their installments.
                 const nextDue = client.nextDueDate ? new Date(client.nextDueDate) : null;
-                const matchesPaid = isPaidAll || (nextDue && nextDue > targetDate);
+                const matchesPaid = Boolean(isPaidAll || (nextDue && nextDue > targetDate));
 
                 if (ledgerStatus === 'PAID') matchesMonth = matchesPaid;
                 else if (ledgerStatus === 'PENDING') matchesMonth = !matchesPaid;
