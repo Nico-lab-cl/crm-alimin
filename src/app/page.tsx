@@ -35,6 +35,7 @@ import { LotReservationPopup } from '@/components/LotReservationPopup';
 import { PlanoModal } from '@/components/PlanoModal';
 import { PurchaseTutorial } from '@/components/PurchaseTutorial';
 import { HowToBuy } from '@/components/HowToBuy';
+import { Testimonials } from '@/components/Testimonials';
 
 import { Hero } from '@/components/Hero';
 import { TrustBanner } from '@/components/TrustBanner';
@@ -491,6 +492,7 @@ export default function Home() {
       {/* How To Buy Section - MOBILE ORDER: Shows before map on mobile */}
       <div className="block md:hidden">
         <HowToBuy />
+        <Testimonials />
       </div>
 
       {/* MOBILE MAP SECTION - VISIBLE ONLY ON MOBILE */}
@@ -547,6 +549,7 @@ export default function Home() {
         {/* How To Buy Section - DESKTOP ONLY (Already shown above on mobile) */}
         <div className="hidden md:block">
           <HowToBuy />
+          <Testimonials />
         </div>
 
         {/* 2. Vista Satelital (Secundaria) - Immersive Full Bleed - DESKTOP ONLY */}
