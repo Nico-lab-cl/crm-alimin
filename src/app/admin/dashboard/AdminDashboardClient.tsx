@@ -52,10 +52,25 @@ export function AdminDashboardClient({
 }: AdminDashboardClientProps) {
     const isPostventa = userEmail === POSTVENTA_EMAIL;
 
-    const [desktopTab, setDesktopTab] = useState<PostventaTab>('recibos');
-    const [mobileTab, setMobileTab] = useState<AdminMobileTab | PostventaTab>(
-        isPostventa ? 'recibos' : 'terrenos'
+    const [desktopTab, setDesktopTab] = useState<PostventaTab>(
+        (initialMobileTab as PostventaTab) || 'recibos'
     );
+    const [mobileTab, setMobileTab] = useState<AdminMobileTab | PostventaTab>(
+        (initialMobileTab as any) || (isPostventa ? 'recibos' : 'terrenos')
+    );
+
+    const handleTabChange = (tab: string) => {
+        const url = new URL(window.location.href);
+        url.searchParams.set('mobileTab', tab);
+        window.history.replaceState(null, '', url.toString());
+        
+        if (isPostventa) {
+            setDesktopTab(tab as PostventaTab);
+            setMobileTab(tab as any);
+        } else {
+            setMobileTab(tab as any);
+        }
+    };
 
     const soldLots = lots.filter((l: any) => l.status === 'sold' && l.price_total_clp).map((l: any) => ({
         id: l.id,
@@ -102,7 +117,7 @@ export function AdminDashboardClient({
 
                         {/* Desktop: Tabs layout */}
                         <div className="hidden md:block">
-                            <Tabs value={desktopTab} onValueChange={(v) => setDesktopTab(v as PostventaTab)} className="w-full">
+                            <Tabs value={desktopTab} onValueChange={handleTabChange} className="w-full">
                                 <TabsList className="grid w-full grid-cols-4 bg-[#0a1622]/60 p-1 rounded-2xl border border-[#3f6066]/20 backdrop-blur-xl">
                                     <TabsTrigger value="recibos" className="data-[state=active]:bg-[#3f6066] data-[state=active]:text-white text-gray-400 font-black uppercase text-[10px] tracking-widest transition-all">
                                         Recibos
@@ -168,7 +183,7 @@ export function AdminDashboardClient({
                                     initialReceipts={receipts}
                                     soldLots={soldLots}
                                     activeTab={mobileTab as PostventaTab}
-                                    onTabChange={(t) => setMobileTab(t as any)}
+                                    onTabChange={handleTabChange}
                                     ledger={ledger}
                                     debtAlerts={debtAlerts}
                                     users={moraManagerUsers}
@@ -283,7 +298,7 @@ export function AdminDashboardClient({
             </div>
 
             {/* Mobile Bottom Nav */}
-            <MobileBottomNav activeTab={mobileTab} onTabChange={setMobileTab} />
+            <MobileBottomNav activeTab={mobileTab} onTabChange={handleTabChange} />
 
             {/* Onboarding Tour — fires once on first mobile visit */}
             <OnboardingTour />

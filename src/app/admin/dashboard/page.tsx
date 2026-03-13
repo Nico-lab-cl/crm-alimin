@@ -15,14 +15,22 @@ export default async function AdminDashboard({
     } 
 }) {
     const session = await auth()
+    const userRole = session?.user?.role
     const userEmail = session?.user?.email || ''
-    const isPostventa = userEmail === POSTVENTA_EMAIL
+    
+    if (!session || (userRole !== 'ADMIN' && userRole !== 'SELLER')) {
+        return <div className="p-8 text-center text-red-500 font-semibold">No autorizado</div>
+    }
 
+    const isPostventa = userEmail === POSTVENTA_EMAIL
     const postventaStage = searchParams.stage || 'ALL'
 
     // Conditional Fetching Optimization:
     // Regular Admins need Pipeline, Sellers, Lots, Users, and Stats.
     // Postventa users ONLY need Ledger and Receipts (and minimal stats for context).
+    const activeTab = searchParams.mobileTab || (isPostventa ? 'recibos' : 'terrenos')
+    const needsPostventaData = isPostventa && (activeTab === 'ledger' || activeTab === 'alertas' || !searchParams.mobileTab)
+
     const [
         pipelineResult, 
         sellersResult, 
@@ -32,12 +40,12 @@ export default async function AdminDashboard({
         postventaResult, 
         receiptsResult
     ] = await Promise.all([
-        !isPostventa ? getAdminPipeline() : Promise.resolve({ success: true, data: [], error: null }),
-        !isPostventa ? getSellers() : Promise.resolve({ success: true, data: [], error: null }),
+        (!isPostventa && userRole === 'ADMIN') ? getAdminPipeline() : Promise.resolve({ success: true, data: [], error: null }),
+        (!isPostventa && userRole === 'ADMIN') ? getSellers() : Promise.resolve({ success: true, data: [], error: null }),
         isPostventa ? getSoldLotsForPostventa() : getAdminLots(),
-        !isPostventa ? getAdminUsersList() : Promise.resolve({ success: true, users: [], error: null }),
-        !isPostventa ? getAdminStats() : Promise.resolve({ success: true, data: null, error: null }),
-        isPostventa ? getFullPostventaData({ stage: postventaStage }) : Promise.resolve({ success: false, data: [], error: null }),
+        (!isPostventa && userRole === 'ADMIN') ? getAdminUsersList() : Promise.resolve({ success: true, users: [], error: null }),
+        (!isPostventa && userRole === 'ADMIN') ? getAdminStats() : Promise.resolve({ success: true, data: null, error: null }),
+        needsPostventaData ? getFullPostventaData({ stage: postventaStage }) : Promise.resolve({ success: true, data: [], stats: { total: 0, late: 0, grace: 0, upcoming: 0, ok: 0 } }),
         isPostventa ? getPaginatedReceipts({ page: 1, pageSize: 50 }) : Promise.resolve({ success: false, receipts: [], error: null })
     ])
 
