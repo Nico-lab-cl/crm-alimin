@@ -31,7 +31,7 @@ export const Testimonials = () => {
   }, [emblaApi]);
 
   return (
-    <section className="py-24 relative overflow-hidden bg-white">
+    <section className="py-24 relative overflow-hidden">
       {/* Decorative Background Elements */}
       <div className="absolute top-0 left-0 w-full h-1 bg-[#E0B457]/30" />
       <div className="absolute -top-24 -right-24 w-96 h-96 bg-[#36595F]/5 rounded-full blur-3xl" />
@@ -46,9 +46,6 @@ export const Testimonials = () => {
           <h1 className="text-3xl md:text-5xl lg:text-6xl font-black text-gray-900 mb-8 tracking-tight max-w-4xl mx-auto leading-[1.1]">
             Mas de 50 familias han encontrado <span className="text-[#36595F]">su hogar con nosotros</span>
           </h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto font-medium">
-            Historias reales de personas que ya disfrutan de su terreno en Lomas del Mar.
-          </p>
         </div>
 
         {/* Carousel Container */}
