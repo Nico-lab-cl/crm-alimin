@@ -20,16 +20,25 @@ export default async function AdminDashboard({
 
     const postventaStage = searchParams.stage || 'ALL'
 
-    const [pipelineResult, sellersResult, lotsResult, usersResult, statsResult, postventaResult, receiptsResult] = await Promise.all([
-        getAdminPipeline(),
-        getSellers(),
+    // Conditional Fetching Optimization:
+    // Regular Admins need Pipeline, Sellers, Lots, Users, and Stats.
+    // Postventa users ONLY need Ledger and Receipts (and minimal stats for context).
+    const [
+        pipelineResult, 
+        sellersResult, 
+        lotsResult, 
+        usersResult, 
+        statsResult, 
+        postventaResult, 
+        receiptsResult
+    ] = await Promise.all([
+        !isPostventa ? getAdminPipeline() : Promise.resolve({ success: true, data: [], error: null }),
+        !isPostventa ? getSellers() : Promise.resolve({ success: true, data: [], error: null }),
         getAdminLots(),
-        getAdminUsersList(),
+        !isPostventa ? getAdminUsersList() : Promise.resolve({ success: true, users: [], error: null }),
         getAdminStats(),
-        isPostventa ? getFullPostventaData({
-            stage: postventaStage
-        }) : Promise.resolve({ success: false, data: [] }),
-        isPostventa ? getPaginatedReceipts({ page: 1, pageSize: 1000 }) : Promise.resolve({ success: false, receipts: [] })
+        isPostventa ? getFullPostventaData({ stage: postventaStage }) : Promise.resolve({ success: false, data: [], error: null }),
+        isPostventa ? getPaginatedReceipts({ page: 1, pageSize: 1000 }) : Promise.resolve({ success: false, receipts: [], error: null })
     ])
 
     if (pipelineResult.error || statsResult.error) {

@@ -227,7 +227,7 @@ export async function getFullPostventaData({
             stats
         };
 
-        memoryCache.set(cacheKey, result, 60); // 1 minute cache
+        memoryCache.set(cacheKey, result, CACHE_TTL);
         return result;
 
     } catch (error) {
