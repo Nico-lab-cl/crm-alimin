@@ -65,6 +65,8 @@ export function PostventaMobileDashboard({
     const [ledgerSearch, setLedgerSearch] = useState('');
     const [ledgerStage, setLedgerStage] = useState<number | 'ALL'>('ALL');
     const [ledgerStatus, setLedgerStatus] = useState<'ALL' | 'PAID' | 'PENDING'>('ALL');
+    const [ledgerMonth, setLedgerMonth] = useState<number | 'ALL'>(new Date().getMonth());
+    const [ledgerYear, setLedgerYear] = useState<number>(new Date().getFullYear());
     const LEDGER_ITEMS_PER_PAGE = 20;
 
     const [alertFilter, setAlertFilter] = useState<'ALL' | 'UPCOMING' | 'GRACE' | 'LATE' | 'OK'>('ALL');
@@ -175,7 +177,22 @@ export function PostventaMobileDashboard({
             
             const matchesStage = ledgerStage === 'ALL' || Number(client.lotStage) === Number(ledgerStage);
             
-            return matchesSearch && matchesStage;
+            let matchesMonth = true;
+            if (ledgerMonth !== 'ALL') {
+                const targetDate = new Date(ledgerYear, Number(ledgerMonth) + 1, 0); // Last day of selected month
+                const isPaidAll = client.paidCuotas >= (client.totalCuotas || 1);
+                
+                // Professional logic: 
+                // A client has "paid March" if their next payment is in April (or later)
+                // OR if they have already paid all their installments.
+                const nextDue = client.nextDueDate ? new Date(client.nextDueDate) : null;
+                const matchesPaid = isPaidAll || (nextDue && nextDue > targetDate);
+
+                if (ledgerStatus === 'PAID') matchesMonth = matchesPaid;
+                else if (ledgerStatus === 'PENDING') matchesMonth = !matchesPaid;
+            }
+
+            return matchesSearch && matchesStage && matchesMonth;
         });
 
         const totalLedgerPages = Math.ceil(filteredLedger.length / LEDGER_ITEMS_PER_PAGE);
@@ -236,6 +253,52 @@ export function PostventaMobileDashboard({
                                 </button>
                             ))}
                         </div>
+                    </div>
+
+                    {/* Month and Status Filters */}
+                    <div className="flex flex-wrap items-center gap-3 relative z-10 py-2 border-t border-white/5">
+                        <div className="flex items-center gap-2 bg-black/40 rounded-2xl p-1 border border-white/5">
+                            <select 
+                                value={ledgerStatus}
+                                onChange={(e) => { setLedgerStatus(e.target.value as any); setLedgerPage(1); }}
+                                className="bg-transparent text-white text-[10px] font-black uppercase tracking-widest px-3 py-2 outline-none cursor-pointer"
+                            >
+                                <option value="ALL" className="bg-[#0a1622]">Estado: Todos</option>
+                                <option value="PAID" className="bg-[#0a1622]">Pagados</option>
+                                <option value="PENDING" className="bg-[#0a1622]">Sin Pagar</option>
+                            </select>
+                        </div>
+
+                        <div className="flex items-center gap-2 bg-black/40 rounded-2xl p-1 border border-white/5">
+                            <select 
+                                value={ledgerMonth}
+                                onChange={(e) => { setLedgerMonth(e.target.value === 'ALL' ? 'ALL' : Number(e.target.value)); setLedgerPage(1); }}
+                                className="bg-transparent text-white text-[10px] font-black uppercase tracking-widest px-3 py-2 outline-none cursor-pointer"
+                            >
+                                <option value="ALL" className="bg-[#0a1622]">Mes: Todos</option>
+                                {['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'].map((m, i) => (
+                                    <option key={i} value={i} className="bg-[#0a1622]">{m}</option>
+                                ))}
+                            </select>
+                        </div>
+
+                        <div className="flex items-center gap-2 bg-black/40 rounded-2xl p-1 border border-white/5">
+                            <select 
+                                value={ledgerYear}
+                                onChange={(e) => { setLedgerYear(Number(e.target.value)); setLedgerPage(1); }}
+                                className="bg-transparent text-white text-[10px] font-black uppercase tracking-widest px-3 py-2 outline-none cursor-pointer"
+                            >
+                                {[2024, 2025, 2026, 2027].map(y => (
+                                    <option key={y} value={y} className="bg-[#0a1622]">{y}</option>
+                                ))}
+                            </select>
+                        </div>
+
+                        {ledgerMonth !== 'ALL' && (
+                            <span className="text-[10px] text-[#3f6066] font-black uppercase tracking-tight ml-auto hidden md:block">
+                                Filtrando pagos de {['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'][Number(ledgerMonth)]} {ledgerYear}
+                            </span>
+                        )}
                     </div>
 
                     <div className="relative group z-10">
