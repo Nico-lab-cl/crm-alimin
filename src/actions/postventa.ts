@@ -166,6 +166,7 @@ export async function getFullPostventaData({
 
             return {
                 id: res.id,
+                name: buyer?.name || res.name || 'Sin nombre',
                 clientName: buyer?.name || res.name || 'Sin nombre',
                 clientEmail: buyer?.email,
                 clientPhone: res.phone,
@@ -178,6 +179,7 @@ export async function getFullPostventaData({
                 totalCuotas,
                 pieStatus: res.pie_status,
                 nextDueDate,
+                displayDueDate: nextDueDate,
                 reservaAmount: lot.reservation_amount_clp || 0,
                 pieAmount,
                 cuotasAmount,
@@ -187,9 +189,7 @@ export async function getFullPostventaData({
                 isPieDebt: res.pie_status !== 'PAID',
                 valor_cuota: lot.valor_cuota || 0,
                 monto_cuota: lot.valor_cuota || 0,
-                // @ts-ignore
                 isMoraFrozen: Boolean(res.mora_frozen),
-                // @ts-ignore
                 manual_documents: res.manual_documents,
                 signed_at: res.signed_at,
                 is_legacy: Boolean(res.is_legacy),

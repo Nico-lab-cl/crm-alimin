@@ -1,5 +1,5 @@
 import { auth } from "@/auth"
-import { getAdminPipeline, getSellers, getAdminLots, getAdminUsersList, getAdminStats } from "@/actions/dashboard"
+import { getAdminPipeline, getSellers, getAdminLots, getAdminUsersList, getAdminStats, getSoldLotsForPostventa } from "@/actions/dashboard"
 import { getFullPostventaData } from "@/actions/postventa"
 import { getPaginatedReceipts } from "@/actions/receipts"
 import { AdminDashboardClient } from "./AdminDashboardClient"
@@ -34,7 +34,7 @@ export default async function AdminDashboard({
     ] = await Promise.all([
         !isPostventa ? getAdminPipeline() : Promise.resolve({ success: true, data: [], error: null }),
         !isPostventa ? getSellers() : Promise.resolve({ success: true, data: [], error: null }),
-        getAdminLots(),
+        isPostventa ? getSoldLotsForPostventa() : getAdminLots(),
         !isPostventa ? getAdminUsersList() : Promise.resolve({ success: true, users: [], error: null }),
         !isPostventa ? getAdminStats() : Promise.resolve({ success: true, data: null, error: null }),
         isPostventa ? getFullPostventaData({ stage: postventaStage }) : Promise.resolve({ success: false, data: [], error: null }),

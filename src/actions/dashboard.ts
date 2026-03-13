@@ -259,6 +259,33 @@ export async function getAdminLots() {
     }
 }
 
+
+export async function getSoldLotsForPostventa() {
+    const session = await auth()
+    if (!session?.user) return { error: "No autorizado" }
+
+    try {
+        const lots = await prisma.lot.findMany({
+            where: {
+                status: { in: ['sold', 'reserved'] }
+            },
+            select: {
+                id: true,
+                number: true,
+                stage: true,
+                status: true,
+                area_m2: true,
+                price_total_clp: true,
+            },
+            orderBy: { number: 'asc' }
+        })
+        return { success: true, data: lots }
+    } catch (error) {
+        console.error("Error getting sold lots for postventa:", error)
+        return { error: "Error al cargar terrenos vendidos" }
+    }
+}
+
 export async function updateLotStatus(lotId: number, status: string) {
     const session = await auth()
     if (session?.user?.role !== Role.ADMIN) return { error: "No autorizado" }

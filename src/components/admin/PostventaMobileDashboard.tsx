@@ -869,8 +869,8 @@ export function PostventaMobileDashboard({
             const matchesStage = alertStage === 'ALL' || alert.lotStage === alertStage;
             const matchesStatus = alertFilter === 'ALL' || alert.status === alertFilter;
             const matchesSearch = !alertSearch || 
-                alert.name.toLowerCase().includes(alertSearch.toLowerCase()) ||
-                alert.lotNumber.toString().includes(alertSearch);
+                (alert.name || alert.clientName || '').toLowerCase().includes(alertSearch.toLowerCase()) ||
+                (alert.lotNumber?.toString() || '').includes(alertSearch);
             return matchesStage && matchesStatus && matchesSearch;
         });
 
