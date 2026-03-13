@@ -72,7 +72,7 @@ export default async function AdminDashboard({
             receipts={(receiptsResult as any).receipts || []}
             paymentStats={paymentStats as any}
             ledger={postventaLedger}
-            debtAlerts={[]} 
+            debtAlerts={postventaLedger}
             postventaStats={postventaStats}
             initialMobileTab={searchParams.mobileTab}
             postventaStage={postventaStage}

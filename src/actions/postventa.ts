@@ -184,7 +184,6 @@ export async function getFullPostventaData({
                 pieAmount,
                 cuotasAmount,
                 uploaded_contract_url: res.uploaded_contract_url,
-                receipts: res.receipts,
                 isGracePeriod,
                 isPieDebt: res.pie_status !== 'PAID',
                 valor_cuota: lot.valor_cuota || 0,
@@ -322,5 +321,33 @@ export async function syncLegacyReceipts() {
     } catch (error) {
         console.error("Error syncing legacy receipts:", error);
         return { error: 'Error al sincronizar recibos' };
+    }
+}
+
+export async function getReservationReceipts(reservationId: string) {
+    const session = await auth();
+    if (!session?.user) return { error: "No autorizado" };
+
+    try {
+        const receipts = await prisma.paymentReceipt.findMany({
+            where: {
+                reservation_id: reservationId,
+                status: 'APPROVED'
+            },
+            orderBy: { created_at: 'desc' },
+            select: {
+                id: true,
+                amount_clp: true,
+                scope: true,
+                status: true,
+                processed_at: true,
+                created_at: true,
+                receipt_url: true
+            }
+        });
+        return { success: true, receipts };
+    } catch (error) {
+        console.error("Error fetching reservation receipts:", error);
+        return { error: "Error al cargar recibos" };
     }
 }

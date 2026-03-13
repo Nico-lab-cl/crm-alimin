@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { approvePaymentReceipt, rejectPaymentReceipt } from '@/actions/receipts';
-import { syncLegacyReceipts } from '@/actions/postventa';
+import { syncLegacyReceipts, getReservationReceipts } from '@/actions/postventa';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { UniversalDocumentViewer } from "@/components/shared/UniversalDocumentViewer";
@@ -79,6 +79,8 @@ export function PostventaMobileDashboard({
     const [alertStage, setAlertStage] = useState<number | 'ALL'>('ALL');
     const [alertSearch, setAlertSearch] = useState('');
     const [alertPage, setAlertPage] = useState(1);
+    const [clientReceipts, setClientReceipts] = useState<any[]>([]);
+    const [isLoadingReceipts, setIsLoadingReceipts] = useState(false);
     const ALERTS_PER_PAGE = 10;
 
     const today = new Date();
@@ -120,6 +122,20 @@ export function PostventaMobileDashboard({
             setIsProcessing(null);
         }
     };
+
+    useEffect(() => {
+        if (selectedClientLedger?.id) {
+            setIsLoadingReceipts(true);
+            setClientReceipts([]);
+            getReservationReceipts(selectedClientLedger.id).then(res => {
+                if (res.success) {
+                    setClientReceipts(res.receipts || []);
+                }
+            }).finally(() => {
+                setIsLoadingReceipts(false);
+            });
+        }
+    }, [selectedClientLedger?.id]);
 
     const handleDeleteDocument = async (reservationId: string, type: string, url?: string) => {
         if (!confirm('¿Estás seguro de que deseas eliminar este documento?')) return;
@@ -754,7 +770,16 @@ export function PostventaMobileDashboard({
                                 const manual = Array.isArray(selectedClientLedger.manual_documents) 
                                     ? selectedClientLedger.manual_documents.filter((d: any) => d.category === 'COMPROBANTE_CUOTA' || d.category === 'COMPROBANTE_PIE')
                                     : [];
-                                const auto = (selectedClientLedger.receipts || []).filter((r: any) => r.status === 'APPROVED');
+                                const auto = clientReceipts.filter((r: any) => r.status === 'APPROVED');
+                                
+                                if (isLoadingReceipts) {
+                                    return (
+                                        <div className="flex flex-col items-center justify-center py-12 space-y-3 opacity-50">
+                                            <Loader2 className="w-8 h-8 animate-spin text-[#8eb2b8]" />
+                                            <p className="text-[10px] font-black uppercase tracking-tighter">Cargando recibos...</p>
+                                        </div>
+                                    );
+                                }
                                 
                                 const all = [
                                     ...manual.map((m: any) => ({ 
