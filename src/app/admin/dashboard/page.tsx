@@ -36,9 +36,9 @@ export default async function AdminDashboard({
         !isPostventa ? getSellers() : Promise.resolve({ success: true, data: [], error: null }),
         getAdminLots(),
         !isPostventa ? getAdminUsersList() : Promise.resolve({ success: true, users: [], error: null }),
-        getAdminStats(),
+        !isPostventa ? getAdminStats() : Promise.resolve({ success: true, data: null, error: null }),
         isPostventa ? getFullPostventaData({ stage: postventaStage }) : Promise.resolve({ success: false, data: [], error: null }),
-        isPostventa ? getPaginatedReceipts({ page: 1, pageSize: 1000 }) : Promise.resolve({ success: false, receipts: [], error: null })
+        isPostventa ? getPaginatedReceipts({ page: 1, pageSize: 50 }) : Promise.resolve({ success: false, receipts: [], error: null })
     ])
 
     if (pipelineResult.error || statsResult.error) {

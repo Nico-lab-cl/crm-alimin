@@ -90,8 +90,8 @@ export async function getFullPostventaData({
             const lot = res.lot;
             const buyer = res.buyer;
 
-            const pieAmount = res.receipts.filter(r => r.scope === 'PIE').reduce((acc, r) => acc + r.amount_clp, 0);
-            const cuotasAmount = res.receipts.filter(r => r.scope === 'INSTALLMENT').reduce((acc, r) => acc + r.amount_clp, 0);
+            const pieAmount = res.receipts.reduce((acc, r) => r.scope === 'PIE' ? acc + r.amount_clp : acc, 0);
+            const cuotasAmount = res.receipts.reduce((acc, r) => r.scope === 'INSTALLMENT' ? acc + r.amount_clp : acc, 0);
             
             const effectivePieAmount = pieAmount || (res.pie_status === 'PAID' ? (lot.pie || 0) : 0);
             const effectiveCuotasAmount = cuotasAmount || ((res.installments_paid || 0) * (lot.valor_cuota || 0));
@@ -106,7 +106,6 @@ export async function getFullPostventaData({
             let nextDueDate = null;
             let lateDays = 0;
             let penaltyAmount = 0;
-            let isPieDebt = false;
 
             const isLegacyBool = Boolean(res.is_legacy);
             const baseDate = res.legacy_installment_start_date
@@ -140,39 +139,29 @@ export async function getFullPostventaData({
                 }
             }
 
-            if (res.pie_status !== 'PAID') {
-                isPieDebt = true;
-            }
-
-            const reservaAmount = lot.reservation_amount_clp || 0;
-
-            let isGracePeriod = false;
-            if (nextDueDate && currentDate >= nextDueDate && penaltyAmount === 0) {
-                const hasPaidCurrent = res.receipts.some(r => {
-                    if (r.scope !== 'INSTALLMENT') return false;
-                    const rDate = new Date(r.created_at);
-                    return rDate.getUTCMonth() === nextDueDate.getUTCMonth() && rDate.getUTCFullYear() === nextDueDate.getUTCFullYear();
-                });
-
-                if (!hasPaidCurrent) {
-                    isGracePeriod = true;
-                }
-            }
-
             const fiveDaysFromNow = new Date(currentDate);
             fiveDaysFromNow.setDate(fiveDaysFromNow.getDate() + 5);
 
-            const isUpcomingPotential = nextDueDate ? (nextDueDate > currentDate && nextDueDate <= fiveDaysFromNow) : false;
-            let isUpcoming = false;
-            if (isUpcomingPotential && nextDueDate) {
-                const hasPaidCurrent = res.receipts.some(r => {
+            // Single pass over receipts for performance
+            let hasPaidCurrentInstallment = false;
+            if (nextDueDate) {
+                const targetMonth = nextDueDate.getUTCMonth();
+                const targetYear = nextDueDate.getUTCFullYear();
+                hasPaidCurrentInstallment = res.receipts.some(r => {
                     if (r.scope !== 'INSTALLMENT') return false;
                     const rDate = new Date(r.created_at);
-                    return rDate.getUTCMonth() === nextDueDate.getUTCMonth() && rDate.getUTCFullYear() === nextDueDate.getUTCFullYear();
+                    return rDate.getUTCMonth() === targetMonth && rDate.getUTCFullYear() === targetYear;
                 });
-                if (!hasPaidCurrent) {
-                    isUpcoming = true;
-                }
+            }
+
+            let isGracePeriod = false;
+            if (nextDueDate && currentDate >= nextDueDate && penaltyAmount === 0 && !hasPaidCurrentInstallment) {
+                isGracePeriod = true;
+            }
+
+            let isUpcoming = false;
+            if (nextDueDate && nextDueDate > currentDate && nextDueDate <= fiveDaysFromNow && !hasPaidCurrentInstallment) {
+                isUpcoming = true;
             }
 
             return {
@@ -189,13 +178,13 @@ export async function getFullPostventaData({
                 totalCuotas,
                 pieStatus: res.pie_status,
                 nextDueDate,
-                reservaAmount,
+                reservaAmount: lot.reservation_amount_clp || 0,
                 pieAmount,
                 cuotasAmount,
                 uploaded_contract_url: res.uploaded_contract_url,
                 receipts: res.receipts,
                 isGracePeriod,
-                isPieDebt,
+                isPieDebt: res.pie_status !== 'PAID',
                 valor_cuota: lot.valor_cuota || 0,
                 monto_cuota: lot.valor_cuota || 0,
                 // @ts-ignore
@@ -248,7 +237,8 @@ export async function updateReservationContract(reservationId: string, url: stri
             data: { uploaded_contract_url: url }
         });
         
-        memoryCache.delete(POSTVENTA_CACHE_KEY);
+        memoryCache.deleteByPrefix('postventa_full_');
+        memoryCache.deleteByPrefix('receipts_paginated_');
         revalidatePath('/admin/dashboard');
         
         return { success: true };
@@ -321,7 +311,8 @@ export async function syncLegacyReceipts() {
             }
         }
 
-        memoryCache.delete(POSTVENTA_CACHE_KEY);
+        memoryCache.deleteByPrefix('postventa_full_');
+        memoryCache.deleteByPrefix('receipts_paginated_');
         revalidatePath('/admin/dashboard');
 
         return { success: true, syncedCount };

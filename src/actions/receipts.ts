@@ -25,11 +25,9 @@ export async function getPaginatedReceipts({
         throw new Error("Unauthorized");
     }
 
-/*
     const cacheKey = `${RECEIPTS_PAGINATED_CACHE_KEY}${page}_${pageSize}_${status || 'all'}_${search || ''}`;
     const cached = memoryCache.get(cacheKey);
     if (cached) return cached;
-*/
 
     try {
         const where: any = {};
@@ -83,7 +81,7 @@ export async function getPaginatedReceipts({
             currentPage: page
         };
 
-        // memoryCache.set(cacheKey, result, 60); // 1 minute cache
+        memoryCache.set(cacheKey, result, 60); // 1 minute cache
         return result;
 
     } catch (error) {
@@ -198,7 +196,8 @@ export async function approvePaymentReceipt(receiptId: string) {
         // We do this non-blocking to prevent slow UI response
         sendPaymentReceiptWebhook(receiptId).catch((e) => console.error("Webhook Error on Receipt Approval:", e));
 
-        memoryCache.delete(POSTVENTA_CACHE_KEY);
+        memoryCache.deleteByPrefix('postventa_full_');
+        memoryCache.deleteByPrefix('receipts_paginated_');
         revalidatePath('/admin/receipts');
         revalidatePath('/user/plots');
         return { success: true };
@@ -226,7 +225,8 @@ export async function rejectPaymentReceipt(receiptId: string, reason: string) {
             }
         });
 
-        memoryCache.delete(POSTVENTA_CACHE_KEY);
+        memoryCache.deleteByPrefix('postventa_full_');
+        memoryCache.deleteByPrefix('receipts_paginated_');
         revalidatePath('/admin/receipts');
         revalidatePath('/user/plots');
         return { success: true };

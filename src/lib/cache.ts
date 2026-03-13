@@ -40,6 +40,14 @@ class MemoryCache {
         this.cache.delete(key);
     }
 
+    public deleteByPrefix(prefix: string): void {
+        for (const key of this.cache.keys()) {
+            if (key.startsWith(prefix)) {
+                this.cache.delete(key);
+            }
+        }
+    }
+
     public clear(): void {
         this.cache.clear();
     }

@@ -124,7 +124,8 @@ export async function updatePipelineStage(reservationId: string, stage: string) 
 
         revalidatePath('/seller/dashboard')
         revalidatePath('/admin/dashboard')
-        memoryCache.delete(POSTVENTA_CACHE_KEY);
+        memoryCache.deleteByPrefix('postventa_full_');
+        memoryCache.deleteByPrefix('receipts_paginated_');
         return { success: true }
     } catch (error) {
         console.error("Error updating stage:", error)
@@ -612,7 +613,8 @@ export async function assignLegacyLotOwner(data: {
         // Webhooks are intentionally DEFERRED for legacy assignments until "Activar Workflow" is clicked
 
         revalidatePath('/admin/dashboard')
-        memoryCache.delete(POSTVENTA_CACHE_KEY);
+        memoryCache.deleteByPrefix('postventa_full_');
+        memoryCache.deleteByPrefix('receipts_paginated_');
         return { success: true, message: isNewUser ? "Usuario creado y asignado. Se envió correo de bienvenida." : "Usuario asignado correctamente." }
 
     } catch (error) {
@@ -641,7 +643,8 @@ export async function toggleMoraFreeze(reservationId: string, freeze: boolean) {
         });
 
         revalidatePath('/admin/dashboard');
-        memoryCache.delete(POSTVENTA_CACHE_KEY);
+        memoryCache.deleteByPrefix('postventa_full_');
+        memoryCache.deleteByPrefix('receipts_paginated_');
         return { success: true, message: freeze ? "Mora congelada exitosamente." : "Mora activada nuevamente." };
     } catch (error) {
         console.error("Error toggling mora freeze:", error);
