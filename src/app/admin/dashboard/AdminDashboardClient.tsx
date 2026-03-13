@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { AdminPipeline } from "@/components/dashboard/AdminPipeline"
 import { AdminLotList } from "@/components/dashboard/AdminLotList"
 import { AdminUserList } from "@/components/dashboard/AdminUserList"
@@ -65,6 +65,21 @@ export function AdminDashboardClient({
         price_total_clp: l.price_total_clp,
     }));
 
+    // Transform ledger to the format expected by AdminMoraManager
+    const moraManagerUsers = useMemo(() => {
+        if (!isPostventa) return users;
+        return (ledger || []).map(entry => ({
+            id: entry.id, // Virtual user ID same as reservation
+            name: entry.name,
+            email: entry.email || entry.clientEmail || '',
+            purchases: [{
+                id: entry.id,
+                mora_frozen: entry.isMoraFrozen,
+                lot: { number: entry.lotNumber }
+            }]
+        }));
+    }, [isPostventa, users, ledger]);
+
     // ============================================================
     // POSTVENTA VIEW — dedicated receipt + mora interface
     // ============================================================
@@ -111,7 +126,7 @@ export function AdminDashboardClient({
                                         activeTab="recibos" 
                                         ledger={ledger} 
                                         debtAlerts={debtAlerts} 
-                                        users={users} 
+                                        users={moraManagerUsers} 
                                         stage={postventaStage}
                                         stats={postventaStats}
                                     />
@@ -136,7 +151,7 @@ export function AdminDashboardClient({
                                         activeTab="alertas" 
                                         ledger={ledger} 
                                         debtAlerts={debtAlerts} 
-                                        users={users} 
+                                        users={moraManagerUsers} 
                                         stats={postventaStats}
                                         stage={postventaStage}
                                     />
@@ -156,7 +171,7 @@ export function AdminDashboardClient({
                                     onTabChange={(t) => setMobileTab(t as any)}
                                     ledger={ledger}
                                     debtAlerts={debtAlerts}
-                                    users={users}
+                                    users={moraManagerUsers}
                                     stats={postventaStats}
                                     stage={postventaStage}
                                 />
