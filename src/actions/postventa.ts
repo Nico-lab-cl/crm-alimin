@@ -197,7 +197,10 @@ export async function getFullPostventaData({
                 penaltyAmount,
                 isUpcoming,
                 isLate: penaltyAmount > 0,
-                isUpToDate: !isGracePeriod && penaltyAmount <= 0 && !isUpcoming
+                isUpToDate: !isGracePeriod && penaltyAmount <= 0 && !isUpcoming,
+                status: (penaltyAmount > 0 && !Boolean(res.mora_frozen)) ? 'LATE' : 
+                        (isGracePeriod && !Boolean(res.mora_frozen)) ? 'GRACE' : 
+                        (isUpcoming && !Boolean(res.mora_frozen)) ? 'UPCOMING' : 'OK'
             };
         });
 

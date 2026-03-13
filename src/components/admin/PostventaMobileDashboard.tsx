@@ -1202,7 +1202,7 @@ export function PostventaMobileDashboard({
                             ? 'bg-amber-500/5 border-amber-500/20'
                             : receipt.status === 'APPROVED'
                                 ? 'bg-[#3f6066]/5 border-[#3f6066]/20'
-                                : '@bg-red-500/5 border-red-500/20'
+                                : 'bg-red-500/5 border-red-500/20'
                             }`}
                     >
                         <div className="flex items-start justify-between gap-1.5">
