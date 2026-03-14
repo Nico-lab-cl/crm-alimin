@@ -17,7 +17,7 @@ import { getEffectiveStage } from "@/lib/pipeline"
 import { PromesaGeneratorAction } from "@/components/admin/PromesaGeneratorAction"
 import { ContractUploadAction } from "@/components/admin/ContractUploadAction"
 
-type ReservationWithDetails = Reservation & {
+export type ReservationWithDetails = Reservation & {
     lot: Lot
     buyer: User | null
     seller: User | null

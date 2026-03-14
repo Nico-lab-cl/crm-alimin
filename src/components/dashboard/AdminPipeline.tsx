@@ -2,17 +2,13 @@
 
 import { useState } from "react"
 import { Reservation, Lot, User } from "@prisma/client"
-import { AdminPipelineCard } from "./AdminPipelineCard"
+import { AdminPipelineCard, ReservationWithDetails } from "./AdminPipelineCard"
 import { updatePipelineStage, assignSeller } from "@/actions/dashboard"
 import { toast } from "sonner"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { getEffectiveStage } from "@/lib/pipeline"
 
-type ReservationWithDetails = Reservation & {
-    lot: Lot
-    buyer: User | null
-    seller: User | null
-}
+// Removed local ReservationWithDetails to use the exported one from Card
 
 const STAGES = [
     { id: "RESERVA_PAGADA", label: "Reserva", color: "bg-blue-100 text-blue-800 border-blue-200" },
