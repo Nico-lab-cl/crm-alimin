@@ -2,15 +2,12 @@
 
 import { useState } from "react"
 import { Reservation, Lot, User } from "@prisma/client"
-import { PipelineCard } from "./PipelineCard"
+import { PipelineCard, ReservationWithDetails } from "./PipelineCard"
 import { updatePipelineStage } from "@/actions/dashboard"
 import { toast } from "sonner"
 import { getEffectiveStage } from "@/lib/pipeline"
 
-type ReservationWithDetails = Reservation & {
-    lot: Lot
-    buyer: User | null
-}
+// Using exported type from PipelineCard
 
 const STAGES = [
     { id: "RESERVA_PAGADA", label: "Reserva Pagada", color: "bg-blue-100 text-blue-800" },

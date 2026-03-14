@@ -17,7 +17,7 @@ import { toast } from "sonner"
 import { PromesaGeneratorAction } from "@/components/admin/PromesaGeneratorAction"
 import { ContractUploadAction } from "@/components/admin/ContractUploadAction"
 
-type ReservationWithDetails = Reservation & {
+export type ReservationWithDetails = Reservation & {
     lot: Lot
     buyer: User | null
 }
