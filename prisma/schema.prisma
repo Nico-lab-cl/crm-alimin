@@ -96,6 +96,9 @@ model Reservation {
   promesa_signed_at             DateTime?
   promesa_signature_ip          String?
 
+  contact_id  String?
+  contact     Contact?  @relation(fields: [contact_id], references: [id])
+
   // Relations
   lot          Lot                 @relation(fields: [lot_id], references: [id])
   transactions WebpayTransaction[]
@@ -106,6 +109,74 @@ model Reservation {
 
   buyer_id String?
   buyer    User?   @relation("BuyerReservations", fields: [buyer_id], references: [id])
+}
+
+model Contact {
+  id          String   @id @default(uuid())
+  email       String   @unique
+  first_name  String?
+  last_name   String?
+  phone       String?
+  rut         String?
+  source      String?  // Ej. META, WEB, etc.
+  // Atribución y Tracking
+  utm_source      String?
+  utm_medium      String?
+  utm_campaign    String?
+  utm_content     String?
+  utm_term        String?
+  meta_lead_id    String?   @unique
+  meta_form_id    String?
+  meta_ad_id      String?
+  meta_ad_name    String?
+  meta_adset_id   String?
+  meta_adset_name String?
+  meta_campaign_id String?
+  meta_campaign_name String?
+  meta_page_id    String?
+
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  // Relaciones
+  reservations Reservation[]
+  notes        Note[]
+  calls        CallLog[]
+  files        ContactFile[]
+}
+
+model Note {
+  id          String   @id @default(uuid())
+  contact_id  String
+  seller_id   String   // Usuario que dejó la nota
+  content     String   @db.Text
+  created_at  DateTime @default(now())
+
+  contact     Contact  @relation(fields: [contact_id], references: [id])
+  seller      User     @relation(fields: [seller_id], references: [id])
+}
+
+model CallLog {
+  id          String   @id @default(uuid())
+  contact_id  String
+  seller_id   String
+  duration    Int?     // En segundos
+  summary     String?  @db.Text
+  date        DateTime @default(now())
+
+  contact     Contact  @relation(fields: [contact_id], references: [id])
+  seller      User     @relation(fields: [seller_id], references: [id])
+}
+
+model ContactFile {
+  id          String   @id @default(uuid())
+  contact_id  String
+  name        String   // Nombre del archivo (ej. Cedula.pdf)
+  url         String   // URL del archivo en el storage
+  type        String?  // Ej. application/pdf
+  created_at  DateTime @default(now())
+
+  contact     Contact  @relation(fields: [contact_id], references: [id])
 }
 
 model LotLock {
@@ -162,6 +233,8 @@ model User {
   // Relations
   sales         Reservation[]  @relation("SellerReservations")
   purchases     Reservation[]  @relation("BuyerReservations")
+  notes         Note[]
+  calls         CallLog[]
   auditLogs     AuditLog[]
   notifications Notification[]
 }

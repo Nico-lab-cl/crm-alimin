@@ -74,6 +74,14 @@ export async function getAdminPipeline() {
                 },
                 seller: {
                     select: { id: true, name: true }
+                },
+                contact: {
+                    select: { 
+                        source: true, 
+                        meta_campaign_name: true,
+                        utm_campaign: true,
+                        utm_source: true
+                    }
                 }
             },
             orderBy: { created_at: 'desc' }

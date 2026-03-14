@@ -21,6 +21,12 @@ type ReservationWithDetails = Reservation & {
     lot: Lot
     buyer: User | null
     seller: User | null
+    contact: {
+        source: string | null
+        meta_campaign_name: string | null
+        utm_campaign: string | null
+        utm_source: string | null
+    } | null
 }
 
 const STAGE_ORDER = ["RESERVA_PAGADA", "RESERVA_POR_FIRMAR", "PIE_POR_PAGAR", "PROMESA_COMPRAVENTA", "PAGO_CUOTAS", "VENTA_CERRADA"]
@@ -57,8 +63,22 @@ export function AdminPipelineCard({
     return (
         <Card className="text-sm shadow-sm hover:shadow-md transition-shadow relative">
             <CardHeader className="p-3 pb-0">
-                <CardTitle className="text-base font-semibold flex justify-between items-start">
-                    <span>{reservation.name}</span>
+                <CardTitle className="text-base font-semibold flex flex-col gap-1">
+                    <div className="flex justify-between items-start">
+                        <span>{reservation.name}</span>
+                    </div>
+                    <div className="flex flex-wrap gap-1">
+                        {reservation.contact?.source && (
+                            <Badge variant="outline" className="text-[10px] font-bold bg-blue-50 text-blue-600 border-blue-200 py-0 h-4">
+                                {reservation.contact.source}
+                            </Badge>
+                        )}
+                        {(reservation.contact?.meta_campaign_name || reservation.contact?.utm_campaign) && (
+                            <Badge variant="outline" className="text-[10px] font-medium bg-gray-50 text-gray-600 border-gray-200 py-0 h-4 truncate max-w-[120px]">
+                                {reservation.contact.meta_campaign_name || reservation.contact.utm_campaign}
+                            </Badge>
+                        )}
+                    </div>
                 </CardTitle>
                 <div className="text-xs text-muted-foreground flex items-center gap-1">
                     <MapPin className="w-3 h-3" />
