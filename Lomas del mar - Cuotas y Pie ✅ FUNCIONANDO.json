@@ -1,0 +1,303 @@
+{
+  "name": "Lomas del mar - Cuotas y Pie ✅ FUNCIONANDO",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "85da35c7-7d03-4564-94d1-5eeb88414b95",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -96,
+        0
+      ],
+      "id": "5b536476-22f7-4886-945d-caa2aca7a36b",
+      "name": "Confirmación de cuotas",
+      "webhookId": "85da35c7-7d03-4564-94d1-5eeb88414b95"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "97088a1c-742f-4d8b-a98f-d7aa29452c30",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -112,
+        192
+      ],
+      "id": "4a6c56db-d08a-4723-9643-23605696c7ab",
+      "name": "Confirmación de Pie",
+      "webhookId": "97088a1c-742f-4d8b-a98f-d7aa29452c30"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.body.contact_email }}",
+        "subject": "=✅ Pago de Pie Confirmado - Lote {{ $json.body.lot_number }} - Lomas del Mar",
+        "message": "=<!DOCTYPE html> <html lang=\"es\"> <head>     <meta charset=\"UTF-8\">     <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">     <style>         body { font-family: 'Segoe UI', Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; background-color: #f5f5f5; }         .container { max-width: 600px; margin: 0 auto; background: #fff; }         .header { background: linear-gradient(135deg, #1a5f2a 0%, #2d8f4a 100%); color: #fff; padding: 30px; text-align: center; }         .header img { max-width: 140px; height: auto; margin-bottom: 12px; }         .header h1 { margin: 0; font-size: 24px; font-weight: 700; letter-spacing: 1px; }         .content { padding: 40px 30px; }         .success-badge { background: #e8f5e9; border: 2px solid #4caf50; border-radius: 50px; padding: 10px 20px; display: inline-block; margin-bottom: 25px; }         .success-badge span { color: #2e7d32; font-weight: 600; font-size: 14px; text-transform: uppercase; }         .greeting { font-size: 20px; color: #1a5f2a; margin-bottom: 20px; font-weight: 600; }                  /* Tarjeta Financiera */         .financial-card { background: #f9f9f9; border: 1px solid #e0e0e0; border-radius: 8px; padding: 0; overflow: hidden; margin: 25px 0; }         .financial-header { background: #1a5f2a; color: #fff; padding: 10px 20px; font-size: 14px; font-weight: bold; }         .financial-row { display: flex; justify-content: space-between; padding: 12px 20px; border-bottom: 1px solid #eee; }         .financial-row:last-child { border-bottom: none; background-color: #f0f7f1; }         .f-label { color: #666; font-size: 14px; }         .f-value { font-weight: 600; color: #333; }         .f-total-label { color: #1a5f2a; font-weight: 700; font-size: 15px; }         .f-total-value { color: #1a5f2a; font-weight: 700; font-size: 18px; }         .discount { color: #e65100; } /* Color para el descuento de reserva */          .btn-container { text-align: center; margin: 35px 0; }         .btn-dashboard { background-color: #1a5f2a; color: #ffffff !important; padding: 16px 32px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block; font-size: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: background 0.3s; }                  .next-steps { background: #fff3e0; border-left: 4px solid #ff9800; padding: 20px 25px; margin: 25px 0; border-radius: 8px; }         .contact-box { background: #e3f2fd; padding: 20px; border-radius: 8px; text-align: center; font-size: 14px; }         .footer { background: #1a5f2a; color: #fff; padding: 30px; text-align: center; font-size: 12px; }     </style> </head> <body>     <div class=\"container\">         <div class=\"header\">             <img src=\"https://lh3.googleusercontent.com/d/1yWAhY7_vZVJOVwyxZsgILoKd58_na516\" alt=\"ALIMIN Logo\">             <h1>LOMAS DEL MAR</h1>         </div>                  <div class=\"content\">             <div class=\"success-badge\">                 <span>✓ PAGO DE PIE RECIBIDO</span>             </div>                          <p class=\"greeting\">¡Hola {{ $json.body.contact_name }}!</p>             <p>Confirmamos la recepción exitosa del pago correspondiente al <strong>Pie Inicial</strong> de tu terreno. Este es un gran paso hacia la obtención de tu propiedad.</p>                          <div class=\"financial-card\">                 <div class=\"financial-header\">📋 Detalle de la Operación - Lote {{ $json.body.lot_number }}</div>                                  <div class=\"financial-row\">                     <span class=\"f-label\">Valor Total del Pie:</span>                     <span class=\"f-value\">{{ $json.body.pie_total }} CLP</span>                 </div>                                  <div class=\"financial-row\">                     <span class=\"f-label\">(-) Abono por Reserva:</span>                     <span class=\"f-value discount\">- {{ $json.body.reserva_descontada }} CLP</span>                 </div>                                  <div class=\"financial-row\">                     <span class=\"f-total-label\">MONTO PAGADO HOY:</span>                     <span class=\"f-total-value\">{{ $json.body.monto_pagado }} CLP</span>                 </div>             </div>              <p style=\"text-align: center; color: #555; margin-bottom: 10px;\">Puedes revisar el estado actualizado de tu lote y descargar el comprobante en tu panel:</p>              <div class=\"btn-container\">                 <a href=\"{{ $json.body.link_gestion_terreno }}\" class=\"btn-dashboard\">                     GESTIONAR MI TERRENO                 </a>             </div>                          <div class=\"next-steps\">                 <h3 style=\"margin-top:0; color: #e65100; font-size: 17px;\">🚀 Próximos Pasos</h3>                 <p>Con el pie pagado, nuestro equipo legal comenzará la <strong>redacción de la escritura de compraventa</strong>. Te notificaremos por este medio cuando el borrador esté disponible para tu revisión.</p>             </div>                          <div class=\"contact-box\">                 <p><strong>¿Consultas sobre tu pago?</strong><br>                 📧 inmobiliaria@aliminspa.cl<br>                 📱 +56 9 4882 2607</p>             </div>         </div>                  <div class=\"footer\">             <p><strong>ALIMIN SPA</strong><br>Región de Valparaíso, Chile</p>             <p style=\"opacity: 0.6; margin-top: 10px; font-size: 10px;\">Ref Pago: {{ $json.body.reservation_id }}</p>         </div>     </div> </body> </html>",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        96,
+        192
+      ],
+      "id": "584a84fe-990d-40c4-b3f5-599c7d518abe",
+      "name": "Send a message",
+      "webhookId": "f0e289f1-27c7-4746-b066-b9f762e9710e",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "L2WQMNL9sCFpfem9",
+          "name": "Lomas del mar - Alimin Gmail"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.body.contact_email }}",
+        "subject": "=✅ Comprobante de Pago - Cuota Lote {{ $json.body.lot_number }} - Lomas del Mar",
+        "message": "=<!DOCTYPE html>\n<html lang=\"es\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <style>\n        body { font-family: 'Segoe UI', Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; background-color: #f5f5f5; }\n        .container { max-width: 600px; margin: 0 auto; background: #fff; }\n        .header { background: linear-gradient(135deg, #1a5f2a 0%, #2d8f4a 100%); color: #fff; padding: 30px; text-align: center; }\n        .header img { max-width: 140px; height: auto; margin-bottom: 12px; }\n        .header h1 { margin: 0; font-size: 24px; font-weight: 700; letter-spacing: 1px; }\n        .content { padding: 40px 30px; }\n        .success-badge { background: #e8f5e9; border: 2px solid #4caf50; border-radius: 50px; padding: 10px 20px; display: inline-block; margin-bottom: 25px; }\n        .success-badge span { color: #2e7d32; font-weight: 600; font-size: 14px; text-transform: uppercase; }\n        .greeting { font-size: 20px; color: #1a5f2a; margin-bottom: 20px; font-weight: 600; }\n        \n        /* Tarjeta de Progreso */\n        .progress-card { background: #fff; border: 1px solid #e0e0e0; border-radius: 12px; padding: 0; overflow: hidden; margin: 25px 0; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }\n        .progress-header { background: #2d3e50; color: #fff; padding: 15px 25px; display: flex; justify-content: space-between; align-items: center; }\n        .progress-header span { font-size: 14px; font-weight: 500; opacity: 0.9; }\n        .amount-highlight { font-size: 20px; font-weight: 700; color: #4caf50; } /* Verde brillante para el dinero */\n        \n        .stat-grid { display: flex; border-bottom: 1px solid #eee; }\n        .stat-item { flex: 1; padding: 20px; text-align: center; border-right: 1px solid #eee; }\n        .stat-item:last-child { border-right: none; }\n        .stat-label { font-size: 12px; color: #777; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 5px; }\n        .stat-value { font-size: 22px; font-weight: 700; color: #333; }\n        .stat-value.remaining { color: #e65100; } /* Naranja para lo que falta */\n\n        .info-row { padding: 15px 25px; background: #f9f9f9; font-size: 14px; color: #555; text-align: center; border-top: 1px solid #eee; }\n\n        .btn-container { text-align: center; margin: 35px 0; }\n        .btn-portal { background-color: #1a5f2a; color: #ffffff !important; padding: 16px 32px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block; font-size: 15px; transition: background 0.3s; }\n        \n        .footer { background: #1a5f2a; color: #fff; padding: 30px; text-align: center; font-size: 12px; }\n    </style>\n</head>\n<body>\n    <div class=\"container\">\n        <div class=\"header\">\n            <img src=\"https://lh3.googleusercontent.com/d/1yWAhY7_vZVJOVwyxZsgILoKd58_na516\" alt=\"ALIMIN Logo\">\n            <h1>LOMAS DEL MAR</h1>\n        </div>\n        \n        <div class=\"content\">\n            <div class=\"success-badge\">\n                <span>✓ PAGO CONFIRMADO</span>\n            </div>\n            \n            <p class=\"greeting\">¡Hola {{ $json.body.contact_name }}!</p>\n            <p>Hemos recibido correctamente el pago de tu cuota mensual. Tu financiamiento se mantiene al día.</p>\n            \n            <div class=\"progress-card\">\n                <div class=\"progress-header\">\n                    <span>Monto Pagado:</span>\n                    <span class=\"amount-highlight\">${{ $json.body.monto_pagado }}</span>\n                </div>\n                \n                <div class=\"stat-grid\">\n                    <div class=\"stat-item\">\n                        <span class=\"stat-label\">Cuotas Pagadas</span>\n                        <span class=\"stat-value\">{{ $json.body.cantidad_cuotas_pagadas }}</span>\n                    </div>\n                    <div class=\"stat-item\">\n                        <span class=\"stat-label\">Restantes</span>\n                        <span class=\"stat-value remaining\">{{ $json.body.cuotas_restantes }}</span>\n                    </div>\n                </div>\n\n                <div class=\"info-row\">\n                    Correspondiente al Lote <strong>#{{ $json.body.lot_number }}</strong>\n                </div>\n            </div>\n\n\n            <div class=\"btn-container\">\n                <a href=\"{{ $json.body.link_gestion_terreno }}\" class=\"btn-portal\">\n                    Gestiona tu terreno\n                </a>\n            </div>\n            \n            <p style=\"font-size: 13px; color: #888; text-align: center; margin-top: 30px;\">\n                * La actualización en tu panel de cliente es inmediata. Si tienes dudas con el saldo restante, contáctanos.\n            </p>\n        </div>\n        \n        <div class=\"footer\">\n            <p><strong>ALIMIN SPA</strong><br>Financiamiento Directo</p>\n            <p style=\"opacity: 0.6; margin-top: 10px; font-size: 10px;\">ID Transacción: {{ $json.body.reservation_id }}</p>\n        </div>\n    </div>\n</body>\n</html>",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        96,
+        0
+      ],
+      "id": "34f6ce9c-c60a-427e-99e7-66b9fe7a64e8",
+      "name": "Send a message1",
+      "webhookId": "f0e289f1-27c7-4746-b066-b9f762e9710e",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "L2WQMNL9sCFpfem9",
+          "name": "Lomas del mar - Alimin Gmail"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "89c6e0f1-2e6d-4a21-9211-92fe1d1d2ba5",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -112,
+        384
+      ],
+      "id": "8594b858-8b6c-47b5-a204-665f4e26706e",
+      "name": "Interes dia 11",
+      "webhookId": "89c6e0f1-2e6d-4a21-9211-92fe1d1d2ba5"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://aliminlomasdelmar.com/api/admin/cron/pre-mora",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-cron-secret",
+              "value": "lomas2026_super_secret_cron_key"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -416,
+        384
+      ],
+      "id": "d14564a7-238d-44a4-8cee-70100e72d3b3",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "c3f4f116-0339-4d1f-8e2b-e57b2c4180f2",
+              "leftValue": "={{ $json.body.is_pre_mora }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        96,
+        384
+      ],
+      "id": "170e20b6-42c7-4535-b5ed-31a5fbdbf41d",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.body.contact_email }}",
+        "subject": "=⚠️ ÚLTIMO DÍA: Pago de Cuota sin Interés - Lote {{ $json.body.lot_number }} - Lomas del Mar",
+        "message": "=<!DOCTYPE html>\n<html lang=\"es\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <style>\n        body { font-family: 'Segoe UI', Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; background-color: #f5f5f5; }\n        .container { max-width: 600px; margin: 0 auto; background: #fff; }\n        .header { background: linear-gradient(135deg, #1a5f2a 0%, #2d8f4a 100%); color: #fff; padding: 30px; text-align: center; }\n        .header img { max-width: 140px; height: auto; margin-bottom: 12px; }\n        .header h1 { margin: 0; font-size: 24px; font-weight: 700; letter-spacing: 1px; }\n        .content { padding: 40px 30px; }\n        .warning-badge { background: #fff8e1; border: 2px solid #ffb300; border-radius: 50px; padding: 10px 20px; display: inline-block; margin-bottom: 25px; }\n        .warning-badge span { color: #f57f17; font-weight: 600; font-size: 14px; text-transform: uppercase; }\n        .greeting { font-size: 20px; color: #1a5f2a; margin-bottom: 20px; font-weight: 600; }\n        \n        .progress-card { background: #fff; border: 1px solid #e0e0e0; border-radius: 12px; padding: 0; overflow: hidden; margin: 25px 0; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }\n        .progress-header { background: #2d3e50; color: #fff; padding: 15px 25px; display: flex; justify-content: space-between; align-items: center; }\n        .progress-header span { font-size: 14px; font-weight: 500; opacity: 0.9; }\n        .amount-highlight { font-size: 20px; font-weight: 700; color: #ffb300; } \n        \n        .stat-grid { display: flex; border-bottom: 1px solid #eee; }\n        .stat-item { flex: 1; padding: 20px; text-align: center; border-right: 1px solid #eee; }\n        .stat-item:last-child { border-right: none; }\n        .stat-label { font-size: 12px; color: #777; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 5px; }\n        .stat-value { font-size: 22px; font-weight: 700; color: #333; }\n\n        .info-row { padding: 15px 25px; background: #f9f9f9; font-size: 14px; color: #555; text-align: center; border-top: 1px solid #eee; }\n        .alert-row { padding: 15px 25px; background: #fffde7; font-size: 13px; color: #d84315; text-align: center; border-top: 1px solid #fff9c4; font-weight: 500; }\n\n        .btn-container { text-align: center; margin: 35px 0; }\n        .btn-portal { background-color: #1a5f2a; color: #ffffff !important; padding: 16px 32px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block; font-size: 15px; transition: background 0.3s; }\n        \n        .footer { background: #1a5f2a; color: #fff; padding: 30px; text-align: center; font-size: 12px; }\n    </style>\n</head>\n<body>\n    <div class=\"container\">\n        <div class=\"header\">\n            <img src=\"https://lh3.googleusercontent.com/d/1yWAhY7_vZVJOVwyxZsgILoKd58_na516\" alt=\"ALIMIN Logo\">\n            <h1>LOMAS DEL MAR</h1>\n        </div>\n        \n        <div class=\"content\">\n            <div class=\"warning-badge\">\n                <span>⚠️ HOY VENCE TU CUOTA</span>\n            </div>\n            \n            <p class=\"greeting\">¡Hola {{ $json.body.contact_name }}!</p>\n            <p>Queremos recordarte que <strong>hoy es tu último día para pagar tu cuota mensual sin intereses</strong>.</p>\n            \n            <div class=\"progress-card\">\n                <div class=\"progress-header\">\n                    <span>Monto a Pagar:</span>\n                    <span class=\"amount-highlight\">${{ $json.body.monto_cuota }}</span>\n                </div>\n                \n                <div class=\"stat-grid\">\n                    <div class=\"stat-item\">\n                        <span class=\"stat-label\">Lote Destino</span>\n                        <span class=\"stat-value\">#{{ $json.body.lot_number }}</span>\n                    </div>\n                    <div class=\"stat-item\">\n                        <span class=\"stat-label\">Nº de Cuota</span>\n                        <span class=\"stat-value\">{{ $json.body.cuota_numero }}</span>\n                    </div>\n                </div>\n\n                <div class=\"alert-row\">\n                    * Recuerda que a partir de mañana se aplicará un recargo diario por mora sobre el monto original.\n                </div>\n            </div>\n\n            <div class=\"btn-container\">\n                <a href=\"{{ $json.body.link_gestion_terreno }}\" class=\"btn-portal\">\n                    Ir a tu portal a pagar\n                </a>\n            </div>\n            \n            <p style=\"font-size: 13px; color: #888; text-align: center; margin-top: 30px;\">\n                Si ya realizaste el pago y lo subiste a la plataforma, por favor omite este mensaje.\n            </p>\n        </div>\n        \n        <div class=\"footer\">\n            <p><strong>ALIMIN SPA</strong><br>Financiamiento Directo</p>\n            <p style=\"opacity: 0.6; margin-top: 10px; font-size: 10px;\">ID Operación: {{ $json.body.reservation_id }}</p>\n        </div>\n    </div>\n</body>\n</html>\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        368,
+        368
+      ],
+      "id": "906ba52a-1ece-4703-b66d-1161a89b8caf",
+      "name": "Correo: Ultimo dia para pagar tu cuota sin interes",
+      "webhookId": "f0e289f1-27c7-4746-b066-b9f762e9710e",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "L2WQMNL9sCFpfem9",
+          "name": "Lomas del mar - Alimin Gmail"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.body.contact_email }}",
+        "subject": "=🚨 ALERTA DE MORA: Pago Vencido - Lote {{ $json.body.lot_number }} - Lomas del Mar",
+        "message": "=<!DOCTYPE html>\n<html lang=\"es\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <style>\n        body { font-family: 'Segoe UI', Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; background-color: #f5f5f5; }\n        .container { max-width: 600px; margin: 0 auto; background: #fff; }\n        .header { background: linear-gradient(135deg, #b71c1c 0%, #d32f2f 100%); color: #fff; padding: 30px; text-align: center; }\n        .header img { max-width: 140px; height: auto; margin-bottom: 12px; }\n        .header h1 { margin: 0; font-size: 24px; font-weight: 700; letter-spacing: 1px; }\n        .content { padding: 40px 30px; }\n        .danger-badge { background: #ffebee; border: 2px solid #f44336; border-radius: 50px; padding: 10px 20px; display: inline-block; margin-bottom: 25px; }\n        .danger-badge span { color: #c62828; font-weight: 600; font-size: 14px; text-transform: uppercase; }\n        .greeting { font-size: 20px; color: #b71c1c; margin-bottom: 20px; font-weight: 600; }\n        \n        .progress-card { background: #fff; border: 1px solid #e0e0e0; border-radius: 12px; padding: 0; overflow: hidden; margin: 25px 0; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }\n        .progress-header { background: #2d3e50; color: #fff; padding: 15px 25px; display: flex; justify-content: space-between; align-items: center; }\n        .progress-header span { font-size: 14px; font-weight: 500; opacity: 0.9; }\n        .amount-highlight { font-size: 20px; font-weight: 700; color: #f44336; } \n        \n        .stat-grid { display: flex; border-bottom: 1px solid #eee; }\n        .stat-item { flex: 1; padding: 20px; text-align: center; border-right: 1px solid #eee; }\n        .stat-item:last-child { border-right: none; }\n        .stat-label { font-size: 12px; color: #777; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 5px; }\n        .stat-value { font-size: 22px; font-weight: 700; color: #333; }\n        .stat-value.remaining { color: #d32f2f; } \n\n        .info-row { padding: 15px 25px; background: #fff5f5; font-size: 14px; color: #c62828; text-align: center; border-top: 1px solid #ffebee; font-weight: 500; }\n\n        .btn-container { text-align: center; margin: 35px 0; }\n        .btn-portal { background-color: #b71c1c; color: #ffffff !important; padding: 16px 32px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block; font-size: 15px; transition: background 0.3s; }\n        \n        .footer { background: #2d3e50; color: #fff; padding: 30px; text-align: center; font-size: 12px; }\n    </style>\n</head>\n<body>\n    <div class=\"container\">\n        <div class=\"header\">\n            <img src=\"https://lh3.googleusercontent.com/d/1yWAhY7_vZVJOVwyxZsgILoKd58_na516\" alt=\"ALIMIN Logo\">\n            <h1>LOMAS DEL MAR</h1>\n        </div>\n        \n        <div class=\"content\">\n            <div class=\"danger-badge\">\n                <span>🔴 AVISO DE MORA Y ATRASO</span>\n            </div>\n            \n            <p class=\"greeting\">¡Hola {{ $json.body.contact_name }}!</p>\n            <p>Tu cuota mensual del Lote <strong>#{{ $json.body.lot_number }}</strong> se encuentra vencida. Mantenemos un registro de <strong>{{ $json.body.dias_atraso }} días de atraso</strong>.</p>\n            \n            <div class=\"progress-card\">\n                <div class=\"progress-header\">\n                    <span>Monto Total a Pagar:</span>\n                    <span class=\"amount-highlight\">${{ $json.body.total_a_pagar }}</span>\n                </div>\n                \n                <div class=\"stat-grid\">\n                    <div class=\"stat-item\">\n                        <span class=\"stat-label\">Cuota Original</span>\n                        <span class=\"stat-value\">${{ $json.body.monto_cuota }}</span>\n                    </div>\n                    <div class=\"stat-item\">\n                        <span class=\"stat-label\">Multa e Intereses</span>\n                        <span class=\"stat-value remaining\">+${{ $json.body.interes_mora }}</span>\n                    </div>\n                </div>\n\n                <div class=\"info-row\">\n                    Corresponde a la Cuota Nº {{ $json.body.cuota_numero }}. Los intereses aumentan diariamente.\n                </div>\n            </div>\n\n            <div class=\"btn-container\">\n                <a href=\"{{ $json.body.link_gestion_terreno }}\" class=\"btn-portal\">\n                    Pagar Deuda y Multa\n                </a>\n            </div>\n            \n            <p style=\"font-size: 13px; color: #888; text-align: center; margin-top: 30px;\">\n                Evita la acumulación de más intereses regularizando tu pago lo antes posible directo en el portal.\n            </p>\n        </div>\n        \n        <div class=\"footer\">\n            <p><strong>ALIMIN SPA</strong><br>Departamento de Cobranzas</p>\n            <p style=\"opacity: 0.6; margin-top: 10px; font-size: 10px;\">ID Operación: {{ $json.body.reservation_id }}</p>\n        </div>\n    </div>\n</body>\n</html>\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        368,
+        592
+      ],
+      "id": "65e4f511-2870-42cc-8c9e-04c55ed9e5cd",
+      "name": "Alerta de MORA",
+      "webhookId": "f0e289f1-27c7-4746-b066-b9f762e9710e",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "L2WQMNL9sCFpfem9",
+          "name": "Lomas del mar - Alimin Gmail"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "months",
+              "triggerAtDayOfMonth": 10,
+              "triggerAtHour": 14
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -592,
+        384
+      ],
+      "id": "85c29742-1693-4112-adf4-a1b6bf6f0f94",
+      "name": "Todos los"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Confirmación de cuotas": {
+      "main": [
+        [
+          {
+            "node": "Send a message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Confirmación de Pie": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Interes dia 11": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Correo: Ultimo dia para pagar tu cuota sin interes",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Alerta de MORA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Todos los": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "301c77c8-e742-4d3b-b982-d7107017c79b",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "6e88b42a5e011f39a6920cb8fcbced8eb6ca6be5a13db9dc945e745822e35ac5"
+  },
+  "id": "LLY04vjGrrnP75xu",
+  "tags": []
+}
