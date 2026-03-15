@@ -96,46 +96,11 @@ export async function POST(req: NextRequest) {
             // CRITICAL FIX: Use real amount from lot or environment variable
             amount = lot.reservation_amount_clp || RESERVATION_AMOUNT_CLP;
 
-            // CRITICAL FIX: Upsert Contact to ensure Reservation appears in CRM
-            const contactNameParts = name.trim().split(" ");
-            const firstName = contactNameParts[0] || "";
-            const lastName = contactNameParts.slice(1).join(" ") || "";
-
-            const contact = await tx.contact.upsert({
-                where: { email },
-                update: {
-                    first_name: firstName,
-                    last_name: lastName,
-                    phone: phone || undefined,
-                    rut: rut || undefined,
-                    // Note: We don't overwrite source if it already came from META
-                    utm_source: utm_source || undefined,
-                    utm_medium: utm_medium || undefined,
-                    utm_campaign: utm_campaign || undefined,
-                    utm_content: utm_content || undefined,
-                    utm_term: utm_term || undefined,
-                },
-                create: {
-                    email,
-                    first_name: firstName,
-                    last_name: lastName,
-                    phone: phone || "",
-                    rut: rut || "",
-                    source: "LOMAS",
-                    utm_source,
-                    utm_medium,
-                    utm_campaign,
-                    utm_content,
-                    utm_term,
-                }
-            });
-
             // 3. Create Reservation
             await tx.reservation.create({
                 data: {
                     id: reservationId,
                     lot_id: lotId,
-                    contact_id: contact.id, // LINK TO CRM CONTACT
                     name,
                     email,
                     phone,
