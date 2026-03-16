@@ -17,6 +17,7 @@ export async function POST(
         }
 
         const { id: reservationId } = await params;
+        console.log(`[PromesaSignRequest] Attempting OTP for reservation: ${reservationId}`);
 
         const reservation = await prisma.reservation.findUnique({
             where: { id: reservationId },
@@ -24,6 +25,7 @@ export async function POST(
         });
 
         if (!reservation) {
+            console.log(`[PromesaSignRequest] Reservation not found: ${reservationId}`);
             return NextResponse.json({ error: "Reserva no encontrada" }, { status: 404 });
         }
 
@@ -56,7 +58,12 @@ export async function POST(
         // Use same n8n OTP webhook
         const webhookUrl = "https://n8n-n8n.yszha2.easypanel.host/webhook/533d88ba-81ec-4d87-8bb3-000998fc5550";
 
+        // Fire and await with timeout
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+
         try {
+            console.log(`[PromesaSignRequest] Calling n8n webhook for ${reservation.email}...`);
             const response = await fetch(webhookUrl, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -68,16 +75,25 @@ export async function POST(
                     dashboard_url: `${process.env.NEXT_PUBLIC_BASE_URL}/user/documents`,
                     lot_number: reservation.lot.number,
                     lot_stage: reservation.lot.stage
-                })
+                }),
+                signal: controller.signal
             });
+            clearTimeout(timeoutId);
 
             if (!response.ok) {
                 const errorText = await response.text();
-                throw new Error(`N8N Error: ${response.status} - ${errorText}`);
+                const msg = `N8N Error: ${response.status} - ${errorText}`;
+                console.error(`[PromesaSignRequest] ${msg}`);
+                throw new Error(msg);
             }
+            console.log(`[PromesaSignRequest] Webhook called successfully for ${reservation.email}`);
         } catch (webhookError: any) {
-            console.error("Failed to call n8n webhook:", webhookError);
-            return NextResponse.json({ error: `Error enviando correo: ${webhookError.message}` }, { status: 502 });
+            clearTimeout(timeoutId);
+            const isTimeout = webhookError.name === 'AbortError';
+            const errorMsg = isTimeout ? "La solicitud al servidor de correos saturó (timeout 10s)" : webhookError.message;
+
+            console.error("[PromesaSignRequest] Failed to call n8n webhook:", webhookError);
+            return NextResponse.json({ error: `Error enviando correo: ${errorMsg}` }, { status: 500 });
         }
 
         return NextResponse.json({ success: true, message: "Código enviado a tu correo" });
