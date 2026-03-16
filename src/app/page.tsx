@@ -65,6 +65,8 @@ type ApiLotsRow = {
   cuotas?: number | null;
   pie?: number | null;
   valor_cuota?: number | null;
+  price_total_clp?: number | null;
+  last_installment_amount?: number | null;
 };
 
 const normalizeStatus = (status: unknown): Lot['status'] | null => {
@@ -123,9 +125,11 @@ export default function Home() {
           ...lot,
           status: nextStatus,
           reservedUntil: Number.isFinite(reservedUntilMs) ? reservedUntilMs : null,
-          cuotas: row?.cuotas ?? lot.cuotas, // Map cuotas from API
-          pie: row?.pie ?? lot.pie, // Map pie from API
-          valorCuota: row?.valor_cuota ?? lot.valorCuota, // Map valor_cuota from API
+          cuotas: row?.cuotas ?? lot.cuotas,
+          pie: row?.pie ?? lot.pie,
+          valorCuota: row?.valor_cuota ?? lot.valorCuota,
+          totalPrice: row?.price_total_clp ?? lot.totalPrice,
+          last_installment_amount: row?.last_installment_amount ?? lot.last_installment_amount,
           // Backend is the source-of-truth; locks from legacy local data should not drive reserved.
           lockedBy: null,
           lockedUntil: null,
@@ -276,6 +280,10 @@ export default function Home() {
             return {
               ...lot,
               cuotas: row?.cuotas ?? lot.cuotas,
+              pie: row?.pie ?? lot.pie,
+              valorCuota: row?.valor_cuota ?? lot.valorCuota,
+              totalPrice: row?.price_total_clp ?? lot.totalPrice,
+              last_installment_amount: row?.last_installment_amount ?? lot.last_installment_amount,
               status: nextStatus,
               reservedUntil: nextReservedUntil,
             };
