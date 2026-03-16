@@ -53,7 +53,7 @@ export function AdminDashboardClient({
     const isPostventa = userEmail === POSTVENTA_EMAIL;
 
     const [desktopTab, setDesktopTab] = useState<PostventaTab>(
-        (initialMobileTab as PostventaTab) || 'recibos'
+        (initialMobileTab as PostventaTab) || 'terrenos'
     );
     const [mobileTab, setMobileTab] = useState<AdminMobileTab | PostventaTab>(
         (initialMobileTab as any) || (isPostventa ? 'recibos' : 'terrenos')
@@ -184,9 +184,6 @@ export function AdminDashboardClient({
                                         stats={postventaStats}
                                         stage={postventaStage}
                                     />
-                                </TabsContent>
-                                <TabsContent value="mora" className="mt-6">
-                                    <MoraExplainerCard soldLots={soldLots} />
                                 </TabsContent>
                             </Tabs>
                         </div>
