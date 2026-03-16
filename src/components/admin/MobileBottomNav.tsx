@@ -12,12 +12,13 @@ interface MobileBottomNavProps {
     isPostventa?: boolean;
 }
 
-const adminTabs: { id: AdminMobileTab; label: string; icon: React.ElementType }[] = [
+const adminTabs: { id: AdminMobileTab | PostventaTab; label: string; icon: React.ElementType }[] = [
     { id: 'terrenos', label: 'Terrenos', icon: Map },
     { id: 'usuarios', label: 'Usuarios', icon: Users },
 ];
 
 const postventaTabs: { id: PostventaTab; label: string; icon: React.ElementType }[] = [
+    { id: 'terrenos', label: 'Terrenos', icon: Map },
     { id: 'recibos', label: 'Recibos', icon: Receipt },
     { id: 'mora', label: 'Simular', icon: Calculator },
     { id: 'ledger', label: 'Cuentas', icon: BookOpen },

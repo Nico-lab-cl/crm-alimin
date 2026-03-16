@@ -23,13 +23,14 @@ export default async function AdminDashboard({
     }
 
     const isPostventa = userEmail === POSTVENTA_EMAIL
+    const isAdmin = userRole === 'ADMIN'
     const postventaStage = searchParams.stage || 'ALL'
 
     // Conditional Fetching Optimization:
-    // Regular Admins need Pipeline, Sellers, Lots, Users, and Stats.
-    // Postventa users ONLY need Ledger and Receipts (and minimal stats for context).
+    // Regular Admins need everything.
+    // Postventa users ONLY need Ledger and Receipts.
     const activeTab = searchParams.mobileTab || (isPostventa ? 'recibos' : 'terrenos')
-    const needsPostventaData = isPostventa && (activeTab === 'ledger' || activeTab === 'alertas' || !searchParams.mobileTab)
+    const needsPostventaData = (isPostventa || isAdmin) && (activeTab === 'ledger' || activeTab === 'alertas' || activeTab === 'postventa' || !searchParams.mobileTab)
 
     const [
         pipelineResult, 
@@ -46,7 +47,7 @@ export default async function AdminDashboard({
         (!isPostventa && userRole === 'ADMIN') ? getAdminUsersList() : Promise.resolve({ success: true, users: [], error: null }),
         (!isPostventa && userRole === 'ADMIN') ? getAdminStats() : Promise.resolve({ success: true, data: null, error: null }),
         needsPostventaData ? getFullPostventaData({ stage: postventaStage }) : Promise.resolve({ success: true, data: [], stats: { total: 0, late: 0, grace: 0, upcoming: 0, ok: 0 } }),
-        isPostventa ? getPaginatedReceipts({ page: 1, pageSize: 50 }) : Promise.resolve({ success: false, receipts: [], error: null })
+        (isPostventa || (isAdmin && activeTab === 'postventa')) ? getPaginatedReceipts({ page: 1, pageSize: 50 }) : Promise.resolve({ success: false, receipts: [], error: null })
     ])
 
     if (pipelineResult.error || statsResult.error) {
@@ -65,7 +66,7 @@ export default async function AdminDashboard({
     let postventaLedger: any[] = []
     let postventaStats = { total: 0, late: 0, grace: 0, upcoming: 0, ok: 0 }
 
-    if (isPostventa && (postventaResult as any)?.success) {
+    if ((isPostventa || isAdmin) && (postventaResult as any)?.success) {
         postventaLedger = (postventaResult as any).data || []
         postventaStats = (postventaResult as any).stats || postventaStats
     }

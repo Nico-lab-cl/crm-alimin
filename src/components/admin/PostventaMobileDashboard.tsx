@@ -22,8 +22,9 @@ import { MoraExplainerCard } from './MoraExplainerCard';
 import { ContractUploadAction } from "@/components/admin/ContractUploadAction";
 import { AdminMoraManager } from "@/components/admin/AdminMoraManager"
 import { AssignOwnerModal } from "@/components/dashboard/AssignOwnerModal";
+import { AdminLotList } from "@/components/dashboard/AdminLotList";
 
-export type PostventaTab = 'recibos' | 'mora' | 'ledger' | 'alertas';
+export type PostventaTab = 'recibos' | 'mora' | 'ledger' | 'alertas' | 'terrenos';
 
 interface SoldLot {
     id: number;
@@ -43,6 +44,7 @@ interface PostventaMobileDashboardProps {
     onTabChange?: (tab: PostventaTab) => void;
     stats?: { total: number, late: number, grace: number, upcoming: number, ok: number };
     stage?: string | number;
+    fullLots?: any[];
 }
 
 export function PostventaMobileDashboard({ 
@@ -54,7 +56,8 @@ export function PostventaMobileDashboard({
     users = [],
     onTabChange,
     stats = { total: 0, late: 0, grace: 0, upcoming: 0, ok: 0 },
-    stage = 'ALL'
+    stage = 'ALL',
+    fullLots = []
 }: PostventaMobileDashboardProps) {
     const [receipts, setReceipts] = useState(initialReceipts);
     const [rejectingId, setRejectingId] = useState<string | null>(null);
@@ -170,6 +173,28 @@ export function PostventaMobileDashboard({
         if (status === 'REJECTED') return <Badge variant="destructive" className="text-[10px]">Rechazado</Badge>;
         return null;
     };
+
+    if (activeTab === 'terrenos') {
+        return (
+            <div className="space-y-4 pb-24 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                <div className="bg-[#0a1622]/60 backdrop-blur-xl border border-[#3f6066]/20 p-4 md:p-6 rounded-[2rem] space-y-4 shadow-2xl relative overflow-hidden">
+                    <div className="flex items-center gap-3">
+                        <div className="bg-[#3f6066]/20 p-2.5 rounded-2xl border border-[#3f6066]/30">
+                            <MapPin className="w-5 h-5 text-[#8eb2b8]" />
+                        </div>
+                        <div>
+                            <h2 className="text-xl font-black text-white tracking-tight uppercase">Gestión de Terrenos</h2>
+                            <p className="text-[10px] text-[#3f6066] font-black uppercase tracking-widest">Vista para Postventa</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="bg-black/40 backdrop-blur-md rounded-[2rem] p-6 border border-white/10 shadow-xl">
+                    <AdminLotList lots={fullLots} />
+                </div>
+            </div>
+        );
+    }
 
     if (activeTab === 'ledger') {
         const filteredLedger = ledger.filter(client => {

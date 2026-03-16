@@ -118,7 +118,10 @@ export function AdminDashboardClient({
                         {/* Desktop: Tabs layout */}
                         <div className="hidden md:block">
                             <Tabs value={desktopTab} onValueChange={handleTabChange} className="w-full">
-                                <TabsList className="grid w-full grid-cols-4 bg-[#0a1622]/60 p-1 rounded-2xl border border-[#3f6066]/20 backdrop-blur-xl">
+                                <TabsList className="grid w-full grid-cols-5 bg-[#0a1622]/60 p-1 rounded-2xl border border-[#3f6066]/20 backdrop-blur-xl">
+                                    <TabsTrigger value="terrenos" className="data-[state=active]:bg-[#3f6066] data-[state=active]:text-white text-gray-400 font-black uppercase text-[10px] tracking-widest transition-all">
+                                        Terrenos
+                                    </TabsTrigger>
                                     <TabsTrigger value="recibos" className="data-[state=active]:bg-[#3f6066] data-[state=active]:text-white text-gray-400 font-black uppercase text-[10px] tracking-widest transition-all">
                                         Recibos
                                     </TabsTrigger>
@@ -128,10 +131,21 @@ export function AdminDashboardClient({
                                     <TabsTrigger value="alertas" className="data-[state=active]:bg-[#3f6066] data-[state=active]:text-white text-gray-400 font-black uppercase text-[10px] tracking-widest transition-all">
                                         Alertas
                                     </TabsTrigger>
-                                    <TabsTrigger value="mora" className="data-[state=active]:bg-[#3f6066] data-[state=active]:text-white text-gray-400 font-black uppercase text-[10px] tracking-widest transition-all">
-                                        Calculadora
-                                    </TabsTrigger>
                                 </TabsList>
+
+                                <TabsContent value="terrenos" className="mt-6">
+                                    <PostventaMobileDashboard 
+                                        onTabChange={setDesktopTab} 
+                                        initialReceipts={receipts} 
+                                        soldLots={soldLots} 
+                                        activeTab="terrenos" 
+                                        ledger={ledger} 
+                                        debtAlerts={debtAlerts} 
+                                        stats={postventaStats}
+                                        stage={postventaStage}
+                                        fullLots={lots}
+                                    />
+                                </TabsContent>
 
                                 <TabsContent value="recibos" className="mt-6">
                                     <PostventaMobileDashboard 
@@ -189,6 +203,7 @@ export function AdminDashboardClient({
                                     users={moraManagerUsers}
                                     stats={postventaStats}
                                     stage={postventaStage}
+                                    fullLots={lots}
                                 />
                         </div>
                     </div>
