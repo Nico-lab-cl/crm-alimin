@@ -53,10 +53,10 @@ export function AdminDashboardClient({
     const isPostventa = userEmail === POSTVENTA_EMAIL;
 
     const [desktopTab, setDesktopTab] = useState<PostventaTab>(
-        (initialMobileTab as PostventaTab) || 'terrenos'
+        (initialMobileTab as PostventaTab) || (isPostventa ? 'terrenos' : 'recibos')
     );
     const [mobileTab, setMobileTab] = useState<AdminMobileTab | PostventaTab>(
-        (initialMobileTab as any) || (isPostventa ? 'recibos' : 'terrenos')
+        (initialMobileTab as any) || (isPostventa ? 'terrenos' : 'terrenos')
     );
 
     const handleTabChange = (tab: string) => {
