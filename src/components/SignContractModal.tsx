@@ -35,14 +35,28 @@ export function SignContractModal({ reservationId, lotNumber, lotStage, onSucces
         try {
             const res = await fetch(`/api/contracts/${reservationId}/sign-request`, {
                 method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ action: "request_otp" }), // Dummy body to avoid proxy issues with empty POST
             });
-            const data = await res.json();
+            
+            const contentType = res.headers.get("content-type");
+            if (!res.ok) {
+                if (contentType && contentType.includes("application/json")) {
+                    const data = await res.json();
+                    throw new Error(data.error || "Error al solicitar código");
+                } else {
+                    const errorText = await res.text();
+                    console.error("Non-JSON error response:", errorText);
+                    throw new Error(`Error de servidor (${res.status}). Por favor contacta a soporte.`);
+                }
+            }
 
-            if (!res.ok) throw new Error(data.error || "Error al solicitar código");
-
+            // We expect JSON if it's OK
+            await res.json();
             toast.success("Código enviado a tu correo");
             setStep("otp");
         } catch (error: any) {
+            console.error("Sign request error:", error);
             toast.error(error.message);
         } finally {
             setLoading(false);
@@ -62,16 +76,27 @@ export function SignContractModal({ reservationId, lotNumber, lotStage, onSucces
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ code: otp }),
             });
-            const data = await res.json();
+            
+            const contentType = res.headers.get("content-type");
+            if (!res.ok) {
+                if (contentType && contentType.includes("application/json")) {
+                    const data = await res.json();
+                    throw new Error(data.error || "Error al verificar código");
+                } else {
+                    const errorText = await res.text();
+                    console.error("Non-JSON verification error response:", errorText);
+                    throw new Error(`Error de servidor (${res.status}) al verificar. Por favor contacta a soporte.`);
+                }
+            }
 
-            if (!res.ok) throw new Error(data.error || "Error al verificar código");
-
+            await res.json();
             toast.success("Contrato firmado exitosamente");
             setStep("success");
             // Perform updates in background, but keep modal open
             if (onSuccess) onSuccess();
             router.refresh();
         } catch (error: any) {
+            console.error("Verification error:", error);
             toast.error(error.message);
         } finally {
             setLoading(false);

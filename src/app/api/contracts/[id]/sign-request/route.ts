@@ -5,18 +5,19 @@ import { prisma } from "@/lib/prisma";
 // Generate a random 4-digit code
 const generateOTP = () => Math.floor(1000 + Math.random() * 9000).toString();
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(
     req: NextRequest,
-    context: { params: Promise<{ id: string }> } // Correct type for Next.js 15+ dynamic routes
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
+        const { id: reservationId } = await params;
         const session = await auth();
         if (!session || !session.user || !session.user.email) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        const params = await context.params;
-        const reservationId = params.id;
 
         const reservation = await prisma.reservation.findUnique({
             where: { id: reservationId },
