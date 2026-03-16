@@ -59,7 +59,7 @@ export async function POST(req: Request) {
         const verificationLink = `${baseUrl}/verify-email?token=${token}`;
 
         // 3. Send to n8n Webhook
-        const webhookUrl = "https://n8n-n8n.yszha2.easypanel.host/webhook/6014ee07-0470-4a07-aa94-2e5266bd9a03";
+        const webhookUrl = "https://n8n.aliminlomasdelmar.com/webhook/6014ee07-0470-4a07-aa94-2e5266bd9a03";
 
         // Blocking fetch to ensure execution in serverless environment
         try {

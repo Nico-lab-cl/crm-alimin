@@ -4,7 +4,7 @@ import { prisma } from '@/lib/prisma';
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://aliminlomasdelmar.com';
 
 export async function sendPieWebhook(reservationId: string, amountPaid: number) {
-    const pieWebhookUrl = "https://n8n-n8n.yszha2.easypanel.host/webhook/97088a1c-742f-4d8b-a98f-d7aa29452c30";
+    const pieWebhookUrl = "https://n8n.aliminlomasdelmar.com/webhook/97088a1c-742f-4d8b-a98f-d7aa29452c30";
 
     const reservation = await prisma.reservation.findUnique({
         where: { id: reservationId },
@@ -81,7 +81,7 @@ export async function sendPieWebhook(reservationId: string, amountPaid: number) 
 }
 
 export async function sendInstallmentWebhook(reservationId: string, amountPaid: number, installmentsCount: number = 1) {
-    const installmentWebhookUrl = "https://n8n-n8n.yszha2.easypanel.host/webhook/85da35c7-7d03-4564-94d1-5eeb88414b95";
+    const installmentWebhookUrl = "https://n8n.aliminlomasdelmar.com/webhook/85da35c7-7d03-4564-94d1-5eeb88414b95";
 
     const reservation = await prisma.reservation.findUnique({
         where: { id: reservationId },
@@ -159,7 +159,7 @@ export async function sendInstallmentWebhook(reservationId: string, amountPaid: 
 }
 
 export async function sendContractSignedWebhook(reservationId: string) {
-    const webhookUrl = "https://n8n-n8n.yszha2.easypanel.host/webhook/dd409dcd-adb6-4b8a-9d8a-6734156c7f08";
+    const webhookUrl = "https://n8n.aliminlomasdelmar.com/webhook/dd409dcd-adb6-4b8a-9d8a-6734156c7f08";
 
     const reservation = await prisma.reservation.findUnique({
         where: { id: reservationId },
@@ -226,7 +226,7 @@ export async function sendContractSignedWebhook(reservationId: string) {
 }
 
 export async function sendPaymentReceiptWebhook(receiptId: string) {
-    const webhookUrl = "https://n8n-n8n.yszha2.easypanel.host/webhook/a5ec08cd-b2cc-497b-b384-5f1712a3219f"; // Reemplazar con URL real
+    const webhookUrl = "https://n8n.aliminlomasdelmar.com/webhook/a5ec08cd-b2cc-497b-b384-5f1712a3219f"; // Reemplazar con URL real
 
     const receipt = await prisma.paymentReceipt.findUnique({
         where: { id: receiptId },
@@ -302,7 +302,7 @@ export async function sendMoraWebhook(payload: {
     link_gestion_terreno: string;
     is_pre_mora?: boolean;
 }) {
-    const moraWebhookUrl = "https://n8n-n8n.yszha2.easypanel.host/webhook/89c6e0f1-2e6d-4a21-9211-92fe1d1d2ba5";
+    const moraWebhookUrl = "https://n8n.aliminlomasdelmar.com/webhook/89c6e0f1-2e6d-4a21-9211-92fe1d1d2ba5";
 
     try {
         const res = await fetch(moraWebhookUrl, {

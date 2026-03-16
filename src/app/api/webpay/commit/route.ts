@@ -121,7 +121,7 @@ export async function GET(req: NextRequest) {
 
                     // Trigger Registration Webhook (New User)
                     // URL provided by user for Temp Password email:
-                    const registerWebhookUrl = "https://n8n-n8n.yszha2.easypanel.host/webhook/7febf5b8-27dd-4988-b137-364480bcba58";
+                    const registerWebhookUrl = "https://n8n.aliminlomasdelmar.com/webhook/7febf5b8-27dd-4988-b137-364480bcba58";
 
                     try {
                         // Fire and forget
@@ -203,7 +203,7 @@ export async function GET(req: NextRequest) {
 
             // --- TRIGGER PAYMENT WEBHOOK ---
             // URL provided by user for Lot Info email:
-            const paymentWebhookUrl = process.env.N8N_WEBHOOK_URL || "https://n8n-n8n.yszha2.easypanel.host/webhook/7b928d3b-2850-462d-87df-f6a87fe4108a";
+            const paymentWebhookUrl = process.env.N8N_WEBHOOK_URL || "https://n8n.aliminlomasdelmar.com/webhook/7b928d3b-2850-462d-87df-f6a87fe4108a";
 
             // Only trigger generic "New Purchase" webhook for Reservations (not Pie or Installments)
             if (paymentWebhookUrl && (!scope || scope === 'RESERVATION')) {

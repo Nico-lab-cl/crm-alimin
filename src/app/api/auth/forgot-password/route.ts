@@ -37,7 +37,7 @@ export async function POST(req: Request) {
         const resetLink = `${baseUrl}/reset-password?token=${token}`;
 
         // 4. Send to n8n Webhook
-        const webhookUrl = process.env.N8N_PASSWORD_RESET_WEBHOOK_URL;
+        const webhookUrl = process.env.N8N_PASSWORD_RESET_WEBHOOK_URL || "https://n8n.aliminlomasdelmar.com/webhook/140fae21-540a-4ef5-b0bf-7354b9baa44d";
 
         if (!webhookUrl) {
             console.error("Missing N8N_PASSWORD_RESET_WEBHOOK_URL env var");

@@ -732,7 +732,7 @@ export async function triggerLegacyWorkflow(reservationId: string) {
             });
 
             const baseUrl = process.env.NEXTAUTH_URL || "https://aliminlomasdelmar.com";
-            const registerWebhookUrl = "https://n8n-n8n.yszha2.easypanel.host/webhook/7febf5b8-27dd-4988-b137-364480bcba58";
+            const registerWebhookUrl = "https://n8n.aliminlomasdelmar.com/webhook/7febf5b8-27dd-4988-b137-364480bcba58";
 
             try {
                 await fetch(registerWebhookUrl, {
@@ -755,7 +755,7 @@ export async function triggerLegacyWorkflow(reservationId: string) {
         }
 
         // 2. Trigger Main Payment Webhook (Simulation of Payment Success)
-        const paymentWebhookUrl = process.env.N8N_WEBHOOK_URL || "https://n8n-n8n.yszha2.easypanel.host/webhook/7b928d3b-2850-462d-87df-f6a87fe4108a";
+        const paymentWebhookUrl = process.env.N8N_WEBHOOK_URL || "https://n8n.aliminlomasdelmar.com/webhook/7b928d3b-2850-462d-87df-f6a87fe4108a";
         const paymentPayload = {
             contact_name: reservation.name,
             contact_email: reservation.email,
