@@ -53,8 +53,8 @@ export async function POST(
             }
         });
 
-        // Send to n8n Webhook
-        const webhookUrl = "https://n8n-n8n.yszha2.easypanel.host/webhook/533d88ba-81ec-4d87-8bb3-000998fc5550";
+        // Send to n8n Webhook (New Domain)
+        const webhookUrl = "https://n8n.aliminlomasdelmar.com/webhook/533d88ba-81ec-4d87-8bb3-000998fc5550";
 
         // Prepare payload
         const payload = {

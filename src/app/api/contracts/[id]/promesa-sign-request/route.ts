@@ -55,8 +55,8 @@ export async function POST(
             } as any
         });
 
-        // Use same n8n OTP webhook
-        const webhookUrl = "https://n8n-n8n.yszha2.easypanel.host/webhook/533d88ba-81ec-4d87-8bb3-000998fc5550";
+        // Use same n8n OTP webhook (New Domain)
+        const webhookUrl = "https://n8n.aliminlomasdelmar.com/webhook/533d88ba-81ec-4d87-8bb3-000998fc5550";
 
         // Fire and await with timeout
         const controller = new AbortController();
