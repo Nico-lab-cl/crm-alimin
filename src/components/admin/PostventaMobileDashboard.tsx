@@ -24,7 +24,7 @@ import { AdminMoraManager } from "@/components/admin/AdminMoraManager"
 import { AssignOwnerModal } from "@/components/dashboard/AssignOwnerModal";
 import { AdminLotList } from "@/components/dashboard/AdminLotList";
 
-export type PostventaTab = 'recibos' | 'mora' | 'ledger' | 'alertas' | 'terrenos';
+export type PostventaTab = 'mora' | 'ledger' | 'alertas' | 'terrenos';
 
 interface SoldLot {
     id: number;

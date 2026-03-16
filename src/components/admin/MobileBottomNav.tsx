@@ -19,10 +19,9 @@ const adminTabs: { id: AdminMobileTab | PostventaTab; label: string; icon: React
 
 const postventaTabs: { id: PostventaTab; label: string; icon: React.ElementType }[] = [
     { id: 'terrenos', label: 'Terrenos', icon: Map },
-    { id: 'recibos', label: 'Recibos', icon: Receipt },
-    { id: 'mora', label: 'Simular', icon: Calculator },
     { id: 'ledger', label: 'Cuentas', icon: BookOpen },
     { id: 'alertas', label: 'Alertas', icon: AlertTriangle },
+    { id: 'mora', label: 'Simular', icon: Calculator },
 ];
 
 export function MobileBottomNav({ activeTab, onTabChange, isPostventa = false }: MobileBottomNavProps) {
