@@ -76,15 +76,15 @@ export const LotReservationPopup = ({ lot, isOpen, onClose, onConfirm, isTempora
   // Fallback calculation in case DB data is missing or loading
   const getTotalInstallments = (area: number | null | undefined) => {
     if (area == null) return null;
-    if (area >= 200 && area <= 299) return 64;
-    if (area >= 300 && area <= 399) return 77;
+    if (area >= 200 && area <= 299) return 63;
+    if (area >= 300 && area <= 399) return 76;
     return null;
   };
 
   const getPieAmount = (area: number | null | undefined) => {
     if (area == null) return null;
-    if (area >= 200 && area <= 299) return 1000000;
-    if (area >= 300 && area <= 399) return 2000000;
+    if (area >= 200 && area <= 299) return 1500000;
+    if (area >= 300 && area <= 399) return 3500000;
     return null;
   };
 
@@ -342,6 +342,7 @@ export const LotReservationPopup = ({ lot, isOpen, onClose, onConfirm, isTempora
   const pieAmount = lot.pie ?? getPieAmount(lotArea);
   // Use valorCuota from lot data (DB) first, fallback to calculation if missing
   const valorCuotaAmount = lot.valorCuota ?? getValorCuota(lotArea);
+  const lastInstallmentAmount = lot.last_installment_amount ?? (lotArea != null ? (lotArea < 300 ? 390000 : 240000) : null);
   const offerPrice = OFFER_PRICE;
   const showOfferSection = totalInstallments != null;
   const whatsappHref = `https://wa.me/56973077128?text=${encodeURIComponent(
@@ -511,6 +512,13 @@ export const LotReservationPopup = ({ lot, isOpen, onClose, onConfirm, isTempora
                   {valorCuotaAmount ? formatCurrency(valorCuotaAmount) : '---'}
                 </span>
               </div>
+
+              {lastInstallmentAmount && (
+                <div className="flex justify-between items-center text-xs md:text-sm text-muted-foreground mt-1 italic">
+                  <span>Última cuota estimada</span>
+                  <span>{formatCurrency(lastInstallmentAmount)}</span>
+                </div>
+              )}
             </div>
 
             {showOfferSection && (

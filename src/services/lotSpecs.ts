@@ -185,14 +185,14 @@ export const getLotSpec = (lotId: number): LotSpec | null => {
 
 export const PRICING_RULES = {
   PRICE_200M2: 35990000,
-  PRICE_390M2: 43990000,
+  PRICE_390M2: 44990000,
 } as const;
 
 /**
  * Calcula el precio total y precio por m2 según el área del lote.
  * Reglas:
- * - área = 200 m² → totalPrice = 34,900,000 CLP
- * - área = 390 m² → totalPrice = 42,900,000 CLP
+ * - área = 200 m² → totalPrice = 35,990,000 CLP
+ * - área = 390 m² → totalPrice = 44,990,000 CLP
  * - otro → totalPrice = null (mostrar "Consultar")
  */
 export const calculateLotPricing = (area: number | null): { totalPrice: number | null; pricePerM2: number | null } => {
