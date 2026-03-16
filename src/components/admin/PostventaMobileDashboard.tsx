@@ -10,7 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { 
     Loader2, CheckCircle, XCircle, Eye, MapPin, CreditCard, Clock, Receipt, BookOpen, 
     AlertTriangle, Search, Filter, FileSignature, Gavel, Wallet, CalendarDays, ArrowRight, ShieldAlert, RefreshCw,
-    FileText, Download, Trash2, Edit
+    FileText, Download, Trash2, Edit, Map
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { approvePaymentReceipt, rejectPaymentReceipt } from '@/actions/receipts';
@@ -177,15 +177,17 @@ export function PostventaMobileDashboard({
     if (activeTab === 'terrenos') {
         return (
             <div className="space-y-4 pb-24 animate-in fade-in slide-in-from-bottom-4 duration-700">
-                <div className="bg-[#0a1622]/60 backdrop-blur-xl border border-[#3f6066]/20 p-4 md:p-6 rounded-[2rem] space-y-4 shadow-2xl relative overflow-hidden">
-                    <div className="flex items-center gap-3">
-                        <div className="bg-[#3f6066]/20 p-2.5 rounded-2xl border border-[#3f6066]/30">
-                            <MapPin className="w-5 h-5 text-[#8eb2b8]" />
-                        </div>
-                        <div>
-                            <h2 className="text-xl font-black text-white tracking-tight uppercase">Gestión de Terrenos</h2>
-                            <p className="text-[10px] text-[#3f6066] font-black uppercase tracking-widest">Vista para Postventa</p>
-                        </div>
+                <div className="flex items-center gap-4 mb-8">
+                    <div className="p-4 rounded-2xl bg-white/5 border border-white/10 shadow-inner">
+                        <Map className="w-8 h-8 text-[#E0B457]" />
+                    </div>
+                    <div>
+                        <h1 className="text-3xl font-black text-white tracking-tight uppercase">
+                            Gestión de Terrenos
+                        </h1>
+                        <p className="text-[#E0B457] text-xs font-bold tracking-[0.2em] uppercase opacity-70">
+                            Catastro total y asignaciones
+                        </p>
                     </div>
                 </div>
 

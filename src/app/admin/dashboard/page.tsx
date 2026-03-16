@@ -43,7 +43,7 @@ export default async function AdminDashboard({
     ] = await Promise.all([
         (!isPostventa && userRole === 'ADMIN') ? getAdminPipeline() : Promise.resolve({ success: true, data: [], error: null }),
         (!isPostventa && userRole === 'ADMIN') ? getSellers() : Promise.resolve({ success: true, data: [], error: null }),
-        isPostventa ? getSoldLotsForPostventa() : getAdminLots(),
+        getAdminLots(),
         (!isPostventa && userRole === 'ADMIN') ? getAdminUsersList() : Promise.resolve({ success: true, users: [], error: null }),
         (!isPostventa && userRole === 'ADMIN') ? getAdminStats() : Promise.resolve({ success: true, data: null, error: null }),
         needsPostventaData ? getFullPostventaData({ stage: postventaStage }) : Promise.resolve({ success: true, data: [], stats: { total: 0, late: 0, grace: 0, upcoming: 0, ok: 0 } }),

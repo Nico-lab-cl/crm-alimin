@@ -224,7 +224,8 @@ export async function getSellers() {
 // ADMIN: GESTIÓN DE LOTES
 export async function getAdminLots() {
     const session = await auth()
-    if (session?.user?.role !== Role.ADMIN) return { error: "No autorizado" }
+    const isPostventa = session?.user?.email === 'postventa@lomasdelmar.cl';
+    if (session?.user?.role !== Role.ADMIN && !isPostventa) return { error: "No autorizado" }
 
     try {
         const cached = memoryCache.get(ADMIN_LOTS_CACHE_KEY);
@@ -237,6 +238,7 @@ export async function getAdminLots() {
                 number: true,
                 stage: true,
                 status: true,
+                area_m2: true,
                 price_total_clp: true,
                 cuotas: true,
                 valor_cuota: true,
@@ -296,7 +298,8 @@ export async function getSoldLotsForPostventa() {
 
 export async function updateLotStatus(lotId: number, status: string) {
     const session = await auth()
-    if (session?.user?.role !== Role.ADMIN) return { error: "No autorizado" }
+    const isPostventa = session?.user?.email === 'postventa@lomasdelmar.cl';
+    if (session?.user?.role !== Role.ADMIN && !isPostventa) return { error: "No autorizado" }
 
     try {
         await prisma.lot.update({
@@ -481,7 +484,8 @@ export async function assignLegacyLotOwner(data: {
     reservationId?: string;
 }) {
     const session = await auth()
-    if (session?.user?.role !== Role.ADMIN) return { error: "No autorizado" }
+    const isPostventa = session?.user?.email === 'postventa@lomasdelmar.cl';
+    if (session?.user?.role !== Role.ADMIN && !isPostventa) return { error: "No autorizado" }
 
     const {
         lotId, name, email, phone, rut, marital_status, profession, nationality,
@@ -689,7 +693,8 @@ export async function toggleMoraFreeze(reservationId: string, freeze: boolean) {
 
 export async function triggerLegacyWorkflow(reservationId: string) {
     const session = await auth()
-    if (session?.user?.role !== Role.ADMIN) return { error: "No autorizado" }
+    const isPostventa = session?.user?.email === 'postventa@lomasdelmar.cl';
+    if (session?.user?.role !== Role.ADMIN && !isPostventa) return { error: "No autorizado" }
 
     try {
         const reservation = await prisma.reservation.findUnique({
