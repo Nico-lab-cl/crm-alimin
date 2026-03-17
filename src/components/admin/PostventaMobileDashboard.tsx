@@ -185,12 +185,69 @@ export function PostventaMobileDashboard({
 
         const exportData = data.map(item => ({
             ...item,
-            totalPaid: formatCurrency(item.totalPaid),
-            pendingBalance: formatCurrency(item.pendingBalance),
+            totalPaid: formatCurrency(item.totalPaid || 0),
+            pendingBalance: formatCurrency(item.pendingBalance || 0),
             displayDueDate: item.displayDueDate ? format(new Date(item.displayDueDate), 'dd/MM/yyyy') : 'N/A'
         }));
 
         exportToExcel(exportData, `Cartera_Postventa_${format(new Date(), 'yyyy-MM-dd')}.csv`, headers);
+    };
+
+    const handleExportTerrenos = (data: any[]) => {
+        const headers = [
+            { label: 'Lote', key: 'number' },
+            { label: 'Etapa', key: 'stage' },
+            { label: 'Estado', key: 'status' },
+            { label: 'Dueño', key: 'ownerName' },
+            { label: 'Área m2', key: 'area_m2' },
+            { label: 'Precio Total', key: 'price_total_clp' },
+            { label: 'Pie', key: 'pie' },
+            { label: 'Valor Cuota', key: 'valor_cuota' },
+            { label: 'Reserva', key: 'reservation_amount_clp' }
+        ];
+
+        const exportData = data.map(lot => ({
+            ...lot,
+            ownerName: lot.reservations?.[0]?.buyer?.name || '---',
+            price_total_clp: formatCurrency(lot.price_total_clp || 0),
+            pie: formatCurrency(lot.pie || 0),
+            valor_cuota: formatCurrency(lot.valor_cuota || 0),
+            reservation_amount_clp: formatCurrency(lot.reservation_amount_clp || 0),
+            status: lot.status === 'sold' ? 'Vendido' : 'Disponible'
+        }));
+
+        exportToExcel(exportData, `Terrenos_${format(new Date(), 'yyyy-MM-dd')}.csv`, headers);
+    };
+
+    const handleExportAlerts = (data: any[]) => {
+        const headers = [
+            { label: 'Cliente', key: 'clientName' },
+            { label: 'Lote', key: 'lotNumber' },
+            { label: 'Etapa', key: 'lotStage' },
+            { label: 'Estado Pago', key: 'statusLabel' },
+            { label: 'Monto Pendiente', key: 'pendingAmount' },
+            { label: 'Fecha Vencimiento', key: 'displayDueDate' },
+            { label: 'Cuotas Pagadas', key: 'paidCuotas' }
+        ];
+
+        const exportData = data.map(alert => {
+            const isFrozen = Boolean(alert.isMoraFrozen);
+            let statusLabel = 'Al Día';
+            if (alert.isLate && !isFrozen) statusLabel = 'Mora';
+            if (alert.isGracePeriod && !isFrozen) statusLabel = 'Gracia';
+            if (alert.isUpcoming && !isFrozen) statusLabel = 'Próximo';
+            if (isFrozen) statusLabel = 'Mora Congelada';
+
+            return {
+                ...alert,
+                statusLabel,
+                pendingAmount: formatCurrency(alert.penaltyAmount || alert.monto_cuota || 0),
+                displayDueDate: alert.displayDueDate ? format(new Date(alert.displayDueDate), 'dd/MM/yyyy') : 'N/A',
+                paidCuotas: alert.paidCuotas || 0
+            };
+        });
+
+        exportToExcel(exportData, `Alertas_Postventa_${format(new Date(), 'yyyy-MM-dd')}.csv`, headers);
     };
 
     const getStatusBadge = (status: string) => {
@@ -208,7 +265,7 @@ export function PostventaMobileDashboard({
                     <div className="p-4 rounded-2xl bg-white/5 border border-white/10 shadow-inner">
                         <Map className="w-8 h-8 text-[#E0B457]" />
                     </div>
-                    <div>
+                    <div className="flex-1">
                         <h1 className="text-3xl font-black text-white tracking-tight uppercase">
                             Gestión de Terrenos
                         </h1>
@@ -216,6 +273,14 @@ export function PostventaMobileDashboard({
                             Catastro total y asignaciones
                         </p>
                     </div>
+                    <Button 
+                        variant="outline"
+                        onClick={() => handleExportTerrenos(fullLots)}
+                        className="bg-[#E0B457]/10 border-[#E0B457]/20 text-[#E0B457] hover:bg-[#E0B457]/20 font-black text-[10px] uppercase tracking-widest px-6 h-12 rounded-2xl"
+                    >
+                        <Download className="w-4 h-4 mr-2" />
+                        Exportar Excel
+                    </Button>
                 </div>
 
                 <div className="bg-black/40 backdrop-blur-md rounded-[2rem] p-6 border border-white/10 shadow-xl">
@@ -550,6 +615,15 @@ export function PostventaMobileDashboard({
                         <Badge variant="outline" className="md:hidden font-bold bg-white/5 border-white/10 text-white px-3 py-1">
                             {filteredAlerts.length} Clientes Filtrados
                         </Badge>
+                        <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => handleExportAlerts(filteredAlerts)}
+                            className="bg-white/5 border-white/10 text-white hover:bg-white/10 font-bold text-[10px] uppercase tracking-wider px-4 h-10 rounded-xl"
+                        >
+                            <Download className="w-4 h-4 mr-2" />
+                            Exportar
+                        </Button>
                         <AdminMoraManager users={users} />
                     </div>
                 </div>
