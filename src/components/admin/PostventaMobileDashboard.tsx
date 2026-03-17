@@ -15,7 +15,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { approvePaymentReceipt, rejectPaymentReceipt } from '@/actions/receipts';
-import { syncLegacyReceipts, getReservationReceipts } from '@/actions/postventa';
+import { syncLegacyReceipts, getReservationReceipts, registerPostventaPayment } from '@/actions/postventa';
 import { toggleMoraFreeze } from '@/actions/dashboard';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
@@ -91,6 +91,9 @@ export function PostventaMobileDashboard({
     const [alertPage, setAlertPage] = useState(1);
     const [clientReceipts, setClientReceipts] = useState<any[]>([]);
     const [isLoadingReceipts, setIsLoadingReceipts] = useState(false);
+    const [manualAmount, setManualAmount] = useState('');
+    const [manualScope, setManualScope] = useState<'PIE' | 'INSTALLMENT' | 'GASTOS_OPERACIONALES'>('INSTALLMENT');
+    const [isRegistering, setIsRegistering] = useState(false);
     const ALERTS_PER_PAGE = 10;
 
     const today = new Date();
@@ -1041,15 +1044,13 @@ export function PostventaMobileDashboard({
                                                                         >
                                                                             <Eye className="w-4 h-4" />
                                                                         </button>
-                                                                        {!doc.isAuto && (
-                                                                            <button 
-                                                                                onClick={() => handleDeleteDocument(selectedClientLedger.id, doc.category!, doc.url!)}
-                                                                                className="p-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg transition-all"
-                                                                                title="Eliminar"
-                                                                            >
-                                                                                 <Trash2 className="w-4 h-4" />
-                                                                            </button>
-                                                                        )}
+                                                                        <button 
+                                                                            onClick={() => handleDeleteDocument(selectedClientLedger.id, doc.category!, doc.url!)}
+                                                                            className="p-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg transition-all"
+                                                                            title="Eliminar"
+                                                                        >
+                                                                             <Trash2 className="w-4 h-4" />
+                                                                        </button>
                                                                     </div>
                                                                 ) : !doc.hasList && (
                                                                     <ContractUploadAction 
@@ -1138,7 +1139,87 @@ export function PostventaMobileDashboard({
                         </DialogTitle>
                     </DialogHeader>
                     
-                    <div className="flex-1 overflow-y-auto p-6 space-y-3 no-scrollbar">
+                    <div className="flex-1 overflow-y-auto p-6 space-y-6 no-scrollbar">
+                        {/* New: Manual Payment Registration Section */}
+                        <div className="bg-white/5 border border-white/10 rounded-3xl p-6 space-y-4">
+                            <div className="flex items-center gap-3 mb-2">
+                                <div className="bg-emerald-500/10 p-2 rounded-xl">
+                                    <Wallet className="w-4 h-4 text-emerald-400" />
+                                </div>
+                                <h4 className="text-[11px] font-black text-white uppercase tracking-wider">Registrar Nuevo Pago Manual</h4>
+                            </div>
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div className="space-y-1.5">
+                                    <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">Monto (CLP)</label>
+                                    <Input 
+                                        type="number"
+                                        placeholder="Ej: 500000"
+                                        value={manualAmount}
+                                        onChange={(e) => setManualAmount(e.target.value)}
+                                        className="bg-black/20 border-white/5 h-10 text-xs text-white placeholder:text-gray-700 font-bold"
+                                    />
+                                </div>
+                                
+                                <div className="space-y-1.5">
+                                    <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">Tipo de Pago</label>
+                                    <div className="flex gap-1">
+                                        {(['PIE', 'INSTALLMENT', 'GASTOS_OPERACIONALES'] as const).map(s => (
+                                            <button
+                                                key={s}
+                                                onClick={() => setManualScope(s)}
+                                                className={`flex-1 h-10 rounded-xl text-[8px] font-black uppercase transition-all border ${
+                                                    manualScope === s 
+                                                    ? 'bg-[#3f6066] text-white border-[#3f6066]' 
+                                                    : 'bg-white/5 text-gray-500 border-white/5 hover:border-white/10'
+                                                }`}
+                                            >
+                                                {s === 'PIE' ? 'Pie' : s === 'INSTALLMENT' ? 'Cuota' : 'Gastos'}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className="flex items-end">
+                                    <Button
+                                        onClick={async () => {
+                                            if (!manualAmount || isRegistering) return;
+                                            setIsRegistering(true);
+                                            try {
+                                                const res = await registerPostventaPayment({
+                                                    reservationId: selectedClientLedger.id,
+                                                    amount: parseInt(manualAmount),
+                                                    scope: manualScope
+                                                });
+                                                if (res.error) toast.error(res.error);
+                                                else {
+                                                    toast.success("Pago registrado exitosamente");
+                                                    setManualAmount('');
+                                                    // Refresh the listing
+                                                    setIsLoadingReceipts(true);
+                                                    const updatedRes = await getReservationReceipts(selectedClientLedger.id);
+                                                    if ('receipts' in updatedRes) setClientReceipts(updatedRes.receipts as any[]);
+                                                    setIsLoadingReceipts(false);
+                                                }
+                                            } catch (e) {
+                                                toast.error("Error al procesar el pago");
+                                            } finally {
+                                                setIsRegistering(false);
+                                            }
+                                        }}
+                                        disabled={!manualAmount || isRegistering}
+                                        className="w-full h-10 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 font-black uppercase text-[10px] tracking-widest border border-emerald-500/30 rounded-xl"
+                                    >
+                                        {isRegistering ? <Loader2 className="w-4 h-4 animate-spin" /> : "Confirmar Pago"}
+                                    </Button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="space-y-3">
+                            <h4 className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1 flex items-center gap-2">
+                                <Clock className="w-3 h-3" /> Historial de Transacciones
+                            </h4>
                         {isLoadingReceipts ? (
                             <div className="flex flex-col items-center justify-center py-20 gap-4">
                                 <Loader2 className="w-10 h-10 text-[#3f6066] animate-spin" />
@@ -1190,6 +1271,7 @@ export function PostventaMobileDashboard({
                                 ))}
                             </>
                         )}
+                    </div>
                 </div>
                 
                 <div className="p-4 bg-black/20 border-t border-white/5">

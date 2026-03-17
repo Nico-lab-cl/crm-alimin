@@ -64,17 +64,24 @@ export async function POST(
             });
 
             return NextResponse.json({ success: true, reservation: updatedReservation });
-        } else if (type && type !== "promesa" && type !== "reserva") {
-            // Restore dedicated field logic
+        } else if (type?.toUpperCase() === "RESERVA" || type?.toUpperCase() === "PROMESA" || !type) {
+            // Reserva/Promesa main field
+            const updatedReservation = await prisma.reservation.update({
+                where: { id },
+                data: {
+                    uploaded_contract_url: fileData,
+                },
+            });
+            return NextResponse.json({ success: true, reservation: updatedReservation });
+        } else {
+            // manual_documents logic
             let existingDocs: any[] = [];
             if (reservation.manual_documents) {
                 try {
                     existingDocs = Array.isArray(reservation.manual_documents) 
                         ? (reservation.manual_documents as any[]) 
                         : JSON.parse(reservation.manual_documents as string);
-                } catch (e) {
-                    // ignore parse error
-                }
+                } catch (e) {}
             }
 
             existingDocs.push({
@@ -90,15 +97,6 @@ export async function POST(
                 data: { manual_documents: existingDocs },
             });
 
-            return NextResponse.json({ success: true, reservation: updatedReservation });
-        } else {
-            // Traditional Promesa Flow
-            const updatedReservation = await prisma.reservation.update({
-                where: { id },
-                data: {
-                    uploaded_contract_url: fileData,
-                },
-            });
             return NextResponse.json({ success: true, reservation: updatedReservation });
         }
 
@@ -130,7 +128,7 @@ export async function DELETE(
 
         let updateData: any = {};
 
-        if (!type || type === "promesa") {
+        if (!type || type?.toUpperCase() === "PROMESA" || type?.toUpperCase() === "RESERVA") {
             updateData.uploaded_contract_url = null;
         } else if (type === "legacy") {
             let docs: any[] = [];

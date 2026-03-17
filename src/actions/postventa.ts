@@ -388,3 +388,70 @@ export async function getReservationReceipts(reservationId: string) {
         return { error: "Error al cargar recibos" };
     }
 }
+export async function registerPostventaPayment({
+    reservationId,
+    amount,
+    scope,
+    receiptUrl = 'MANUAL_POSTVENTA',
+    date = new Date().toISOString()
+}: {
+    reservationId: string;
+    amount: number;
+    scope: 'PIE' | 'INSTALLMENT' | 'GASTOS_OPERACIONALES';
+    receiptUrl?: string;
+    date?: string;
+}) {
+    const session = await auth();
+    const isPostventa = session?.user?.email === 'postventa@lomasdelmar.cl';
+    if (!session?.user || (session.user.role !== 'ADMIN' && !isPostventa)) {
+        return { error: 'No autorizado' };
+    }
+
+    try {
+        const reservation = await prisma.reservation.findUnique({
+            where: { id: reservationId },
+            include: { lot: true }
+        });
+
+        if (!reservation) return { error: 'Reserva no encontrada' };
+
+        // 1. Create APPROVED receipt
+        const receipt = await prisma.paymentReceipt.create({
+            data: {
+                amount_clp: amount,
+                status: 'APPROVED',
+                receipt_url: receiptUrl,
+                scope: scope === 'GASTOS_OPERACIONALES' ? 'OTHERS' : scope,
+                reservation_id: reservationId,
+                lot_id: reservation.lot_id,
+                processed_at: new Date(date),
+                created_at: new Date(date)
+            }
+        });
+
+        // 2. Update Reservation State
+        if (scope === 'PIE') {
+            await prisma.reservation.update({
+                where: { id: reservationId },
+                data: { pie_status: 'PAID' }
+            });
+        } else if (scope === 'INSTALLMENT') {
+            await prisma.reservation.update({
+                where: { id: reservationId },
+                data: { 
+                    installments_paid: { increment: 1 },
+                    pipeline_stage: 'PAGO_CUOTAS'
+                }
+            });
+        }
+
+        memoryCache.deleteByPrefix('postventa_full_');
+        memoryCache.deleteByPrefix('receipts_paginated_');
+        revalidatePath('/admin/dashboard');
+
+        return { success: true, receipt };
+    } catch (error) {
+        console.error("Error registering manual payment:", error);
+        return { error: 'Error al registrar el pago' };
+    }
+}
