@@ -1,0 +1,248 @@
+generator client {
+  provider      = "prisma-client-js"
+  output        = "../src/lib/generated/client"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Lot {
+  id                      Int       @id @default(autoincrement())
+  number                  String?
+  stage                   Int?
+  area_m2                 Float?
+  price_total_clp         Int?
+  reservation_amount_clp  Int?
+  status                  String    @default("available") // available, reserved, sold
+  cuotas                  Int?
+  pie                     Int?
+  valor_cuota             Int?
+  last_installment_amount Int?
+  reserved_until          DateTime?
+  reserved_at             DateTime?
+  reserved_by             String?
+  order_id                String?
+  updated_at              DateTime? @updatedAt
+
+  // Relations
+  reservations Reservation[]
+  locks        LotLock[]
+  transactions WebpayTransaction[]
+}
+
+model Contact {
+  id         String   @id @default(uuid())
+  email      String   @unique
+  first_name String?
+  last_name  String?
+  phone      String?
+  rut        String?
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  // Relaciones
+  reservations Reservation[]
+  notes        Note[]
+  calls        CallLog[]
+  files        ContactFile[]
+}
+
+model Note {
+  id         String   @id @default(uuid())
+  contact_id String
+  seller_id  String // Usuario que dejó la nota
+  content    String   @db.Text
+  created_at DateTime @default(now())
+
+  contact Contact @relation(fields: [contact_id], references: [id])
+  seller  User    @relation(fields: [seller_id], references: [id])
+}
+
+model CallLog {
+  id         String   @id @default(uuid())
+  contact_id String
+  seller_id  String
+  duration   Int? // En segundos
+  summary    String?  @db.Text
+  date       DateTime @default(now())
+
+  contact Contact @relation(fields: [contact_id], references: [id])
+  seller  User    @relation(fields: [seller_id], references: [id])
+}
+
+model ContactFile {
+  id         String   @id @default(uuid())
+  contact_id String
+  name       String // Nombre del archivo (ej. Cedula.pdf)
+  url        String // URL del archivo en el storage
+  type       String? // Ej. application/pdf
+  created_at DateTime @default(now())
+
+  contact Contact @relation(fields: [contact_id], references: [id])
+}
+
+model Reservation {
+  id         String    @id @default(uuid())
+  lot_id     Int
+  name       String
+  email      String
+  phone      String
+  rut        String?
+  address    String?
+  folio      String?
+  status     String // pending_payment, paid, canceled
+  session_id String?
+  expires_at DateTime?
+  created_at DateTime  @default(now())
+
+  // Legal / Contract Data
+  marital_status String?
+  profession     String?
+  nationality    String? @default("Chilena")
+
+  // Pipeline Data
+  pipeline_stage        String  @default("RESERVA_PAGADA") // RESERVA_PAGADA, ESPERANDO_PIE, PIE_PAGADO, PAGO_CUOTAS, VENTA_CERRADA
+  notes                 String?
+  uploaded_contract_url String?
+  address_street        String?
+  address_number        String?
+  address_commune       String?
+  address_region        String?
+
+  // Ad Tracking / Attributions
+  utm_source   String?
+  utm_medium   String?
+  utm_campaign String?
+  utm_content  String?
+  utm_term     String?
+
+  // Payment Tracking
+  pie_status        String? @default("PENDING") // PENDING, PAID
+  installments_paid Int?    @default(0)
+
+  // Digital Signature — Contrato Reserva
+  signature_otp         String?
+  signature_otp_expires DateTime?
+  signed_at             DateTime?
+  signature_ip          String?
+
+  // Digital Signature — Promesa de Compraventa
+  promesa_signature_otp         String?
+  promesa_signature_otp_expires DateTime?
+  promesa_signed_at             DateTime?
+  promesa_signature_ip          String?
+
+  contact_id String?
+  contact    Contact? @relation(fields: [contact_id], references: [id])
+
+  // Relations
+  lot          Lot                 @relation(fields: [lot_id], references: [id])
+  transactions WebpayTransaction[]
+
+  seller_id String?
+  seller    User?   @relation("SellerReservations", fields: [seller_id], references: [id])
+
+  buyer_id String?
+  buyer    User?   @relation("BuyerReservations", fields: [buyer_id], references: [id])
+}
+
+model LotLock {
+  lot_id       Int      @id
+  locked_by    String
+  locked_until DateTime
+  created_at   DateTime @default(now())
+
+  lot Lot @relation(fields: [lot_id], references: [id])
+}
+
+model WebpayTransaction {
+  id                  String    @id @default(uuid())
+  token               String    @unique
+  buy_order           String
+  amount_clp          Int
+  status              String?
+  response_code       Int?
+  transaction_date    DateTime?
+  authorization_code  String?
+  payment_type_code   String?
+  installments_number Int?
+  processed_at        DateTime?
+
+  // Custom Payment Scope
+  scope              String? @default("RESERVATION") // RESERVATION, PIE, INSTALLMENT
+  installments_count Int?    @default(0) // How many installments are being paid in this tx
+
+  created_at DateTime @default(now())
+
+  // Relations
+  reservation_id String
+  lot_id         Int
+  reservation    Reservation @relation(fields: [reservation_id], references: [id])
+  lot            Lot         @relation(fields: [lot_id], references: [id])
+}
+
+enum Role {
+  ADMIN
+  SELLER
+  USER
+}
+
+model User {
+  id                 String    @id @default(uuid())
+  email              String    @unique
+  emailVerified      DateTime?
+  password           String
+  name               String
+  role               Role      @default(SELLER)
+  mustChangePassword Boolean   @default(false)
+  createdAt          DateTime  @default(now())
+
+  // Relaciones CRM
+  notes Note[]
+  calls CallLog[]
+
+  // Relations
+  sales         Reservation[]  @relation("SellerReservations")
+  purchases     Reservation[]  @relation("BuyerReservations")
+  auditLogs     AuditLog[]
+  notifications Notification[]
+}
+
+enum ActionType {
+  CREATE
+  UPDATE
+  DELETE
+  LOGIN
+  LOGOUT
+  OTHER
+}
+
+model AuditLog {
+  id         String     @id @default(uuid())
+  action     ActionType
+  entity     String
+  entity_id  String?
+  details    String?
+  pk         String? // Primary key reference if needed
+  user_id    String?
+  user_email String?
+  ip_address String?
+  user_agent String?
+  created_at DateTime   @default(now())
+
+  user User? @relation(fields: [user_id], references: [id])
+}
+
+model Notification {
+  id         String   @id @default(uuid())
+  user_id    String
+  type       String // e.g. 'payment_due', 'contract_pending', 'lot_purchased'
+  title      String
+  message    String
+  read       Boolean  @default(false)
+  created_at DateTime @default(now())
+
+  user User @relation(fields: [user_id], references: [id])
+}
