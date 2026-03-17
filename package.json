@@ -25,6 +25,7 @@
     "@hello-pangea/dnd": "^18.0.1",
     "@prisma/client": "^6.19.2",
     "bcryptjs": "^3.0.3",
+    "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
     "firebase-admin": "^13.7.0",
     "lucide-react": "^0.575.0",
@@ -32,16 +33,23 @@
     "next-auth": "^4.24.13",
     "react": "19.2.3",
     "react-dom": "19.2.3",
-    "react-email-editor": "^1.7.11"
+    "react-email-editor": "^1.7.11",
+    "react-hook-form": "^7.54.2",
+    "sonner": "^2.0.1",
+    "tailwind-merge": "^3.0.2",
+    "zod": "^3.24.2"
   },
   "devDependencies": {
+    "@hookform/resolvers": "^4.1.2",
     "@tailwindcss/postcss": "^4",
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "autoprefixer": "^10.4.20",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
+    "postcss": "^8.5.3",
     "prisma": "^6.19.2",
     "tailwindcss": "^4",
     "typescript": "^5"
