@@ -10,11 +10,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { 
     Loader2, CheckCircle, XCircle, Eye, MapPin, CreditCard, Clock, Receipt, BookOpen, 
     AlertTriangle, Search, Filter, FileSignature, Gavel, Wallet, CalendarDays, ArrowRight, ShieldAlert, RefreshCw,
-    FileText, Download, Trash2, Edit, Map
+    FileText, Download, Trash2, Edit, Map, Snowflake
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { cn } from '@/lib/utils';
 import { approvePaymentReceipt, rejectPaymentReceipt } from '@/actions/receipts';
 import { syncLegacyReceipts, getReservationReceipts } from '@/actions/postventa';
+import { toggleMoraFreeze } from '@/actions/dashboard';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { UniversalDocumentViewer } from "@/components/shared/UniversalDocumentViewer";
@@ -198,8 +200,9 @@ export function PostventaMobileDashboard({
         return null;
     };
 
+    let content;
     if (activeTab === 'terrenos') {
-        return (
+        content = (
             <div className="space-y-4 pb-24 animate-in fade-in slide-in-from-bottom-4 duration-700">
                 <div className="flex items-center gap-4 mb-8">
                     <div className="p-4 rounded-2xl bg-white/5 border border-white/10 shadow-inner">
@@ -220,9 +223,7 @@ export function PostventaMobileDashboard({
                 </div>
             </div>
         );
-    }
-
-    if (activeTab === 'ledger') {
+    } else if (activeTab === 'ledger') {
         const filteredLedger = ledger.filter(client => {
             const matchesSearch = !ledgerSearch || 
                 client.clientName?.toLowerCase().includes(ledgerSearch.toLowerCase()) ||
@@ -254,7 +255,7 @@ export function PostventaMobileDashboard({
             ledgerPage * LEDGER_ITEMS_PER_PAGE
         );
 
-        return (
+        content = (
             <div className="space-y-4 pb-24 animate-in fade-in slide-in-from-bottom-4 duration-700">
                 {/* Header & Controls - Premium Glassmorphism */}
                 <div className="bg-[#0a1622]/60 backdrop-blur-xl border border-[#3f6066]/20 p-4 md:p-6 rounded-[2rem] space-y-4 shadow-2xl relative overflow-hidden">
@@ -399,7 +400,7 @@ export function PostventaMobileDashboard({
                         </div>
                     </div>
                 </div>
-
+                
                 {/* Optimized Desktop Grid - Reduced Density for Readability */}
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
                     {paginatedLedger.map(client => {
@@ -510,547 +511,9 @@ export function PostventaMobileDashboard({
                         </Button>
                     </div>
                 )}
-
-                {/* Main Client Detail Modal - The SINGLE source of truth */}
-                <Dialog open={!!selectedClientLedger} onOpenChange={(open) => !open && setSelectedClientLedger(null)}>
-                    <DialogContent className="max-w-5xl w-[95vw] h-[90vh] bg-[#0a1622] border-[#3f6066]/20 p-0 overflow-hidden rounded-[2.5rem] shadow-[0_0_80px_rgba(0,0,0,0.8)] flex flex-col">
-                        {selectedClientLedger && (
-                            <>
-                                <div className="flex-1 overflow-y-auto no-scrollbar">
-                                    {/* Modal Header - Brand Immersive */}
-                                    <div className="bg-gradient-to-br from-[#3f6066]/20 to-transparent p-8 border-b border-white/5 relative overflow-hidden">
-                                        <div className="absolute top-0 right-0 w-80 h-80 bg-[#3f6066]/10 rounded-full blur-[100px] -mr-40 -mt-40" />
-                                        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-8">
-                                            <div className="flex items-center gap-6">
-                                                <div className="w-16 h-16 rounded-2xl bg-[#3f6066] flex items-center justify-center shadow-2xl shadow-[#3f6066]/20 flex-shrink-0 border border-white/10">
-                                                    <span className="text-2xl font-black text-white">
-                                                        {selectedClientLedger.clientName?.charAt(0)}
-                                                    </span>
-                                                </div>
-                                                <div className="space-y-2">
-                                                    <div className="flex items-center gap-3">
-                                                        <h2 className="text-2xl font-black text-white uppercase tracking-tight leading-none">{selectedClientLedger.clientName}</h2>
-                                                        {selectedClientLedger.is_legacy && (
-                                                            <Badge className="bg-amber-500/20 text-amber-500 border-amber-500/30 text-[8px] font-black uppercase">Legacy</Badge>
-                                                        )}
-                                                    </div>
-                                                    <div className="flex items-center gap-4">
-                                                        <Badge className="bg-black/50 text-[#8eb2b8] border-[#3f6066]/30 text-[9px] font-black uppercase px-2 py-0.5">Lote {selectedClientLedger.lotNumber}</Badge>
-                                                        <Badge className="bg-black/50 text-[#8eb2b8] border-[#3f6066]/30 text-[9px] font-black uppercase px-2 py-0.5">Etapa {selectedClientLedger.lotStage}</Badge>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div className="flex flex-col items-end gap-3">
-                                                <div className="bg-black/40 backdrop-blur-md rounded-2xl p-5 border border-white/5 text-right min-w-[200px]">
-                                                    <p className="text-[10px] text-[#3f6066] font-black uppercase tracking-[0.2em]">Total Invertido</p>
-                                                    <p className="text-3xl font-black text-white leading-none mt-1.5 tabular-nums">
-                                                        {formatCurrency(selectedClientLedger.totalPaid)}
-                                                    </p>
-                                                </div>
-                                                <Button 
-                                                    variant="outline" 
-                                                    size="sm"
-                                                    onClick={async (e) => {
-                                                        e.stopPropagation();
-                                                        const res = await syncLegacyReceipts();
-                                                        if ('error' in res) toast.error(res.error);
-                                                        else {
-                                                            toast.success(`Sincronización completada: ${res.syncedCount} recibos.`);
-                                                            window.location.reload();
-                                                        }
-                                                    }}
-                                                    className="h-8 text-[9px] font-black text-[#8eb2b8] hover:text-white uppercase tracking-widest bg-white/5 hover:bg-[#3f6066]/20 border-white/5 rounded-xl px-4"
-                                                >
-                                                    <RefreshCw className="w-3 h-3 mr-2" />
-                                                    Sincronizar Datos
-                                                </Button>
-
-                                                <Button 
-                                                    variant="outline" 
-                                                    size="sm"
-                                                    onClick={() => setIsEditModalOpen(true)}
-                                                    className="h-8 text-[9px] font-black text-[#8eb2b8] hover:text-white uppercase tracking-widest bg-white/5 hover:bg-[#3f6066]/20 border-white/5 rounded-xl px-4"
-                                                >
-                                                    <Edit className="w-3 h-3 mr-2" />
-                                                    Editar Cliente
-                                                </Button>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="p-8 space-y-10">
-                                        {/* Core Stats - High Visibility Grid */}
-                                        {(() => {
-                                            const isOffline = selectedClientLedger.is_legacy || selectedClientLedger.signatureIp === 'Firma Offline';
-                                            return (
-                                                <>
-                                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
-                                            {[
-                                                { label: 'Cuotas Pagadas', value: `${selectedClientLedger.paidCuotas} / ${selectedClientLedger.totalCuotas}`, icon: Wallet },
-                                                { label: 'Próximo Pago', value: selectedClientLedger.nextDueDate ? format(new Date(selectedClientLedger.nextDueDate), 'dd MMM yy', { locale: es }) : 'N/A', icon: CalendarDays, color: 'text-[#8eb2b8]' },
-                                                { label: 'Monto Cuota', value: formatCurrency(selectedClientLedger.valor_cuota || 0), icon: CreditCard },
-                                                { label: 'Estado Pie', value: selectedClientLedger.pieStatus, badge: true }
-                                            ].map((stat, i) => (
-                                                <div key={i} className="bg-white/5 rounded-3xl p-5 border border-white/5 flex flex-col items-center text-center group hover:bg-[#3f6066]/5 hover:border-[#3f6066]/20 transition-all">
-                                                    <p className="text-[9px] text-gray-500 font-black uppercase tracking-widest mb-3 flex items-center gap-2">
-                                                        {stat.icon && <stat.icon className="w-3.5 h-3.5 text-[#3f6066]" />}
-                                                        {stat.label}
-                                                    </p>
-                                                    {stat.badge ? (
-                                                        <Badge className={`${selectedClientLedger.pieStatus === 'PAID' ? 'bg-emerald-500 shadow-emerald-500/20' : 'bg-amber-500 shadow-amber-500/20'} text-white font-black text-[10px] px-3 py-1 rounded-xl uppercase`}>
-                                                            {stat.value}
-                                                        </Badge>
-                                                    ) : (
-                                                        <p className={`text-xl font-black text-white ${stat.color || ''} leading-none`}>{stat.value}</p>
-                                                    )}
-                                                </div>
-                                            ))}
-                                        </div>
-
-                                        {/* Documentation Section - Interactive Grid */}
-                                        <div className="space-y-6">
-                                            <div className="flex items-center gap-4">
-                                                <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent via-[#3f6066]/20 to-transparent" />
-                                                <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] px-4 whitespace-nowrap">Expediente Digital</h3>
-                                                <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent via-[#3f6066]/20 to-transparent" />
-                                            </div>
-                                            
-                                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-                                                {/* Item: Promesa */}
-                                                <div className="bg-white/[0.03] rounded-3xl p-6 border border-white/5 flex flex-col group hover:bg-white/[0.08] transition-all">
-                                                    <div className="flex justify-between items-start mb-6">
-                                                        <div className="p-3 bg-blue-500/10 rounded-2xl border border-blue-500/20">
-                                                            <FileSignature className="w-6 h-6 text-blue-400" />
-                                                        </div>                                            
-                                                        <div className="flex gap-2">
-                                                            <Button
-                                                                size="icon"
-                                                                variant="ghost"
-                                                                disabled={!selectedClientLedger.uploaded_contract_url}
-                                                                onClick={() => setViewerConfig({
-                                                                    isOpen: true,
-                                                                    url: selectedClientLedger.uploaded_contract_url,
-                                                                    name: "Promesa de Compraventa",
-                                                                    category: "Documento Legal"
-                                                                })}
-                                                                className="h-10 w-10 bg-white/5 hover:bg-white/10 text-white rounded-xl"
-                                                            >
-                                                                <Eye className="w-5 h-5" />
-                                                            </Button>
-                                                            {selectedClientLedger.uploaded_contract_url && (
-                                                                <Button
-                                                                    size="icon"
-                                                                    variant="ghost"
-                                                                    onClick={() => handleDeleteDocument(selectedClientLedger.id, 'promesa', selectedClientLedger.uploaded_contract_url)}
-                                                                    className="h-10 w-10 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-xl transition-all"
-                                                                >
-                                                                    <Trash2 className="w-5 h-5" />
-                                                                </Button>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                    <div className="flex-1 mb-6">
-                                                        <p className="text-white font-black text-sm uppercase tracking-tight">Promesa de Compra</p>
-                                                        <p className="text-[9px] text-gray-500 font-black uppercase mt-1">Status: {selectedClientLedger.uploaded_contract_url ? 'Cargado' : 'Pendiente'}</p>
-                                                    </div>
-                                                    <ContractUploadAction 
-                                                        reservationId={selectedClientLedger.id} 
-                                                        reservationName={selectedClientLedger.clientName}
-                                                        label={selectedClientLedger.uploaded_contract_url ? "Actualizar" : "Subir PDF"}
-                                                        onUploadComplete={() => {
-                                                            toast.success("Expediente actualizado");
-                                                            window.location.reload();
-                                                        }}
-                                                    />
-                                                </div>
-
-                                                {/* Item: Reserva PDF / Manual Reserva for Offline */}
-                                                {!isOffline ? (
-                                                    <div className="bg-white/[0.03] rounded-3xl p-6 border border-white/5 flex flex-col group hover:bg-white/[0.08] transition-all">
-                                                        <div className="flex justify-between items-start mb-6">
-                                                            <div className="p-3 bg-emerald-500/10 rounded-2xl border border-emerald-500/20">
-                                                                <FileText className="w-6 h-6 text-emerald-400" />
-                                                            </div>
-                                                            <Button
-                                                                size="icon"
-                                                                variant="ghost"
-                                                                onClick={() => setViewerConfig({
-                                                                    isOpen: true,
-                                                                    url: `/api/contracts/${selectedClientLedger.id}/pdf`,
-                                                                    name: "Contrato de Reserva",
-                                                                    category: "Documento Sistema"
-                                                                })}
-                                                                className="h-10 w-10 bg-white/5 hover:bg-white/10 text-white rounded-xl"
-                                                            >
-                                                                <Eye className="w-5 h-5" />
-                                                            </Button>
-                                                        </div>
-                                                        <div className="flex-1 mb-6">
-                                                            <p className="text-white font-black text-sm uppercase tracking-tight">Reserva Digital</p>
-                                                            <p className="text-[9px] text-gray-500 font-black uppercase mt-1">Generado por Alimin</p>
-                                                        </div>
-                                                        <Button 
-                                                            variant="outline" 
-                                                            size="sm"
-                                                            onClick={() => window.open(`/api/contracts/${selectedClientLedger.id}/pdf?download=true`, '_blank')}
-                                                            className="w-full h-11 text-[10px] font-black uppercase border-white/5 bg-white/5 hover:bg-emerald-500/10 hover:text-emerald-400 rounded-2xl transition-all"
-                                                        >
-                                                            <Download className="w-4 h-4 mr-2" />
-                                                            Bajar PDF
-                                                        </Button>
-                                                    </div>
-                                                ) : (
-                                                    <div className="bg-amber-900/10 rounded-3xl p-6 border border-amber-500/20 flex flex-col group hover:bg-amber-900/20 transition-all">
-                                                        <div className="flex justify-between items-start mb-6">
-                                                            <div className="p-3 bg-amber-500/20 rounded-2xl border border-amber-500/30">
-                                                                <FileText className="w-6 h-6 text-amber-500" />
-                                                            </div>
-                                                            {(() => {
-                                                                let legacyDocs = [];
-                                                                if (selectedClientLedger.legacy_uploaded_contracts) {
-                                                                    try {
-                                                                        legacyDocs = typeof selectedClientLedger.legacy_uploaded_contracts === 'string' 
-                                                                            ? JSON.parse(selectedClientLedger.legacy_uploaded_contracts) 
-                                                                            : selectedClientLedger.legacy_uploaded_contracts;
-                                                                    } catch (e) {}
-                                                                }
-
-                                                                if (!Array.isArray(legacyDocs) || legacyDocs.length === 0) {
-                                                                    return <Badge variant="outline" className="text-amber-500 border-amber-500/30 font-black text-[7px] uppercase">Falta Archivo</Badge>;
-                                                                }
-                                                                
-                                                                return (
-                                                                    <div className="flex flex-col gap-2 w-full">
-                                                                        {legacyDocs.map((doc: any, i: number) => (
-                                                                            <div key={i} className="flex items-center justify-between p-2 bg-white/5 rounded-xl border border-white/5 group/file">
-                                                                                <span className="text-[10px] font-bold text-gray-400 truncate max-w-[100px] group-hover/file:text-white transition-colors">{doc.name}</span>
-                                                                                <div className="flex gap-1">
-                                                                                    <Button
-                                                                                        size="icon"
-                                                                                        variant="ghost"
-                                                                                        onClick={() => setViewerConfig({
-                                                                                            isOpen: true,
-                                                                                            url: doc.url,
-                                                                                            name: doc.name,
-                                                                                            category: "Contrato Manual"
-                                                                                        })}
-                                                                                        className="h-8 w-8 bg-white/5 hover:bg-white/10 text-white rounded-lg"
-                                                                                    >
-                                                                                        <Eye className="w-4 h-4" />
-                                                                                    </Button>
-                                                                                    <Button
-                                                                                        size="icon"
-                                                                                        variant="ghost"
-                                                                                        onClick={() => handleDeleteDocument(selectedClientLedger.id, 'legacy', doc.url)}
-                                                                                        className="h-8 w-8 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg transition-all"
-                                                                                    >
-                                                                                        <Trash2 className="w-4 h-4" />
-                                                                                    </Button>
-                                                                                </div>
-                                                                            </div>
-                                                                        ))}
-                                                                    </div>
-                                                                );
-                                                            })()}
-                                                        </div>
-                                                        <div className="flex-1 mb-6">
-                                                            <p className="text-amber-500 font-black text-sm uppercase tracking-tight">Reserva Offline</p>
-                                                            <p className="text-[9px] text-gray-400 font-black uppercase mt-1">Manual / Escaneado</p>
-                                                        </div>
-                                                        <ContractUploadAction 
-                                                            reservationId={selectedClientLedger.id} 
-                                                            reservationName={selectedClientLedger.clientName}
-                                                            type="legacy"
-                                                            label={selectedClientLedger.legacy_uploaded_contracts?.length > 0 ? "Actualizar" : "Subir Reserva"}
-                                                            onUploadComplete={() => {
-                                                                toast.success("Reserva física actualizada");
-                                                                window.location.reload();
-                                                            }}
-                                                        />
-                                                    </div>
-                                                )}
-
-                                                {/* Item: Gastos Op */}
-                                                <div className="bg-white/[0.03] rounded-3xl p-6 border border-white/5 flex flex-col group hover:bg-white/[0.08] transition-all">
-                                                    <div className="flex justify-between items-start mb-6">
-                                                        <div className="p-3 bg-amber-500/10 rounded-2xl border border-amber-500/20">
-                                                            <Gavel className="w-6 h-6 text-amber-500" />
-                                                        </div>
-                                                        {(() => {
-                                                            const doc = Array.isArray(selectedClientLedger.manual_documents) ? selectedClientLedger.manual_documents.find((d: any) => d.category === 'GASTOS_OPERACIONALES') : null;
-                                                            if (doc) {
-                                                                return (
-                                                                    <div className="flex gap-2">
-                                                                        <Button 
-                                                                            size="icon"
-                                                                            variant="ghost"
-                                                                            onClick={() => setViewerConfig({
-                                                                                isOpen: true,
-                                                                                url: doc.url,
-                                                                                name: "Gastos Operacionales",
-                                                                                category: "Legal"
-                                                                            })}
-                                                                            className="h-10 w-10 bg-white/5 hover:bg-white/10 text-white rounded-xl"
-                                                                        >
-                                                                            <Eye className="w-5 h-5" />
-                                                                        </Button>
-                                                                        <Button 
-                                                                            size="icon"
-                                                                            variant="ghost"
-                                                                            onClick={() => handleDeleteDocument(selectedClientLedger.id, 'GASTOS_OPERACIONALES', doc.url)}
-                                                                            className="h-10 w-10 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-xl transition-all"
-                                                                        >
-                                                                            <Trash2 className="w-5 h-5" />
-                                                                        </Button>
-                                                                    </div>
-                                                                );
-                                                            }
-                                                            return <Badge variant="outline" className="text-gray-600 border-gray-800 font-black text-[7px] uppercase">Pendiente</Badge>;
-                                                        })()}
-                                                    </div>
-                                                    <div className="flex-1 mb-6">
-                                                        <p className="text-white font-black text-sm uppercase tracking-tight">Gastos Op.</p>
-                                                        <p className="text-[9px] text-gray-500 font-black uppercase mt-1">Comprobante Notarial</p>
-                                                    </div>
-                                                    <ContractUploadAction 
-                                                        reservationId={selectedClientLedger.id} 
-                                                        reservationName={selectedClientLedger.clientName}
-                                                        type="GASTOS_OPERACIONALES"
-                                                        label="Registrar"
-                                                        onUploadComplete={() => {
-                                                            toast.success("Expediente actualizado");
-                                                            window.location.reload();
-                                                        }}
-                                                    />
-                                                </div>
-
-                                                {/* Item: Pagos Externos */}
-                                                <div className="bg-white/[0.03] rounded-3xl p-6 border border-white/5 flex flex-col group hover:bg-white/[0.08] transition-all">
-                                                    <div className="flex justify-between items-start mb-6">
-                                                        <div className="p-3 bg-indigo-500/10 rounded-2xl border border-indigo-500/20">
-                                                            <Wallet className="w-6 h-6 text-indigo-400" />
-                                                        </div>
-                                                        <Button 
-                                                            size="icon"
-                                                            variant="ghost"
-                                                            onClick={() => setShowPaymentsModal(true)}
-                                                            className="h-10 w-10 bg-white/5 hover:bg-white/10 text-white rounded-xl"
-                                                        >
-                                                            <Eye className="w-5 h-5" />
-                                                        </Button>
-                                                    </div>
-                                                    <div className="flex-1 mb-6">
-                                                        <p className="text-white font-black text-sm uppercase tracking-tight">Pagos Externos</p>
-                                                        <p className="text-[9px] text-gray-500 font-black uppercase mt-1">Comprobantes Manuales</p>
-                                                    </div>
-                                                    <ContractUploadAction 
-                                                        reservationId={selectedClientLedger.id} 
-                                                        reservationName={selectedClientLedger.clientName}
-                                                        type="COMPROBANTE_CUOTA"
-                                                        label="Cargar Pago"
-                                                        onUploadComplete={() => {
-                                                            toast.success("Pago registrado");
-                                                            window.location.reload();
-                                                        }}
-                                                        extraCategories={[
-                                                            { id: 'COMPROBANTE_PIE', label: 'Pago de Pie' },
-                                                            { id: 'COMPROBANTE_CUOTA', label: 'Pago de Cuota' }
-                                                        ]}
-                                                    />
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* Mora Control Panel - Immersive Dark Mode */}
-                                        <div className="bg-black/60 rounded-[2.5rem] p-10 border border-red-500/10 relative overflow-hidden group">
-                                            <div className="absolute top-0 right-0 p-12 opacity-[0.03] group-hover:scale-125 transition-all duration-1000 grayscale">
-                                                <ShieldAlert className="w-64 h-64 text-red-500" />
-                                            </div>
-                                            <div className="relative z-10 flex flex-col lg:flex-row lg:items-center gap-10">
-                                                <div className="flex-1 space-y-4">
-                                                    <h3 className="text-[10px] font-black text-red-500/60 uppercase tracking-[0.4em] flex items-center gap-2">
-                                                        <Clock className="w-4 h-4 text-red-500" />
-                                                        Gestión de Morosidad
-                                                    </h3>
-                                                    <p className="text-white font-black text-2xl uppercase tracking-tight">Exención y Congelación</p>
-                                                    <p className="text-[11px] text-gray-500 leading-relaxed font-medium max-w-xl">
-                                                        Controla la aplicación de multas automáticas e intereses diarios. Congelar la mora eximirá al cliente de notificaciones de cobranza y mantendrá su deuda en $0 temporalmente.
-                                                    </p>
-                                                </div>
-                                                <div className="shrink-0">
-                                                    <AdminMoraManager users={users} />
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </>
-                                );
-                            })()}
-                        </div>
-                                
-                                <div className="p-12 pt-0 flex justify-center">
-                                    <Button 
-                                        variant="ghost" 
-                                        onClick={() => setSelectedClientLedger(null)} 
-                                        className="w-full sm:w-auto px-20 h-16 rounded-3xl text-xs font-black uppercase tracking-[0.5em] text-gray-600 hover:text-white hover:bg-white/5 border border-transparent hover:border-white/10 transition-all shadow-2xl hover:shadow-[#3f6066]/10"
-                                    >
-                                        Cerrar Expediente
-                                    </Button>
-                                </div>
-                            </div>
-                        </>
-                    )}
-                </DialogContent>
-            </Dialog>
-                
-                {/* Payments Detail Modal - Focused View */}
-                <Dialog open={showPaymentsModal} onOpenChange={setShowPaymentsModal}>
-                    <DialogContent className="max-w-sm bg-[#0a1622] border-[#3f6066]/20 p-0 overflow-hidden rounded-[2rem] shadow-2xl">
-                        <DialogHeader className="p-5 bg-[#3f6066]/10 border-b border-white/5">
-                            <DialogTitle className="flex items-center gap-2 text-white font-black uppercase tracking-tight text-sm">
-                                <Wallet className="w-4 h-4 text-[#8eb2b8]" />
-                                Historial de Pagos
-                            </DialogTitle>
-                        </DialogHeader>
-                        
-                        <div className="p-5 max-h-[50vh] overflow-y-auto no-scrollbar space-y-3">
-                            {(() => {
-                                if (!selectedClientLedger) return null;
-                                const manual = Array.isArray(selectedClientLedger.manual_documents) 
-                                    ? selectedClientLedger.manual_documents.filter((d: any) => d.category === 'COMPROBANTE_CUOTA' || d.category === 'COMPROBANTE_PIE')
-                                    : [];
-                                const auto = clientReceipts.filter((r: any) => r.status === 'APPROVED');
-                                
-                                if (isLoadingReceipts) {
-                                    return (
-                                        <div className="flex flex-col items-center justify-center py-12 space-y-3 opacity-50">
-                                            <Loader2 className="w-8 h-8 animate-spin text-[#8eb2b8]" />
-                                            <p className="text-[10px] font-black uppercase tracking-tighter">Cargando recibos...</p>
-                                        </div>
-                                    );
-                                }
-                                
-                                const all = [
-                                    ...manual.map((m: any) => ({ 
-                                        name: m.name, 
-                                        url: m.url, 
-                                        type: m.category === 'COMPROBANTE_PIE' ? 'PIE' : 'CUOTA', 
-                                        category: m.category,
-                                        isAuto: false,
-                                        date: m.uploadedAt ? new Date(m.uploadedAt) : new Date()
-                                    })),
-                                    ...auto.map((a: any) => ({ 
-                                        name: `Comprobante Oficial #${a.id.slice(-4)}`, 
-                                        url: `/api/receipt/${a.id}/pdf`, 
-                                        type: a.scope, 
-                                        isAuto: true,
-                                        date: new Date(a.processed_at || a.created_at)
-                                    }))
-                                ].sort((a, b) => b.date.getTime() - a.date.getTime());
-
-                                const hasAuto = auto.length > 0;
-
-                                return (
-                                    <>
-                                        {!hasAuto && all.length > 0 && (
-                                            <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 mb-4">
-                                                <p className="text-[9px] text-amber-500 font-black uppercase leading-tight">
-                                                    Nota: No se han generado comprobantes PDF oficiales todavía. 
-                                                    Usa el botón "Sincronizar" para crearlos.
-                                                </p>
-                                            </div>
-                                        )}
-                                        {all.length === 0 ? (
-                                            <div className="text-center py-8 opacity-30">
-                                                <Receipt className="w-8 h-8 mx-auto mb-2" />
-                                                <p className="text-[10px] font-black uppercase">Sin registros</p>
-                                            </div>
-                                        ) : (
-                                            all.map((p, idx) => (
-                                                <div key={idx} className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/5 group hover:bg-white/10 transition-all">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className={`p-2 rounded-lg ${p.type === 'PIE' ? 'bg-amber-500/10' : 'bg-blue-500/10'}`}>
-                                                            <Receipt className={`w-3.5 h-3.5 ${p.type === 'PIE' ? 'text-amber-500' : 'text-blue-400'}`} />
-                                                        </div>
-                                                        <div className="min-w-0">
-                                                            <p className="text-[10px] font-black text-white leading-tight uppercase truncate max-w-[120px]">{p.name}</p>
-                                                            <div className="flex items-center gap-2 mt-0.5">
-                                                                <span className={`text-[6px] font-black uppercase px-1 rounded ${p.type === 'PIE' ? 'bg-amber-500/20 text-amber-500' : 'bg-blue-500/20 text-blue-400'}`}>
-                                                                    {p.type === 'PIE' ? 'Pie' : 'Cuota'}
-                                                                </span>
-                                                                <span className="text-[6px] text-gray-500 font-bold uppercase">{format(p.date, 'dd MMM yy', { locale: es })}</span>
-                                                                {p.isAuto ? (
-                                                                    <span className="text-[6px] text-emerald-500 font-black uppercase bg-emerald-500/10 px-1 rounded">PDF Oficial</span>
-                                                                ) : (
-                                                                    <span className="text-[6px] text-gray-600 font-bold uppercase">Manual</span>
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                                                           <div className="flex gap-1">
-                                                                    <button
-                                                                        onClick={() => setViewerConfig({
-                                                                            isOpen: true,
-                                                                            url: p.url,
-                                                                            name: p.name,
-                                                                            category: p.type === 'PIE' ? 'Pago Pie' : 'Cuota'
-                                                                        })}
-                                                                        className="p-2 bg-[#3f6066]/20 hover:bg-[#3f6066]/40 text-[#8eb2b8] rounded-lg transition-all"
-                                                                        title="Visualizar"
-                                                                    >
-                                                                        <Eye className="w-4 h-4" />
-                                                                    </button>
-                                                                    {!p.isAuto && (
-                                                                        <button
-                                                                            onClick={() => handleDeleteDocument(selectedClientLedger.id, p.category, p.url)}
-                                                                            className="p-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg transition-all"
-                                                                            title="Eliminar"
-                                                                        >
-                                                                            <Trash2 className="w-4 h-4" />
-                                                                        </button>
-                                                                    )}
-                                                                </div>
-                                                </div>
-                                            ))
-                                        )}
-                                    </>
-                                );
-                            })()}
-                        </div>
-                        
-                        <div className="p-4 bg-black/20 border-t border-white/5">
-                            <Button
-                                onClick={() => setShowPaymentsModal(false)}
-                                className="w-full bg-[#3f6066] hover:bg-[#3f6066]/80 text-white font-black uppercase text-[10px] tracking-widest h-10 rounded-xl"
-                            >
-                                Cerrar Historial
-                            </Button>
-                        </div>
-                    </DialogContent>
-                </Dialog>
-
-                <UniversalDocumentViewer 
-                    {...viewerConfig} 
-                    onClose={() => setViewerConfig(prev => ({ ...prev, isOpen: false }))}
-                />
-
-                {selectedClientLedger && (
-                    <AssignOwnerModal
-                        open={isEditModalOpen}
-                        onOpenChange={setIsEditModalOpen}
-                        lotId={selectedClientLedger.lotId}
-                        lotNumber={selectedClientLedger.lotNumber}
-                        existingReservation={selectedClientLedger}
-                        onSuccess={() => {
-                            toast.success("Cliente actualizado exitosamente");
-                            window.location.reload();
-                        }}
-                    />
-                )}
             </div>
         );
-    }
-
-    if (activeTab === 'alertas') {
+    } else if (activeTab === 'alertas') {
         const filteredAlerts = debtAlerts.filter(alert => {
             const matchesStage = alertStage === 'ALL' || alert.lotStage === alertStage;
             const matchesStatus = alertFilter === 'ALL' || alert.status === alertFilter;
@@ -1066,7 +529,7 @@ export function PostventaMobileDashboard({
             alertPage * ALERTS_PER_PAGE
         );
 
-        return (
+        content = (
             <div className="space-y-6 pb-24">
                 {/* Dashboard Header */}
                 <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
@@ -1236,7 +699,6 @@ export function PostventaMobileDashboard({
                                         className={`${colorClass} p-3 rounded-2xl border backdrop-blur-xl transition-all duration-500 hover:scale-[1.03] active:scale-[0.98] flex flex-col justify-between relative overflow-hidden shadow-2xl group cursor-pointer`}
                                         onClick={() => { 
                                             setSelectedClientLedger(alert); 
-                                            onTabChange?.('ledger'); 
                                         }}
                                     >
                                         <div className="space-y-2">
@@ -1316,206 +778,393 @@ export function PostventaMobileDashboard({
                 </div>
             </div>
         );
-    }
-
-    if (activeTab === 'mora') {
-        return (
+    } else if (activeTab === 'mora') {
+        content = (
             <div className="space-y-4 pb-24">
                 <MoraExplainerCard soldLots={soldLots} />
             </div>
         );
+    } else {
+        content = (
+            <div className="space-y-4 pb-24">
+                {/* Header */}
+            </div>
+        );
     }
 
-    // Receipts view
     return (
-        <div className="space-y-4 pb-24">
-            {/* Header */}
-            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-                <div className="flex items-center gap-2">
-                    <Receipt className="w-5 h-5 text-alimin-gold" />
-                    <h2 className="text-lg font-bold text-white uppercase tracking-tight">Recibos por Aprobar</h2>
-                    {pendingCount > 0 && (
-                        <Badge variant="destructive" className="bg-red-500/20 text-red-500 border-red-500/30 text-[10px] font-bold animate-pulse">
-                            {pendingCount}
-                        </Badge>
+        <div className="relative">
+            {content}
+
+            {/* Global Client Detail Modal */}
+            <Dialog open={!!selectedClientLedger} onOpenChange={(open) => !open && setSelectedClientLedger(null)}>
+                <DialogContent className="max-w-5xl w-[95vw] h-[90vh] bg-[#0a1622] border-[#3f6066]/20 p-0 overflow-hidden rounded-[2.5rem] shadow-[0_0_80px_rgba(0,0,0,0.8)] flex flex-col">
+                    {selectedClientLedger && (
+                        <>
+                            <div className="flex-1 overflow-y-auto no-scrollbar">
+                                {/* Modal Header - Brand Immersive */}
+                                <div className="bg-gradient-to-br from-[#3f6066]/20 to-transparent p-8 border-b border-white/5 relative overflow-hidden">
+                                    <div className="absolute top-0 right-0 w-80 h-80 bg-[#3f6066]/10 rounded-full blur-[100px] -mr-40 -mt-40" />
+                                    <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-8">
+                                        <div className="flex items-center gap-6">
+                                            <div className="w-16 h-16 rounded-2xl bg-[#3f6066] flex items-center justify-center shadow-2xl shadow-[#3f6066]/20 flex-shrink-0 border border-white/10">
+                                                <span className="text-2xl font-black text-white">
+                                                    {selectedClientLedger.clientName?.charAt(0)}
+                                                </span>
+                                            </div>
+                                            <div className="space-y-2">
+                                                <div className="flex items-center gap-3">
+                                                    <h2 className="text-2xl font-black text-white uppercase tracking-tight leading-none">{selectedClientLedger.clientName}</h2>
+                                                    {selectedClientLedger.is_legacy && (
+                                                        <Badge className="bg-amber-500/20 text-amber-500 border-amber-500/30 text-[8px] font-black uppercase">Legacy</Badge>
+                                                    )}
+                                                </div>
+                                                <div className="flex items-center gap-4">
+                                                    <Badge className="bg-black/50 text-[#8eb2b8] border-[#3f6066]/30 text-[9px] font-black uppercase px-2 py-0.5">Lote {selectedClientLedger.lotNumber}</Badge>
+                                                    <Badge className="bg-black/50 text-[#8eb2b8] border-[#3f6066]/30 text-[9px] font-black uppercase px-2 py-0.5">Etapa {selectedClientLedger.lotStage}</Badge>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="flex flex-col items-end gap-3">
+                                            <div className="bg-black/40 backdrop-blur-md rounded-2xl p-5 border border-white/5 text-right min-w-[200px]">
+                                                <p className="text-[10px] text-[#3f6066] font-black uppercase tracking-[0.2em]">Total Invertido</p>
+                                                <p className="text-3xl font-black text-white leading-none mt-1.5 tabular-nums">
+                                                    {formatCurrency(selectedClientLedger.totalPaid)}
+                                                </p>
+                                            </div>
+                                            <Button 
+                                                variant="outline" 
+                                                size="sm"
+                                                onClick={async (e) => {
+                                                    e.stopPropagation();
+                                                    const res = await syncLegacyReceipts();
+                                                    if ('error' in res) toast.error(res.error);
+                                                    else {
+                                                        toast.success(`Sincronización completada: ${res.syncedCount} recibos.`);
+                                                        window.location.reload();
+                                                    }
+                                                }}
+                                                className="h-8 text-[9px] font-black text-[#8eb2b8] hover:text-white uppercase tracking-widest bg-white/5 hover:bg-[#3f6066]/20 border-white/5 rounded-xl px-4"
+                                            >
+                                                <RefreshCw className="w-3 h-3 mr-2" />
+                                                Sincronizar Datos
+                                            </Button>
+
+                                            <Button 
+                                                variant="outline" 
+                                                size="sm"
+                                                onClick={() => setIsEditModalOpen(true)}
+                                                className="h-8 text-[9px] font-black text-[#8eb2b8] hover:text-white uppercase tracking-widest bg-white/5 hover:bg-[#3f6066]/20 border-white/5 rounded-xl px-4"
+                                            >
+                                                <Edit className="w-3 h-3 mr-2" />
+                                                Editar Cliente
+                                            </Button>
+
+                                            <Button 
+                                                variant={selectedClientLedger.isMoraFrozen ? "destructive" : "outline"} 
+                                                size="sm"
+                                                onClick={async () => {
+                                                    const freeze = !selectedClientLedger.isMoraFrozen;
+                                                    const res = await toggleMoraFreeze(selectedClientLedger.id, freeze);
+                                                    if (res.error) toast.error(res.error);
+                                                    else {
+                                                        toast.success(res.message);
+                                                        window.location.reload();
+                                                    }
+                                                }}
+                                                className={cn(
+                                                    "h-8 text-[9px] font-black uppercase tracking-widest rounded-xl px-4 border-white/5",
+                                                    selectedClientLedger.isMoraFrozen 
+                                                        ? "bg-red-500/20 text-red-400 hover:bg-red-500/30" 
+                                                        : "bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500/20"
+                                                )}
+                                            >
+                                                <Snowflake className="w-3 h-3 mr-2" />
+                                                {selectedClientLedger.isMoraFrozen ? "Activar Mora" : "Congelar Mora"}
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="p-8 space-y-10">
+                                    {/* Core Stats - High Visibility Grid */}
+                                    {(() => {
+                                        const isOffline = selectedClientLedger.is_legacy || selectedClientLedger.signatureIp === 'Firma Offline';
+                                        return (
+                                            <>
+                                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
+                                        {[
+                                            { label: 'Cuotas Pagadas', value: `${selectedClientLedger.paidCuotas} / ${selectedClientLedger.totalCuotas}`, icon: Wallet },
+                                            { label: 'Próximo Pago', value: selectedClientLedger.nextDueDate ? format(new Date(selectedClientLedger.nextDueDate), 'dd MMM yy', { locale: es }) : 'N/A', icon: CalendarDays, color: 'text-[#8eb2b8]' },
+                                            { label: 'Monto Cuota', value: formatCurrency(selectedClientLedger.valor_cuota || 0), icon: CreditCard },
+                                            { label: 'Estado Pie', value: selectedClientLedger.pieStatus, badge: true }
+                                        ].map((stat, i) => (
+                                            <div key={i} className="bg-white/5 rounded-3xl p-5 border border-white/5 flex flex-col items-center text-center group hover:bg-[#3f6066]/5 hover:border-[#3f6066]/20 transition-all">
+                                                <p className="text-[9px] text-gray-500 font-black uppercase tracking-widest mb-3 flex items-center gap-2">
+                                                    {stat.icon && <stat.icon className="w-3.5 h-3.5 text-[#3f6066]" />}
+                                                    {stat.label}
+                                                </p>
+                                                {stat.badge ? (
+                                                    <Badge className={`${selectedClientLedger.pieStatus === 'PAID' ? 'bg-emerald-500 shadow-emerald-500/20' : 'bg-amber-500 shadow-amber-500/20'} text-white font-black text-[10px] px-3 py-1 rounded-xl uppercase`}>
+                                                        {selectedClientLedger.pieStatus}
+                                                    </Badge>
+                                                ) : (
+                                                    <p className={`text-xl font-black ${stat.color || 'text-white'} tabular-nums`}>{stat.value}</p>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                    
+                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                                        {/* Left: Documents Section */}
+                                        <div className="bg-white/[0.02] rounded-[2rem] border border-white/5 p-8 flex flex-col gap-6">
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="bg-[#8eb2b8]/10 p-2.5 rounded-2xl">
+                                                        <Receipt className="w-5 h-5 text-[#8eb2b8]" />
+                                                    </div>
+                                                    <h3 className="text-lg font-black text-white uppercase tracking-tight">Documentación</h3>
+                                                </div>
+                                            </div>
+
+                                            <div className="grid grid-cols-1 gap-3">
+                                                {(() => {
+                                                    const docs = [
+                                                        { label: 'Contrato de Reserva', category: 'RESERVA', url: selectedClientLedger.uploaded_contract_url, isAuto: true, date: selectedClientLedger.signed_at },
+                                                        { label: 'Comprobantes de Pago', category: 'RECEIPT', hasList: true },
+                                                        { label: 'Promesa de Compraventa', category: 'PROMESA', url: selectedClientLedger.legacy_uploaded_contracts ? JSON.parse(selectedClientLedger.legacy_uploaded_contracts)[0] : null, isAuto: false },
+                                                        ...(selectedClientLedger.manual_documents || [])
+                                                    ];
+
+                                                    return docs.map((doc, idx) => (
+                                                        <div key={idx} className="bg-black/40 border border-white/5 rounded-2xl p-4 flex items-center justify-between group hover:bg-white/5 transition-all">
+                                                            <div className="flex items-center gap-4">
+                                                                <div className="bg-white/5 p-2 rounded-xl group-hover:bg-[#3f6066]/20 transition-all">
+                                                                    <FileText className="w-4 h-4 text-gray-500 group-hover:text-[#8eb2b8]" />
+                                                                </div>
+                                                                <div>
+                                                                    <p className="text-[10px] font-black text-white uppercase tracking-widest">{doc.label || doc.name}</p>
+                                                                    <p className="text-[8px] text-gray-600 font-bold uppercase mt-0.5 tracking-tight">
+                                                                        {doc.date ? `Generado el ${format(new Date(doc.date), 'dd/MM/yyyy')}` : (doc.url ? 'Documento disponible' : 'Pendiente de carga')}
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+                                                            <div className="flex gap-2">
+                                                                {doc.url ? (
+                                                                    <div className="flex gap-2">
+                                                                        <button 
+                                                                            onClick={() => setViewerConfig({ isOpen: true, url: doc.url!, name: doc.label || doc.name || 'Documento', category: doc.category })}
+                                                                            className="p-2 bg-[#3f6066]/20 hover:bg-[#3f6066]/30 text-[#8eb2b8] rounded-lg transition-all"
+                                                                            title="Ver"
+                                                                        >
+                                                                            <Eye className="w-4 h-4" />
+                                                                        </button>
+                                                                        {!doc.isAuto && (
+                                                                            <button 
+                                                                                onClick={() => handleDeleteDocument(selectedClientLedger.id, doc.category!, doc.url!)}
+                                                                                className="p-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg transition-all"
+                                                                                title="Eliminar"
+                                                                            >
+                                                                                 <Trash2 className="w-4 h-4" />
+                                                                            </button>
+                                                                        )}
+                                                                    </div>
+                                                                ) : !doc.hasList && (
+                                                                    <ContractUploadAction 
+                                                                        reservationId={selectedClientLedger.id} 
+                                                                        reservationName={selectedClientLedger.clientName}
+                                                                        type={doc.category || 'OTRO'} 
+                                                                        onUploadComplete={() => { toast.success('Cargado'); window.location.reload(); }}
+                                                                    />
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    ));
+                                                })()}
+                                            </div>
+                                        </div>
+
+                                        {/* Right: Payment Timeline */}
+                                        <div className="bg-white/[0.02] rounded-[2rem] border border-white/5 p-8 flex flex-col gap-6">
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="bg-emerald-500/10 p-2.5 rounded-2xl">
+                                                        <Clock className="w-5 h-5 text-emerald-400" />
+                                                    </div>
+                                                    <h3 className="text-lg font-black text-white uppercase tracking-tight">Historial de Pagos</h3>
+                                                </div>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={() => setShowPaymentsModal(true)}
+                                                    className="text-[9px] font-black text-[#8eb2b8] hover:text-white uppercase tracking-tighter"
+                                                >
+                                                    Ver Listado <ArrowRight className="w-3.5 h-3.5 ml-2" />
+                                                </Button>
+                                            </div>
+
+                                            <div className="space-y-4">
+                                                {clientReceipts.slice(0, 3).map((r, i) => (
+                                                    <div key={i} className="flex gap-4 relative">
+                                                        {i < clientReceipts.slice(0, 3).length - 1 && (
+                                                            <div className="absolute left-4 top-10 bottom-0 w-px bg-white/5" />
+                                                        )}
+                                                        <div className={`w-8 h-8 rounded-full border border-white/10 flex items-center justify-center shrink-0 ${r.status === 'APPROVED' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400'}`}>
+                                                            <CheckCircle className="w-4 h-4" />
+                                                        </div>
+                                                        <div className="flex-1 min-w-0">
+                                                            <div className="flex justify-between items-start">
+                                                                <p className="text-[10px] font-black text-white uppercase tracking-widest">{formatCurrency(r.amount_clp)}</p>
+                                                                <span className="text-[8px] text-gray-600 font-bold tabular-nums">{format(new Date(r.created_at), 'dd/MM/yyyy')}</span>
+                                                            </div>
+                                                            <p className="text-[8px] text-[#3f6066] font-black uppercase tracking-tight mt-0.5">{r.scope === 'PIE' ? 'Pago de Pie' : 'Abono Cuota'}</p>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                                {clientReceipts.length === 0 && (
+                                                    <p className="text-center py-10 text-gray-700 font-black uppercase text-[10px] tracking-widest italic">No hay historial de pagos registrados</p>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    </>
+                                        );
+                                    })()}
+                                </div>
+                            </div>
+                            
+                            <div className="p-4 bg-black/40 border-t border-white/5 flex justify-end gap-3 z-20">
+                                <Button
+                                    onClick={() => setSelectedClientLedger(null)}
+                                    className="bg-white/5 hover:bg-white/10 text-white font-black uppercase text-[10px] tracking-widest h-10 px-8 rounded-xl border border-white/5"
+                                >
+                                    Cerrar Expediente
+                                </Button>
+                            </div>
+                        </>
                     )}
-                </div>
-                
-                <div className="relative group w-full md:w-80">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 group-focus-within:text-[#3f6066] transition-colors" />
-                    <Input 
-                        placeholder="Buscar por lote o nombre..." 
-                        value={ledgerSearch}
-                        onChange={(e) => { setLedgerSearch(e.target.value); setLedgerPage(1); }}
-                        className="bg-white/5 border-white/10 rounded-xl pl-9 h-10 text-sm text-white placeholder:text-gray-600 focus:ring-alimin-gold/20 focus:border-alimin-gold/40 transition-all font-medium"
-                    />
-                    <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
-                        {ledgerSearch && (
-                            <Button 
-                                size="sm"
-                                onClick={() => setLedgerPage(1)}
-                                className="bg-alimin-gold text-black hover:bg-alimin-gold/80 h-7 rounded-lg text-[9px] font-bold px-2"
-                            >
-                                Buscar
-                            </Button>
-                        )}
-                    </div>
-                </div>
-            </div>
-
-            {/* Filters */}
-            <div className="flex flex-wrap gap-2">
-                {(['PENDING', 'ALL', 'APPROVED', 'REJECTED'] as const).map(f => (
-                    <button
-                        key={f}
-                        onClick={() => setFilter(f)}
-                        className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-colors ${filter === f
-                            ? 'bg-[#36595F] text-white'
-                            : 'bg-white/5 text-gray-400 hover:bg-white/10'
-                            }`}
-                    >
-                        {f === 'PENDING' ? `Pendientes (${pendingCount})` : f === 'ALL' ? 'Todos' : f === 'APPROVED' ? 'Aprobados' : 'Rechazados'}
-                    </button>
-                ))}
-            </div>
-
-            {/* Receipt Cards Grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 gap-3">
-                {filteredReceipts.map(receipt => (
-                    <div
-                        key={receipt.id}
-                        className={`rounded-2xl border p-4 space-y-3 backdrop-blur-xl transition-all duration-500 hover:scale-[1.02] active:scale-[0.98] flex flex-col justify-between shadow-2xl group ${receipt.status === 'PENDING'
-                            ? 'bg-amber-500/5 border-amber-500/20'
-                            : receipt.status === 'APPROVED'
-                                ? 'bg-[#3f6066]/5 border-[#3f6066]/20'
-                                : 'bg-red-500/5 border-red-500/20'
-                            }`}
-                    >
-                        <div className="flex items-start justify-between gap-1.5">
-                            <div className="min-w-0">
-                                <p className="font-black text-white text-[11px] truncate tracking-tight uppercase">
-                                    {receipt.reservation?.buyer?.name || 'Sin nombre'}
-                                </p>
-                                <p className="text-[7px] text-[#3f6066] font-black uppercase tracking-widest leading-none mt-1">
-                                    T-{receipt.reservation?.lot?.number} · E{receipt.reservation?.lot?.stage}
-                                </p>
-                            </div>
-                            {getStatusBadge(receipt.status)}
-                        </div>
-
-                        <div className="bg-black/40 rounded-xl p-2.5 border border-white/5 space-y-1.5">
-                            <div className="flex justify-between items-center">
-                                <span className="text-[6px] text-gray-500 font-black uppercase tracking-widest">Monto</span>
-                                <span className="text-sm font-black text-white">{formatCurrency(receipt.amount_clp)}</span>
-                            </div>
-                            <div className="flex justify-between items-center pt-1 border-t border-white/5">
-                                <span className="text-[6px] text-gray-500 font-black uppercase tracking-widest">Concepto</span>
-                                <span className="text-[8px] font-black text-[#8eb2b8] uppercase">
-                                    {receipt.scope === 'PIE' ? 'Pago de Pie' : `${(receipt.installments_count || 1) > 1 ? (receipt.installments_count || 1) + ' Cuotas' : 'Cuota'}`}
-                                </span>
-                            </div>
-                        </div>
-
-                        {/* Rejection Reason */}
-                        {receipt.rejection_reason && (
-                            <div className="bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">
-                                <p className="text-[11px] text-red-500 font-bold uppercase tracking-tight mb-1">Motivo de Rechazo</p>
-                                <p className="text-xs text-red-100/70 font-medium italic">
-                                    "{receipt.rejection_reason}"
-                                </p>
-                            </div>
-                        )}
-
-                        {/* Actions */}
-                        <div className="flex gap-2 pt-2">
-                            <button
-                                onClick={() => setViewerConfig({
-                                    isOpen: true,
-                                    url: receipt.receipt_url,
-                                    name: `Recibo #${receipt.id.slice(-4)}`,
-                                    category: receipt.reservation?.buyer?.name
-                                })}
-                                className="flex items-center justify-center gap-1.5 flex-1 min-h-[44px] rounded-lg bg-white/10 text-white text-xs font-semibold hover:bg-white/20 transition-colors active:scale-[0.97]"
-                            >
-                                <Eye className="w-4 h-4" />
-                                Ver
-                            </button>
-
-                            {receipt.status === 'PENDING' && (
-                                <>
-                                    <button
-                                        onClick={() => handleApprove(receipt.id)}
-                                        disabled={isProcessing === receipt.id}
-                                        className="flex items-center justify-center gap-1.5 flex-1 min-h-[44px] rounded-lg bg-green-600 text-white text-xs font-semibold hover:bg-green-700 transition-colors active:scale-[0.97] disabled:opacity-50"
-                                    >
-                                        {isProcessing === receipt.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
-                                        Aprobar
-                                    </button>
-                                    <button
-                                        onClick={() => setRejectingId(receipt.id)}
-                                        disabled={isProcessing === receipt.id}
-                                        className="flex items-center justify-center gap-1.5 flex-1 min-h-[44px] rounded-lg bg-red-600 text-white text-xs font-semibold hover:bg-red-700 transition-colors active:scale-[0.97] disabled:opacity-50"
-                                    >
-                                        <XCircle className="w-4 h-4" />
-                                        Rechazar
-                                    </button>
-                                </>
-                            )}
-                        </div>
-                    </div>
-                ))}
-
-                {filteredReceipts.length === 0 && (
-                    <div className="p-8 text-center text-gray-500 text-sm">
-                        {filter === 'PENDING' ? 'No hay comprobantes pendientes 🎉' : 'No hay comprobantes en esta categoría.'}
-                    </div>
-                )}
-
-                {/* Universal Document Viewer Integration */}
-                <UniversalDocumentViewer
-                    {...viewerConfig}
-                    onClose={() => setViewerConfig(prev => ({ ...prev, isOpen: false }))}
-                />
-            </div>
-
-            {/* Reject Dialog */}
-            <Dialog open={!!rejectingId} onOpenChange={(open) => !open && setRejectingId(null)}>
-                <DialogContent className="max-w-[90vw] md:max-w-md">
-                    <DialogHeader>
-                        <DialogTitle>Rechazar Transferencia</DialogTitle>
-                    </DialogHeader>
-                    <div className="py-4">
-                        <label className="text-sm font-medium mb-2 block">Motivo del rechazo:</label>
-                        <Textarea
-                            value={rejectionReason}
-                            onChange={(e) => setRejectionReason(e.target.value)}
-                            placeholder="Ej: El monto no corresponde, imagen borrosa..."
-                            rows={3}
-                        />
-                    </div>
-                    <div className="flex flex-col-reverse sm:flex-row justify-end gap-2">
-                        <Button variant="outline" onClick={() => setRejectingId(null)} className="min-h-[44px]">Cancelar</Button>
-                        <Button variant="destructive" onClick={() => rejectingId && handleReject(rejectingId)} disabled={isProcessing === rejectingId} className="min-h-[44px]">
-                            {isProcessing === rejectingId ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-                            Confirmar Rechazo
-                        </Button>
-                    </div>
                 </DialogContent>
             </Dialog>
 
-            {selectedClientLedger && (
-                <AssignOwnerModal
-                    open={isEditModalOpen}
-                    onOpenChange={setIsEditModalOpen}
-                    lotId={selectedClientLedger.lotId}
-                    lotNumber={selectedClientLedger.lotNumber}
-                    existingReservation={selectedClientLedger}
-                    onSuccess={() => {
-                        toast.success("Cliente actualizado exitosamente");
-                        window.location.reload();
-                    }}
-                />
-            )}
-        </div>
+            {/* Global History Modal */}
+            <Dialog open={showPaymentsModal} onOpenChange={setShowPaymentsModal}>
+                <DialogContent className="max-w-2xl w-[95vw] h-[80vh] bg-[#0a1622] border-white/5 p-0 overflow-hidden flex flex-col rounded-[2.5rem]">
+                    <DialogHeader className="p-8 pb-4 border-b border-white/10">
+                        <DialogTitle className="text-xl font-black text-white uppercase tracking-tighter flex items-center gap-3">
+                            <Clock className="w-6 h-6 text-[#8eb2b8]" />
+                            Detalle de Movimientos
+                        </DialogTitle>
+                    </DialogHeader>
+                    
+                    <div className="flex-1 overflow-y-auto p-6 space-y-3 no-scrollbar">
+                        {isLoadingReceipts ? (
+                            <div className="flex flex-col items-center justify-center py-20 gap-4">
+                                <Loader2 className="w-10 h-10 text-[#3f6066] animate-spin" />
+                                <p className="text-[10px] font-black text-gray-600 uppercase tracking-[0.2em]">Cargando transacciones...</p>
+                            </div>
+                        ) : clientReceipts.length === 0 ? (
+                            <div className="text-center py-20 opacity-20">
+                                <Receipt className="w-16 h-16 mx-auto mb-4" />
+                                <p className="font-black uppercase text-xs">Sin registros</p>
+                            </div>
+                        ) : (
+                            <>
+                                <div className="p-3 bg-white/5 rounded-2xl border border-white/5 mb-4">
+                                     <p className="text-[8px] text-[#3f6066] font-black uppercase tracking-widest text-center">Mostrando {clientReceipts.length} recibos históricos registrados</p>
+                                </div>
+                                {clientReceipts.map((p, idx) => (
+                                    <div key={idx} className="bg-black/40 border border-white/5 rounded-2xl p-4 flex items-center justify-between group hover:bg-white/5 transition-all">
+                                        <div className="flex items-center gap-4">
+                                            <div className="bg-white/5 p-3 rounded-xl">
+                                                <CreditCard className="w-5 h-5 text-[#8eb2b8]" />
+                                            </div>
+                                            <div>
+                                                <p className="text-xs font-black text-white uppercase">{formatCurrency(p.amount_clp)}</p>
+                                                <p className="text-[9px] text-gray-500 font-bold uppercase mt-0.5 tracking-tight">
+                                                    {p.scope === 'PIE' ? 'Pago de Pie' : `${(p.installments_count || 1) > 1 ? p.installments_count + ' Cuotas' : 'Cuota'}`} · {format(new Date(p.created_at), 'dd/MM/yyyy HH:mm')}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            {getStatusBadge(p.status)}
+                                            <button 
+                                                onClick={() => setViewerConfig({ isOpen: true, url: p.receipt_url, name: `Recibo ${format(new Date(p.created_at), 'dd/MM/yyyy')}`, category: 'PAGO' })}
+                                                className="p-2 bg-[#3f6066]/20 hover:bg-[#3f6066]/30 text-[#8eb2b8] rounded-lg transition-all"
+                                                title="Ver"
+                                            >
+                                                <Eye className="w-4 h-4" />
+                                            </button>
+                                            {!p.isAuto && (
+                                                <button 
+                                                    onClick={() => handleDeleteDocument(selectedClientLedger.id, p.category, p.url)}
+                                                    className="p-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg transition-all"
+                                                    title="Eliminar"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
+                            </>
+                        )}
+                </div>
+                
+                <div className="p-4 bg-black/20 border-t border-white/5">
+                    <Button
+                        onClick={() => setShowPaymentsModal(false)}
+                        className="w-full bg-[#3f6066] hover:bg-[#3f6066]/80 text-white font-black uppercase text-[10px] tracking-widest h-10 rounded-xl"
+                    >
+                        Cerrar Historial
+                    </Button>
+                </div>
+            </DialogContent>
+        </Dialog>
+
+        <UniversalDocumentViewer 
+            {...viewerConfig} 
+            onClose={() => setViewerConfig(prev => ({ ...prev, isOpen: false }))}
+        />
+
+        {selectedClientLedger && (
+            <AssignOwnerModal
+                open={isEditModalOpen}
+                onOpenChange={setIsEditModalOpen}
+                lotId={selectedClientLedger.lotId}
+                lotNumber={selectedClientLedger.lotNumber}
+                existingReservation={selectedClientLedger}
+                onSuccess={() => {
+                    toast.success("Cliente actualizado exitosamente");
+                    window.location.reload();
+                }}
+            />
+        )}
+
+        {/* Global Reject Dialog (for receipts tab) */}
+        <Dialog open={!!rejectingId} onOpenChange={(open) => !open && setRejectingId(null)}>
+            <DialogContent className="max-w-[90vw] md:max-w-md bg-[#0a1622] border-white/10">
+                <DialogHeader>
+                    <DialogTitle>Rechazar Transferencia</DialogTitle>
+                </DialogHeader>
+                <div className="py-4">
+                    <label className="text-sm font-medium mb-2 block text-gray-300">Motivo del rechazo:</label>
+                    <Textarea
+                        value={rejectionReason}
+                        onChange={(e) => setRejectionReason(e.target.value)}
+                        placeholder="Ej: El monto no corresponde, imagen borrosa..."
+                        rows={3}
+                        className="bg-black/40 border-white/5"
+                    />
+                </div>
+                <div className="flex flex-col-reverse sm:flex-row justify-end gap-2">
+                    <Button variant="outline" onClick={() => setRejectingId(null)} className="min-h-[44px]">Cancelar</Button>
+                    <Button variant="destructive" onClick={() => rejectingId && handleReject(rejectingId)} disabled={isProcessing === rejectingId} className="min-h-[44px]">
+                        {isProcessing === rejectingId ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                        Confirmar Rechazo
+                    </Button>
+                </div>
+            </DialogContent>
+        </Dialog>
+    </div>
     );
 }
