@@ -290,28 +290,36 @@ export function PostventaMobileDashboard({
         );
     } else if (activeTab === 'ledger') {
         const filteredLedger = ledger.filter(client => {
+            // Requirement: Only users with a reserved lot
+            if (!client.lotNumber) return false;
+
             const matchesSearch = !ledgerSearch || 
-                client.clientName?.toLowerCase().includes(ledgerSearch.toLowerCase()) ||
-                client.lotNumber?.includes(ledgerSearch);
+                (client.clientName || '').toLowerCase().includes(ledgerSearch.toLowerCase()) ||
+                String(client.lotNumber || '').includes(ledgerSearch);
             
             const matchesStage = ledgerStage === 'ALL' || Number(client.lotStage) === Number(ledgerStage);
             
-            let matchesMonth = true;
+            let matchesStatus = true;
             if (ledgerMonth !== 'ALL') {
-                const targetDate = new Date(ledgerYear, Number(ledgerMonth) + 1, 0); // Last day of selected month
+                const targetDate = new Date(ledgerYear, Number(ledgerMonth) + 1, 0);
                 const isPaidAll = client.paidCuotas >= (client.totalCuotas || 1);
-                
-                // Professional logic: 
-                // A client has "paid March" if their next payment is in April (or later)
-                // OR if they have already paid all their installments.
                 const nextDue = client.nextDueDate ? new Date(client.nextDueDate) : null;
+                
+                // Matches "Paid" for the target month if next payment is after that month
                 const matchesPaid = Boolean(isPaidAll || (nextDue && nextDue > targetDate));
 
-                if (ledgerStatus === 'PAID') matchesMonth = matchesPaid;
-                else if (ledgerStatus === 'PENDING') matchesMonth = !matchesPaid;
+                if (ledgerStatus === 'PAID') matchesStatus = matchesPaid;
+                else if (ledgerStatus === 'PENDING') matchesStatus = !matchesPaid;
+            } else {
+                // Global status filter when "All Months" is selected
+                if (ledgerStatus === 'PAID') {
+                    matchesStatus = (client.pendingBalance || 0) <= 0 || client.paidCuotas >= (client.totalCuotas || 1);
+                } else if (ledgerStatus === 'PENDING') {
+                    matchesStatus = (client.pendingBalance || 0) > 0 && client.paidCuotas < (client.totalCuotas || 1);
+                }
             }
 
-            return matchesSearch && matchesStage && matchesMonth;
+            return matchesSearch && matchesStage && matchesStatus;
         });
 
         const totalLedgerPages = Math.ceil(filteredLedger.length / LEDGER_ITEMS_PER_PAGE);
