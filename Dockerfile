@@ -1,6 +1,6 @@
 # Stage 1: Install dependencies
 FROM node:20-alpine AS deps
-RUN apk add --no-cache libc6-compat
+RUN apk add --no-cache libc6-compat openssl
 WORKDIR /app
 COPY package*.json ./
 COPY prisma ./prisma/
@@ -9,6 +9,7 @@ RUN npm install --legacy-peer-deps
 # Stage 2: Build the application
 FROM node:20-alpine AS builder
 WORKDIR /app
+RUN apk add --no-cache openssl
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 # Generate Prisma client
@@ -20,6 +21,7 @@ RUN npm run build
 # Stage 3: Production server
 FROM node:20-alpine AS runner
 WORKDIR /app
+RUN apk add --no-cache openssl
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 

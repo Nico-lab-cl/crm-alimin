@@ -42,6 +42,7 @@ next-env.d.ts
 
 /src/generated/prisma
 
-*.mp4
+# *.mp4 (uncommented to allow drone videos under 100MB)
+Grabación*.mp4
 borrador*.pdf
 promesa_temp.txt
