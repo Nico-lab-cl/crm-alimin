@@ -1,12 +1,12 @@
-
 import NextAuth from "next-auth"
 import Credentials from "next-auth/providers/credentials"
 import { z } from "zod"
 import bcrypt from "bcryptjs"
 import { prisma } from "@/lib/prisma"
-import { Role } from "@prisma/client"
+import { authConfig } from "./auth.config"
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
+    ...authConfig,
     providers: [
         Credentials({
             async authorize(credentials) {
@@ -29,8 +29,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
                         if (!user.emailVerified) {
                             console.log(`[Auth] User not verified: ${email}`);
-                            // We can throw an error to be caught by the frontend, or return null.
-                            // Throwing allows specific error messages.
                             throw new Error("Por favor verifica tu correo electrónico antes de iniciar sesión.");
                         }
 
@@ -53,28 +51,4 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             },
         }),
     ],
-    pages: {
-        signIn: '/login',
-    },
-    callbacks: {
-        async jwt({ token, user }) {
-            if (user) {
-                token.role = user.role
-                token.id = user.id
-                // Use type assertion if needed, though extending types/next-auth.d.ts should handle it
-                token.mustChangePassword = (user as any).mustChangePassword;
-            }
-            return token
-        },
-        async session({ session, token }) {
-            if (token && session.user) {
-                session.user.role = token.role as Role
-                session.user.id = token.id as string
-                session.user.mustChangePassword = token.mustChangePassword as boolean;
-            }
-            return session
-        },
-    },
-    secret: process.env.AUTH_SECRET,
-    trustHost: true, // Specific for Easypanel/Docker behind proxy
 })
