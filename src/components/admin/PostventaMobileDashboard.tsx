@@ -20,6 +20,7 @@ import { useRouter } from 'next/navigation';
 import { UniversalDocumentViewer } from "@/components/shared/UniversalDocumentViewer";
 import { MoraExplainerCard } from './MoraExplainerCard';
 import { ContractUploadAction } from "@/components/admin/ContractUploadAction";
+import { exportToExcel } from '@/lib/export-utils';
 import { AdminMoraManager } from "@/components/admin/AdminMoraManager"
 import { AssignOwnerModal } from "@/components/dashboard/AssignOwnerModal";
 import { AdminLotList } from "@/components/dashboard/AdminLotList";
@@ -167,6 +168,29 @@ export function PostventaMobileDashboard({
     const formatCurrency = (amount: number) =>
         new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(amount);
 
+    const handleExportLedger = (data: any[]) => {
+        const headers = [
+            { label: 'Cliente', key: 'clientName' },
+            { label: 'Lote', key: 'lotNumber' },
+            { label: 'Etapa', key: 'lotStage' },
+            { label: 'Total Pagado', key: 'totalPaid' },
+            { label: 'Pendiente', key: 'pendingBalance' },
+            { label: 'Próximo Vencimiento', key: 'displayDueDate' },
+            { label: 'Cuotas Pagadas', key: 'paidCuotas' },
+            { label: 'Total Cuotas', key: 'totalCuotas' },
+            { label: 'Estado', key: 'status' }
+        ];
+
+        const exportData = data.map(item => ({
+            ...item,
+            totalPaid: formatCurrency(item.totalPaid),
+            pendingBalance: formatCurrency(item.pendingBalance),
+            displayDueDate: item.displayDueDate ? format(new Date(item.displayDueDate), 'dd/MM/yyyy') : 'N/A'
+        }));
+
+        exportToExcel(exportData, `Cartera_Postventa_${format(new Date(), 'yyyy-MM-dd')}.csv`, headers);
+    };
+
     const getStatusBadge = (status: string) => {
         if (status === 'PENDING') return <Badge variant="secondary" className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30 text-[10px]">Pendiente</Badge>;
         if (status === 'APPROVED') return <Badge className="bg-green-500/20 text-green-400 border-green-500/30 text-[10px]">Aprobado</Badge>;
@@ -265,6 +289,16 @@ export function PostventaMobileDashboard({
                             >
                                 <Clock className="w-3.5 h-3.5 mr-2" />
                                 Sincronizar Recibos
+                            </Button>
+
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleExportLedger(filteredLedger)}
+                                className="bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20 text-[10px] font-black uppercase tracking-widest h-9"
+                            >
+                                <Download className="w-3.5 h-3.5 mr-2" />
+                                Exportar Excel
                             </Button>
                         </div>
                         
