@@ -607,7 +607,7 @@ export function PostventaMobileDashboard({
                                                                 <Button
                                                                     size="icon"
                                                                     variant="ghost"
-                                                                    onClick={() => handleDeleteDocument(selectedClientLedger.id, 'promesa')}
+                                                                    onClick={() => handleDeleteDocument(selectedClientLedger.id, 'promesa', selectedClientLedger.uploaded_contract_url)}
                                                                     className="h-10 w-10 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-xl transition-all"
                                                                 >
                                                                     <Trash2 className="w-5 h-5" />
@@ -623,7 +623,10 @@ export function PostventaMobileDashboard({
                                                         reservationId={selectedClientLedger.id} 
                                                         reservationName={selectedClientLedger.clientName}
                                                         label={selectedClientLedger.uploaded_contract_url ? "Actualizar" : "Subir PDF"}
-                                                        onUploadComplete={() => toast.success("Expediente actualizado")}
+                                                        onUploadComplete={() => {
+                                                            toast.success("Expediente actualizado");
+                                                            window.location.reload();
+                                                        }}
                                                     />
                                                 </div>
 
@@ -725,7 +728,10 @@ export function PostventaMobileDashboard({
                                                             reservationName={selectedClientLedger.clientName}
                                                             type="legacy"
                                                             label={selectedClientLedger.legacy_uploaded_contracts?.length > 0 ? "Actualizar" : "Subir Reserva"}
-                                                            onUploadComplete={() => toast.success("Reserva física actualizada")}
+                                                            onUploadComplete={() => {
+                                                                toast.success("Reserva física actualizada");
+                                                                window.location.reload();
+                                                            }}
                                                         />
                                                     </div>
                                                 )}
@@ -777,7 +783,10 @@ export function PostventaMobileDashboard({
                                                         reservationName={selectedClientLedger.clientName}
                                                         type="GASTOS_OPERACIONALES"
                                                         label="Registrar"
-                                                        onUploadComplete={() => toast.success("Expediente actualizado")}
+                                                        onUploadComplete={() => {
+                                                            toast.success("Expediente actualizado");
+                                                            window.location.reload();
+                                                        }}
                                                     />
                                                 </div>
 
@@ -805,7 +814,10 @@ export function PostventaMobileDashboard({
                                                         reservationName={selectedClientLedger.clientName}
                                                         type="COMPROBANTE_CUOTA"
                                                         label="Cargar Pago"
-                                                        onUploadComplete={() => toast.success("Pago registrado")}
+                                                        onUploadComplete={() => {
+                                                            toast.success("Pago registrado");
+                                                            window.location.reload();
+                                                        }}
                                                         extraCategories={[
                                                             { id: 'COMPROBANTE_PIE', label: 'Pago de Pie' },
                                                             { id: 'COMPROBANTE_CUOTA', label: 'Pago de Cuota' }

@@ -8,9 +8,10 @@ export async function POST(
 ) {
     try {
         const session = await auth();
+        const isPostventa = session?.user?.email === 'postventa@lomasdelmar.cl';
 
-        // Only ADMIN or SELLER can upload contracts
-        if (!session || (session.user?.role !== "ADMIN" && session.user?.role !== "SELLER")) {
+        // Only ADMIN, SELLER or POSTVENTA can upload contracts
+        if (!session || (session.user?.role !== "ADMIN" && session.user?.role !== "SELLER" && !isPostventa)) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
@@ -113,8 +114,9 @@ export async function DELETE(
 ) {
     try {
         const session = await auth();
+        const isPostventa = session?.user?.email === 'postventa@lomasdelmar.cl';
 
-        if (!session || (session.user?.role !== "ADMIN" && session.user?.role !== "SELLER")) {
+        if (!session || (session.user?.role !== "ADMIN" && session.user?.role !== "SELLER" && !isPostventa)) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
