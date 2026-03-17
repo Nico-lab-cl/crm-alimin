@@ -1014,55 +1014,106 @@ export function PostventaMobileDashboard({
 
                                             <div className="grid grid-cols-1 gap-3">
                                                 {(() => {
-                                                    const docs = [
-                                                        { label: 'Contrato de Reserva', category: 'RESERVA', url: selectedClientLedger.uploaded_contract_url, isAuto: true, date: selectedClientLedger.signed_at },
-                                                        { label: 'Comprobantes de Pago', category: 'RECEIPT', hasList: true },
-                                                        { label: 'Promesa de Compraventa', category: 'PROMESA', url: selectedClientLedger.legacy_uploaded_contracts ? JSON.parse(selectedClientLedger.legacy_uploaded_contracts)[0] : null, isAuto: false },
-                                                        ...(selectedClientLedger.manual_documents || [])
+                                                    const manualDocs = Array.isArray(selectedClientLedger.manual_documents) ? selectedClientLedger.manual_documents : [];
+                                                    
+                                                    // Define standard categories
+                                                    const standardCategories = [
+                                                        { id: 'RESERVA', label: 'Contrato de Reserva' },
+                                                        { id: 'PROMESA', label: 'Promesa de Compraventa' },
+                                                        { id: 'PIE', label: 'Comprobantes de Pie' },
+                                                        { id: 'CUOTAS', label: 'Documentos de Cuotas' },
+                                                        { id: 'GASTOS_OPERACIONALES', label: 'Gastos Operacionales' }
                                                     ];
 
-                                                    return docs.map((doc, idx) => (
-                                                        <div key={idx} className="bg-black/40 border border-white/5 rounded-2xl p-4 flex items-center justify-between group hover:bg-white/5 transition-all">
-                                                            <div className="flex items-center gap-4">
-                                                                <div className="bg-white/5 p-2 rounded-xl group-hover:bg-[#3f6066]/20 transition-all">
-                                                                    <FileText className="w-4 h-4 text-gray-500 group-hover:text-[#8eb2b8]" />
-                                                                </div>
-                                                                <div>
-                                                                    <p className="text-[10px] font-black text-white uppercase tracking-widest">{doc.label || doc.name}</p>
-                                                                    <p className="text-[8px] text-gray-600 font-bold uppercase mt-0.5 tracking-tight">
-                                                                        {doc.date ? `Generado el ${format(new Date(doc.date), 'dd/MM/yyyy')}` : (doc.url ? 'Documento disponible' : 'Pendiente de carga')}
-                                                                    </p>
-                                                                </div>
-                                                            </div>
-                                                            <div className="flex gap-2">
-                                                                {doc.url ? (
-                                                                    <div className="flex gap-2">
-                                                                        <button 
-                                                                            onClick={() => setViewerConfig({ isOpen: true, url: doc.url!, name: doc.label || doc.name || 'Documento', category: doc.category })}
-                                                                            className="p-2 bg-[#3f6066]/20 hover:bg-[#3f6066]/30 text-[#8eb2b8] rounded-lg transition-all"
-                                                                            title="Ver"
-                                                                        >
-                                                                            <Eye className="w-4 h-4" />
-                                                                        </button>
-                                                                        <button 
-                                                                            onClick={() => handleDeleteDocument(selectedClientLedger.id, doc.category!, doc.url!)}
-                                                                            className="p-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg transition-all"
-                                                                            title="Eliminar"
-                                                                        >
-                                                                             <Trash2 className="w-4 h-4" />
-                                                                        </button>
+                                                    // Map documents to their categories
+                                                    const docs = standardCategories.map(cat => {
+                                                        let docInfo: any = { label: cat.label, category: cat.id };
+                                                        
+                                                        if (cat.id === 'RESERVA') {
+                                                            docInfo.url = selectedClientLedger.uploaded_contract_url;
+                                                            docInfo.date = selectedClientLedger.signed_at;
+                                                        } else if (cat.id === 'PROMESA') {
+                                                            docInfo.url = selectedClientLedger.legacy_uploaded_contracts ? JSON.parse(selectedClientLedger.legacy_uploaded_contracts)[0] : null;
+                                                        } else {
+                                                            // Find matching manual document
+                                                            const match = manualDocs.find((d: any) => d.category === cat.id);
+                                                            if (match) {
+                                                                docInfo.url = match.url;
+                                                                docInfo.date = match.uploadedAt;
+                                                                docInfo.name = match.name;
+                                                            }
+                                                        }
+                                                        return docInfo;
+                                                    });
+
+                                                    // Add other manual documents that don't fit standard categories
+                                                    const extraDocs = manualDocs
+                                                        .filter((d: any) => !standardCategories.some(cat => cat.id === d.category))
+                                                        .map((d: any) => ({ ...d, label: d.name, category: d.category || 'OTRO', isExtra: true }));
+
+                                                    const allDocs = [...docs, ...extraDocs];
+
+                                                    return (
+                                                        <>
+                                                            {allDocs.map((doc, idx) => (
+                                                                <div key={idx} className="bg-black/40 border border-white/5 rounded-2xl p-4 flex items-center justify-between group hover:bg-white/5 transition-all">
+                                                                    <div className="flex items-center gap-4">
+                                                                        <div className="bg-white/5 p-2 rounded-xl group-hover:bg-[#3f6066]/20 transition-all">
+                                                                            <FileText className="w-4 h-4 text-gray-500 group-hover:text-[#8eb2b8]" />
+                                                                        </div>
+                                                                        <div>
+                                                                            <p className="text-[10px] font-black text-white uppercase tracking-widest">{doc.label || doc.name}</p>
+                                                                            <p className="text-[8px] text-gray-600 font-bold uppercase mt-0.5 tracking-tight">
+                                                                                {doc.date ? `Cargado el ${format(new Date(doc.date), 'dd/MM/yyyy')}` : (doc.url ? 'Documento disponible' : 'Pendiente de carga')}
+                                                                            </p>
+                                                                        </div>
                                                                     </div>
-                                                                ) : !doc.hasList && (
-                                                                    <ContractUploadAction 
-                                                                        reservationId={selectedClientLedger.id} 
-                                                                        reservationName={selectedClientLedger.clientName}
-                                                                        type={doc.category || 'OTRO'} 
-                                                                        onUploadComplete={() => { toast.success('Cargado'); window.location.reload(); }}
-                                                                    />
-                                                                )}
+                                                                    <div className="flex gap-2">
+                                                                        {doc.url ? (
+                                                                            <div className="flex gap-2">
+                                                                                <button 
+                                                                                    onClick={() => setViewerConfig({ isOpen: true, url: doc.url!, name: doc.label || doc.name || 'Documento', category: doc.category })}
+                                                                                    className="p-2 bg-[#3f6066]/20 hover:bg-[#3f6066]/30 text-[#8eb2b8] rounded-lg transition-all"
+                                                                                    title="Ver"
+                                                                                >
+                                                                                    <Eye className="w-4 h-4" />
+                                                                                </button>
+                                                                                <button 
+                                                                                    onClick={() => handleDeleteDocument(selectedClientLedger.id, doc.category!, doc.url!)}
+                                                                                    className="p-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg transition-all"
+                                                                                    title="Eliminar"
+                                                                                >
+                                                                                     <Trash2 className="w-4 h-4" />
+                                                                                </button>
+                                                                            </div>
+                                                                        ) : (
+                                                                            <ContractUploadAction 
+                                                                                reservationId={selectedClientLedger.id} 
+                                                                                reservationName={selectedClientLedger.clientName}
+                                                                                type={doc.category} 
+                                                                                label="Subir"
+                                                                                onUploadComplete={() => { toast.success('Cargado'); window.location.reload(); }}
+                                                                            />
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                            ))}
+                                                            
+                                                            <div className="mt-4 pt-4 border-t border-white/5">
+                                                                <ContractUploadAction 
+                                                                    reservationId={selectedClientLedger.id} 
+                                                                    reservationName={selectedClientLedger.clientName}
+                                                                    label="Subir Otros Documentos"
+                                                                    extraCategories={[
+                                                                        { id: 'OTRO', label: 'Otro' },
+                                                                        { id: 'CEDULA', label: 'Cédula de Identidad' },
+                                                                        { id: 'COMPROBANTE_DOMICILIO', label: 'Comprobante Domicilio' }
+                                                                    ]}
+                                                                    onUploadComplete={() => { toast.success('Cargado'); window.location.reload(); }}
+                                                                />
                                                             </div>
-                                                        </div>
-                                                    ));
+                                                        </>
+                                                    );
                                                 })()}
                                             </div>
                                         </div>
