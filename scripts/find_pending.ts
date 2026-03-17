@@ -1,5 +1,5 @@
-import { prisma } from './src/lib/prisma';
-import { getInstallmentDueDate, calculateTotalInterest } from './src/lib/financials';
+import { prisma } from '@/lib/prisma';
+import { getInstallmentDueDate, calculateTotalInterest } from '@/lib/financials';
 
 async function findPending() {
     const allReservations = await prisma.reservation.findMany({
