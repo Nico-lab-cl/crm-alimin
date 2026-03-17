@@ -15,7 +15,8 @@ export async function getFullPostventaData({
     stage?: string | number;
 } = {}) {
     const session = await auth()
-    if (!session?.user || session.user.role !== 'ADMIN') {
+    const isPostventa = session?.user?.email === 'postventa@lomasdelmar.cl';
+    if (!session?.user || (session.user.role !== 'ADMIN' && !isPostventa)) {
         return { error: 'No autorizado', data: [], totalPages: 0 }
     }
 

@@ -2,6 +2,7 @@
  * Utility to export data to CSV and trigger a download in the browser.
  */
 export function exportToCSV(data: any[], filename: string, headers: string[]) {
+    if (typeof window === 'undefined') return;
     if (!data || !data.length) return;
 
     const csvContent = [
@@ -33,6 +34,7 @@ export function exportToCSV(data: any[], filename: string, headers: string[]) {
  * Utility to export data to Excel-friendly CSV (with BOM)
  */
 export function exportToExcel(data: any[], filename: string, headers: { label: string, key: string }[]) {
+  if (typeof window === 'undefined') return;
   if (!data || !data.length) return;
 
   const csvContent = [
