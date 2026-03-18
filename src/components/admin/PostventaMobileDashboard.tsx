@@ -1055,7 +1055,11 @@ export function PostventaMobileDashboard({
                                                             docInfo.url = selectedClientLedger.uploaded_contract_url;
                                                             docInfo.date = selectedClientLedger.signed_at;
                                                         } else if (cat.id === 'PROMESA') {
-                                                            docInfo.url = selectedClientLedger.legacy_uploaded_contracts ? JSON.parse(selectedClientLedger.legacy_uploaded_contracts)[0] : null;
+                                                            const parsedLegacy = selectedClientLedger.legacy_uploaded_contracts ? JSON.parse(selectedClientLedger.legacy_uploaded_contracts) : null;
+                                                            if (parsedLegacy && parsedLegacy.length > 0) {
+                                                                docInfo.url = parsedLegacy[0].url;
+                                                                docInfo.name = parsedLegacy[0].name;
+                                                            }
                                                         } else {
                                                             // Find matching manual document
                                                             const match = manualDocs.find((d: any) => d.category === cat.id);
@@ -1078,7 +1082,7 @@ export function PostventaMobileDashboard({
                                                     return (
                                                         <>
                                                             {allDocs.map((doc, idx) => (
-                                                                <div key={idx} className="bg-black/40 border border-white/5 rounded-2xl p-4 flex items-center justify-between group hover:bg-white/5 transition-all">
+                                                                <div key={doc.category || idx} className="bg-black/40 border border-white/5 rounded-2xl p-4 flex items-center justify-between group hover:bg-white/5 transition-all">
                                                                     <div className="flex items-center gap-4">
                                                                         <div className="bg-white/5 p-2 rounded-xl group-hover:bg-[#3f6066]/20 transition-all">
                                                                             <FileText className="w-4 h-4 text-gray-500 group-hover:text-[#8eb2b8]" />

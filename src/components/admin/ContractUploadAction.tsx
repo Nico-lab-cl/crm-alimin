@@ -76,7 +76,7 @@ export function ContractUploadAction({
                     },
                     body: JSON.stringify({
                         fileData: base64,
-                        type: selectedType || undefined,
+                        type: selectedType || type || undefined,
                         fileName: fileName || file.name
                     }),
                 });

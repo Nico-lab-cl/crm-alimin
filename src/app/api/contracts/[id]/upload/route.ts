@@ -68,8 +68,24 @@ export async function POST(
             memoryCache.deleteByPrefix('postventa_full_');
 
             return NextResponse.json({ success: true, reservation: updatedReservation });
-        } else if (type?.toUpperCase() === "RESERVA" || type?.toUpperCase() === "PROMESA" || !type) {
-            // Reserva/Promesa main field
+        } else if (type?.toUpperCase() === "PROMESA") {
+            // Promesa goes to legacy_uploaded_contracts
+            const legacyDoc = [{
+                name: fileName || `Promesa_Compraventa.pdf`,
+                url: fileData,
+            }];
+
+            const updatedReservation = await prisma.reservation.update({
+                where: { id },
+                data: { legacy_uploaded_contracts: JSON.stringify(legacyDoc) },
+            });
+
+            // Invalidate postventa cache after upload
+            memoryCache.deleteByPrefix('postventa_full_');
+
+            return NextResponse.json({ success: true, reservation: updatedReservation });
+        } else if (type?.toUpperCase() === "RESERVA" || !type) {
+            // Reserva main field
             const updatedReservation = await prisma.reservation.update({
                 where: { id },
                 data: {
@@ -139,8 +155,10 @@ export async function DELETE(
 
         let updateData: any = {};
 
-        if (!type || type?.toUpperCase() === "PROMESA" || type?.toUpperCase() === "RESERVA") {
+        if (!type || type?.toUpperCase() === "RESERVA") {
             updateData.uploaded_contract_url = null;
+        } else if (type?.toUpperCase() === "PROMESA") {
+            updateData.legacy_uploaded_contracts = null;
         } else if (type === "legacy") {
             let docs: any[] = [];
             if (reservation.legacy_uploaded_contracts) {
