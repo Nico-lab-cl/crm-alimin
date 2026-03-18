@@ -95,6 +95,25 @@ export function PostventaMobileDashboard({
     const [manualScope, setManualScope] = useState<'PIE' | 'INSTALLMENT' | 'GASTOS_OPERACIONALES'>('INSTALLMENT');
     const [isRegistering, setIsRegistering] = useState(false);
     const ALERTS_PER_PAGE = 10;
+    
+    const router = useRouter();
+
+    const refreshData = async () => {
+        const { invalidatePostventaCache, getFullPostventaData } = await import("@/actions/postventa");
+        await invalidatePostventaCache();
+        
+        if (selectedClientLedger) {
+            const res = await getFullPostventaData({ stage: 'ALL' }) as { success?: boolean, data?: any[], error?: string };
+            if (res && !res.error && res.data) {
+                const updatedClient = res.data.find((c: any) => c.id === selectedClientLedger.id);
+                if (updatedClient) {
+                    setSelectedClientLedger(updatedClient);
+                }
+            }
+        }
+        
+        router.refresh();
+    };
 
     const today = new Date();
 
@@ -1095,7 +1114,7 @@ export function PostventaMobileDashboard({
                                                                                 reservationName={selectedClientLedger.clientName}
                                                                                 type={doc.category} 
                                                                                 label="Subir"
-                                                                                onUploadComplete={() => { toast.success('Cargado'); window.location.reload(); }}
+                                                                                onUploadComplete={() => { toast.success('Cargado'); refreshData(); }}
                                                                             />
                                                                         )}
                                                                     </div>
