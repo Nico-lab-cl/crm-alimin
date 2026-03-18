@@ -201,13 +201,43 @@ export function UserDocumentsList({ reservations }: { reservations: Reservation[
                                     ? docs 
                                     : (typeof docs === 'string' ? JSON.parse(docs) : []);
 
-                                // Add unknown categories dynamically to 'OTRO'
                                 const processedDocsList = docsList.map((d: any) => {
                                     if (!categories.find(c => c.id === d.category)) {
                                         return { ...d, originalCategory: d.category, category: 'OTRO' };
                                     }
                                     return d;
                                 });
+
+                                // Append user's payment receipts as documents
+                                if (res.receipts && Array.isArray(res.receipts)) {
+                                    res.receipts.forEach((r: any) => {
+                                        if (!r.url) return; // Skip if no document
+                                        
+                                        let category = 'OTRO';
+                                        let baseName = 'Comprobante';
+                                        
+                                        if (r.type === 'PIE') {
+                                            category = 'PIE';
+                                            baseName = 'Comprobante de Pie';
+                                        } else if (r.type === 'INSTALLMENT') {
+                                            category = 'CUOTAS';
+                                            baseName = r.installment_id ? `Comprobante de Cuota #${r.installment_id}` : 'Comprobante de Cuota';
+                                        } else if (r.type === 'RESERVATION') {
+                                            category = 'OTRO';
+                                            baseName = 'Comprobante de Reserva';
+                                        }
+
+                                        const formattedDate = new Date(r.created_at).toLocaleDateString('es-CL');
+                                        
+                                        processedDocsList.push({
+                                            name: `${baseName} (${formattedDate}).pdf`, // Add generic extension to enable viewer
+                                            url: r.url,
+                                            category: category,
+                                            originalCategory: category,
+                                            uploadedAt: r.created_at
+                                        });
+                                    });
+                                }
 
                                 return categories.map(cat => {
                                     const catDocs = processedDocsList.filter((d: any) => d.category === cat.id);
