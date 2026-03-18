@@ -52,6 +52,8 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
         compraventa_firmada: false,
         is_promo: false,
         mora_frozen: false,
+        advisor: "",
+        observation: "",
     })
 
     const [hasDebt, setHasDebt] = useState(false)
@@ -85,6 +87,8 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
                 compraventa_firmada: !!existingReservation.promesa_signed_at,
                 is_promo: !!existingReservation.is_promo,
                 mora_frozen: !!existingReservation.mora_frozen,
+                advisor: existingReservation.advisor || "",
+                observation: existingReservation.observation || "",
             })
             if (existingReservation.legacy_debt_start_date) {
                 setHasDebt(true)
@@ -117,7 +121,8 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
                 marital_status: "", profession: "", nationality: "Chilena",
                 address_street: "", address_number: "", address_commune: "", address_region: "",
                 reservation_amount_clp: 500000, pie: 0, cuotas: 0, valor_cuota: 0, last_installment_amount: 0, price_total_clp: 0, legacy_current_installment: 1, isPiePaid: true,
-                reserva_firmada: false, compraventa_firmada: false, is_promo: false, mora_frozen: false
+                reserva_firmada: false, compraventa_firmada: false, is_promo: false, mora_frozen: false,
+                advisor: "", observation: ""
             })
             setHasDebt(false)
             setDebtStartDate(undefined)
@@ -148,7 +153,8 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
                     marital_status: "", profession: "", nationality: "Chilena",
                     address_street: "", address_number: "", address_commune: "", address_region: "",
                     reservation_amount_clp: 500000, pie: 0, cuotas: 0, valor_cuota: 0, last_installment_amount: 0, price_total_clp: 0, legacy_current_installment: 1, isPiePaid: true,
-                    reserva_firmada: false, compraventa_firmada: false, is_promo: false, mora_frozen: false
+                    reserva_firmada: false, compraventa_firmada: false, is_promo: false, mora_frozen: false,
+                    advisor: "", observation: ""
                 })
                 setHasDebt(false)
                 setDebtStartDate(undefined)
@@ -252,10 +258,35 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
                         <Label htmlFor="nationality">Nacionalidad</Label>
                         <Input
                             id="nationality"
-
                             value={formData.nationality}
                             onChange={(e) => setFormData({ ...formData, nationality: e.target.value })}
                         />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="advisor">Asesor</Label>
+                            <select
+                                id="advisor"
+                                value={formData.advisor}
+                                onChange={(e) => setFormData({ ...formData, advisor: e.target.value })}
+                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                            >
+                                <option value="">Seleccionar Asesor</option>
+                                <option value="Marcela">Marcela</option>
+                                <option value="Orlando">Orlando</option>
+                                <option value="Barbara">Barbara</option>
+                            </select>
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="observation">Observación</Label>
+                            <Input
+                                id="observation"
+                                value={formData.observation}
+                                onChange={(e) => setFormData({ ...formData, observation: e.target.value })}
+                                placeholder="Ej: Cliente VIP, requiere seguimiento"
+                            />
+                        </div>
                     </div>
 
                     <div className="grid grid-cols-3 gap-4">

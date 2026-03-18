@@ -98,6 +98,10 @@ export async function getFullPostventaData({
                 address_region: true,
                 marital_status: true,
                 profession: true,
+                // @ts-ignore
+                advisor: true,
+                // @ts-ignore
+                observation: true,
                 nationality: true,
                 legacy_installment_ranges: true,
                 legacy_current_installment: true,

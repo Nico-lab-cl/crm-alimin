@@ -481,6 +481,8 @@ export async function assignLegacyLotOwner(data: {
     compraventa_firmada?: boolean;
     is_promo?: boolean;
     mora_frozen?: boolean;
+    advisor?: string;
+    observation?: string;
     reservationId?: string;
 }) {
     const session = await auth()
@@ -493,6 +495,7 @@ export async function assignLegacyLotOwner(data: {
         reservation_amount_clp, pie, cuotas, valor_cuota, last_installment_amount,
         price_total_clp, legacy_current_installment, legacy_debt_start_date, legacy_installment_start_date, legacy_installment_ranges, isPiePaid,
         reserva_firmada, compraventa_firmada, is_promo, mora_frozen,
+        advisor, observation,
         reservationId
     } = data
 
@@ -579,6 +582,10 @@ export async function assignLegacyLotOwner(data: {
             is_promo: is_promo || false,
             // @ts-ignore - Prisma Client cache issue
             mora_frozen: mora_frozen || false,
+            // @ts-ignore
+            advisor: advisor || (existingReservation?.advisor || null),
+            // @ts-ignore
+            observation: observation || (existingReservation?.observation || null),
             is_legacy: existingReservation ? existingReservation.is_legacy : true,
             workflow_activated: existingReservation ? existingReservation.workflow_activated : false,
             legacy_current_installment: legacy_current_installment || (existingReservation?.legacy_current_installment || 1),
