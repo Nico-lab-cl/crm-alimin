@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileText, Download, CheckCircle, Clock, Folder, Briefcase, Eye, FileSignature, Receipt, CreditCard, X } from "lucide-react";
+import { FileText, Download, CheckCircle, Clock, Folder, Briefcase, Eye, FileSignature, Receipt, CreditCard, X, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { UniversalDocumentViewer } from "@/components/shared/UniversalDocumentViewer";
 
@@ -215,17 +215,27 @@ export function UserDocumentsList({ reservations }: { reservations: Reservation[
                                 const docs = (res as any).manual_documents;
                                 const categories = [
                                     { id: 'GASTOS_OPERACIONALES', label: 'Gastos Operacionales', icon: FileSignature, color: 'text-amber-500' },
-                                    { id: 'COMPROBANTE_PIE', label: 'Pagos del Pie', icon: CheckCircle, color: 'text-green-500' },
-                                    { id: 'COMPROBANTE_CUOTA', label: 'Recibos de Cuotas', icon: Receipt, color: 'text-blue-500' }
+                                    { id: 'PIE', label: 'Pagos del Pie', icon: CheckCircle, color: 'text-green-500' },
+                                    { id: 'CUOTAS', label: 'Recibos de Cuotas', icon: Receipt, color: 'text-blue-500' },
+                                    { id: 'CEDULA', label: 'Cédula de Identidad', icon: Briefcase, color: 'text-purple-500' },
+                                    { id: 'COMPROBANTE_DOMICILIO', label: 'Comprobante Domicilio', icon: MapPin, color: 'text-teal-500' },
+                                    { id: 'OTRO', label: 'Otros Documentos', icon: Folder, color: 'text-gray-400' }
                                 ];
 
+                                const docsList = Array.isArray(docs) 
+                                    ? docs 
+                                    : (typeof docs === 'string' ? JSON.parse(docs) : []);
+
+                                // Add unknown categories dynamically to 'OTRO'
+                                const processedDocsList = docsList.map((d: any) => {
+                                    if (!categories.find(c => c.id === d.category)) {
+                                        return { ...d, originalCategory: d.category, category: 'OTRO' };
+                                    }
+                                    return d;
+                                });
+
                                 return categories.map(cat => {
-                                    const rawDocs = res.manual_documents;
-                                    const docsList = Array.isArray(rawDocs) 
-                                        ? rawDocs 
-                                        : (typeof rawDocs === 'string' ? JSON.parse(rawDocs) : []);
-                                    
-                                    const catDocs = docsList.filter((d: any) => d.category === cat.id);
+                                    const catDocs = processedDocsList.filter((d: any) => d.category === cat.id);
                                     if (catDocs.length === 0) return null;
 
                                     return (
@@ -236,10 +246,11 @@ export function UserDocumentsList({ reservations }: { reservations: Reservation[
                                             </h3>
                                             <div className="grid grid-cols-1 gap-3">
                                                 {catDocs.map((doc: any, i: number) => {
-                                                    const isPdf = doc.url?.toLowerCase().includes('.pdf') || doc.url?.startsWith('data:application/pdf');
-                                                    const isExcel = doc.url?.toLowerCase().includes('.xls') || doc.url?.toLowerCase().includes('.xlsx') || doc.url?.includes('spreadsheetml');
-                                                    const isWord = doc.url?.toLowerCase().includes('.doc') || doc.url?.toLowerCase().includes('.docx') || doc.url?.includes('wordprocessingml');
-                                                    const isImage = doc.url?.includes('image/') || doc.url?.toLowerCase().match(/\.(jpg|jpeg|png|gif|webp)$/);
+                                                    const urlStr = doc.url || '';
+                                                    const isPdf = urlStr.toLowerCase().includes('pdf');
+                                                    const isExcel = urlStr.toLowerCase().includes('.xls') || urlStr.toLowerCase().includes('spreadsheetml');
+                                                    const isWord = urlStr.toLowerCase().includes('.doc') || urlStr.toLowerCase().includes('wordprocessingml');
+                                                    const isImage = urlStr.includes('image/') || urlStr.toLowerCase().match(/\.(jpg|jpeg|png|gif|webp)$/) || urlStr.toLowerCase().includes('ext=.jpg');
 
                                                     const getLabel = () => {
                                                         if (isPdf) return "Bajar PDF";
@@ -248,6 +259,10 @@ export function UserDocumentsList({ reservations }: { reservations: Reservation[
                                                         if (isImage) return "Bajar Imagen";
                                                         return "Descargar";
                                                     };
+
+                                                    const displayName = doc.originalCategory && doc.originalCategory !== 'OTRO' 
+                                                        ? `${doc.originalCategory}: ${doc.name}` 
+                                                        : doc.name;
 
                                                     return (
                                                         <div key={i} className="group items-center flex justify-between px-5 py-4 bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/20 rounded-2xl transition-all">
@@ -258,7 +273,7 @@ export function UserDocumentsList({ reservations }: { reservations: Reservation[
                                                                      isImage ? <FileText className="h-4 w-4 text-amber-500" /> :
                                                                      <FileText className="h-4 w-4 text-gray-400" />}
                                                                 </div>
-                                                                <span className="text-[11px] font-bold text-gray-400 group-hover:text-white transition-colors">{doc.name}</span>
+                                                                <span className="text-[11px] font-bold text-gray-400 group-hover:text-white transition-colors truncate max-w-[200px]">{displayName}</span>
                                                             </div>
                                                             <div className="flex gap-4">
                                                                     <button 

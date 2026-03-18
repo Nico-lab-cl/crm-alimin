@@ -180,6 +180,47 @@ export async function getFullPostventaData({
                 isUpcoming = true;
             }
 
+            // -------------------------------------------------------------
+            // OPTIMIZATION: Strip Base64 and return Dynamic API URLs
+            // -------------------------------------------------------------
+            
+            // 1. Contrato de Reserva
+            let uploadedContractUrl = res.uploaded_contract_url ? 
+                `/api/contracts/${res.id}/file?type=RESERVA&name=Contrato_Reserva.pdf` : null;
+
+            // 2. Promesa
+            let legacyContractsMeta = null;
+            if (res.legacy_uploaded_contracts) {
+                try {
+                    const parsedLegacy = typeof res.legacy_uploaded_contracts === 'string' 
+                        ? JSON.parse(res.legacy_uploaded_contracts) 
+                        : res.legacy_uploaded_contracts;
+                    if (Array.isArray(parsedLegacy) && parsedLegacy.length > 0) {
+                        legacyContractsMeta = JSON.stringify([{
+                            name: parsedLegacy[0].name || 'Promesa de Compraventa',
+                            url: `/api/contracts/${res.id}/file?type=PROMESA&name=${encodeURIComponent(parsedLegacy[0].name || 'Promesa_Compraventa.pdf')}`
+                        }]);
+                    }
+                } catch (e) {}
+            }
+
+            // 3. Manual Documents
+            let manualDocumentsMeta: any = [];
+            if ((res as any).manual_documents) {
+                try {
+                    const parsedManual = Array.isArray((res as any).manual_documents) 
+                        ? (res as any).manual_documents 
+                        : JSON.parse((res as any).manual_documents as string);
+                    
+                    manualDocumentsMeta = parsedManual.map((d: any) => ({
+                        name: d.name,
+                        category: d.category,
+                        uploadedAt: d.uploadedAt,
+                        url: `/api/contracts/${res.id}/file?type=${encodeURIComponent(d.category)}&name=${encodeURIComponent(d.name)}`
+                    }));
+                } catch (e) {}
+            }
+
             return {
                 id: res.id,
                 name: buyer?.name || res.name || 'Sin nombre',
@@ -200,13 +241,13 @@ export async function getFullPostventaData({
                 reservaAmount: lot.reservation_amount_clp || 0,
                 pieAmount,
                 cuotasAmount,
-                uploaded_contract_url: res.uploaded_contract_url,
+                uploaded_contract_url: uploadedContractUrl,
                 isGracePeriod,
                 isPieDebt: res.pie_status !== 'PAID',
                 valor_cuota: lot.valor_cuota || 0,
                 monto_cuota: lot.valor_cuota || 0,
                 isMoraFrozen: Boolean(res.mora_frozen),
-                manual_documents: res.manual_documents,
+                manual_documents: manualDocumentsMeta,
                 signed_at: res.signed_at,
                 is_legacy: Boolean(res.is_legacy),
                 lateDays,
@@ -232,7 +273,7 @@ export async function getFullPostventaData({
                 legacy_installment_ranges: res.legacy_installment_ranges,
                 legacy_installment_start_date: res.legacy_installment_start_date,
                 legacy_debt_start_date: res.legacy_debt_start_date,
-                legacy_uploaded_contracts: res.legacy_uploaded_contracts,
+                legacy_uploaded_contracts: legacyContractsMeta,
                 promesa_signed_at: res.promesa_signed_at,
                 is_promo: res.is_promo,
                 notes: res.notes,
