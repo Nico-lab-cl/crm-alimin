@@ -150,14 +150,14 @@ export function PostventaMobileDashboard({
         }
     }, [selectedClientLedger?.id]);
 
-    const handleDeleteDocument = async (reservationId: string, type: string, url?: string) => {
+    const handleDeleteDocument = async (reservationId: string, type: string, url?: string, name?: string) => {
         if (!confirm('¿Estás seguro de que deseas eliminar este documento?')) return;
         
         try {
             const res = await fetch(`/api/contracts/${reservationId}/upload`, {
                 method: "DELETE",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ type, url }),
+                body: JSON.stringify({ type, url, name }),
             });
 
             if (!res.ok) throw new Error("Error al eliminar");
@@ -1079,7 +1079,7 @@ export function PostventaMobileDashboard({
                                                                                     <Eye className="w-4 h-4" />
                                                                                 </button>
                                                                                 <button 
-                                                                                    onClick={() => handleDeleteDocument(selectedClientLedger.id, doc.category!, doc.url!)}
+                                                                                    onClick={() => handleDeleteDocument(selectedClientLedger.id, doc.category!, doc.url!, doc.name || doc.label)}
                                                                                     className="p-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg transition-all"
                                                                                     title="Eliminar"
                                                                                 >

@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
+import { memoryCache } from "@/lib/cache";
 
 export async function POST(
     request: Request,
@@ -63,6 +64,9 @@ export async function POST(
                 data: { legacy_uploaded_contracts: JSON.stringify(existingDocs) },
             });
 
+            // Invalidate postventa cache after upload
+            memoryCache.deleteByPrefix('postventa_full_');
+
             return NextResponse.json({ success: true, reservation: updatedReservation });
         } else if (type?.toUpperCase() === "RESERVA" || type?.toUpperCase() === "PROMESA" || !type) {
             // Reserva/Promesa main field
@@ -72,6 +76,10 @@ export async function POST(
                     uploaded_contract_url: fileData,
                 },
             });
+
+            // Invalidate postventa cache after upload
+            memoryCache.deleteByPrefix('postventa_full_');
+
             return NextResponse.json({ success: true, reservation: updatedReservation });
         } else {
             // manual_documents logic
@@ -97,6 +105,9 @@ export async function POST(
                 data: { manual_documents: existingDocs },
             });
 
+            // Invalidate postventa cache after upload
+            memoryCache.deleteByPrefix('postventa_full_');
+
             return NextResponse.json({ success: true, reservation: updatedReservation });
         }
 
@@ -119,7 +130,7 @@ export async function DELETE(
         }
 
         const { id } = await params;
-        const { type, url } = await request.json();
+        const { type, url, name } = await request.json();
 
         const reservation = await prisma.reservation.findUnique({ where: { id } });
         if (!reservation) {
@@ -139,7 +150,7 @@ export async function DELETE(
             }
             updateData.legacy_uploaded_contracts = JSON.stringify(docs.filter(d => d.url !== url));
         } else {
-            // manual_documents
+            // manual_documents - match by name+category since URLs have been replaced with API URLs
             let docs: any[] = [];
             if (reservation.manual_documents) {
                 try {
@@ -148,14 +159,22 @@ export async function DELETE(
                         : JSON.parse(reservation.manual_documents as string);
                 } catch (e) {}
             }
-            // Filter by URL if provided, otherwise by type (for single-item categories like GASTOS_OPERACIONALES)
-            updateData.manual_documents = docs.filter(d => url ? d.url !== url : d.category !== type);
+            // Match by name AND category for precise deletion
+            if (name) {
+                updateData.manual_documents = docs.filter(d => !(d.category === type && d.name === name));
+            } else {
+                // Fallback: filter by category (removes all docs of that category)
+                updateData.manual_documents = docs.filter(d => d.category !== type);
+            }
         }
 
         await prisma.reservation.update({
             where: { id },
             data: updateData,
         });
+
+        // Invalidate postventa cache so data is fresh on reload
+        memoryCache.deleteByPrefix('postventa_full_');
 
         return NextResponse.json({ success: true });
     } catch (error) {
