@@ -9,6 +9,10 @@ import { revalidatePath } from "next/cache"
 const POSTVENTA_CACHE_KEY = 'postventa_data';
 const CACHE_TTL = 300; // 5 minutes
 
+export async function invalidatePostventaCache() {
+    memoryCache.deleteByPrefix('postventa_full_');
+}
+
 export async function getFullPostventaData({
     stage = 'ALL'
 }: {

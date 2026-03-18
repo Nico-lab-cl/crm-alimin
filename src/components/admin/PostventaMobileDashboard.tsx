@@ -162,6 +162,9 @@ export function PostventaMobileDashboard({
 
             if (!res.ok) throw new Error("Error al eliminar");
             
+            const { invalidatePostventaCache } = await import("@/actions/postventa");
+            await invalidatePostventaCache();
+
             toast.success("Documento eliminado correctamente");
             window.location.reload();
         } catch (error) {

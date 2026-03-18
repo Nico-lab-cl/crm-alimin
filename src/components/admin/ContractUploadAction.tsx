@@ -85,6 +85,9 @@ export function ContractUploadAction({
                     throw new Error("Error al subir el documento");
                 }
 
+                const { invalidatePostventaCache } = await import("@/actions/postventa");
+                await invalidatePostventaCache();
+
                 setSuccess(true);
                 setTimeout(() => {
                     setOpen(false);
