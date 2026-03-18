@@ -48,8 +48,6 @@ export function UserDocumentsList({ reservations }: { reservations: Reservation[
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 w-full max-w-7xl mx-auto">
             {reservations.map((res) => {
                 const isOffline = res.is_legacy || res.signature_ip === 'Firma Offline';
-                const hasReserva = !!res.signed_at && !isOffline;
-                const hasCompraventa = !!res.uploaded_contract_url;
 
                 return (
                     <Card key={res.id} className="border-white/10 bg-black/40 backdrop-blur-2xl rounded-[2.5rem] overflow-hidden transition-all hover:bg-black/60 group">
@@ -70,145 +68,144 @@ export function UserDocumentsList({ reservations }: { reservations: Reservation[
                         </CardHeader>
                         
                         <CardContent className="p-8 space-y-10">
-                            {/* ── Contrato de Reserva (Digital) ── */}
-                            {!isOffline && (
-                                <div className="space-y-4">
-                                    <div className="flex justify-between items-center">
-                                        <h3 className="text-white font-black text-xs uppercase tracking-widest">Contrato de Reserva</h3>
-                                        {hasReserva ? (
-                                            <div className="flex items-center gap-2 px-3 py-1 bg-green-500/10 border border-green-500/20 rounded-full">
-                                                <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-                                                <span className="text-green-500 font-black text-[9px] uppercase">Firmado</span>
-                                            </div>
-                                        ) : (
-                                            <div className="flex items-center gap-2 px-3 py-1 bg-amber-500/10 border border-amber-500/20 rounded-full">
-                                                <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                                                <span className="text-amber-500 font-black text-[9px] uppercase">Pendiente</span>
-                                            </div>
-                                        )}
-                                    </div>
-                                    <p className="text-[11px] text-gray-500 font-medium leading-relaxed">Documento inicial que garantiza la reserva de su parcela en el proyecto.</p>
-                                    {hasReserva && (
-                                        <div className="flex flex-wrap gap-2">
-                                            <button
-                                                onClick={() => setViewerConfig({
-                                                    isOpen: true,
-                                                    url: `/api/contracts/${res.id}/pdf`,
-                                                    name: "Contrato de Reserva",
-                                                    category: "Documento Legal"
-                                                })}
-                                                className="inline-flex items-center gap-2 px-6 py-3 bg-[#36595F]/10 hover:bg-[#36595F]/20 border border-[#36595F]/30 rounded-xl text-[10px] font-black uppercase tracking-widest text-white transition-all shadow-lg shadow-[#36595F]/5"
-                                            >
-                                                <Eye className="h-3 w-3" />
-                                                Visualizar
-                                            </button>
-                                            <a
-                                                href={`/api/contracts/${res.id}/pdf?download=true`}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="inline-flex items-center gap-2 px-6 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest text-[#8eb2b8] transition-all"
-                                            >
-                                                <Download className="h-3 w-3" />
-                                                Bajar PDF
-                                            </a>
-                                        </div>
-                                    )}
-                                </div>
-                            )}
+                            {/* ── CONTRATO DE RESERVA ── */}
+                            {(() => {
+                                // Digital signature contract OR manual upload via uploaded_contract_url
+                                const hasDigitalReserva = !!res.signed_at && !isOffline;
+                                const hasUploadedReserva = !!res.uploaded_contract_url;
+                                const hasLegacyReserva = isOffline && !!res.legacy_uploaded_contracts;
+                                const hasReserva = hasDigitalReserva || hasUploadedReserva || hasLegacyReserva;
 
-                            {/* ── Contrato de Reserva (Legacy/Manual) ── */}
-                            {isOffline && res.legacy_uploaded_contracts && (() => {
-                                const legacyDocs = typeof res.legacy_uploaded_contracts === 'string' 
-                                    ? JSON.parse(res.legacy_uploaded_contracts) 
-                                    : res.legacy_uploaded_contracts;
-                                
-                                if (!Array.isArray(legacyDocs) || legacyDocs.length === 0) return null;
+                                let reservaUrl = '';
+                                let reservaName = 'Contrato de Reserva';
+
+                                if (hasUploadedReserva) {
+                                    reservaUrl = res.uploaded_contract_url!;
+                                    reservaName = 'Contrato de Reserva';
+                                } else if (hasDigitalReserva) {
+                                    reservaUrl = `/api/contracts/${res.id}/pdf`;
+                                    reservaName = 'Contrato de Reserva (Digital)';
+                                } else if (hasLegacyReserva) {
+                                    try {
+                                        const legacyDocs = typeof res.legacy_uploaded_contracts === 'string' 
+                                            ? JSON.parse(res.legacy_uploaded_contracts) 
+                                            : res.legacy_uploaded_contracts;
+                                        if (Array.isArray(legacyDocs) && legacyDocs.length > 0) {
+                                            reservaUrl = legacyDocs[0].url;
+                                            reservaName = legacyDocs[0].name || 'Contrato de Reserva (Físico)';
+                                        }
+                                    } catch (e) {}
+                                }
 
                                 return (
                                     <div className="space-y-4">
                                         <div className="flex justify-between items-center">
-                                            <h3 className="text-white font-black text-xs uppercase tracking-widest">Contrato de Reserva (Físico)</h3>
-                                            <div className="flex items-center gap-2 px-3 py-1 bg-indigo-500/10 border border-indigo-500/20 rounded-full">
-                                                <div className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
-                                                <span className="text-indigo-500 font-black text-[9px] uppercase">Archivo Offline</span>
-                                            </div>
-                                        </div>
-                                        <p className="text-[11px] text-gray-500 font-medium leading-relaxed">Copia digital de su contrato de reserva firmado físicamente.</p>
-                                        <div className="grid grid-cols-1 gap-3">
-                                            {legacyDocs.map((doc: any, i: number) => (
-                                                <div key={i} className="group items-center flex justify-between px-5 py-4 bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/20 rounded-2xl transition-all">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="p-2 bg-indigo-500/10 rounded-lg group-hover:bg-indigo-500/20 transition-colors">
-                                                            <FileSignature className="h-4 w-4 text-indigo-400" />
-                                                        </div>
-                                                        <span className="text-[11px] font-bold text-gray-400 group-hover:text-white transition-colors">{doc.name}</span>
-                                                    </div>
-                                                    <div className="flex gap-4">
-                                                        <button 
-                                                            onClick={() => setViewerConfig({
-                                                                isOpen: true,
-                                                                url: doc.url,
-                                                                name: doc.name,
-                                                                category: "Contrato Reserva"
-                                                            })}
-                                                            className="text-gray-600 hover:text-indigo-400 transition-colors" 
-                                                            title="Visualizar"
-                                                        >
-                                                            <Eye className="h-4 w-4" />
-                                                        </button>
-                                                        <a href={doc.url} download={doc.name} className="text-gray-600 hover:text-indigo-400 transition-colors" title="Descargar">
-                                                            <Download className="h-4 w-4" />
-                                                        </a>
-                                                    </div>
+                                            <h3 className="text-white font-black text-xs uppercase tracking-widest">Contrato de Reserva</h3>
+                                            {hasReserva ? (
+                                                <div className="flex items-center gap-2 px-3 py-1 bg-green-500/10 border border-green-500/20 rounded-full">
+                                                    <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                                                    <span className="text-green-500 font-black text-[9px] uppercase">Disponible</span>
                                                 </div>
-                                            ))}
+                                            ) : (
+                                                <div className="flex items-center gap-2 px-3 py-1 bg-white/5 border border-white/10 rounded-full">
+                                                    <div className="w-1.5 h-1.5 rounded-full bg-gray-600" />
+                                                    <span className="text-gray-500 font-black text-[9px] uppercase">Pendiente</span>
+                                                </div>
+                                            )}
                                         </div>
+                                        <p className="text-[11px] text-gray-500 font-medium leading-relaxed">Documento inicial que garantiza la reserva de su parcela en el proyecto.</p>
+                                        {hasReserva && reservaUrl && (
+                                            <div className="flex flex-wrap gap-2">
+                                                <button
+                                                    onClick={() => setViewerConfig({
+                                                        isOpen: true,
+                                                        url: reservaUrl,
+                                                        name: reservaName,
+                                                        category: "Documento Legal"
+                                                    })}
+                                                    className="inline-flex items-center gap-2 px-6 py-3 bg-[#36595F]/10 hover:bg-[#36595F]/20 border border-[#36595F]/30 rounded-xl text-[10px] font-black uppercase tracking-widest text-white transition-all shadow-lg shadow-[#36595F]/5"
+                                                >
+                                                    <Eye className="h-3 w-3" />
+                                                    Visualizar
+                                                </button>
+                                                <a
+                                                    href={reservaUrl}
+                                                    download={reservaName}
+                                                    className="inline-flex items-center gap-2 px-6 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest text-[#8eb2b8] transition-all"
+                                                >
+                                                    <Download className="h-3 w-3" />
+                                                    Bajar PDF
+                                                </a>
+                                            </div>
+                                        )}
                                     </div>
                                 );
                             })()}
 
-                            {/* ── Promesa de Compra Venta ── */}
-                            <div className="space-y-4">
-                                <div className="flex justify-between items-center">
-                                    <h3 className="text-white font-black text-xs uppercase tracking-widest">Promesa de Compraventa</h3>
-                                    {hasCompraventa ? (
-                                        <div className="flex items-center gap-2 px-3 py-1 bg-[#36595F]/20 border border-[#36595F]/30 rounded-full">
-                                            <div className="w-1.5 h-1.5 rounded-full bg-[#8eb2b8] animate-pulse" />
-                                            <span className="text-[#8eb2b8] font-black text-[9px] uppercase">Disponible</span>
+                            {/* ── PROMESA DE COMPRAVENTA ── */}
+                            {(() => {
+                                // Promesa comes from legacy_uploaded_contracts (non-offline) or promesa_signed_at
+                                let hasPromesa = false;
+                                let promesaUrl = '';
+                                let promesaName = 'Promesa de Compraventa';
+
+                                if (!isOffline && res.legacy_uploaded_contracts) {
+                                    try {
+                                        const legacyDocs = typeof res.legacy_uploaded_contracts === 'string' 
+                                            ? JSON.parse(res.legacy_uploaded_contracts) 
+                                            : res.legacy_uploaded_contracts;
+                                        if (Array.isArray(legacyDocs) && legacyDocs.length > 0) {
+                                            hasPromesa = true;
+                                            promesaUrl = legacyDocs[0].url;
+                                            promesaName = legacyDocs[0].name || 'Promesa de Compraventa';
+                                        }
+                                    } catch (e) {}
+                                }
+
+                                return (
+                                    <div className="space-y-4">
+                                        <div className="flex justify-between items-center">
+                                            <h3 className="text-white font-black text-xs uppercase tracking-widest">Promesa de Compraventa</h3>
+                                            {hasPromesa ? (
+                                                <div className="flex items-center gap-2 px-3 py-1 bg-[#36595F]/20 border border-[#36595F]/30 rounded-full">
+                                                    <div className="w-1.5 h-1.5 rounded-full bg-[#8eb2b8] animate-pulse" />
+                                                    <span className="text-[#8eb2b8] font-black text-[9px] uppercase">Disponible</span>
+                                                </div>
+                                            ) : (
+                                                <div className="flex items-center gap-2 px-3 py-1 bg-white/5 border border-white/10 rounded-full">
+                                                    <div className="w-1.5 h-1.5 rounded-full bg-gray-600" />
+                                                    <span className="text-gray-500 font-black text-[9px] uppercase">En Preparación</span>
+                                                </div>
+                                            )}
                                         </div>
-                                    ) : (
-                                        <div className="flex items-center gap-2 px-3 py-1 bg-white/5 border border-white/10 rounded-full">
-                                            <div className="w-1.5 h-1.5 rounded-full bg-gray-600" />
-                                            <span className="text-gray-500 font-black text-[9px] uppercase">En Preparación</span>
-                                        </div>
-                                    )}
-                                </div>
-                                <p className="text-[11px] text-gray-500 font-medium leading-relaxed">Documento legal certificado por abogados que asegura la promesa oficial de compra.</p>
-                                {hasCompraventa && (
-                                    <div className="flex flex-wrap gap-2">
-                                        <button
-                                            onClick={() => setViewerConfig({
-                                                isOpen: true,
-                                                url: res.uploaded_contract_url!,
-                                                name: "Promesa de Compraventa",
-                                                category: "Documento Legal"
-                                            })}
-                                            className="inline-flex items-center gap-2 px-6 py-3 bg-[#36595F]/10 hover:bg-[#36595F]/20 border border-[#36595F]/30 rounded-xl text-[10px] font-black uppercase tracking-widest text-white transition-all shadow-lg shadow-[#36595F]/5"
-                                        >
-                                            <Eye className="h-3 w-3" />
-                                            Visualizar
-                                        </button>
-                                        <a
-                                            href={res.uploaded_contract_url!}
-                                            download
-                                            className="inline-flex items-center gap-2 px-6 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest text-[#8eb2b8] transition-all"
-                                        >
-                                            <Download className="h-3 w-3" />
-                                            Bajar PDF
-                                        </a>
+                                        <p className="text-[11px] text-gray-500 font-medium leading-relaxed">Documento legal certificado por abogados que asegura la promesa oficial de compra.</p>
+                                        {hasPromesa && promesaUrl && (
+                                            <div className="flex flex-wrap gap-2">
+                                                <button
+                                                    onClick={() => setViewerConfig({
+                                                        isOpen: true,
+                                                        url: promesaUrl,
+                                                        name: promesaName,
+                                                        category: "Documento Legal"
+                                                    })}
+                                                    className="inline-flex items-center gap-2 px-6 py-3 bg-[#36595F]/10 hover:bg-[#36595F]/20 border border-[#36595F]/30 rounded-xl text-[10px] font-black uppercase tracking-widest text-white transition-all shadow-lg shadow-[#36595F]/5"
+                                                >
+                                                    <Eye className="h-3 w-3" />
+                                                    Visualizar
+                                                </button>
+                                                <a
+                                                    href={promesaUrl}
+                                                    download={promesaName}
+                                                    className="inline-flex items-center gap-2 px-6 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest text-[#8eb2b8] transition-all"
+                                                >
+                                                    <Download className="h-3 w-3" />
+                                                    Bajar PDF
+                                                </a>
+                                            </div>
+                                        )}
                                     </div>
-                                )}
-                            </div>
+                                );
+                            })()}
 
                             {/* ── Documentos Cargados Manualmente ── */}
                             {(res as any).manual_documents && (() => {
