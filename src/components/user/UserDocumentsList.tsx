@@ -70,32 +70,10 @@ export function UserDocumentsList({ reservations }: { reservations: Reservation[
                         <CardContent className="p-8 space-y-10">
                             {/* ── CONTRATO DE RESERVA ── */}
                             {(() => {
-                                // Digital signature contract OR manual upload via uploaded_contract_url
-                                const hasDigitalReserva = !!res.signed_at && !isOffline;
-                                const hasUploadedReserva = !!res.uploaded_contract_url;
-                                const hasLegacyReserva = isOffline && !!res.legacy_uploaded_contracts;
-                                const hasReserva = hasDigitalReserva || hasUploadedReserva || hasLegacyReserva;
-
-                                let reservaUrl = '';
-                                let reservaName = 'Contrato de Reserva';
-
-                                if (hasUploadedReserva) {
-                                    reservaUrl = res.uploaded_contract_url!;
-                                    reservaName = 'Contrato de Reserva';
-                                } else if (hasDigitalReserva) {
-                                    reservaUrl = `/api/contracts/${res.id}/pdf`;
-                                    reservaName = 'Contrato de Reserva (Digital)';
-                                } else if (hasLegacyReserva) {
-                                    try {
-                                        const legacyDocs = typeof res.legacy_uploaded_contracts === 'string' 
-                                            ? JSON.parse(res.legacy_uploaded_contracts) 
-                                            : res.legacy_uploaded_contracts;
-                                        if (Array.isArray(legacyDocs) && legacyDocs.length > 0) {
-                                            reservaUrl = legacyDocs[0].url;
-                                            reservaName = legacyDocs[0].name || 'Contrato de Reserva (Físico)';
-                                        }
-                                    } catch (e) {}
-                                }
+                                // SYNC: Postventa uses ONLY uploaded_contract_url for Contrato de Reserva
+                                const hasReserva = !!res.uploaded_contract_url;
+                                const reservaUrl = res.uploaded_contract_url || '';
+                                const reservaName = 'Contrato de Reserva';
 
                                 return (
                                     <div className="space-y-4">
@@ -144,12 +122,12 @@ export function UserDocumentsList({ reservations }: { reservations: Reservation[
 
                             {/* ── PROMESA DE COMPRAVENTA ── */}
                             {(() => {
-                                // Promesa comes from legacy_uploaded_contracts (non-offline) or promesa_signed_at
+                                // SYNC: Postventa uses legacy_uploaded_contracts for Promesa, for ALL clients
                                 let hasPromesa = false;
                                 let promesaUrl = '';
                                 let promesaName = 'Promesa de Compraventa';
 
-                                if (!isOffline && res.legacy_uploaded_contracts) {
+                                if (res.legacy_uploaded_contracts) {
                                     try {
                                         const legacyDocs = typeof res.legacy_uploaded_contracts === 'string' 
                                             ? JSON.parse(res.legacy_uploaded_contracts) 
