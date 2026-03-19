@@ -934,11 +934,19 @@ export function PostventaMobileDashboard({
                                             </div>
                                         </div>
                                         <div className="flex flex-col items-end gap-3">
-                                            <div className="bg-black/40 backdrop-blur-md rounded-2xl p-5 border border-white/5 text-right min-w-[200px]">
-                                                <p className="text-[10px] text-[#3f6066] font-black uppercase tracking-[0.2em]">Total Invertido</p>
-                                                <p className="text-3xl font-black text-white leading-none mt-1.5 tabular-nums">
-                                                    {formatCurrency(selectedClientLedger.totalPaid)}
-                                                </p>
+                                            <div className="bg-black/40 backdrop-blur-md rounded-2xl p-5 border border-white/5 text-right min-w-[200px] flex flex-col gap-3">
+                                                <div>
+                                                    <p className="text-[10px] text-[#3f6066] font-black uppercase tracking-[0.2em]">Total Invertido</p>
+                                                    <p className="text-3xl font-black text-white leading-none mt-1.5 tabular-nums">
+                                                        {formatCurrency(selectedClientLedger.totalPaid)}
+                                                    </p>
+                                                </div>
+                                                <div className="pt-3 border-t border-white/5">
+                                                    <p className="text-[9px] text-[#3f6066] font-black uppercase tracking-[0.2em]">Valor Total Terreno</p>
+                                                    <p className="text-lg font-black text-[#8eb2b8] leading-none mt-1 tabular-nums">
+                                                        {formatCurrency(selectedClientLedger.totalToPay)}
+                                                    </p>
+                                                </div>
                                             </div>
                                             <Button 
                                                 variant="outline" 
