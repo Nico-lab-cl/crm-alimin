@@ -232,13 +232,17 @@ export async function getFullPostventaData({
                 } catch (e) {}
             }
 
+            const fetchedName = buyer?.name || res.name || 'Sin nombre';
+            const fetchedLastName = (res as any).last_name || '';
+            const fullNameConcat = fetchedLastName ? `${fetchedName} ${fetchedLastName}`.trim() : fetchedName;
+
             return {
                 id: res.id,
-                name: buyer?.name || res.name || 'Sin nombre',
+                name: fetchedName,
                 // @ts-ignore
-                last_name: (res as any).last_name || null,
-                clientName: buyer?.name || res.name || 'Sin nombre',
-                clientEmail: buyer?.email,
+                last_name: fetchedLastName || null,
+                clientName: fullNameConcat,
+                clientEmail: buyer?.email || res.email,
                 clientPhone: res.phone,
                 lotNumber: lot.number,
                 lotStage: lot.stage || 1,
