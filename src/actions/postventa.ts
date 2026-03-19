@@ -120,13 +120,22 @@ export async function getFullPostventaData({
             const pieAmount = res.receipts.reduce((acc, r) => r.scope === 'PIE' ? acc + r.amount_clp : acc, 0);
             const cuotasAmount = res.receipts.reduce((acc, r) => r.scope === 'INSTALLMENT' ? acc + r.amount_clp : acc, 0);
             
-            const netPieFallback = Math.max(0, (lot.pie || 0) - (lot.reservation_amount_clp || 0));
-            const effectivePieAmount = pieAmount || (res.pie_status === 'PAID' ? netPieFallback : 0);
+            // Historical pie receipts were imported as Gross Pie. Subtract reservation to get Net Pie.
+            let actualNetPie = 0;
+            if (pieAmount > 0) {
+                actualNetPie = Math.max(0, pieAmount - (lot.reservation_amount_clp || 0));
+            } else if (res.pie_status === 'PAID') {
+                actualNetPie = lot.pie || 0;
+            }
+
             const effectiveCuotasAmount = cuotasAmount || ((res.installments_paid || 0) * (lot.valor_cuota || 0));
             
-            const totalPaid = (lot.reservation_amount_clp || 0) + effectivePieAmount + effectiveCuotasAmount;
+            // Total Invertido is entirely the money collected by the developer post-reservation.
+            const totalPaid = actualNetPie + effectiveCuotasAmount;
+            
             const totalToPay = lot.price_total_clp || 0;
-            const pendingBalance = Math.max(0, totalToPay - totalPaid);
+            // The reservation is still conceptually applied to the property's gross list price
+            const pendingBalance = Math.max(0, totalToPay - totalPaid - (lot.reservation_amount_clp || 0));
 
             const totalCuotas = lot.cuotas || 0;
             const paidCuotas = res.installments_paid || 0;
