@@ -671,6 +671,36 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
                         </div>
                     </div>
 
+                    <div className="bg-amber-50/50 p-4 rounded-lg border border-amber-100 space-y-4">
+                        <h4 className="font-semibold text-amber-900 border-b border-amber-200 pb-2">Seguimiento Interno</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="advisor">Asesor a cargo</Label>
+                                <select
+                                    id="advisor"
+                                    value={formData.advisor}
+                                    onChange={(e) => setFormData({ ...formData, advisor: e.target.value })}
+                                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                >
+                                    <option value="">Seleccione un asesor...</option>
+                                    <option value="Marcela">Marcela</option>
+                                    <option value="Orlando">Orlando</option>
+                                    <option value="Barbara">Barbara</option>
+                                </select>
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="observation">Observación Interna</Label>
+                                <textarea
+                                    id="observation"
+                                    value={formData.observation}
+                                    onChange={(e) => setFormData({ ...formData, observation: e.target.value })}
+                                    placeholder="Nota interna sobre el cliente..."
+                                    className="flex min-h-[40px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                />
+                            </div>
+                        </div>
+                    </div>
+
                     <div className="bg-green-50/50 p-4 rounded-lg border border-green-100 space-y-4">
                         <h4 className="font-semibold text-green-900 border-b border-green-200 pb-2">Estado de Firmas (Offline)</h4>
                         <div className="flex flex-col gap-3">

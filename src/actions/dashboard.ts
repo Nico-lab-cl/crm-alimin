@@ -521,6 +521,14 @@ export async function assignLegacyLotOwner(data: {
                     mustChangePassword: true
                 }
             })
+        } else {
+            // Update the global User name if it was changed in the editor
+            if (user.name !== name) {
+                user = await prisma.user.update({
+                    where: { id: user.id },
+                    data: { name }
+                });
+            }
         }
 
         // Base assumption: if pie is set, it's paid. If they gave us current installment, we calculate how many they've paid.
@@ -566,7 +574,7 @@ export async function assignLegacyLotOwner(data: {
             buyer_id: user.id,
             name,
             // @ts-ignore
-            last_name: last_name || (existingReservation?.last_name || null),
+            last_name: last_name !== undefined ? (last_name || null) : (existingReservation?.last_name || null),
             email,
             phone,
             rut,
@@ -586,9 +594,9 @@ export async function assignLegacyLotOwner(data: {
             // @ts-ignore - Prisma Client cache issue
             mora_frozen: mora_frozen || false,
             // @ts-ignore
-            advisor: advisor || (existingReservation?.advisor || null),
+            advisor: advisor !== undefined ? (advisor || null) : (existingReservation?.advisor || null),
             // @ts-ignore
-            observation: observation || (existingReservation?.observation || null),
+            observation: observation !== undefined ? (observation || null) : (existingReservation?.observation || null),
             is_legacy: existingReservation ? existingReservation.is_legacy : true,
             workflow_activated: existingReservation ? existingReservation.workflow_activated : false,
             legacy_current_installment: legacy_current_installment || (existingReservation?.legacy_current_installment || 1),
