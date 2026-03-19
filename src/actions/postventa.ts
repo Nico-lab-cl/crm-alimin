@@ -123,9 +123,9 @@ export async function getFullPostventaData({
             const effectivePieAmount = pieAmount || (res.pie_status === 'PAID' ? (lot.pie || 0) : 0);
             const effectiveCuotasAmount = cuotasAmount || ((res.installments_paid || 0) * (lot.valor_cuota || 0));
             
-            const totalPaid = effectivePieAmount + effectiveCuotasAmount;
+            const totalPaid = effectivePieAmount + effectiveCuotasAmount + (lot.reservation_amount_clp || 0);
             const totalToPay = lot.price_total_clp || 0;
-            const pendingBalance = Math.max(0, totalToPay - totalPaid - (lot.reservation_amount_clp || 0));
+            const pendingBalance = Math.max(0, totalToPay - totalPaid);
 
             const totalCuotas = lot.cuotas || 0;
             const paidCuotas = res.installments_paid || 0;
