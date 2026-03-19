@@ -46,6 +46,7 @@ export async function getFullPostventaData({
                 // @ts-ignore
                 last_name: true,
                 phone: true,
+                email: true,
                 installments_paid: true,
                 pie_status: true,
                 uploaded_contract_url: true,
