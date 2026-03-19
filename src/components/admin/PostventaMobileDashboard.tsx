@@ -906,6 +906,7 @@ export function PostventaMobileDashboard({
             {/* Global Client Detail Modal */}
             <Dialog open={!!selectedClientLedger} onOpenChange={(open) => !open && setSelectedClientLedger(null)}>
                 <DialogContent className="max-w-5xl w-[95vw] h-[90vh] bg-[#0a1622] border-[#3f6066]/20 p-0 overflow-hidden rounded-[2.5rem] shadow-[0_0_80px_rgba(0,0,0,0.8)] flex flex-col">
+                    <DialogTitle className="sr-only">Detalles del Cliente</DialogTitle>
                     {selectedClientLedger && (
                         <>
                             <div className="flex-1 overflow-y-auto no-scrollbar">
@@ -989,6 +990,18 @@ export function PostventaMobileDashboard({
                                                 <Snowflake className="w-3 h-3 mr-2" />
                                                 {selectedClientLedger.isMoraFrozen ? "Activar Mora" : "Congelar Mora"}
                                             </Button>
+
+                                            {selectedClientLedger.observation && (
+                                                <div className="mt-2 w-full max-w-[250px] p-3 rounded-xl bg-[#3f6066]/10 border border-[#3f6066]/30 text-left backdrop-blur-md shadow-inner">
+                                                    <p className="text-[9px] font-black text-[#8eb2b8] uppercase tracking-widest mb-1 flex items-center gap-1">
+                                                        <FileText className="w-3 h-3" />
+                                                        Observación
+                                                    </p>
+                                                    <p className="text-xs text-white/90 leading-relaxed whitespace-pre-wrap">
+                                                        {selectedClientLedger.observation}
+                                                    </p>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
