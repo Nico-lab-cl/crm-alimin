@@ -120,10 +120,11 @@ export async function getFullPostventaData({
             const pieAmount = res.receipts.reduce((acc, r) => r.scope === 'PIE' ? acc + r.amount_clp : acc, 0);
             const cuotasAmount = res.receipts.reduce((acc, r) => r.scope === 'INSTALLMENT' ? acc + r.amount_clp : acc, 0);
             
-            const effectivePieAmount = pieAmount || (res.pie_status === 'PAID' ? (lot.pie || 0) : 0);
+            const netPieFallback = Math.max(0, (lot.pie || 0) - (lot.reservation_amount_clp || 0));
+            const effectivePieAmount = pieAmount || (res.pie_status === 'PAID' ? netPieFallback : 0);
             const effectiveCuotasAmount = cuotasAmount || ((res.installments_paid || 0) * (lot.valor_cuota || 0));
             
-            const totalPaid = effectivePieAmount + effectiveCuotasAmount + (lot.reservation_amount_clp || 0);
+            const totalPaid = (lot.reservation_amount_clp || 0) + effectivePieAmount + effectiveCuotasAmount;
             const totalToPay = lot.price_total_clp || 0;
             const pendingBalance = Math.max(0, totalToPay - totalPaid);
 
