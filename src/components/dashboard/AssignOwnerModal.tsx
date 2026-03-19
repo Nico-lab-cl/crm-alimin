@@ -29,6 +29,7 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
     const [loading, setLoading] = useState(false)
     const [formData, setFormData] = useState({
         name: "",
+        last_name: "",
         email: "",
         phone: "",
         rut: "",
@@ -62,12 +63,13 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
     const [installmentRanges, setInstallmentRanges] = useState<{ from: number | '', to: number | '', amount: number | '' }[]>([])
 
     useEffect(() => {
-        if (open && existingReservation && existingReservation.buyer) {
+        if (open && existingReservation && (existingReservation.buyer || existingReservation.name)) {
             setFormData({
-                name: existingReservation.name || existingReservation.buyer.name || "",
-                email: existingReservation.email || existingReservation.buyer.email || "",
-                phone: existingReservation.phone || existingReservation.buyer.phone || "",
-                rut: existingReservation.rut || existingReservation.buyer.rut || "",
+                name: existingReservation.name || existingReservation.buyer?.name || "",
+                last_name: existingReservation.last_name || "",
+                email: existingReservation.email || existingReservation.buyer?.email || "",
+                phone: existingReservation.phone || existingReservation.clientPhone || existingReservation.buyer?.phone || "",
+                rut: existingReservation.rut || existingReservation.buyer?.rut || "",
                 marital_status: existingReservation.marital_status || "SOLTERO/A",
                 profession: existingReservation.profession || "",
                 nationality: existingReservation.nationality || "Chilena",
@@ -117,7 +119,7 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
         } else if (open && !existingReservation) {
             // Reset if opening in create mode
             setFormData({
-                name: "", email: "", phone: "", rut: "",
+                name: "", last_name: "", email: "", phone: "", rut: "",
                 marital_status: "", profession: "", nationality: "Chilena",
                 address_street: "", address_number: "", address_commune: "", address_region: "",
                 reservation_amount_clp: 500000, pie: 0, cuotas: 0, valor_cuota: 0, last_installment_amount: 0, price_total_clp: 0, legacy_current_installment: 1, isPiePaid: true,
@@ -149,7 +151,7 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
             if (result.success) {
                 toast.success(result.message)
                 setFormData({
-                    name: "", email: "", phone: "", rut: "",
+                    name: "", last_name: "", email: "", phone: "", rut: "",
                     marital_status: "", profession: "", nationality: "Chilena",
                     address_street: "", address_number: "", address_commune: "", address_region: "",
                     reservation_amount_clp: 500000, pie: 0, cuotas: 0, valor_cuota: 0, last_installment_amount: 0, price_total_clp: 0, legacy_current_installment: 1, isPiePaid: true,
@@ -184,7 +186,7 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
                 <form onSubmit={handleSubmit} className="space-y-4 pt-2">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <Label htmlFor="name">Nombre Completo</Label>
+                            <Label htmlFor="name">Nombre(s)</Label>
                             <Input
                                 id="name"
                                 required
@@ -192,6 +194,18 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
                                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                             />
                         </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="last_name">Apellido(s)</Label>
+                            <Input
+                                id="last_name"
+                                value={formData.last_name}
+                                onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
+                                placeholder="Ej: Canales"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <Label htmlFor="rut">RUT</Label>
                             <Input

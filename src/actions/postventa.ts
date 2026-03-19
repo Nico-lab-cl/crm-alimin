@@ -43,6 +43,8 @@ export async function getFullPostventaData({
             select: {
                 id: true,
                 name: true,
+                // @ts-ignore
+                last_name: true,
                 phone: true,
                 installments_paid: true,
                 pie_status: true,
@@ -232,6 +234,8 @@ export async function getFullPostventaData({
             return {
                 id: res.id,
                 name: buyer?.name || res.name || 'Sin nombre',
+                // @ts-ignore
+                last_name: (res as any).last_name || null,
                 clientName: buyer?.name || res.name || 'Sin nombre',
                 clientEmail: buyer?.email,
                 clientPhone: res.phone,
@@ -285,7 +289,15 @@ export async function getFullPostventaData({
                 promesa_signed_at: res.promesa_signed_at,
                 is_promo: res.is_promo,
                 notes: res.notes,
-                pie_status: res.pie_status
+                pie_status: res.pie_status,
+                // Fields needed by AssignOwnerModal
+                phone: res.phone,
+                email: buyer?.email || res.email,
+                mora_frozen: Boolean(res.mora_frozen),
+                // @ts-ignore
+                advisor: res.advisor || null,
+                // @ts-ignore
+                observation: res.observation || null
             };
         });
 

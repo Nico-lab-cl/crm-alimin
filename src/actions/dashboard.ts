@@ -455,6 +455,7 @@ export async function createVerifiedUser(data: any) {
 export async function assignLegacyLotOwner(data: {
     lotId: number;
     name: string;
+    last_name?: string;
     email: string;
     phone: string;
     rut?: string;
@@ -490,7 +491,7 @@ export async function assignLegacyLotOwner(data: {
     if (session?.user?.role !== Role.ADMIN && !isPostventa) return { error: "No autorizado" }
 
     const {
-        lotId, name, email, phone, rut, marital_status, profession, nationality,
+        lotId, name, last_name, email, phone, rut, marital_status, profession, nationality,
         address_street, address_number, address_commune, address_region,
         reservation_amount_clp, pie, cuotas, valor_cuota, last_installment_amount,
         price_total_clp, legacy_current_installment, legacy_debt_start_date, legacy_installment_start_date, legacy_installment_ranges, isPiePaid,
@@ -564,6 +565,8 @@ export async function assignLegacyLotOwner(data: {
         const reservationData = {
             buyer_id: user.id,
             name,
+            // @ts-ignore
+            last_name: last_name || (existingReservation?.last_name || null),
             email,
             phone,
             rut,
