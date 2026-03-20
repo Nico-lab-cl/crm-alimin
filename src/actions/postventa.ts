@@ -129,11 +129,14 @@ export async function getFullPostventaData({
             // Historical pie receipts were imported as Gross Pie. Subtract reservation to get Net Pie.
             // --- SIMPLIFIED FINANCIAL CALCULATION ---
             // Formula: Pie (Gross) + Sum(Installments) + Extra Payments
-            // We NO LONGER subtract the reservation from the pie.
+            // PRIORITY: Manual CRM Fields > Digitized Receipts (for Legacy Sync consistency)
             let actualPieComponent = 0;
-            const targetGrossPie = (res as any).pie || lot.pie || 0;
+            const manualPie = (res as any).pie || 0;
+            const targetGrossPie = manualPie || lot.pie || 0;
             
-            if (pieAmount > 0) {
+            if (manualPie > 0) {
+                actualPieComponent = manualPie;
+            } else if (pieAmount > 0) {
                 actualPieComponent = pieAmount;
             } else if (res.pie_status === 'PAID') {
                 actualPieComponent = targetGrossPie;
@@ -143,15 +146,17 @@ export async function getFullPostventaData({
             const paidCuotas = res.installments_paid || 0;
             let calculatedCuotasTotal = 0;
 
-            if (cuotasAmount > 0) {
+            // Priority: Calculate based on installments_paid field first to respect legacy ranges
+            const ranges = res.legacy_installment_ranges ? (typeof res.legacy_installment_ranges === 'string' ? JSON.parse(res.legacy_installment_ranges) : res.legacy_installment_ranges) : [];
+            for (let i = 1; i <= paidCuotas; i++) {
+                const range = (ranges as any[]).find((r: any) => i >= Number(r.from) && i <= Number(r.to));
+                calculatedCuotasTotal += range ? Number(range.amount) : (lot.valor_cuota || 0);
+            }
+
+            // If we have manual receipts that sum to more than the calculated amount, we could use them, 
+            // but for Legacy consistency we stick to the calculated installments total unless 0.
+            if (calculatedCuotasTotal === 0 && cuotasAmount > 0) {
                 calculatedCuotasTotal = cuotasAmount;
-            } else {
-                // If no digitized receipts but installments_paid is > 0, we sum using ranges
-                const ranges = res.legacy_installment_ranges ? (typeof res.legacy_installment_ranges === 'string' ? JSON.parse(res.legacy_installment_ranges) : res.legacy_installment_ranges) : [];
-                for (let i = 1; i <= paidCuotas; i++) {
-                    const range = (ranges as any[]).find((r: any) => i >= Number(r.from) && i <= Number(r.to));
-                    calculatedCuotasTotal += range ? Number(range.amount) : (lot.valor_cuota || 0);
-                }
             }
             
             // Total Invertido: Pie + Installments + Extra Manual Payments
