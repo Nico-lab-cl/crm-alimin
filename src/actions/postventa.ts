@@ -127,13 +127,16 @@ export async function getFullPostventaData({
             const cuotasAmount = res.receipts.reduce((acc, r) => r.scope === 'INSTALLMENT' ? acc + r.amount_clp : acc, 0);
             
             // Historical pie receipts were imported as Gross Pie. Subtract reservation to get Net Pie.
-            let actualNetPie = 0;
+            // --- SIMPLIFIED FINANCIAL CALCULATION ---
+            // Formula: Pie (Gross) + Sum(Installments) + Extra Payments
+            // We NO LONGER subtract the reservation from the pie.
+            let actualPieComponent = 0;
             const targetGrossPie = (res as any).pie || lot.pie || 0;
             
             if (pieAmount > 0) {
-                actualNetPie = Math.max(0, pieAmount - (lot.reservation_amount_clp || 0));
+                actualPieComponent = pieAmount;
             } else if (res.pie_status === 'PAID') {
-                actualNetPie = Math.max(0, targetGrossPie - (lot.reservation_amount_clp || 0));
+                actualPieComponent = targetGrossPie;
             }
 
             // --- REFINED INSTALLMENT CALCULATION ---
@@ -151,14 +154,13 @@ export async function getFullPostventaData({
                 }
             }
             
-            // Total Invertido is entirely the money collected by the developer post-reservation.
-            // Includes: Net Pie + Installments + Extra Manual Payments
-            const totalPaid = actualNetPie + calculatedCuotasTotal + ((res as any).extra_paid_amount || 0);
+            // Total Invertido: Pie + Installments + Extra Manual Payments
+            const totalPaid = actualPieComponent + calculatedCuotasTotal + ((res as any).extra_paid_amount || 0);
             
             const totalToPay = lot.price_total_clp || 0;
-            // The reservation is still conceptually applied to the property's gross list price
-            // We also ADD the pending_amount (debts) to the final balance
-            const pendingBalance = Math.max(0, totalToPay - totalPaid - (lot.reservation_amount_clp || 0) + ((res as any).pending_amount || 0));
+            // The reservation is conceptually part of the "Total Invertido" via the Pie component now.
+            // Balance = Price Total - Total Invertido + Additional Debts
+            const pendingBalance = Math.max(0, totalToPay - totalPaid + ((res as any).pending_amount || 0));
 
             const totalCuotas = lot.cuotas || 0;
             // -- redundant paidCuotas removed --
