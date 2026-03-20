@@ -574,7 +574,7 @@ export async function assignLegacyLotOwner(data: {
         }
 
         const reservationData = {
-            buyer_id: user.id,
+            buyer: { connect: { id: user.id } },
             name,
             // @ts-ignore
             last_name: last_name !== undefined ? (last_name || null) : (existingReservation?.last_name || null),
@@ -626,7 +626,7 @@ export async function assignLegacyLotOwner(data: {
         } else {
             // No existing reservation for this lot — create a new one
             reservation = await prisma.reservation.create({
-                data: { lot_id: lotId, ...reservationData }
+                data: { lot: { connect: { id: lotId } }, ...reservationData }
             });
         }
 
