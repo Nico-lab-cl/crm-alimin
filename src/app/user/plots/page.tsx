@@ -22,6 +22,7 @@ interface Reservation {
     };
     status: string;
     pie_status: string | null;
+    pie: number | null;
     installments_paid: number | null;
     created_at: string;
     signed_at?: string | null;
@@ -238,6 +239,7 @@ export default function UserPlotsPage() {
                                                 lot={res.lot}
                                                 reservation={{
                                                     pie_status: res.pie_status,
+                                                    pie: res.pie,
                                                     installments_paid: res.installments_paid,
                                                     is_legacy: res.is_legacy,
                                                     is_promo: res.is_promo,

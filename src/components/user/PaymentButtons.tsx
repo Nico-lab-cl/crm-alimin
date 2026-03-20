@@ -46,6 +46,7 @@ interface PaymentButtonsProps {
         legacy_installment_start_date?: Date | string | null;
         legacy_installment_ranges?: any;
         receipts?: any[];
+        pie?: number | null;
     };
     acquisitionDate?: string | null;
     isAdminView?: boolean;
@@ -113,7 +114,7 @@ export function PaymentButtons({ reservationId, lot, reservation, acquisitionDat
     const currentDate = simulatedDate ? new Date(simulatedDate) : new Date();
 
     // PIE LOGIC
-    const pieTotal = lot.pie || 0;
+    const pieTotal = reservation.pie ?? lot.pie ?? 0;
     const reservationPaid = lot.reservation_amount_clp || 0;
     const pieToPay = Math.max(0, pieTotal - reservationPaid);
     const isPiePaid = reservation.pie_status === 'PAID';
