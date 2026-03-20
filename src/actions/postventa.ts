@@ -109,7 +109,13 @@ export async function getFullPostventaData({
                 legacy_installment_ranges: true,
                 legacy_current_installment: true,
                 promesa_signed_at: true,
-                legacy_uploaded_contracts: true
+                legacy_uploaded_contracts: true,
+                // @ts-ignore
+                extra_paid_amount: true,
+                // @ts-ignore
+                pending_amount: true,
+                // @ts-ignore
+                pie: true
             }
         });
 
@@ -122,23 +128,40 @@ export async function getFullPostventaData({
             
             // Historical pie receipts were imported as Gross Pie. Subtract reservation to get Net Pie.
             let actualNetPie = 0;
+            const targetGrossPie = (res as any).pie || lot.pie || 0;
+            
             if (pieAmount > 0) {
                 actualNetPie = Math.max(0, pieAmount - (lot.reservation_amount_clp || 0));
             } else if (res.pie_status === 'PAID') {
-                actualNetPie = lot.pie || 0;
+                actualNetPie = Math.max(0, targetGrossPie - (lot.reservation_amount_clp || 0));
             }
 
-            const effectiveCuotasAmount = cuotasAmount || ((res.installments_paid || 0) * (lot.valor_cuota || 0));
+            // --- REFINED INSTALLMENT CALCULATION ---
+            const paidCuotas = res.installments_paid || 0;
+            let calculatedCuotasTotal = 0;
+
+            if (cuotasAmount > 0) {
+                calculatedCuotasTotal = cuotasAmount;
+            } else {
+                // If no digitized receipts but installments_paid is > 0, we sum using ranges
+                const ranges = res.legacy_installment_ranges ? (typeof res.legacy_installment_ranges === 'string' ? JSON.parse(res.legacy_installment_ranges) : res.legacy_installment_ranges) : [];
+                for (let i = 1; i <= paidCuotas; i++) {
+                    const range = (ranges as any[]).find((r: any) => i >= Number(r.from) && i <= Number(r.to));
+                    calculatedCuotasTotal += range ? Number(range.amount) : (lot.valor_cuota || 0);
+                }
+            }
             
             // Total Invertido is entirely the money collected by the developer post-reservation.
-            const totalPaid = actualNetPie + effectiveCuotasAmount;
+            // Includes: Net Pie + Installments + Extra Manual Payments
+            const totalPaid = actualNetPie + calculatedCuotasTotal + ((res as any).extra_paid_amount || 0);
             
             const totalToPay = lot.price_total_clp || 0;
             // The reservation is still conceptually applied to the property's gross list price
-            const pendingBalance = Math.max(0, totalToPay - totalPaid - (lot.reservation_amount_clp || 0));
+            // We also ADD the pending_amount (debts) to the final balance
+            const pendingBalance = Math.max(0, totalToPay - totalPaid - (lot.reservation_amount_clp || 0) + ((res as any).pending_amount || 0));
 
             const totalCuotas = lot.cuotas || 0;
-            const paidCuotas = res.installments_paid || 0;
+            // -- redundant paidCuotas removed --
 
             let nextDueDate = null;
             let lateDays = 0;
