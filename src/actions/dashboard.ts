@@ -610,8 +610,12 @@ export async function assignLegacyLotOwner(data: {
             signature_ip: reserva_firmada ? 'Firma Offline' : (existingReservation?.signature_ip || null),
             promesa_signed_at: compraventa_firmada ? new Date() : (existingReservation?.promesa_signed_at || null),
             promesa_signature_ip: compraventa_firmada ? 'Firma Offline' : (existingReservation?.promesa_signature_ip || null),
+            // @ts-ignore
             extra_paid_amount: extra_paid_amount !== undefined ? Number(extra_paid_amount) : (existingReservation?.extra_paid_amount || 0),
+            // @ts-ignore
             pending_amount: pending_amount !== undefined ? Number(pending_amount) : (existingReservation?.pending_amount || 0),
+            // @ts-ignore
+            pie: pie !== undefined ? Number(pie) : (existingReservation?.pie || 0),
         };
 
         let reservation;
