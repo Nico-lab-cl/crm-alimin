@@ -55,6 +55,8 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
         mora_frozen: false,
         advisor: "",
         observation: "",
+        extra_paid_amount: 0,
+        pending_amount: 0,
     })
 
     const [hasDebt, setHasDebt] = useState(false)
@@ -91,6 +93,8 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
                 mora_frozen: !!existingReservation.mora_frozen,
                 advisor: existingReservation.advisor || "",
                 observation: existingReservation.observation || "",
+                extra_paid_amount: existingReservation.extra_paid_amount || 0,
+                pending_amount: existingReservation.pending_amount || 0,
             })
             if (existingReservation.legacy_debt_start_date) {
                 setHasDebt(true)
@@ -124,7 +128,8 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
                 address_street: "", address_number: "", address_commune: "", address_region: "",
                 reservation_amount_clp: 500000, pie: 0, cuotas: 0, valor_cuota: 0, last_installment_amount: 0, price_total_clp: 0, legacy_current_installment: 1, isPiePaid: true,
                 reserva_firmada: false, compraventa_firmada: false, is_promo: false, mora_frozen: false,
-                advisor: "", observation: ""
+                advisor: "", observation: "",
+                extra_paid_amount: 0, pending_amount: 0
             })
             setHasDebt(false)
             setDebtStartDate(undefined)
@@ -156,7 +161,8 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
                     address_street: "", address_number: "", address_commune: "", address_region: "",
                     reservation_amount_clp: 500000, pie: 0, cuotas: 0, valor_cuota: 0, last_installment_amount: 0, price_total_clp: 0, legacy_current_installment: 1, isPiePaid: true,
                     reserva_firmada: false, compraventa_firmada: false, is_promo: false, mora_frozen: false,
-                    advisor: "", observation: ""
+                    advisor: "", observation: "",
+                    extra_paid_amount: 0, pending_amount: 0
                 })
                 setHasDebt(false)
                 setDebtStartDate(undefined)
@@ -398,6 +404,31 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
                                 value={formData.pie === 0 ? "" : formData.pie}
                                 onChange={(e) => setFormData({ ...formData, pie: Number(e.target.value) })}
                             />
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-blue-50/30 p-3 rounded-md border border-blue-100">
+                        <div className="space-y-2">
+                            <Label htmlFor="extra_paid_amount" className="text-blue-900 font-semibold">Pagos Extra Realizados (CLP)</Label>
+                            <Input
+                                id="extra_paid_amount"
+                                type="number"
+                                value={formData.extra_paid_amount === 0 ? "" : formData.extra_paid_amount}
+                                onChange={(e) => setFormData({ ...formData, extra_paid_amount: Number(e.target.value) })}
+                                placeholder="Ej: Pago deuda offline"
+                            />
+                            <p className="text-[10px] text-blue-600">Suma este valor al total pagado del cliente (uso interno).</p>
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="pending_amount" className="text-red-900 font-semibold">Deuda Pendiente Adicional (CLP)</Label>
+                            <Input
+                                id="pending_amount"
+                                type="number"
+                                value={formData.pending_amount === 0 ? "" : formData.pending_amount}
+                                onChange={(e) => setFormData({ ...formData, pending_amount: Number(e.target.value) })}
+                                placeholder="Ej: Saldo pendiente"
+                            />
+                            <p className="text-[10px] text-red-600">Monto EXTRA que el cliente aún debe por otros conceptos.</p>
                         </div>
                     </div>
 

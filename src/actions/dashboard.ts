@@ -484,6 +484,8 @@ export async function assignLegacyLotOwner(data: {
     mora_frozen?: boolean;
     advisor?: string;
     observation?: string;
+    extra_paid_amount?: number;
+    pending_amount?: number;
     reservationId?: string;
 }) {
     const session = await auth()
@@ -497,6 +499,7 @@ export async function assignLegacyLotOwner(data: {
         price_total_clp, legacy_current_installment, legacy_debt_start_date, legacy_installment_start_date, legacy_installment_ranges, isPiePaid,
         reserva_firmada, compraventa_firmada, is_promo, mora_frozen,
         advisor, observation,
+        extra_paid_amount, pending_amount,
         reservationId
     } = data
 
@@ -607,6 +610,8 @@ export async function assignLegacyLotOwner(data: {
             signature_ip: reserva_firmada ? 'Firma Offline' : (existingReservation?.signature_ip || null),
             promesa_signed_at: compraventa_firmada ? new Date() : (existingReservation?.promesa_signed_at || null),
             promesa_signature_ip: compraventa_firmada ? 'Firma Offline' : (existingReservation?.promesa_signature_ip || null),
+            extra_paid_amount: extra_paid_amount !== undefined ? Number(extra_paid_amount) : (existingReservation?.extra_paid_amount || 0),
+            pending_amount: pending_amount !== undefined ? Number(pending_amount) : (existingReservation?.pending_amount || 0),
         };
 
         let reservation;

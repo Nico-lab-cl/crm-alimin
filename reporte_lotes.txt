@@ -1,0 +1,101 @@
+LOTE | NOMBRE | ETAPA CRM | VALOR TOTAL | CUOTAS PAGADAS | MONTO CUOTA | ÚLT. CUOTA
+------------------------------------------------------------------------------------------
+34 | Marcela Navarrete | VENTA_CERRADA | $35.800.000 | 0 | $550.000 | $350.000
+32 | trixie vega | RESERVA_PAGADA | $44.990.000 | 0 | $550.000 | $240.000
+28 | Nicolas Cabrera | VENTA_CERRADA | $35.990.000 | 1 | $550.000 | $340.000
+58 | trixie vega | RESERVA_PAGADA | $44.990.000 | 0 | $550.000 | $240.000
+20 | trixie vega | RESERVA_PAGADA | $35.990.000 | 0 | $550.000 | $390.000
+17 | Carolina del Carmen Rojas Donoso | PIE_POR_PAGAR | $35.990.000 | 0 | $550.000 | $340.000
+17 | Carolina del Carmen Rojas Donoso | RESERVA_PAGADA | $35.990.000 | 0 | $550.000 | $340.000
+7 | Carolina del Carmen Rojas Donoso | RESERVA_PAGADA | $35.990.000 | 0 | $550.000 | $390.000
+18 | trixie vega | RESERVA_PAGADA | $35.990.000 | 0 | $550.000 | $390.000
+13 | Jose Domingo Torres Prieto | RESERVA_POR_FIRMAR | $35.990.000 | 0 | $550.000 | $340.000
+13 | Jose Domingo Torres Prieto | RESERVA_PAGADA | $35.990.000 | 0 | $550.000 | $340.000
+13 | Jose Domingo Torres Prieto | RESERVA_PAGADA | $35.990.000 | 0 | $550.000 | $340.000
+43 | Guillermo Eduardo Aguirre Gutiérrez | VENTA_CERRADA | $43.990.000 | 0 | $550.000 | $190.000
+1 | Cyndi Bárbara González Arriagada | RESERVA_PAGADA | $35.990.000 | 0 | $550.000 | $390.000
+37 | Caroline Macarena Vera Maulen | PIE_POR_PAGAR | $43.990.000 | 0 | $550.000 | $190.000
+38 | Diego Alexander oyanedel arriaza | PAGO_CUOTAS | $43.990.000 | 1 | $550.000 | $190.000
+31 | omar eduardo navia arevalo | PIE_POR_PAGAR | $43.990.000 | 0 | $550.000 | $190.000
+32 | Gloria Sauzo | PAGO_CUOTAS | $43.990.000 | 1 | $550.000 | $140.000
+39 | franco baeza ocares | RESERVA_POR_FIRMAR | $43.990.000 | 0 | $550.000 | $190.000
+39 | franco baeza ocares | RESERVA_PAGADA | $43.990.000 | 0 | $550.000 | $190.000
+39 | franco baeza ocares | RESERVA_PAGADA | $43.990.000 | 0 | $550.000 | $190.000
+39 | Bernardita Herrera | VENTA_CERRADA | $35.900.000 | 0 | $550.000 | $100.000
+18 | nicolas cabrera | RESERVA_PAGADA | $35.990.000 | 0 | $550.000 | $390.000
+46 | Johanna Lucero | VENTA_CERRADA | $43.990.000 | 1 | $550.000 | $140.000
+47 | Luis Varela | VENTA_CERRADA | $27.900.000 | 3 | $550.000 | $300.000
+38 | Jessica Aravena | VENTA_CERRADA | $35.900.000 | 1 | $550.000 | $350.000
+37 | Eugenia Rojas | VENTA_CERRADA | $35.900.000 | 1 | $550.000 | $550.000
+46 | Pamela Salazar | VENTA_CERRADA | $35.900.000 | 2 | $550.000 | $350.000
+40 | Alexis Marcel Urrutia Navarrete | RESERVA_POR_FIRMAR | $43.990.000 | 0 | $550.000 | $190.000
+43 | Guillermo Eduardo Aguirre Gutiérrez | RESERVA_PAGADA | $43.990.000 | 0 | $550.000 | $190.000
+31 | Luis gilberto sanchez alfaro | PAGO_CUOTAS | $43.990.000 | 1 | $550.000 | $190.000
+31 | Luis Gilberto Sánchez Alfaro | RESERVA_PAGADA | $43.990.000 | 0 | $550.000 | $190.000
+41 | Paulina Gomez | PIE_POR_PAGAR | $43.990.000 | 1 | $550.000 | $190.000
+41 | Cristóbal Machuca | RESERVA_PAGADA | $43.990.000 | 0 | $550.000 | $190.000
+39 | franco baeza ocares | RESERVA_PAGADA | $43.990.000 | 0 | $550.000 | $190.000
+41 | Cristóbal Machuca | RESERVA_PAGADA | $43.990.000 | 0 | $550.000 | $190.000
+41 | Cristóbal Machuca | RESERVA_PAGADA | $43.990.000 | 0 | $550.000 | $190.000
+43 | Guillermo Eduardo Aguirre Gutiérrez | RESERVA_PAGADA | $43.990.000 | 0 | $550.000 | $190.000
+43 | Guillermo Eduardo Aguirre Gutiérrez | RESERVA_PAGADA | $43.990.000 | 0 | $550.000 | $190.000
+42 | Rodrigo Marquez | VENTA_CERRADA | $35.900.000 | 1 | $350.000 | $50.000
+40 | Jahn Perez | PAGO_CUOTAS | $43.990.000 | 1 | $550.000 | $140.000
+42 | Alan Larico | VENTA_CERRADA | $43.990.000 | 1 | $550.000 | $140.000
+45 | Caroline Carrasco | VENTA_CERRADA | $35.900.000 | 1 | $550.000 | $350.000
+44 | Marlene Vidal | VENTA_CERRADA | $35.900.000 | 1 | $550.000 | $349.998
+29 | ROMINA DURAN MUÑOZ | PAGO_CUOTAS | $43.990.000 | 1 | $550.000 | $140.000
+41 | Karen Andrea Gonzalez Isamit | VENTA_CERRADA | $43.990.000 | 1 | $550.000 | $140.000
+43 | Paola Zuñiga | VENTA_CERRADA | $43.990.000 | 1 | $550.000 | $140.000
+4 | Alejandra Beiza | VENTA_CERRADA | $35.990.000 | 1 | $550.000 | $340.000
+30 | Mayerling Pinto | VENTA_CERRADA | $43.990.000 | 1 | $550.000 | $190.000
+47 | Monica Rios | PIE_PAGADO | $35.990.000 | 1 | $550.000 | $340.000
+44 | Karina Astorga | VENTA_CERRADA | $35.900.000 | 0 | $550.000 | $350.000
+45 | Nicole Leyton | VENTA_CERRADA | $35.900.000 | 2 | $550.000 | $350.000
+2 | Luisa Molina | VENTA_CERRADA | $27.700.000 | 1 | $550.000 | $400.000
+5 | Francisca Canales | VENTA_CERRADA | $27.900.000 | 2 | $550.000 | $300.000
+42 | Eduardo Arroyo | VENTA_CERRADA | $35.900.000 | 6 | $550.000 | $150.000
+6 | Paola Riquelme | VENTA_CERRADA | $27.900.000 | 1 | $550.000 | $300.000
+8 | Elias Becerra | VENTA_CERRADA | $18.890.000 | 7 | $500.000 | $290.000
+1 | Macarena Carrasco | VENTA_CERRADA | $18.890.000 | 6 | $500.000 | $290.000
+17 | nicolas cabrera | RESERVA_PAGADA | $35.990.000 | 0 | $550.000 | $390.000
+43 | Franco Paolo Ignacio Baeza Ocares | RESERVA_PAGADA | $43.990.000 | 0 | $550.000 | $190.000
+16 | Nicolas Andres Correa Irribarra | PAGO_CUOTAS | $35.990.000 | 1 | $550.000 | $340.000
+16 | Nicolas Andres Correa Irribarra | RESERVA_PAGADA | $35.990.000 | 0 | $550.000 | $340.000
+17 | nicolas cabrera | RESERVA_PAGADA | $35.990.000 | 0 | $550.000 | $390.000
+31 | nicolas cabrera | RESERVA_PAGADA | $44.990.000 | 0 | $550.000 | $240.000
+33 | nicolas cabrera | RESERVA_PAGADA | $44.990.000 | 0 | $550.000 | $240.000
+17 | Nicolas Cabrera | RESERVA_PAGADA | $35.990.000 | 0 | $550.000 | $390.000
+57 | Nicolas Cabrera | RESERVA_PAGADA | $44.990.000 | 0 | $550.000 | $240.000
+16 | Nicolas Cabrera | RESERVA_PAGADA | $35.990.000 | 0 | $550.000 | $390.000
+31 | nicolas cabrera | RESERVA_PAGADA | $44.990.000 | 0 | $550.000 | $240.000
+1 | Test User | RESERVA_PAGADA | $35.990.000 | 0 | $550.000 | $390.000
+58 | Nicolas Cabrera | RESERVA_PAGADA | $44.990.000 | 0 | $550.000 | $240.000
+18 | Nicolas Cabrera | RESERVA_PAGADA | $35.990.000 | 0 | $550.000 | $390.000
+16 | Nicolas Cabrera | RESERVA_PAGADA | $35.990.000 | 0 | $550.000 | $390.000
+15 | trixie vega | RESERVA_PAGADA | $35.990.000 | 0 | $550.000 | $390.000
+16 | Nicolas Cabrera | RESERVA_PAGADA | $35.990.000 | 0 | $550.000 | $390.000
+22 | Nicolas Cabrera | RESERVA_PAGADA | $35.990.000 | 0 | $550.000 | $390.000
+34 | nicolas cabrera | RESERVA_PAGADA | $44.990.000 | 0 | $550.000 | $240.000
+15 | trixie vega | RESERVA_PAGADA | $35.990.000 | 0 | $550.000 | $390.000
+15 | Nicolas Cabrera | RESERVA_PAGADA | $35.990.000 | 0 | $550.000 | $390.000
+32 | Nicolas Cabrera | RESERVA_PAGADA | $44.990.000 | 0 | $550.000 | $240.000
+16 | Nicolas Cabrera | RESERVA_PAGADA | $35.990.000 | 0 | $550.000 | $390.000
+10 | Jose Diaz Bombal | RESERVA_PAGADA | $35.990.000 | 0 | $550.000 | $390.000
+35 | Nicole Martinez | RESERVA_PAGADA | $43.990.000 | 0 | $550.000 | $190.000
+38 | Ivan andres Villalon rojas | COMPRAVENTA_POR_FIRMAR | $43.990.000 | 1 | $550.000 | $190.000
+36 | Soledad Bravo lopez | PAGO_CUOTAS | $43.990.000 | 1 | $550.000 | $190.000
+36 | Soledad Bravo lopez | RESERVA_PAGADA | $43.990.000 | 0 | $550.000 | $190.000
+36 | Soledad Bravo Lopez | RESERVA_PAGADA | $43.990.000 | 0 | $550.000 | $190.000
+9 | Yanira Vidal | RESERVA_PAGADA | $35.990.000 | 0 | $550.000 | $390.000
+20 | Alexis Patricio Leiva pardo | COMPRAVENTA_POR_FIRMAR | $35.990.000 | 1 | $550.000 | $340.000
+20 | Alexis Patricio Leiva pardo | RESERVA_PAGADA | $35.990.000 | 0 | $550.000 | $340.000
+37 | Nicolas Cabrera | RESERVA_PAGADA | $43.990.000 | 0 | $550.000 | $190.000
+33 | Marcelo Alejandro Marquez Aldana | COMPRAVENTA_POR_FIRMAR | $43.990.000 | 2 | $550.000 | $190.000
+33 | Marcelo Alejandro Marquez Aldana | RESERVA_PAGADA | $43.990.000 | 0 | $550.000 | $190.000
+40 | Maria jose vergara diaz | PAGO_CUOTAS | $43.990.000 | 1 | $550.000 | $140.000
+9 | Eduardo Contreras Ibarra | PAGO_CUOTAS | $35.990.000 | 1 | $550.000 | $340.000
+3 | Ricardo Salazar | PAGO_CUOTAS | $35.990.000 | 1 | $550.000 | $340.000
+3 | Ricardo Salazar | RESERVA_PAGADA | $35.990.000 | 0 | $550.000 | $340.000
+3 | Ricardo Salazar Horta | RESERVA_PAGADA | $35.990.000 | 0 | $550.000 | $340.000
+28 | Damián Felipe Jara Soto | RESERVA_PAGADA | $44.990.000 | 0 | $550.000 | $240.000
