@@ -57,6 +57,8 @@ export async function getFullPostventaData({
                 // @ts-ignore
                 mora_frozen: true,
                 // @ts-ignore
+                has_operational_expenses: true,
+                // @ts-ignore
                 manual_documents: true,
                 // @ts-ignore
                 signed_at: true,
@@ -341,6 +343,8 @@ export async function getFullPostventaData({
                 phone: res.phone,
                 email: buyer?.email || res.email,
                 mora_frozen: Boolean(res.mora_frozen),
+                // @ts-ignore
+                has_operational_expenses: Boolean(res.has_operational_expenses),
                 // @ts-ignore
                 advisor: res.advisor || null,
                 // @ts-ignore

@@ -487,6 +487,7 @@ export async function assignLegacyLotOwner(data: {
     extra_paid_amount?: number;
     pending_amount?: number;
     reservationId?: string;
+    has_operational_expenses?: boolean;
 }) {
     const session = await auth()
     const isPostventa = session?.user?.email === 'postventa@lomasdelmar.cl';
@@ -500,7 +501,7 @@ export async function assignLegacyLotOwner(data: {
         reserva_firmada, compraventa_firmada, is_promo, mora_frozen,
         advisor, observation,
         extra_paid_amount, pending_amount,
-        reservationId
+        reservationId, has_operational_expenses
     } = data
 
     try {
@@ -596,6 +597,8 @@ export async function assignLegacyLotOwner(data: {
             is_promo: is_promo || false,
             // @ts-ignore - Prisma Client cache issue
             mora_frozen: mora_frozen || false,
+            // @ts-ignore
+            has_operational_expenses: has_operational_expenses || false,
             // @ts-ignore
             advisor: advisor !== undefined ? (advisor || null) : (existingReservation?.advisor || null),
             // @ts-ignore

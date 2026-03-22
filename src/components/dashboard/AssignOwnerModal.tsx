@@ -57,6 +57,7 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
         observation: "",
         extra_paid_amount: 0,
         pending_amount: 0,
+        has_operational_expenses: false,
     })
 
     const [hasDebt, setHasDebt] = useState(false)
@@ -95,6 +96,7 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
                 observation: existingReservation.observation || "",
                 extra_paid_amount: existingReservation.extra_paid_amount || 0,
                 pending_amount: existingReservation.pending_amount || 0,
+                has_operational_expenses: !!existingReservation.has_operational_expenses,
             })
             if (existingReservation.legacy_debt_start_date) {
                 setHasDebt(true)
@@ -129,7 +131,7 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
                 reservation_amount_clp: 500000, pie: 0, cuotas: 0, valor_cuota: 0, last_installment_amount: 0, price_total_clp: 0, legacy_current_installment: 1, isPiePaid: true,
                 reserva_firmada: false, compraventa_firmada: false, is_promo: false, mora_frozen: false,
                 advisor: "", observation: "",
-                extra_paid_amount: 0, pending_amount: 0
+                extra_paid_amount: 0, pending_amount: 0, has_operational_expenses: false
             })
             setHasDebt(false)
             setDebtStartDate(undefined)
@@ -162,7 +164,7 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
                     reservation_amount_clp: 500000, pie: 0, cuotas: 0, valor_cuota: 0, last_installment_amount: 0, price_total_clp: 0, legacy_current_installment: 1, isPiePaid: true,
                     reserva_firmada: false, compraventa_firmada: false, is_promo: false, mora_frozen: false,
                     advisor: "", observation: "",
-                    extra_paid_amount: 0, pending_amount: 0
+                    extra_paid_amount: 0, pending_amount: 0, has_operational_expenses: false
                 })
                 setHasDebt(false)
                 setDebtStartDate(undefined)
@@ -491,6 +493,27 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
                             </label>
                             <p className="text-[11px] text-cyan-700">
                                 Selecciona esto si el cliente está exento del pago de multas por atraso y notificaciones de deuda (Temporal).
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center space-x-2 bg-purple-50 border border-purple-200 p-3 rounded-md">
+                        <input
+                            type="checkbox"
+                            id="has_operational_expenses"
+                            className="w-4 h-4 text-purple-600 rounded border-gray-300 focus:ring-purple-500"
+                            checked={formData.has_operational_expenses}
+                            onChange={(e) => setFormData({ ...formData, has_operational_expenses: e.target.checked })}
+                        />
+                        <div className="grid gap-1.5 leading-none">
+                            <label
+                                htmlFor="has_operational_expenses"
+                                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-purple-900"
+                            >
+                                Cliente con Gastos Operacionales
+                            </label>
+                            <p className="text-[11px] text-purple-700">
+                                Selecciona esta opción si el cliente contempla gastos operacionales formales.
                             </p>
                         </div>
                     </div>
