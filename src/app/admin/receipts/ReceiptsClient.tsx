@@ -9,7 +9,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Loader2, CheckCircle, XCircle, Eye, MapPin, CreditCard, Clock, Download, ChevronLeft, ChevronRight, Filter } from "lucide-react";
+import { Loader2, CheckCircle, XCircle, Eye, MapPin, CreditCard, Clock, Download, ChevronLeft, ChevronRight, Filter, FileText } from "lucide-react";
 import { approvePaymentReceipt, rejectPaymentReceipt } from "@/actions/receipts";
 import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
@@ -178,16 +178,19 @@ export default function ReceiptsClient({
                                         >
                                             <Eye className="w-4 h-4" />
                                         </Button>
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            asChild
-                                            title="Descargar Comprobante Subido"
-                                        >
-                                            <a href={receipt.receipt_url} download target="_blank" rel="noopener noreferrer">
-                                                <Download className="w-4 h-4" />
-                                            </a>
-                                        </Button>
+                                        
+                                        {receipt.receipt_url && receipt.receipt_url !== 'LEGACY_SYNC' && !receipt.receipt_url.includes('MANUAL') && (
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                asChild
+                                                title="Descargar Comprobante Subido"
+                                            >
+                                                <a href={receipt.receipt_url} download target="_blank" rel="noopener noreferrer">
+                                                    <Download className="w-4 h-4" />
+                                                </a>
+                                            </Button>
+                                        )}
 
                                         {receipt.status === 'APPROVED' && (
                                             <Button
@@ -394,12 +397,32 @@ export default function ReceiptsClient({
             <Dialog open={!!selectedImage} onOpenChange={() => setSelectedImage(null)}>
                 <DialogContent className="max-w-[95vw] md:max-w-4xl p-0 overflow-hidden bg-black/5 border-none">
                     {selectedImage && (
-                        <div className="w-full h-[70vh] md:h-[80vh] flex items-center justify-center bg-gray-900 overflow-auto">
-                            {selectedImage.startsWith('data:application/pdf') ? (
-                                <iframe src={selectedImage} className="w-full h-full" />
+                        <div className="w-full h-[70vh] md:h-[80vh] flex flex-col items-center justify-center bg-[#0a1622] overflow-auto border border-white/10 rounded-2xl relative">
+                            {selectedImage === 'LEGACY_SYNC' || selectedImage.includes('MANUAL') ? (
+                                <div className="flex flex-col items-center justify-center text-center p-8 text-gray-400 gap-4">
+                                    <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center">
+                                        <FileText className="w-8 h-8 text-white/50" />
+                                    </div>
+                                    <h3 className="text-xl font-bold text-white uppercase tracking-tight">Registro Manual</h3>
+                                    <p className="max-w-md text-sm leading-relaxed">
+                                        Este abono fue registrado manualmente desde el panel de administración o importado desde el sistema legado.<br/>
+                                        <span className="font-semibold text-white/70">No existe documento físico adjunto.</span>
+                                    </p>
+                                </div>
+                            ) : selectedImage.startsWith('data:application/pdf') || selectedImage.includes('/pdf') || selectedImage.endsWith('.pdf') ? (
+                                <iframe src={selectedImage} className="w-full h-full bg-white" />
                             ) : (
                                 <img src={selectedImage} alt="Comprobante" className="max-w-full max-h-full object-contain" />
                             )}
+                            
+                            <Button 
+                                variant="ghost" 
+                                size="icon"
+                                className="absolute top-4 right-4 bg-black/50 hover:bg-black/70 text-white rounded-full border border-white/10"
+                                onClick={() => setSelectedImage(null)}
+                            >
+                                <XCircle className="w-6 h-6" />
+                            </Button>
                         </div>
                     )}
                 </DialogContent>

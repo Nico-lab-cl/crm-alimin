@@ -37,7 +37,8 @@ export async function getFullPostventaData({
             }
         };
 
-        const allReservations = await prisma.reservation.findMany({
+        // We cast to any[] because we manually added columns via SQL that aren't in Prisma schema yet
+        const allReservations: any[] = await prisma.reservation.findMany({
             where: whereStats,
             orderBy: { created_at: 'desc' },
             select: {
@@ -120,14 +121,14 @@ export async function getFullPostventaData({
                 pie: true,
                 status: true
             }
-        });
+        }) as any[];
 
         const processedData = allReservations.map(res => {
             const lot = res.lot;
             const buyer = res.buyer;
 
-            const pieAmount = res.receipts.reduce((acc, r) => r.scope === 'PIE' ? acc + r.amount_clp : acc, 0);
-            const cuotasAmount = res.receipts.reduce((acc, r) => r.scope === 'INSTALLMENT' ? acc + r.amount_clp : acc, 0);
+            const pieAmount = res.receipts.reduce((acc: number, r: any) => r.scope === 'PIE' ? acc + r.amount_clp : acc, 0);
+            const cuotasAmount = res.receipts.reduce((acc: number, r: any) => r.scope === 'INSTALLMENT' ? acc + r.amount_clp : acc, 0);
             
             // Historical pie receipts were imported as Gross Pie. Subtract reservation to get Net Pie.
             // --- SIMPLIFIED FINANCIAL CALCULATION ---
@@ -217,7 +218,7 @@ export async function getFullPostventaData({
             if (nextDueDate) {
                 const targetMonth = nextDueDate.getUTCMonth();
                 const targetYear = nextDueDate.getUTCFullYear();
-                hasPaidCurrentInstallment = res.receipts.some(r => {
+                hasPaidCurrentInstallment = res.receipts.some((r: any) => {
                     if (r.scope !== 'INSTALLMENT') return false;
                     const rDate = new Date(r.created_at);
                     return rDate.getUTCMonth() === targetMonth && rDate.getUTCFullYear() === targetYear;

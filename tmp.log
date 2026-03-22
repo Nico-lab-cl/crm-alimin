@@ -1,0 +1,10 @@
+19fd3ef feat: add has op expenses
+8d7a72e feat: use explicit reservation status for 'Pagados' filter in Postventa
+494de1b fix: prioritize manual finance fields over receipts for legacy consistency
+1895518 feat: simplify postventa total paid formula (ignore reservation subtraction)
+ca1d9cb feat: sync postventa financials including manual pie and installment ranges
+3afe4af feat: sync pie calculation logic in client portal
+7c7fa10 feat: save pie amount in Reservation table
+b94c3fb fix: correctly add financial fields to schema and remove @ts-ignore
+f6407f0 fix: use relation connect for buyer and lot in reservation update/create
+a702fae fix: bypass prisma type issues in build with @ts-ignore
