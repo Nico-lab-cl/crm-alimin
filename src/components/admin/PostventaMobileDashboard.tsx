@@ -325,23 +325,10 @@ export function PostventaMobileDashboard({
             const matchesStage = ledgerStage === 'ALL' || Number(client.lotStage) === Number(ledgerStage);
             
             let matchesStatus = true;
-            if (ledgerMonth !== 'ALL') {
-                const targetDate = new Date(ledgerYear, Number(ledgerMonth) + 1, 0);
-                const isPaidAll = client.paidCuotas >= (client.totalCuotas || 1);
-                const nextDue = client.nextDueDate ? new Date(client.nextDueDate) : null;
-                
-                // Matches "Paid" for the target month if next payment is after that month
-                const matchesPaid = Boolean(isPaidAll || (nextDue && nextDue > targetDate));
-
-                if (ledgerStatus === 'PAID') matchesStatus = matchesPaid;
-                else if (ledgerStatus === 'PENDING') matchesStatus = !matchesPaid;
-            } else {
-                // Global status filter when "All Months" is selected
-                if (ledgerStatus === 'PAID') {
-                    matchesStatus = (client.pendingBalance || 0) <= 0 || client.paidCuotas >= (client.totalCuotas || 1);
-                } else if (ledgerStatus === 'PENDING') {
-                    matchesStatus = (client.pendingBalance || 0) > 0 && client.paidCuotas < (client.totalCuotas || 1);
-                }
+            if (ledgerStatus === 'PAID') {
+                matchesStatus = client.reservationStatus === 'paid';
+            } else if (ledgerStatus === 'PENDING') {
+                matchesStatus = client.reservationStatus !== 'paid';
             }
 
             return matchesSearch && matchesStage && matchesStatus;

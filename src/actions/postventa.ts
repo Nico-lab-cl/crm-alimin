@@ -115,7 +115,8 @@ export async function getFullPostventaData({
                 // @ts-ignore
                 pending_amount: true,
                 // @ts-ignore
-                pie: true
+                pie: true,
+                status: true
             }
         });
 
@@ -315,6 +316,7 @@ export async function getFullPostventaData({
                 status: (penaltyAmount > 0 && !Boolean(res.mora_frozen)) ? 'LATE' : 
                         (isGracePeriod && !Boolean(res.mora_frozen)) ? 'GRACE' : 
                         (isUpcoming && !Boolean(res.mora_frozen)) ? 'UPCOMING' : 'OK',
+                reservationStatus: res.status,
                 // Additional fields for editing
                 lotId: lot.id,
                 buyer: buyer,
