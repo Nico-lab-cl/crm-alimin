@@ -33,7 +33,7 @@ export default function ReceiptsClient({
 }: ReceiptsClientProps) {
     const router = useRouter();
     const [receipts, setReceipts] = useState(initialReceipts);
-    const [selectedImage, setSelectedImage] = useState<string | null>(null);
+    const [selectedReceipt, setSelectedReceipt] = useState<{ id: string, url: string, status: string } | null>(null);
     const [rejectingId, setRejectingId] = useState<string | null>(null);
     const [rejectionReason, setRejectionReason] = useState("");
     const [isProcessing, setIsProcessing] = useState<string | null>(null);
@@ -173,7 +173,7 @@ export default function ReceiptsClient({
                                         <Button
                                             variant="outline"
                                             size="sm"
-                                            onClick={() => setSelectedImage(receipt.receipt_url)}
+                                            onClick={() => setSelectedReceipt({ id: receipt.id, url: receipt.receipt_url || '', status: receipt.status })}
                                             title="Ver Comprobante Subido"
                                         >
                                             <Eye className="w-4 h-4" />
@@ -311,7 +311,7 @@ export default function ReceiptsClient({
                         {/* Action Buttons — 44px min height */}
                         <div className="flex gap-2 text-center">
                             <button
-                                onClick={() => setSelectedImage(receipt.receipt_url)}
+                                onClick={() => setSelectedReceipt({ id: receipt.id, url: receipt.receipt_url || '', status: receipt.status })}
                                 className="flex items-center justify-center gap-1.5 flex-1 min-h-[44px] rounded-lg bg-gray-100 text-gray-700 text-xs font-semibold hover:bg-gray-200 transition-colors active:scale-[0.97]"
                                 title="Ver Comprobante Subido"
                             >
@@ -394,37 +394,89 @@ export default function ReceiptsClient({
             )}
 
             {/* Image Viewer Dialog */}
-            <Dialog open={!!selectedImage} onOpenChange={() => setSelectedImage(null)}>
+            <Dialog open={!!selectedReceipt} onOpenChange={() => setSelectedReceipt(null)}>
                 <DialogContent className="max-w-[95vw] md:max-w-4xl p-0 overflow-hidden bg-black/5 border-none">
-                    {selectedImage && (
-                        <div className="w-full h-[70vh] md:h-[80vh] flex flex-col items-center justify-center bg-[#0a1622] overflow-auto border border-white/10 rounded-2xl relative">
-                            {selectedImage === 'LEGACY_SYNC' || selectedImage.includes('MANUAL') ? (
-                                <div className="flex flex-col items-center justify-center text-center p-8 text-gray-400 gap-4">
-                                    <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center">
-                                        <FileText className="w-8 h-8 text-white/50" />
-                                    </div>
-                                    <h3 className="text-xl font-bold text-white uppercase tracking-tight">Registro Manual</h3>
-                                    <p className="max-w-md text-sm leading-relaxed">
-                                        Este abono fue registrado manualmente desde el panel de administración o importado desde el sistema legado.<br/>
-                                        <span className="font-semibold text-white/70">No existe documento físico adjunto.</span>
-                                    </p>
+                    {selectedReceipt && (() => {
+                        const { id, url, status } = selectedReceipt;
+                        const isPlaceholder = !url || url === 'LEGACY_SYNC' || url.includes('MANUAL');
+                        
+                        // If it's a placeholder AND the receipt is approved, show the digitally generated PDF
+                        if (isPlaceholder && status === 'APPROVED') {
+                            return (
+                                <div className="w-full h-[70vh] md:h-[80vh] flex flex-col items-center justify-center bg-white overflow-hidden rounded-2xl relative">
+                                    <iframe src={`/api/receipt/${id}/pdf`} className="w-full h-full border-0" />
+                                    <Button 
+                                        variant="ghost" 
+                                        size="icon"
+                                        className="absolute top-4 right-4 bg-black/50 hover:bg-black/70 text-[#0a1622] rounded-full border border-black/10 shadow-lg z-50"
+                                        onClick={() => setSelectedReceipt(null)}
+                                        title="Cerrar"
+                                    >
+                                        <XCircle className="w-8 h-8" />
+                                    </Button>
                                 </div>
-                            ) : selectedImage.startsWith('data:application/pdf') || selectedImage.includes('/pdf') || selectedImage.endsWith('.pdf') ? (
-                                <iframe src={selectedImage} className="w-full h-full bg-white" />
-                            ) : (
-                                <img src={selectedImage} alt="Comprobante" className="max-w-full max-h-full object-contain" />
-                            )}
-                            
-                            <Button 
-                                variant="ghost" 
-                                size="icon"
-                                className="absolute top-4 right-4 bg-black/50 hover:bg-black/70 text-white rounded-full border border-white/10"
-                                onClick={() => setSelectedImage(null)}
-                            >
-                                <XCircle className="w-6 h-6" />
-                            </Button>
-                        </div>
-                    )}
+                            );
+                        }
+
+                        // Placeholder but not approved (rare, but handle gracefully)
+                        if (isPlaceholder) {
+                            return (
+                                <div className="w-full h-[70vh] md:h-[80vh] flex flex-col items-center justify-center bg-[#0a1622] overflow-auto border border-white/10 rounded-2xl relative">
+                                    <div className="flex flex-col items-center justify-center text-center p-8 text-gray-400 gap-4">
+                                        <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center">
+                                            <FileText className="w-8 h-8 text-white/50" />
+                                        </div>
+                                        <h3 className="text-xl font-bold text-white uppercase tracking-tight">Registro Manual</h3>
+                                        <p className="max-w-md text-sm leading-relaxed">
+                                            Este abono fue registrado manualmente desde el panel de administración o importado desde el sistema legado.<br/>
+                                            <span className="font-semibold text-white/70">No existe documento físico adjunto.</span>
+                                        </p>
+                                    </div>
+                                    <Button 
+                                        variant="ghost" 
+                                        size="icon"
+                                        className="absolute top-4 right-4 bg-black/50 hover:bg-black/70 text-white rounded-full border border-white/10"
+                                        onClick={() => setSelectedReceipt(null)}
+                                    >
+                                        <XCircle className="w-6 h-6" />
+                                    </Button>
+                                </div>
+                            );
+                        }
+
+                        // Fix raw base64 missing data prefix
+                        let finalUrl = url;
+                        if (!url.startsWith('http') && !url.startsWith('data:') && !url.startsWith('/api') && url.length > 100) {
+                            if (url.startsWith('JVBERi')) {
+                                finalUrl = `data:application/pdf;base64,${url}`;
+                            } else {
+                                finalUrl = `data:image/jpeg;base64,${url}`;
+                            }
+                        }
+
+                        const isPdfData = finalUrl.startsWith('data:application/pdf') || finalUrl.includes('/pdf') || finalUrl.endsWith('.pdf');
+
+                        return (
+                            <div className="w-full h-[70vh] md:h-[80vh] flex flex-col items-center justify-center bg-[#0a1622] overflow-auto border border-white/10 rounded-2xl relative">
+                                {isPdfData ? (
+                                    <iframe src={finalUrl} className="w-full h-full bg-white border-0" />
+                                ) : (
+                                    <div className="w-full h-full flex items-center justify-center p-4">
+                                        <img src={finalUrl} alt="Comprobante" className="max-w-full max-h-full object-contain rounded-xl shadow-2xl" />
+                                    </div>
+                                )}
+                                
+                                <Button 
+                                    variant="ghost" 
+                                    size="icon"
+                                    className="absolute top-4 right-4 bg-black/50 hover:bg-black/70 text-white rounded-full border border-white/10"
+                                    onClick={() => setSelectedReceipt(null)}
+                                >
+                                    <XCircle className="w-8 h-8" />
+                                </Button>
+                            </div>
+                        );
+                    })()}
                 </DialogContent>
             </Dialog>
 
