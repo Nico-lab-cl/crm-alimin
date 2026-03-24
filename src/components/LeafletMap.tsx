@@ -11,9 +11,15 @@ interface LeafletMapProps {
   onSelectLot?: (lot: Lot) => void;
 }
 
+interface PolygonData {
+  id: number;
+  center: { lat: number; lng: number };
+  paths: { lat: number; lng: number }[];
+}
+
 const LeafletMap = ({ lots, onSelectLot }: LeafletMapProps) => {
   // Center of Lomas del Mar based on generate_map.ts
-  const center: [number, number] = [-33.8500, -71.7500];
+  const center: [number, number] = [-33.4616, -71.6158]; // Updated to match actual data in lotPolygons.json
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -34,14 +40,16 @@ const LeafletMap = ({ lots, onSelectLot }: LeafletMapProps) => {
   };
 
   const mergedPolygons = useMemo(() => {
-    return lotPolygons.map(poly => {
-      const dbLot = lots.find(l => l.number === poly.number);
+    const polys = (lotPolygons as unknown) as PolygonData[];
+    return polys.map(poly => {
+      const dbLot = lots.find((l: Lot) => l.id === poly.id);
       return {
         ...poly,
+        number: dbLot?.number || poly.id.toString(),
         status: dbLot?.status || 'available',
         totalPrice: dbLot?.totalPrice,
         area: dbLot?.area,
-        id: dbLot?.id || poly.id
+        id: poly.id
       };
     });
   }, [lots]);
@@ -62,7 +70,7 @@ const LeafletMap = ({ lots, onSelectLot }: LeafletMapProps) => {
         {mergedPolygons.map((poly) => (
           <Polygon
             key={`${poly.id}-${poly.number}`}
-            positions={poly.paths as [number, number][]}
+            positions={poly.paths.map(p => [p.lat, p.lng]) as [number, number][]}
             pathOptions={{
               fillColor: getStatusColor(poly.status),
               fillOpacity: 0.6,
@@ -71,7 +79,7 @@ const LeafletMap = ({ lots, onSelectLot }: LeafletMapProps) => {
             }}
             eventHandlers={{
               click: () => {
-                const fullLot = lots.find(l => l.number === poly.number);
+                const fullLot = lots.find((l: Lot) => l.number === poly.number);
                 if (fullLot && onSelectLot) {
                   onSelectLot(fullLot);
                 }
@@ -97,7 +105,7 @@ const LeafletMap = ({ lots, onSelectLot }: LeafletMapProps) => {
                   <button 
                     className="mt-3 w-full bg-[#36595F] text-white py-1 px-3 rounded text-sm hover:bg-[#2A454A] transition-colors"
                     onClick={() => {
-                        const fullLot = lots.find(l => l.number === poly.number);
+                        const fullLot = lots.find((l: Lot) => l.number === poly.number);
                         if (fullLot && onSelectLot) onSelectLot(fullLot);
                     }}
                   >

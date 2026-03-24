@@ -26,14 +26,14 @@ export function generateKML(lots: Lot[]): string {
   </Document>
 </kml>`;
 
-    const placemarks = lotPolygons.map(poly => {
-        const dbLot = lots.find(l => l.number === poly.number);
+    const placemarks = (lotPolygons as any[]).map(poly => {
+        const dbLot = lots.find((l: Lot) => l.id === poly.id);
         const status = dbLot?.status || 'available';
-        const coordinates = poly.paths.map(p => `${p[1]},${p[0]},0`).join(' ');
+        const coordinates = poly.paths.map((p: any) => `${p.lng},${p.lat},0`).join(' ');
 
         return `
     <Placemark>
-      <name>Lote ${poly.number}</name>
+      <name>Lote ${dbLot?.number || poly.id}</name>
       <description>
         Estado: ${status}
         Etapa: ${dbLot?.stage || 'N/A'}
