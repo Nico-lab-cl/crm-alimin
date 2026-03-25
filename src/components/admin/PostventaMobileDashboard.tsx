@@ -5,7 +5,10 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent,    DialogHeader, 
+    DialogTitle, 
+    DialogDescription 
+} from "@/components/ui/dialog";
 import { Textarea } from '@/components/ui/textarea';
 import { 
     Loader2, CheckCircle, XCircle, Eye, MapPin, CreditCard, Clock, Receipt, BookOpen, 
@@ -894,6 +897,9 @@ export function PostventaMobileDashboard({
             <Dialog open={!!selectedClientLedger} onOpenChange={(open) => !open && setSelectedClientLedger(null)}>
                 <DialogContent className="max-w-5xl w-[95vw] h-[90vh] bg-[#0a1622] border-[#3f6066]/20 p-0 overflow-hidden rounded-[2.5rem] shadow-[0_0_80px_rgba(0,0,0,0.8)] flex flex-col">
                     <DialogTitle className="sr-only">Detalles del Cliente</DialogTitle>
+                    <DialogDescription className="sr-only">
+                        Información detallada del estado de cuenta, cuotas y pagos del cliente.
+                    </DialogDescription>
                     {selectedClientLedger && (
                         <>
                             <div className="flex-1 overflow-y-auto no-scrollbar">

@@ -506,6 +506,8 @@ export async function assignLegacyLotOwner(data: {
         next_payment_date
     } = data
 
+    console.log("[assignLegacyLotOwner] Data received:", { lotId, email, next_payment_date, legacy_debt_start_date });
+
     try {
         let user = await prisma.user.findUnique({ where: { email } })
         let isNewUser = false
@@ -608,8 +610,9 @@ export async function assignLegacyLotOwner(data: {
             is_legacy: existingReservation ? existingReservation.is_legacy : true,
             workflow_activated: existingReservation ? existingReservation.workflow_activated : false,
             legacy_current_installment: legacy_current_installment || (existingReservation?.legacy_current_installment || 1),
-            legacy_debt_start_date: legacy_debt_start_date ? new Date(legacy_debt_start_date) : (existingReservation?.legacy_debt_start_date ? new Date(existingReservation.legacy_debt_start_date) : null),
-            legacy_installment_start_date: legacy_installment_start_date ? new Date(legacy_installment_start_date) : (existingReservation?.legacy_installment_start_date ? new Date(existingReservation.legacy_installment_start_date) : null),
+            legacy_debt_start_date: (legacy_debt_start_date && !isNaN(new Date(legacy_debt_start_date).getTime())) ? new Date(legacy_debt_start_date) : (existingReservation?.legacy_debt_start_date ? new Date(existingReservation.legacy_debt_start_date) : null),
+            legacy_installment_start_date: (legacy_installment_start_date && !isNaN(new Date(legacy_installment_start_date).getTime())) ? new Date(legacy_installment_start_date) : (existingReservation?.legacy_installment_start_date ? new Date(existingReservation.legacy_installment_start_date) : null),
+
             legacy_installment_ranges: legacy_installment_ranges ? JSON.parse(legacy_installment_ranges) : (existingReservation?.legacy_installment_ranges || null),
             signed_at: reserva_firmada ? new Date() : (existingReservation?.signed_at || null),
             signature_ip: reserva_firmada ? 'Firma Offline' : (existingReservation?.signature_ip || null),
