@@ -14,14 +14,18 @@ export async function invalidatePostventaCache() {
 }
 
 export async function getFullPostventaData({
-    stage = 'ALL'
+    stage = 'ALL',
+    serverAuthOverride = false
 }: {
     stage?: string | number;
+    serverAuthOverride?: boolean;
 } = {}) {
-    const session = await auth()
-    const isPostventa = session?.user?.email === 'postventa@lomasdelmar.cl';
-    if (!session?.user || (session.user.role !== 'ADMIN' && !isPostventa)) {
-        return { error: 'No autorizado', data: [], totalPages: 0 }
+    if (!serverAuthOverride) {
+        const session = await auth()
+        const isPostventa = session?.user?.email === 'postventa@lomasdelmar.cl' || session?.user?.email === 'postventa@aliminspa.cl';
+        if (!session?.user || (session.user.role !== 'ADMIN' && !isPostventa)) {
+            return { error: 'No autorizado', data: [], totalPages: 0 }
+        }
     }
 
     const cacheKey = `postventa_full_${stage}`;
@@ -119,7 +123,8 @@ export async function getFullPostventaData({
                 pending_amount: true,
                 // @ts-ignore
                 pie: true,
-                status: true
+                status: true,
+                next_payment_date: true
             }
         }) as any[];
 
@@ -189,7 +194,12 @@ export async function getFullPostventaData({
             if (paidCuotas < totalCuotas) {
                 const customStart = res.legacy_installment_start_date ? new Date(res.legacy_installment_start_date) : null;
                 const customDueDay = customStart ? customStart.getDate() : null;
-                nextDueDate = getInstallmentDueDate(baseDate, paidCuotas + 1, isLegacyBool, customDueDay, Boolean(res.is_promo));
+                
+                if (res.next_payment_date) {
+                    nextDueDate = new Date(res.next_payment_date);
+                } else {
+                    nextDueDate = getInstallmentDueDate(baseDate, paidCuotas + 1, isLegacyBool, customDueDay, Boolean(res.is_promo));
+                }
 
                 const lotAreaM2 = lot.area_m2 || 200;
                 
@@ -349,7 +359,8 @@ export async function getFullPostventaData({
                 // @ts-ignore
                 advisor: res.advisor || null,
                 // @ts-ignore
-                observation: res.observation || null
+                observation: res.observation || null,
+                next_payment_date: res.next_payment_date
             };
         });
 
@@ -506,18 +517,22 @@ export async function registerPostventaPayment({
     amount,
     scope,
     receiptUrl = 'MANUAL_POSTVENTA',
-    date = new Date().toISOString()
+    date = new Date().toISOString(),
+    serverAuthOverride = false
 }: {
     reservationId: string;
     amount: number;
     scope: 'PIE' | 'INSTALLMENT' | 'GASTOS_OPERACIONALES';
     receiptUrl?: string;
     date?: string;
+    serverAuthOverride?: boolean;
 }) {
-    const session = await auth();
-    const isPostventa = session?.user?.email === 'postventa@lomasdelmar.cl';
-    if (!session?.user || (session.user.role !== 'ADMIN' && !isPostventa)) {
-        return { error: 'No autorizado' };
+    if (!serverAuthOverride) {
+        const session = await auth();
+        const isPostventa = session?.user?.email === 'postventa@lomasdelmar.cl' || session?.user?.email === 'postventa@aliminspa.cl';
+        if (!session?.user || (session.user.role !== 'ADMIN' && !isPostventa)) {
+            return { error: 'No autorizado' };
+        }
     }
 
     try {
@@ -553,7 +568,8 @@ export async function registerPostventaPayment({
                 where: { id: reservationId },
                 data: { 
                     installments_paid: { increment: 1 },
-                    pipeline_stage: 'PAGO_CUOTAS'
+                    pipeline_stage: 'PAGO_CUOTAS',
+                    next_payment_date: null
                 }
             });
         }

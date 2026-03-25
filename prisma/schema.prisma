@@ -116,6 +116,8 @@ model Reservation {
 
   buyer_id String?
   buyer    User?   @relation("BuyerReservations", fields: [buyer_id], references: [id])
+
+  next_payment_date DateTime?
 }
 
 model Contact {

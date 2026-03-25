@@ -13,16 +13,20 @@ export async function getPaginatedReceipts({
     page = 1,
     pageSize = 20,
     status,
-    search
+    search,
+    serverAuthOverride = false
 }: {
     page?: number;
     pageSize?: number;
     status?: string | null;
     search?: string;
+    serverAuthOverride?: boolean;
 } = {}) {
-    const session = await auth();
-    if (!session?.user || session.user.role !== 'ADMIN') {
-        throw new Error("Unauthorized");
+    if (!serverAuthOverride) {
+        const session = await auth();
+        if (!session?.user || session.user.role !== 'ADMIN') {
+            throw new Error("Unauthorized");
+        }
     }
 
     const cacheKey = `${RECEIPTS_PAGINATED_CACHE_KEY}${page}_${pageSize}_${status || 'all'}_${search || ''}`;
@@ -144,10 +148,12 @@ export async function uploadPaymentReceipt({
     }
 }
 
-export async function approvePaymentReceipt(receiptId: string) {
-    const session = await auth();
-    if (!session?.user || session.user.role !== 'ADMIN') {
-        throw new Error("Unauthorized");
+export async function approvePaymentReceipt(receiptId: string, serverAuthOverride = false) {
+    if (!serverAuthOverride) {
+        const session = await auth();
+        if (!session?.user || session.user.role !== 'ADMIN') {
+            throw new Error("Unauthorized");
+        }
     }
 
     try {
@@ -208,10 +214,12 @@ export async function approvePaymentReceipt(receiptId: string) {
     }
 }
 
-export async function rejectPaymentReceipt(receiptId: string, reason: string) {
-    const session = await auth();
-    if (!session?.user || session.user.role !== 'ADMIN') {
-        throw new Error("Unauthorized");
+export async function rejectPaymentReceipt(receiptId: string, reason: string, serverAuthOverride = false) {
+    if (!serverAuthOverride) {
+        const session = await auth();
+        if (!session?.user || session.user.role !== 'ADMIN') {
+            throw new Error("Unauthorized");
+        }
     }
 
     try {

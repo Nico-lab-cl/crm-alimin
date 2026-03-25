@@ -488,6 +488,7 @@ export async function assignLegacyLotOwner(data: {
     pending_amount?: number;
     reservationId?: string;
     has_operational_expenses?: boolean;
+    next_payment_date?: string;
 }) {
     const session = await auth()
     const isPostventa = session?.user?.email === 'postventa@lomasdelmar.cl';
@@ -501,7 +502,8 @@ export async function assignLegacyLotOwner(data: {
         reserva_firmada, compraventa_firmada, is_promo, mora_frozen,
         advisor, observation,
         extra_paid_amount, pending_amount,
-        reservationId, has_operational_expenses
+        reservationId, has_operational_expenses,
+        next_payment_date
     } = data
 
     try {
@@ -619,6 +621,7 @@ export async function assignLegacyLotOwner(data: {
             pending_amount: pending_amount !== undefined ? Number(pending_amount) : (existingReservation?.pending_amount || 0),
             // @ts-ignore
             pie: pie !== undefined ? Number(pie) : (existingReservation?.pie || 0),
+            next_payment_date: next_payment_date ? new Date(next_payment_date) : (existingReservation?.next_payment_date ? new Date(existingReservation.next_payment_date) : null),
         };
 
         let reservation;

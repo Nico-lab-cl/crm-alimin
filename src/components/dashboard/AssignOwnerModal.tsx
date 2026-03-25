@@ -63,6 +63,7 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
     const [hasDebt, setHasDebt] = useState(false)
     const [debtStartDate, setDebtStartDate] = useState<Date | undefined>(undefined)
     const [installmentStartDate, setInstallmentStartDate] = useState<Date | undefined>(undefined)
+    const [nextPaymentDate, setNextPaymentDate] = useState<Date | undefined>(undefined)
     const [installmentRanges, setInstallmentRanges] = useState<{ from: number | '', to: number | '', amount: number | '' }[]>([])
 
     useEffect(() => {
@@ -110,6 +111,11 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
             } else {
                 setInstallmentStartDate(undefined)
             }
+            if (existingReservation.next_payment_date) {
+                setNextPaymentDate(new Date(existingReservation.next_payment_date))
+            } else {
+                setNextPaymentDate(undefined)
+            }
             if (existingReservation.legacy_installment_ranges) {
                 try {
                     const parsed = typeof existingReservation.legacy_installment_ranges === 'string'
@@ -136,6 +142,7 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
             setHasDebt(false)
             setDebtStartDate(undefined)
             setInstallmentStartDate(undefined)
+            setNextPaymentDate(undefined)
             setInstallmentRanges([])
         }
     }, [open, existingReservation])
@@ -150,6 +157,7 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
                 lotId,
                 ...formData,
                 legacy_installment_start_date: installmentStartDate?.toISOString(),
+                next_payment_date: nextPaymentDate?.toISOString(),
                 legacy_debt_start_date: hasDebt ? debtStartDate?.toISOString() : undefined,
                 legacy_installment_ranges: JSON.stringify(installmentRanges.filter(r => r.from !== '' && r.to !== '' && r.amount !== '')),
                 reservationId: existingReservation?.id
@@ -169,6 +177,7 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
                 setHasDebt(false)
                 setDebtStartDate(undefined)
                 setInstallmentStartDate(undefined)
+                setNextPaymentDate(undefined)
                 setInstallmentRanges([])
                 onSuccess()
                 onOpenChange(false)
@@ -672,6 +681,44 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
                                             mode="single"
                                             selected={installmentStartDate}
                                             onSelect={setInstallmentStartDate}
+                                            initialFocus
+                                        />
+                                    </PopoverContent>
+                                </Popover>
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label className="text-blue-900 font-bold">Manual: Próximo Pago</Label>
+                                <p className="text-xs text-blue-700">Opcional: Sobrescribe la fecha calculada para el siguiente pago solamente.</p>
+                                <Popover>
+                                    <PopoverTrigger asChild>
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            className={cn(
+                                                "w-full justify-start text-left font-semibold border-blue-300 bg-blue-50/50 hover:bg-blue-100",
+                                                !nextPaymentDate && "text-muted-foreground"
+                                            )}
+                                        >
+                                            <CalendarIcon className="mr-2 h-4 w-4 text-blue-600" />
+                                            {nextPaymentDate ? format(nextPaymentDate, "dd/MM/yyyy", { locale: es }) : <span>Automático (Día 5)</span>}
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto p-0" align="start">
+                                        <div className="p-2 border-b border-gray-100">
+                                            <Button 
+                                                variant="ghost" 
+                                                size="sm" 
+                                                className="w-full text-xs text-red-500 hover:text-red-700 h-7"
+                                                onClick={() => setNextPaymentDate(undefined)}
+                                            >
+                                                Limpiar / Volver a Automático
+                                            </Button>
+                                        </div>
+                                        <Calendar
+                                            mode="single"
+                                            selected={nextPaymentDate}
+                                            onSelect={setNextPaymentDate}
                                             initialFocus
                                         />
                                     </PopoverContent>
