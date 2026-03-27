@@ -463,7 +463,7 @@ export async function syncLegacyReceipts() {
                             status: 'APPROVED',
                             receipt_url: 'LEGACY_SYNC',
                             scope: 'INSTALLMENT',
-                            installments_count: cuotaNum,
+                            nominal_installment_number: cuotaNum,
                             reservation_id: res.id,
                             lot_id: res.lot_id,
                             processed_at: new Date('2026-03-11')
@@ -543,13 +543,20 @@ export async function registerPostventaPayment({
 
         if (!reservation) return { error: 'Reserva no encontrada' };
 
-        // 1. Create APPROVED receipt
+        // 1. Calculate Nominal Number for manual payment
+        let nominalNumber: number | null = null;
+        if (scope === 'INSTALLMENT') {
+            nominalNumber = (reservation.installments_paid || 0) + 1;
+        }
+
         const receipt = await prisma.paymentReceipt.create({
             data: {
                 amount_clp: amount,
                 status: 'APPROVED',
                 receipt_url: receiptUrl,
                 scope: scope === 'GASTOS_OPERACIONALES' ? 'OTHERS' : scope,
+                installments_count: scope === 'INSTALLMENT' ? 1 : undefined,
+                nominal_installment_number: nominalNumber,
                 reservation_id: reservationId,
                 lot_id: reservation.lot_id,
                 processed_at: new Date(date),

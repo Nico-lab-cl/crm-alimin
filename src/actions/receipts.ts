@@ -169,11 +169,29 @@ export async function approvePaymentReceipt(receiptId: string, serverAuthOverrid
             throw new Error("El comprobante ya fue procesado");
         }
 
-        // 1. Mark Receipt as Approved
-        // @ts-ignore
+        // 1. Calculate Nominal Serial Numbers
+        const currentPaid = receipt.reservation.installments_paid || 0;
+        const count = receipt.installments_count || 1;
+        let nominalNumber: number | null = null;
+        let nominalRange: string | null = null;
+
+        if (receipt.scope === 'INSTALLMENT') {
+            if (count === 1) {
+                nominalNumber = currentPaid + 1;
+            } else {
+                nominalRange = `${currentPaid + 1}-${currentPaid + count}`;
+            }
+        }
+
+        // 2. Mark Receipt as Approved
         await prisma.paymentReceipt.update({
             where: { id: receiptId },
-            data: { status: 'APPROVED', processed_at: new Date() }
+            data: { 
+                status: 'APPROVED', 
+                processed_at: new Date(),
+                nominal_installment_number: nominalNumber,
+                nominal_installment_range: nominalRange
+            }
         });
 
         // 2. Process Business Logic (similar to webpay commit)

@@ -70,6 +70,8 @@ export async function GET(
                 paymentScope={receipt.scope}
                 installmentsCount={receipt.installments_count || 0}
                 totalInstallments={receipt.lot.cuotas || 0}
+                nominalInstallmentNumber={receipt.nominal_installment_number}
+                nominalInstallmentRange={receipt.nominal_installment_range}
                 installmentDueDate={installmentDueDate}
                 logoPath={logoPath}
             />

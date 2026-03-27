@@ -294,7 +294,8 @@ model PaymentReceipt {
   installments_count  Int?      @default(0)
   created_at          DateTime  @default(now())
   processed_at        DateTime?
-  rejection_reason    String?
+  nominal_installment_number Int?
+  nominal_installment_range  String? // e.g. "4-5"
 
   // Relations
   reservation_id      String

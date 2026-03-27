@@ -177,6 +177,8 @@ interface PaymentReceiptPDFProps {
     installmentsCount?: number;
     totalInstallments?: number;
     installmentDueDate?: Date;
+    nominalInstallmentNumber?: number | null;
+    nominalInstallmentRange?: string | null;
     logoPath: string;
 }
 
@@ -193,6 +195,8 @@ export const PaymentReceiptPDF = ({
     installmentsCount = 0,
     totalInstallments = 0,
     installmentDueDate,
+    nominalInstallmentNumber,
+    nominalInstallmentRange,
     logoPath
 }: PaymentReceiptPDFProps) => {
 
@@ -202,8 +206,18 @@ export const PaymentReceiptPDF = ({
         ? ` (${format(installmentDueDate, 'MMMM yyyy', { locale: es }).toUpperCase()})` 
         : '';
         
+    let installmentLabel = '';
+    if (nominalInstallmentRange) {
+        installmentLabel = `Cuotas #${nominalInstallmentRange}`;
+    } else if (nominalInstallmentNumber) {
+        installmentLabel = `Cuota #${String(nominalInstallmentNumber).padStart(2, '0')}`;
+    } else {
+        // Fallback to count if nominal is missing
+        installmentLabel = `Cuota #${String(installmentsCount).padStart(2, '0')}`;
+    }
+
     const itemName = isCuotas
-        ? `Cuota #${String(installmentsCount).padStart(2, '0')}/${totalInstallments}${monthYear}`
+        ? `${installmentLabel}/${totalInstallments}${monthYear}`
         : paymentScope === 'PIE'
             ? 'Pago de Pie'
             : 'Pago de Reserva';
