@@ -1,7 +1,5 @@
-
-export const PENALTY_RATE_200M2 = 0.00027785496;  // For lots < 300m2
-export const PENALTY_RATE_300M2 = 0.000227324392; // For lots >= 300m2
 export const GRACE_PERIOD_DAYS = 5; // From day 5 to 10 (inclusive)
+export const FIXED_DAILY_PENALTY = 10000;
 export const PENALTY_START_DATE_WEB = new Date('2026-03-11T00:00:00-03:00'); // March 11, 2026
 
 export function getInstallmentDueDate(
@@ -40,11 +38,10 @@ export function getInstallmentDueDate(
 }
 
 export function calculateDailyInterest(
-    totalLotPrice: number,
-    lotAreaM2: number
+    _totalLotPrice: number,
+    _lotAreaM2: number
 ): number {
-    const rate = lotAreaM2 >= 300 ? PENALTY_RATE_300M2 : PENALTY_RATE_200M2;
-    return Math.round(totalLotPrice * rate);
+    return FIXED_DAILY_PENALTY;
 }
 
 export function calculateTotalInterest(
@@ -103,7 +100,12 @@ export function calculateTotalInterest(
     }
 
     const diffTime = pDate.getTime() - gDate.getTime();
-    const daysLate = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    let daysLate = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    // If late, the first day of penalty (the start of the debt) is also counted
+    if (daysLate > 0) {
+        daysLate += 1;
+    }
 
     if (daysLate <= 0) return 0;
 

@@ -54,7 +54,11 @@ export function MoraExplainerCard({ soldLots }: MoraExplainerCardProps) {
         end.setHours(0, 0, 0, 0);
 
         const diffTime = end.getTime() - start.getTime();
-        const daysLate = Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
+        let daysLate = Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
+        
+        if (daysLate > 0) {
+            daysLate += 1;
+        }
 
         const totalInterest = dailyInterest * daysLate;
         return { dailyInterest, totalInterest, daysLate };
@@ -62,8 +66,6 @@ export function MoraExplainerCard({ soldLots }: MoraExplainerCardProps) {
 
     const CLP = (value: number) =>
         new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(value);
-
-    const penaltyRate = areaM2 >= 300 ? '0,000227324392' : '0,00027785496';
 
     const formatDateChile = (date: Date) =>
         date.toLocaleDateString('es-CL', { day: '2-digit', month: 'long', year: 'numeric' });
@@ -97,10 +99,10 @@ export function MoraExplainerCard({ soldLots }: MoraExplainerCardProps) {
                         content={
                             <div className="space-y-2 text-xs">
                                 <p className="font-bold text-orange-400">¿Cómo funciona la mora?</p>
-                                <p>Cada cuota vence el <b>día 5</b> de cada mes. Hay un período de gracia hasta el <b>día 10</b>.</p>
-                                <p>Si el cliente no paga antes del <b>día 11</b>, comienza a correr un interés <b>diario</b> que se calcula sobre el <b>valor total del terreno</b>.</p>
-                                <p className="pt-2 border-t border-white/10">• Terrenos &lt; 300m²: {penaltyRate} × valor total</p>
-                                <p>• Terrenos ≥ 300m²: 0,000227324392 × valor total</p>
+                                <p>Cada cuota vence el día de su aniversario. Hay un período de gracia de <b>5 días</b>.</p>
+                                <p>Si el cliente no paga antes del vencimiento del periodo de gracia, comienza a correr un interés <b>diario fijo</b>.</p>
+                                <p className="pt-2 border-t border-white/10 font-bold text-lg text-white">Multa: $10.000 / día</p>
+                                <p className="text-[10px] text-gray-500 italic">(Se cuenta desde el primer día de atraso)</p>
                             </div>
                         }
                     />
@@ -218,8 +220,8 @@ export function MoraExplainerCard({ soldLots }: MoraExplainerCardProps) {
 
                                     <div className="space-y-3">
                                         <div className="flex justify-between items-end">
-                                            <span className="text-xs text-gray-400 font-medium">Tasa aplicada:</span>
-                                            <span className="font-mono text-white text-[10px]">{penaltyRate}</span>
+                                            <span className="text-xs text-gray-400 font-medium">Tipo de interés:</span>
+                                            <span className="font-bold text-white text-[10px]">Multa Diaria Fija</span>
                                         </div>
                                         <div className="flex justify-between items-end border-b border-white/5 pb-2">
                                             <span className="text-xs text-gray-400 font-medium">Interés diario:</span>

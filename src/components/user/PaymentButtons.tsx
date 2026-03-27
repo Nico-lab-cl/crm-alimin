@@ -224,62 +224,44 @@ export function PaymentButtons({ reservationId, lot, reservation, acquisitionDat
         const instNum = paidCuotas + 1;
         if (instNum <= totalCuotas) {
 
-            // --- LEGACY OFFLINE DEBT CALCULATION ---
-            if (reservation.is_legacy && reservation.legacy_debt_start_date) {
-                const debtStart = new Date(reservation.legacy_debt_start_date);
-                debtStart.setHours(0, 0, 0, 0);
+            const iDue = getInstallmentDueDate(baseDate, instNum, isLegacyBool, customDueDay, isPromoBool);
+            const totalPrice = lot.price_total_clp || 0;
+            const lotAreaM2 = lot.area_m2 || 200;
 
-                if (targetDate > debtStart && !reservation.mora_frozen) {
-                    const diffTime = targetDate.getTime() - debtStart.getTime();
-                    const lateDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            const interestForThisInstallment = calculateTotalInterest(
+                totalPrice,
+                lotAreaM2,
+                iDue,
+                Boolean(reservation.is_legacy),
+                targetDate,
+                Boolean(reservation.mora_frozen),
+                reservation.legacy_debt_start_date
+            );
 
-                    if (lateDays > 0) {
-                        const totalPrice = lot.price_total_clp || 0;
-                        const lotAreaM2 = lot.area_m2 || 200;
-                        const dailyInterest = calculateDailyInterest(totalPrice, lotAreaM2);
-                        const totalInt = dailyInterest * lateDays;
+            if (interestForThisInstallment > 0) {
+                const daily = calculateDailyInterest(totalPrice, lotAreaM2);
+                const calculatedDays = daily > 0 ? Math.round(interestForThisInstallment / daily) : 0;
 
-                        // Admin Preview
-                        previewInterest = totalInt;
-                        previewDays = lateDays;
+                // Admin Preview
+                previewInterest = interestForThisInstallment;
+                previewDays = calculatedDays;
 
-                        // User Payment
-                        calculatedInterest = totalInt;
-                        daysLateForDisplay = lateDays;
-                        lateRangeDisplay = `${debtStart.toLocaleDateString('es-CL', { day: '2-digit', month: '2-digit' })} - ${targetDate.toLocaleDateString('es-CL', { day: '2-digit', month: '2-digit' })}`;
-                    }
+                // User Payment
+                calculatedInterest = interestForThisInstallment;
+                daysLateForDisplay = calculatedDays;
+                
+                // Determinamos el inicio del periodo de multa para el display
+                // Si es legacy con deuda manual, el rango empieza en esa fecha
+                // Si no, empieza el día después del fin de la gracia (iDue + 5 días)
+                const rangeStart = reservation.legacy_debt_start_date 
+                    ? new Date(reservation.legacy_debt_start_date)
+                    : new Date(iDue);
+                
+                if (!reservation.legacy_debt_start_date) {
+                    rangeStart.setDate(rangeStart.getDate() + 5);
                 }
-            }
-            else {
-                const iDue = getInstallmentDueDate(baseDate, instNum, isLegacyBool, customDueDay, isPromoBool);
-                const totalPrice = lot.price_total_clp || 0;
-                const lotAreaM2 = lot.area_m2 || 200;
 
-                const interestForThisInstallment = calculateTotalInterest(
-                    totalPrice,
-                    lotAreaM2,
-                    iDue,
-                    Boolean(reservation.is_legacy),
-                    targetDate,
-                    Boolean(reservation.mora_frozen),
-                    reservation.legacy_debt_start_date
-                );
-
-                if (interestForThisInstallment > 0) {
-                    const daily = calculateDailyInterest(totalPrice, lotAreaM2);
-                    const calculatedDays = daily > 0 ? Math.round(interestForThisInstallment / daily) : 0;
-
-                    // Admin Preview
-                    previewInterest = interestForThisInstallment;
-                    previewDays = calculatedDays;
-
-                    // User Payment
-                    calculatedInterest = interestForThisInstallment;
-                    daysLateForDisplay = calculatedDays;
-                    const graceEnd = new Date(iDue);
-                    graceEnd.setDate(10);
-                    lateRangeDisplay = `${graceEnd.toLocaleDateString('es-CL', { day: '2-digit', month: '2-digit' })} - ${targetDate.toLocaleDateString('es-CL', { day: '2-digit', month: '2-digit' })}`;
-                }
+                lateRangeDisplay = `${rangeStart.toLocaleDateString('es-CL', { day: '2-digit', month: '2-digit' })} - ${targetDate.toLocaleDateString('es-CL', { day: '2-digit', month: '2-digit' })}`;
             }
         }
     }
