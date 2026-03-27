@@ -241,7 +241,6 @@ export async function rejectPaymentReceipt(receiptId: string, reason: string, se
     }
 
     try {
-        // @ts-ignore
         await prisma.paymentReceipt.update({
             where: { id: receiptId },
             data: {
