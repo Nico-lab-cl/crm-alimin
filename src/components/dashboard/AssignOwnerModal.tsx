@@ -156,9 +156,9 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
             const result = await assignLegacyLotOwner({
                 lotId,
                 ...formData,
-                legacy_installment_start_date: installmentStartDate?.toISOString(),
-                next_payment_date: nextPaymentDate?.toISOString(),
-                legacy_debt_start_date: hasDebt ? debtStartDate?.toISOString() : undefined,
+                legacy_installment_start_date: installmentStartDate?.toISOString() || null,
+                next_payment_date: nextPaymentDate?.toISOString() || null,
+                legacy_debt_start_date: hasDebt ? (debtStartDate?.toISOString() || null) : null,
                 legacy_installment_ranges: JSON.stringify(installmentRanges.filter(r => r.from !== '' && r.to !== '' && r.amount !== '')),
                 reservationId: existingReservation?.id
             })

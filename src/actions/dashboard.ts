@@ -474,21 +474,21 @@ export async function assignLegacyLotOwner(data: {
     last_installment_amount?: number;
     price_total_clp?: number;
     legacy_current_installment?: number;
-    legacy_debt_start_date?: string;
-    legacy_installment_start_date?: string;
-    legacy_installment_ranges?: string;
+    legacy_debt_start_date?: string | null;
+    legacy_installment_start_date?: string | null;
+    legacy_installment_ranges?: string | null;
     isPiePaid?: boolean;
     reserva_firmada?: boolean;
     compraventa_firmada?: boolean;
     is_promo?: boolean;
     mora_frozen?: boolean;
-    advisor?: string;
-    observation?: string;
+    advisor?: string | null;
+    observation?: string | null;
     extra_paid_amount?: number;
     pending_amount?: number;
     reservationId?: string;
     has_operational_expenses?: boolean;
-    next_payment_date?: string;
+    next_payment_date?: string | null;
 }) {
     const session = await auth()
     const isPostventa = session?.user?.email === 'postventa@lomasdelmar.cl';
@@ -610,10 +610,10 @@ export async function assignLegacyLotOwner(data: {
             is_legacy: existingReservation ? existingReservation.is_legacy : true,
             workflow_activated: existingReservation ? existingReservation.workflow_activated : false,
             legacy_current_installment: legacy_current_installment || (existingReservation?.legacy_current_installment || 1),
-            legacy_debt_start_date: (legacy_debt_start_date && !isNaN(new Date(legacy_debt_start_date).getTime())) ? new Date(legacy_debt_start_date) : (existingReservation?.legacy_debt_start_date ? new Date(existingReservation.legacy_debt_start_date) : null),
-            legacy_installment_start_date: (legacy_installment_start_date && !isNaN(new Date(legacy_installment_start_date).getTime())) ? new Date(legacy_installment_start_date) : (existingReservation?.legacy_installment_start_date ? new Date(existingReservation.legacy_installment_start_date) : null),
+            legacy_debt_start_date: (legacy_debt_start_date !== undefined) ? (legacy_debt_start_date ? new Date(legacy_debt_start_date) : null) : (existingReservation?.legacy_debt_start_date ? new Date(existingReservation.legacy_debt_start_date) : null),
+            legacy_installment_start_date: (legacy_installment_start_date !== undefined) ? (legacy_installment_start_date ? new Date(legacy_installment_start_date) : null) : (existingReservation?.legacy_installment_start_date ? new Date(existingReservation.legacy_installment_start_date) : null),
 
-            legacy_installment_ranges: legacy_installment_ranges ? JSON.parse(legacy_installment_ranges) : (existingReservation?.legacy_installment_ranges || null),
+            legacy_installment_ranges: (legacy_installment_ranges !== undefined) ? (legacy_installment_ranges ? JSON.parse(legacy_installment_ranges) : null) : (existingReservation?.legacy_installment_ranges || null),
             signed_at: reserva_firmada ? new Date() : (existingReservation?.signed_at || null),
             signature_ip: reserva_firmada ? 'Firma Offline' : (existingReservation?.signature_ip || null),
             promesa_signed_at: compraventa_firmada ? new Date() : (existingReservation?.promesa_signed_at || null),
@@ -624,7 +624,7 @@ export async function assignLegacyLotOwner(data: {
             pending_amount: pending_amount !== undefined ? Number(pending_amount) : (existingReservation?.pending_amount || 0),
             // @ts-ignore
             pie: pie !== undefined ? Number(pie) : (existingReservation?.pie || 0),
-            next_payment_date: next_payment_date ? new Date(next_payment_date) : (existingReservation?.next_payment_date ? new Date(existingReservation.next_payment_date) : null),
+            next_payment_date: (next_payment_date !== undefined) ? (next_payment_date ? new Date(next_payment_date) : null) : (existingReservation?.next_payment_date ? new Date(existingReservation.next_payment_date) : null),
         };
 
         let reservation;
