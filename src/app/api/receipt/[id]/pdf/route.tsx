@@ -48,10 +48,12 @@ export async function GET(
             const customStart = receipt.reservation.legacy_installment_start_date ? new Date(receipt.reservation.legacy_installment_start_date) : null;
             const customDueDay = customStart ? customStart.getUTCDate() : null; // Using UTC date to avoid timezone shift
 
+            const effectiveInstallmentNum = receipt.nominal_installment_number || receipt.installments_count || 1;
+            
             installmentDueDate = getInstallmentDueDate(
                 baseDate,
-                receipt.installments_count,
-                 Boolean(receipt.reservation.is_legacy),
+                effectiveInstallmentNum,
+                Boolean(receipt.reservation.is_legacy),
                 customDueDay,
                 Boolean(receipt.reservation.is_promo)
             );
