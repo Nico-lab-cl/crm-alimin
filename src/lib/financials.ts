@@ -64,8 +64,8 @@ export function calculateTotalInterest(
 
     let gDate: Date;
 
-    if (isLegacy && legacyDebtStartDate) {
-        // For legacy users with a manual debt start date, we use that date directly
+    if (legacyDebtStartDate) {
+        // For users with a manual debt start date, we use that date directly
         gDate = new Date(legacyDebtStartDate);
     } else {
         // 1. Determine Grace Period End (Dynamic)
