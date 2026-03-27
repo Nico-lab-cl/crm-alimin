@@ -1,4 +1,4 @@
-export type LotStatus = 'available' | 'reserved' | 'sold' | 'selected';
+export type LotStatus = 'available' | 'reserved' | 'sold' | 'selected' | 'blocked';
 
 // Dimensiones del lote (en metros)
 export interface LotDimensions {

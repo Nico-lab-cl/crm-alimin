@@ -70,7 +70,7 @@ type ApiLotsRow = {
 };
 
 const normalizeStatus = (status: unknown): Lot['status'] | null => {
-  if (status === 'sold' || status === 'reserved' || status === 'available') return status;
+  if (status === 'sold' || status === 'reserved' || status === 'available' || status === 'blocked') return status as Lot['status'];
   return null;
 };
 

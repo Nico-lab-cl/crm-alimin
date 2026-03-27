@@ -78,7 +78,7 @@ export async function POST(req: NextRequest) {
                 throw new Error('lot_not_found');
             }
 
-            if (lot.status === 'sold') {
+            if (lot.status === 'sold' || lot.status === 'blocked') {
                 throw new Error('lot_sold');
             }
 

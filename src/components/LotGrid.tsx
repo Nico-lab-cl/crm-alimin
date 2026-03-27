@@ -228,6 +228,7 @@ export const LotGrid = ({
       case 'reserved':
         return 'lot-marker-reserved';
       case 'sold':
+      case 'blocked':
         return 'lot-marker-sold';
       default:
         return 'lot-marker-available';
@@ -628,7 +629,7 @@ export const LotGrid = ({
                         {lot.status === 'reserved' && (
                           <p className="text-xs text-amber-600 mt-1">Reservado</p>
                         )}
-                        {lot.status === 'sold' && (
+                        {(lot.status === 'sold' || lot.status === 'blocked') && (
                           <p className="text-xs text-red-600 mt-1">Vendido</p>
                         )}
                       </div>

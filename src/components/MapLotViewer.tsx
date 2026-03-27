@@ -28,6 +28,7 @@ export default function MapLotViewer({ lots, onSelectLot, selectedLotId }: MapLo
             case "available":
                 return "bg-primary border-[#2A454A]";
             case "sold":
+            case "blocked":
                 return "bg-red-500 border-red-700";
             case "reserved":
                 return "bg-yellow-500 border-yellow-700";
