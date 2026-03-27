@@ -54,11 +54,14 @@ export function LotBottomSheet({ lot, open, onOpenChange, onStatusChange, onAssi
     if (!lot) return null;
 
     const isSold = lot.status === 'sold';
+    const isBlocked = lot.status === 'blocked';
+    const isReserved = lot.status === 'reserved';
     const owner = lot.reservations?.[0]?.buyer;
     const hasOwner = !!owner;
 
     const handleToggleStatus = async () => {
-        const newStatus = isSold ? 'available' : 'sold';
+        // Toggle between available and blocked if not sold
+        const newStatus = isBlocked ? 'available' : 'blocked';
         setIsToggling(true);
 
         // Optimistic: update UI immediately
@@ -68,7 +71,7 @@ export function LotBottomSheet({ lot, open, onOpenChange, onStatusChange, onAssi
         try {
             const res = await updateLotStatus(lot.id, newStatus);
             if (res.success) {
-                toast.success(`Terreno ${lot.number} ${newStatus === 'sold' ? 'bloqueado' : 'desbloqueado'}`);
+                toast.success(`Terreno ${lot.number} ${newStatus === 'blocked' ? 'bloqueado' : 'desbloqueado'}`);
             } else {
                 // Rollback
                 onStatusChange(lot.id, lot.status);
@@ -91,7 +94,7 @@ export function LotBottomSheet({ lot, open, onOpenChange, onStatusChange, onAssi
                         <div className="flex items-center gap-3">
                             <div className={cn(
                                 'w-12 h-12 rounded-xl flex items-center justify-center text-lg font-black',
-                                isSold
+                                (isSold || isBlocked)
                                     ? 'bg-red-900/40 text-red-400 border border-red-500/30'
                                     : 'bg-green-900/40 text-green-400 border border-green-500/30'
                             )}>
@@ -108,11 +111,11 @@ export function LotBottomSheet({ lot, open, onOpenChange, onStatusChange, onAssi
                         </div>
                         <span className={cn(
                             'px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider',
-                            isSold
+                            (isSold || isBlocked)
                                 ? 'bg-red-900/30 text-red-400 border border-red-500/20'
                                 : 'bg-green-900/30 text-green-400 border border-green-500/20'
                         )}>
-                            {isSold ? 'Vendido' : 'Disponible'}
+                            {isBlocked ? 'Bloqueado' : (isSold ? 'Vendido' : 'Disponible')}
                         </span>
                     </div>
                 </DrawerHeader>
@@ -157,26 +160,28 @@ export function LotBottomSheet({ lot, open, onOpenChange, onStatusChange, onAssi
 
                     {/* Quick Actions */}
                     <div className="space-y-3">
-                        <Button
-                            onClick={handleToggleStatus}
-                            disabled={isToggling}
-                            className={cn(
-                                'w-full h-12 text-base font-bold rounded-xl transition-all duration-200',
-                                'active:scale-[0.98]',
-                                isSold
-                                    ? 'bg-green-600 hover:bg-green-700 text-white'
-                                    : 'bg-red-600 hover:bg-red-700 text-white'
-                            )}
-                        >
-                            {isToggling ? (
-                                <Loader2 className="w-5 h-5 animate-spin mr-2" />
-                            ) : isSold ? (
-                                <Unlock className="w-5 h-5 mr-2" />
-                            ) : (
-                                <Lock className="w-5 h-5 mr-2" />
-                            )}
-                            {isSold ? 'Desbloquear Terreno' : 'Bloquear Terreno'}
-                        </Button>
+                        {!isSold && (
+                            <Button
+                                onClick={handleToggleStatus}
+                                disabled={isToggling}
+                                className={cn(
+                                    'w-full h-12 text-base font-bold rounded-xl transition-all duration-200',
+                                    'active:scale-[0.98]',
+                                    isBlocked
+                                        ? 'bg-green-600 hover:bg-green-700 text-white'
+                                        : 'bg-red-600 hover:bg-red-700 text-white'
+                                )}
+                            >
+                                {isToggling ? (
+                                    <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                                ) : isBlocked ? (
+                                    <Unlock className="w-5 h-5 mr-2" />
+                                ) : (
+                                    <Lock className="w-5 h-5 mr-2" />
+                                )}
+                                {isBlocked ? 'Desbloquear Terreno' : 'Bloquear Terreno'}
+                            </Button>
+                        )}
 
                         {/* Show Assign Owner if sold but no owner */}
                         {isSold && !hasOwner && (

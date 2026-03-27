@@ -15,7 +15,7 @@ model Lot {
   area_m2                 Float?
   price_total_clp         Int?
   reservation_amount_clp  Int?
-  status                  String    @default("available") // available, reserved, sold
+  status                  String    @default("available") // available, reserved, sold, blocked
   cuotas                  Int?
   pie                     Int?
   valor_cuota             Int?

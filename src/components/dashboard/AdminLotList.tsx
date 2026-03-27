@@ -181,7 +181,7 @@ export const AdminLotList = ({ lots: initialLots }: AdminLotListProps) => {
                             }}
                             className={`
                                 relative p-2 md:p-3 rounded-xl border transition-all duration-200 flex flex-col items-center gap-1.5 md:gap-2
-                                ${isSold
+                                ${ (isSold || lot.status === 'blocked')
                                     ? 'bg-red-900/20 border-red-500/30 hover:bg-red-900/30'
                                     : 'bg-green-900/20 border-green-500/30 hover:bg-green-900/30'
                                 }
@@ -189,8 +189,8 @@ export const AdminLotList = ({ lots: initialLots }: AdminLotListProps) => {
                             `}
                         >
                             <div className="text-center">
-                                <span className={`text-[10px] md:text-xs uppercase font-bold tracking-wider ${isSold ? 'text-red-400' : 'text-green-400'}`}>
-                                    {isSold ? 'VENDIDO' : 'DISPONIBLE'}
+                                <span className={`text-[10px] md:text-xs uppercase font-bold tracking-wider ${ (isSold || lot.status === 'blocked') ? 'text-red-400' : 'text-green-400'}`}>
+                                    {lot.status === 'blocked' ? 'BLOQUEADO' : (isSold ? 'VENDIDO' : 'DISPONIBLE')}
                                 </span>
                                 <p className="text-white font-bold text-sm md:text-lg">
                                     Terreno {lot.number}
