@@ -296,6 +296,7 @@ model PaymentReceipt {
   processed_at        DateTime?
   nominal_installment_number Int?
   nominal_installment_range  String? // e.g. "4-5"
+  rejection_reason           String?
 
   // Relations
   reservation_id      String
