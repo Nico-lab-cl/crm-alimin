@@ -5,7 +5,8 @@ import { SignJWT } from "jose";
 
 export async function POST(req: Request) {
     try {
-        const { email } = await req.json();
+        const { email: rawEmail } = await req.json();
+        const email = rawEmail?.toLowerCase();
 
         if (!email) {
             return NextResponse.json({ error: "Email requerido" }, { status: 400 });

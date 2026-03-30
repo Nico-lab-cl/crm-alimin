@@ -16,7 +16,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                         .safeParse(credentials)
 
                     if (parsedCredentials.success) {
-                        const { email, password } = parsedCredentials.data
+                        const { email: rawEmail, password } = parsedCredentials.data
+                        const email = rawEmail.toLowerCase();
 
                         console.log(`[Auth] Attempting login for: ${email}`);
 

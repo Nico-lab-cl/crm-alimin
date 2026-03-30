@@ -417,7 +417,8 @@ export async function createVerifiedUser(data: any) {
     const session = await auth()
     if (session?.user?.role !== Role.ADMIN) return { error: "No autorizado" }
 
-    const { name, email, password, role } = data
+    const { name, email: rawEmail, password, role } = data
+    const email = rawEmail.toLowerCase();
 
     try {
         const existingUser = await prisma.user.findUnique({ where: { email } })
@@ -495,7 +496,7 @@ export async function assignLegacyLotOwner(data: {
     if (session?.user?.role !== Role.ADMIN && !isPostventa) return { error: "No autorizado" }
 
     const {
-        lotId, name, last_name, email, phone, rut, marital_status, profession, nationality,
+        lotId, name, last_name, email: rawEmail, phone, rut, marital_status, profession, nationality,
         address_street, address_number, address_commune, address_region,
         reservation_amount_clp, pie, cuotas, valor_cuota, last_installment_amount,
         price_total_clp, legacy_current_installment, legacy_debt_start_date, legacy_installment_start_date, legacy_installment_ranges, isPiePaid,
@@ -505,6 +506,8 @@ export async function assignLegacyLotOwner(data: {
         reservationId, has_operational_expenses,
         next_payment_date
     } = data
+
+    const email = rawEmail?.toLowerCase();
 
     console.log("[assignLegacyLotOwner] Data received:", { lotId, email, next_payment_date, legacy_debt_start_date });
 
