@@ -661,7 +661,7 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
 
                             <div className="space-y-2">
                                 <Label>Fecha Inicio de Cuotas</Label>
-                                <p className="text-xs text-gray-500">Mes ANTERIOR al de la primera cuota. Ej: si la cuota 1 fue en Enero, selecciona Diciembre.</p>
+                                <p className="text-xs text-gray-500">Selecciona el <strong>día 5 del MES de la primera cuota</strong>. Ej: si la cuota 1 fue en Enero, selecciona 5 de Enero.</p>
                                 <Popover>
                                     <PopoverTrigger asChild>
                                         <Button

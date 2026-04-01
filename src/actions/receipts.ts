@@ -211,7 +211,8 @@ export async function approvePaymentReceipt(receiptId: string, serverAuthOverrid
                 where: { id: receipt.reservation_id },
                 data: {
                     installments_paid: newInstallmentsPaid,
-                    pipeline_stage: 'PAGO_CUOTAS'
+                    pipeline_stage: 'PAGO_CUOTAS',
+                    next_payment_date: null // Clear manual override so system recalculates
                 }
             });
         }

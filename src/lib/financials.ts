@@ -14,23 +14,21 @@ export function getInstallmentDueDate(
     const dueDay = customDueDay || 5;
     const due = new Date(base.getFullYear(), base.getMonth(), dueDay, 12, 0, 0, 0);
 
-    if (isLegacy) {
-        // Offline clients: the base date is typically a virtual month before their first debt
+    if (customDueDay) {
+        // When admin explicitly set a start date, it represents the MONTH of cuota 1.
+        // Formula: base + (N-1). Works the same for legacy and non-legacy.
+        due.setMonth(due.getMonth() + (installmentNumber - 1));
+    } else if (isLegacy) {
+        // Legacy clients without custom start: base is "month before" cuota 1
         due.setMonth(due.getMonth() + installmentNumber);
     } else {
-        // Web Users:
-        // NORMAL CALCULATION
-        if (customDueDay) {
-            // When an admin assigns a custom date (e.g. March 15), cuota 1 is exactly in that month.
+        // Web Users without custom start:
+        // Si compraron entre el día 1 y 5 (inclusive), su primera cuota es este mismo mes.
+        // Si compraron después del día 5, su primera cuota es el mes siguiente.
+        if (base.getDate() <= 5) {
             due.setMonth(due.getMonth() + (installmentNumber - 1));
         } else {
-            // Si compraron entre el día 1 y 5 (inclusive), su primera cuota es este mismo mes.
-            // Si compraron después del día 5, su primera cuota es el mes siguiente.
-            if (base.getDate() <= 5) {
-                due.setMonth(due.getMonth() + (installmentNumber - 1));
-            } else {
-                due.setMonth(due.getMonth() + installmentNumber);
-            }
+            due.setMonth(due.getMonth() + installmentNumber);
         }
     }
 
