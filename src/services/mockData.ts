@@ -279,7 +279,7 @@ const generateInitialLots = (): Lot[] => {
       cuotas = 56;
       pie = 7500000;
       valorCuota = 550000;
-      fallbackTotalPrice = 37900000;
+      fallbackTotalPrice = 37990000;
     }
 
     // Determinar estado del lote (fuente de verdad final: Supabase/DB, pero inicializar con forceSold)

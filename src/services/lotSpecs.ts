@@ -185,7 +185,7 @@ export const getLotSpec = (lotId: number): LotSpec | null => {
 
 export const PRICING_RULES = {
   PRICE_200M2: 29990000,
-  PRICE_390M2: 37900000,
+  PRICE_390M2: 37990000,
 } as const;
 
 /**
