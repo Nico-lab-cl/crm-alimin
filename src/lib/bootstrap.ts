@@ -50,6 +50,31 @@ export async function bootstrapDatabase(prisma: PrismaClient) {
         // Lógica de upsert simplificada
         const existing = await prisma.lot.findUnique({ where: { id } });
 
+        // Lógica de financiamiento basada en área (excluyendo etapa 4 de estos nuevos precios)
+        const area = details.area_m2;
+        const stage = details.stage;
+        let pricingData = {};
+
+        if (stage !== 4 && targetStatus === 'available') {
+            if (area && area >= 200 && area <= 299) {
+                pricingData = {
+                    price_total_clp: 29990000,
+                    pie: 5500000,
+                    cuotas: 45,
+                    valor_cuota: 550000,
+                    last_installment_amount: 290000
+                };
+            } else if (area && area >= 300 && area <= 399) {
+                pricingData = {
+                    price_total_clp: 37900000,
+                    pie: 7500000,
+                    cuotas: 56,
+                    valor_cuota: 550000,
+                    last_installment_amount: 240000
+                };
+            }
+        }
+
         if (!existing) {
             await prisma.lot.create({
                 data: {
@@ -57,9 +82,9 @@ export async function bootstrapDatabase(prisma: PrismaClient) {
                     number: details.number,
                     stage: details.stage,
                     area_m2: details.area_m2 || 300,
-                    price_total_clp: details.price_total_clp || 14990000,
                     reservation_amount_clp: 50, // Siempre 50
-                    status: targetStatus
+                    status: targetStatus,
+                    ...pricingData
                 }
             });
             createdCount++;
@@ -68,7 +93,8 @@ export async function bootstrapDatabase(prisma: PrismaClient) {
             const needsUpdate =
                 existing.status !== targetStatus ||
                 existing.reservation_amount_clp !== 50 ||
-                existing.number !== details.number; // Basic check
+                existing.number !== details.number ||
+                (stage !== 4 && targetStatus === 'available' && existing.price_total_clp !== (pricingData as any).price_total_clp); 
 
             if (needsUpdate) {
                 await prisma.lot.update({
@@ -78,12 +104,12 @@ export async function bootstrapDatabase(prisma: PrismaClient) {
                         reservation_amount_clp: 50,
                         number: details.number,
                         stage: details.stage,
+                        ...pricingData,
                         // Limpiar datos de reserva si se libera
                         ...(targetStatus === 'available' ? {
                             reserved_at: null,
                             reserved_by: null,
                             reserved_until: null,
-                            // NO borramos order_id para historial, pero se podría
                         } : {})
                     }
                 });

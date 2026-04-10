@@ -74,17 +74,17 @@ export const LotReservationPopup = ({ lot, isOpen, onClose, onConfirm, isTempora
   const [errors, setErrors] = useState<Partial<ContactFormData>>({});
 
   // Fallback calculation in case DB data is missing or loading
-  const getTotalInstallments = (area: number | null | undefined) => {
-    if (area == null) return null;
-    if (area >= 200 && area <= 299) return 63;
-    if (area >= 300 && area <= 399) return 76;
+  const getTotalInstallments = (area: number | null | undefined, stage?: number | null) => {
+    if (area == null || stage === 4) return null;
+    if (area >= 200 && area <= 299) return 45;
+    if (area >= 300 && area <= 399) return 56;
     return null;
   };
 
-  const getPieAmount = (area: number | null | undefined) => {
-    if (area == null) return null;
-    if (area >= 200 && area <= 299) return 1500000;
-    if (area >= 300 && area <= 399) return 3500000;
+  const getPieAmount = (area: number | null | undefined, stage?: number | null) => {
+    if (area == null || stage === 4) return null;
+    if (area >= 200 && area <= 299) return 5500000;
+    if (area >= 300 && area <= 399) return 7500000;
     return null;
   };
 
@@ -337,12 +337,12 @@ export const LotReservationPopup = ({ lot, isOpen, onClose, onConfirm, isTempora
   const dimensions = lotSpec?.dimensions;
   const lotArea = lotSpec?.area_m2 || lot.area;
   // Use cuotas from lot data (DB) first, fallback to calculation if missing
-  const totalInstallments = lot.cuotas ?? getTotalInstallments(lotArea);
+  const totalInstallments = lot.cuotas ?? getTotalInstallments(lotArea, lotStageLabel);
   // Use pie from lot data (DB) first, fallback to calculation if missing
-  const pieAmount = lot.pie ?? getPieAmount(lotArea);
+  const pieAmount = lot.pie ?? getPieAmount(lotArea, lotStageLabel);
   // Use valorCuota from lot data (DB) first, fallback to calculation if missing
   const valorCuotaAmount = lot.valorCuota ?? getValorCuota(lotArea);
-  const lastInstallmentAmount = lot.last_installment_amount ?? (lotArea != null ? (lotArea < 300 ? 390000 : 240000) : null);
+  const lastInstallmentAmount = lot.last_installment_amount ?? (lotArea != null && lotStageLabel !== 4 ? (lotArea < 300 ? 290000 : 240000) : null);
   const offerPrice = OFFER_PRICE;
   const showOfferSection = totalInstallments != null;
   const whatsappHref = `https://wa.me/56973077128?text=${encodeURIComponent(
