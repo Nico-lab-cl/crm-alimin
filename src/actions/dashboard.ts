@@ -476,6 +476,7 @@ export async function assignLegacyLotOwner(data: {
     price_total_clp?: number;
     legacy_current_installment?: number;
     legacy_debt_start_date?: string | null;
+    legacy_debt_end_date?: string | null;
     legacy_installment_start_date?: string | null;
     legacy_installment_ranges?: string | null;
     isPiePaid?: boolean;
@@ -499,7 +500,7 @@ export async function assignLegacyLotOwner(data: {
         lotId, name, last_name, email: rawEmail, phone, rut, marital_status, profession, nationality,
         address_street, address_number, address_commune, address_region,
         reservation_amount_clp, pie, cuotas, valor_cuota, last_installment_amount,
-        price_total_clp, legacy_current_installment, legacy_debt_start_date, legacy_installment_start_date, legacy_installment_ranges, isPiePaid,
+        price_total_clp, legacy_current_installment, legacy_debt_start_date, legacy_debt_end_date, legacy_installment_start_date, legacy_installment_ranges, isPiePaid,
         reserva_firmada, compraventa_firmada, is_promo, mora_frozen,
         advisor, observation,
         extra_paid_amount, pending_amount,
@@ -614,6 +615,7 @@ export async function assignLegacyLotOwner(data: {
             workflow_activated: existingReservation ? existingReservation.workflow_activated : false,
             legacy_current_installment: legacy_current_installment || (existingReservation?.legacy_current_installment || 1),
             legacy_debt_start_date: (legacy_debt_start_date !== undefined) ? (legacy_debt_start_date ? new Date(legacy_debt_start_date) : null) : (existingReservation?.legacy_debt_start_date ? new Date(existingReservation.legacy_debt_start_date) : null),
+            legacy_debt_end_date: (legacy_debt_end_date !== undefined) ? (legacy_debt_end_date ? new Date(legacy_debt_end_date) : null) : (existingReservation?.legacy_debt_end_date ? new Date(existingReservation.legacy_debt_end_date) : null),
             legacy_installment_start_date: (legacy_installment_start_date !== undefined) ? (legacy_installment_start_date ? new Date(legacy_installment_start_date) : null) : (existingReservation?.legacy_installment_start_date ? new Date(existingReservation.legacy_installment_start_date) : null),
 
             legacy_installment_ranges: (legacy_installment_ranges !== undefined) ? (legacy_installment_ranges ? JSON.parse(legacy_installment_ranges) : null) : (existingReservation?.legacy_installment_ranges || null),

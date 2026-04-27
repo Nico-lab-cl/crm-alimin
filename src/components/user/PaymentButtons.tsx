@@ -43,6 +43,7 @@ interface PaymentButtonsProps {
         is_promo?: boolean;
         mora_frozen?: boolean;
         legacy_debt_start_date?: Date | string | null;
+        legacy_debt_end_date?: Date | string | null;
         legacy_installment_start_date?: Date | string | null;
         legacy_installment_ranges?: any;
         receipts?: any[];
@@ -235,7 +236,8 @@ export function PaymentButtons({ reservationId, lot, reservation, acquisitionDat
                 Boolean(reservation.is_legacy),
                 targetDate,
                 Boolean(reservation.mora_frozen),
-                reservation.legacy_debt_start_date
+                reservation.legacy_debt_start_date,
+                reservation.legacy_debt_end_date
             );
 
             if (interestForThisInstallment > 0) {
@@ -261,7 +263,11 @@ export function PaymentButtons({ reservationId, lot, reservation, acquisitionDat
                     rangeStart.setDate(rangeStart.getDate() + 5);
                 }
 
-                lateRangeDisplay = `${rangeStart.toLocaleDateString('es-CL', { day: '2-digit', month: '2-digit' })} - ${targetDate.toLocaleDateString('es-CL', { day: '2-digit', month: '2-digit' })}`;
+                const rangeEnd = reservation.legacy_debt_end_date && new Date(reservation.legacy_debt_end_date) < targetDate
+                    ? new Date(reservation.legacy_debt_end_date)
+                    : targetDate;
+
+                lateRangeDisplay = `${rangeStart.toLocaleDateString('es-CL', { day: '2-digit', month: '2-digit' })} - ${rangeEnd.toLocaleDateString('es-CL', { day: '2-digit', month: '2-digit' })}`;
             }
         }
     }

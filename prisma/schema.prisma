@@ -85,6 +85,7 @@ model Reservation {
 
   // Legacy Offline Data
   legacy_debt_start_date         DateTime? // If the user has a debt from before digital onboarding
+  legacy_debt_end_date           DateTime? // If the user has a debt that ends at a specific date
   legacy_installment_start_date  DateTime? // The base date from which installment schedule is computed (month BEFORE first cuota month)
   legacy_installment_ranges      Json?     // Array of {from: number, to: number, amount: number}
   legacy_current_installment     Int? // e.g "Cuota 4 que debe pagar el 5 de marzo"

@@ -59,6 +59,7 @@ export async function getFullPostventaData({
                 is_legacy: true,
                 legacy_installment_start_date: true,
                 legacy_debt_start_date: true,
+                legacy_debt_end_date: true,
                 // @ts-ignore
                 mora_frozen: true,
                 // @ts-ignore
@@ -211,7 +212,8 @@ export async function getFullPostventaData({
                     currentDate,
                     // @ts-ignore
                     Boolean(res.mora_frozen),
-                    res.legacy_debt_start_date
+                    res.legacy_debt_start_date,
+                    res.legacy_debt_end_date
                 );
 
                 if (penaltyAmount > 0) {
@@ -345,6 +347,7 @@ export async function getFullPostventaData({
                 legacy_installment_ranges: res.legacy_installment_ranges,
                 legacy_installment_start_date: res.legacy_installment_start_date,
                 legacy_debt_start_date: res.legacy_debt_start_date,
+                legacy_debt_end_date: res.legacy_debt_end_date,
                 legacy_uploaded_contracts: legacyContractsMeta,
                 promesa_signed_at: res.promesa_signed_at,
                 is_promo: res.is_promo,

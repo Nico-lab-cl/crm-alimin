@@ -89,7 +89,9 @@ export async function POST(req: NextRequest) {
                 chileNow,
                 // @ts-ignore
                 Boolean(res.mora_frozen),
-                res.legacy_debt_start_date
+                res.legacy_debt_start_date,
+                // @ts-ignore
+                res.legacy_debt_end_date
             );
 
             // Determine Status (using exact Dashboard logic)

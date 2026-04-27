@@ -32,6 +32,7 @@ interface Reservation {
     is_promo?: boolean;
     legacy_uploaded_contracts?: string | null;
     legacy_debt_start_date?: string | null;
+    legacy_debt_end_date?: string | null;
     legacy_installment_start_date?: string | null;
     legacy_installment_ranges?: any;
     receipts?: any[];
@@ -244,6 +245,7 @@ export default function UserPlotsPage() {
                                                     is_legacy: res.is_legacy,
                                                     is_promo: res.is_promo,
                                                     legacy_debt_start_date: res.legacy_debt_start_date,
+                                                    legacy_debt_end_date: res.legacy_debt_end_date,
                                                     legacy_installment_start_date: res.legacy_installment_start_date,
                                                     legacy_installment_ranges: res.legacy_installment_ranges,
                                                     receipts: res.receipts

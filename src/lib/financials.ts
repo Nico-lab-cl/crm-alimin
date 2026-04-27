@@ -49,12 +49,23 @@ export function calculateTotalInterest(
     isLegacy: boolean,
     paymentDate: Date = new Date(),
     moraFrozen: boolean = false,
-    legacyDebtStartDate?: Date | string | null
+    legacyDebtStartDate?: Date | string | null,
+    legacyDebtEndDate?: Date | string | null
 ): number {
     if (moraFrozen) return 0;
 
-    // 1. Calculate days late
+    // 1. Calculate effective end date for interest
     const pDate = new Date(paymentDate);
+    
+    if (legacyDebtEndDate) {
+        const endDate = new Date(legacyDebtEndDate);
+        // If the current date (paymentDate) is AFTER the fixed end date, 
+        // we only calculate up to that fixed end date.
+        if (pDate > endDate) {
+            pDate.setTime(endDate.getTime());
+        }
+    }
+
     pDate.setHours(0, 0, 0, 0);
 
     let gDate: Date;

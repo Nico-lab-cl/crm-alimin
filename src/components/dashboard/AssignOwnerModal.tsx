@@ -62,6 +62,7 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
 
     const [hasDebt, setHasDebt] = useState(false)
     const [debtStartDate, setDebtStartDate] = useState<Date | undefined>(undefined)
+    const [debtEndDate, setDebtEndDate] = useState<Date | undefined>(undefined)
     const [installmentStartDate, setInstallmentStartDate] = useState<Date | undefined>(undefined)
     const [nextPaymentDate, setNextPaymentDate] = useState<Date | undefined>(undefined)
     const [installmentRanges, setInstallmentRanges] = useState<{ from: number | '', to: number | '', amount: number | '' }[]>([])
@@ -102,9 +103,15 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
             if (existingReservation.legacy_debt_start_date) {
                 setHasDebt(true)
                 setDebtStartDate(new Date(existingReservation.legacy_debt_start_date))
+                if (existingReservation.legacy_debt_end_date) {
+                    setDebtEndDate(new Date(existingReservation.legacy_debt_end_date))
+                } else {
+                    setDebtEndDate(undefined)
+                }
             } else {
                 setHasDebt(false)
                 setDebtStartDate(undefined)
+                setDebtEndDate(undefined)
             }
             if (existingReservation.legacy_installment_start_date) {
                 setInstallmentStartDate(new Date(existingReservation.legacy_installment_start_date))
@@ -141,6 +148,7 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
             })
             setHasDebt(false)
             setDebtStartDate(undefined)
+            setDebtEndDate(undefined)
             setInstallmentStartDate(undefined)
             setNextPaymentDate(undefined)
             setInstallmentRanges([])
@@ -159,6 +167,7 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
                 legacy_installment_start_date: installmentStartDate?.toISOString() || null,
                 next_payment_date: nextPaymentDate?.toISOString() || null,
                 legacy_debt_start_date: hasDebt ? (debtStartDate?.toISOString() || null) : null,
+                legacy_debt_end_date: hasDebt ? (debtEndDate?.toISOString() || null) : null,
                 legacy_installment_ranges: JSON.stringify(installmentRanges.filter(r => r.from !== '' && r.to !== '' && r.amount !== '')),
                 reservationId: existingReservation?.id
             })
@@ -176,6 +185,7 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
                 })
                 setHasDebt(false)
                 setDebtStartDate(undefined)
+                setDebtEndDate(undefined)
                 setInstallmentStartDate(undefined)
                 setNextPaymentDate(undefined)
                 setInstallmentRanges([])
@@ -742,31 +752,70 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
                             </div>
 
                             {hasDebt && (
-                                <div className="pt-2">
-                                    <Label className="block mb-2 text-xs">Fecha desde que dejó de pagar</Label>
-                                    <Popover>
-                                        <PopoverTrigger asChild>
-                                            <Button
-                                                type="button"
-                                                variant={"outline"}
-                                                className={cn(
-                                                    "w-full justify-start text-left font-normal",
-                                                    !debtStartDate && "text-muted-foreground"
-                                                )}
-                                            >
-                                                <CalendarIcon className="mr-2 h-4 w-4" />
-                                                {debtStartDate ? format(debtStartDate, "PPP", { locale: es }) : <span>Seleccionar Inicio Mora</span>}
-                                            </Button>
-                                        </PopoverTrigger>
-                                        <PopoverContent className="w-auto p-0" align="start">
-                                            <Calendar
-                                                mode="single"
-                                                selected={debtStartDate}
-                                                onSelect={setDebtStartDate}
-                                                initialFocus
-                                            />
-                                        </PopoverContent>
-                                    </Popover>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                                    <div className="space-y-1">
+                                        <Label className="block mb-2 text-[10px] font-bold uppercase text-blue-900">Fecha INICIO mora</Label>
+                                        <Popover>
+                                            <PopoverTrigger asChild>
+                                                <Button
+                                                    type="button"
+                                                    variant={"outline"}
+                                                    className={cn(
+                                                        "w-full justify-start text-left font-normal border-blue-200",
+                                                        !debtStartDate && "text-muted-foreground"
+                                                    )}
+                                                >
+                                                    <CalendarIcon className="mr-2 h-4 w-4" />
+                                                    {debtStartDate ? format(debtStartDate, "dd/MM/yyyy", { locale: es }) : <span>Seleccionar Inicio</span>}
+                                                </Button>
+                                            </PopoverTrigger>
+                                            <PopoverContent className="w-auto p-0" align="start">
+                                                <Calendar
+                                                    mode="single"
+                                                    selected={debtStartDate}
+                                                    onSelect={setDebtStartDate}
+                                                    initialFocus
+                                                />
+                                            </PopoverContent>
+                                        </Popover>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <Label className="block mb-2 text-[10px] font-bold uppercase text-blue-900">Fecha FIN mora (Opcional)</Label>
+                                        <Popover>
+                                            <PopoverTrigger asChild>
+                                                <Button
+                                                    type="button"
+                                                    variant={"outline"}
+                                                    className={cn(
+                                                        "w-full justify-start text-left font-normal border-blue-200",
+                                                        !debtEndDate && "text-muted-foreground"
+                                                    )}
+                                                >
+                                                    <CalendarIcon className="mr-2 h-4 w-4" />
+                                                    {debtEndDate ? format(debtEndDate, "dd/MM/yyyy", { locale: es }) : <span>Hasta hoy (Dinámico)</span>}
+                                                </Button>
+                                            </PopoverTrigger>
+                                            <PopoverContent className="w-auto p-0" align="start">
+                                                <div className="p-2 border-b border-gray-100">
+                                                    <Button 
+                                                        variant="ghost" 
+                                                        size="sm" 
+                                                        className="w-full text-xs text-red-500 hover:text-red-700 h-7"
+                                                        onClick={() => setDebtEndDate(undefined)}
+                                                    >
+                                                        Limpiar / Hasta hoy
+                                                    </Button>
+                                                </div>
+                                                <Calendar
+                                                    mode="single"
+                                                    selected={debtEndDate}
+                                                    onSelect={setDebtEndDate}
+                                                    initialFocus
+                                                />
+                                            </PopoverContent>
+                                        </Popover>
+                                        <p className="text-[9px] text-blue-600 mt-1">Si se deja vacío, la mora se calcula hasta el día de hoy.</p>
+                                    </div>
                                 </div>
                             )}
                         </div>

@@ -80,7 +80,11 @@ export async function POST(req: NextRequest) {
                 res.is_legacy,
                 chileNow,
                 // @ts-ignore - Prisma client cache issue
-                Boolean(res.mora_frozen)
+                Boolean(res.mora_frozen),
+                // @ts-ignore
+                res.legacy_debt_start_date,
+                // @ts-ignore
+                res.legacy_debt_end_date
             );
 
             // If interest > 0, it means it's past the day 10 cutoff

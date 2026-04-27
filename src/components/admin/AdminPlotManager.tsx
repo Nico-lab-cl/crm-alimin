@@ -211,33 +211,30 @@ export function AdminPlotManager({ reservations, allClients, userId, initialUser
                                         // -----------------------------------------------------------------
                                         // LEGACY DEBT CALCULATION
                                         // -----------------------------------------------------------------
-                                        if (res.is_legacy && res.legacy_debt_start_date) {
-                                            const debtStart = new Date(res.legacy_debt_start_date);
-                                            debtStart.setHours(0, 0, 0, 0);
-
-                                            // Only calculate if the simulation End Date is after the Debt Start Date
-                                            if (end > debtStart) {
-                                                const diffTime = end.getTime() - debtStart.getTime();
-                                                const lateDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-                                                if (lateDays > 0) {
-                                                    // For legacy debt, we assume the base amount penalty is currently 1 installment's worth of penalty per period missed. 
-                                                    // Since we don't know the EXACT schedule of their offline debt without a complex ledger, 
-                                                    // we apply the daily penalty factor (0.027785496%) to their normal installment value, times the total days they are late.
-
-                                                    // En lugar de calcular usando el factor hardcodeado antiguo, usamos la nueva lógica:
-                                                    const totalPrice = res.lot.price_total_clp || 0;
-                                                    const lotAreaM2 = res.lot.area_m2 || 200;
-
-                                                    const dailyInterest = calculateDailyInterest(totalPrice, lotAreaM2);
-
-                                                    // If we are simulating from a specific date forward, the days accumulate
-                                                    totalInterestAccrued += dailyInterest * lateDays;
-                                                    lateInstallmentsCount++; // Representing 1 block of legacy debt
-                                                }
-                                            }
-                                            return; // Skip the standard loop for this legacy user
-                                        }
+                                         if (res.is_legacy && res.legacy_debt_start_date) {
+                                             const debtStart = new Date(res.legacy_debt_start_date);
+                                             debtStart.setHours(0, 0, 0, 0);
+ 
+                                             // Only calculate if the simulation End Date is after the Debt Start Date
+                                             if (end > debtStart) {
+                                                 const calculationEnd = res.legacy_debt_end_date && new Date(res.legacy_debt_end_date) < end 
+                                                     ? new Date(res.legacy_debt_end_date) 
+                                                     : end;
+                                                 
+                                                 const diffTime = calculationEnd.getTime() - debtStart.getTime();
+                                                 let lateDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+ 
+                                                 if (lateDays > 0) {
+                                                     lateDays += 1; // Match calculateTotalInterest logic
+                                                     const totalPrice = res.lot.price_total_clp || 0;
+                                                     const lotAreaM2 = res.lot.area_m2 || 200;
+                                                     const dailyInterest = calculateDailyInterest(totalPrice, lotAreaM2);
+                                                     totalInterestAccrued += dailyInterest * lateDays;
+                                                     lateInstallmentsCount++;
+                                                 }
+                                             }
+                                             return; 
+                                         }
 
                                         // -----------------------------------------------------------------
                                         // STANDARD DIGITAL PURCHASE CALCULATION
@@ -381,7 +378,8 @@ export function AdminPlotManager({ reservations, allClients, userId, initialUser
 
                                                     {res.legacy_debt_start_date && (
                                                         <div className="text-[10px] bg-red-900/30 text-red-400 px-2 py-1 rounded border border-red-900/50">
-                                                            ⚠️ Cliente traspasado con deuda desde: {new Date(res.legacy_debt_start_date).toLocaleDateString('es-CL')}
+                                                            ⚠️ Cliente traspasado con deuda: {new Date(res.legacy_debt_start_date).toLocaleDateString('es-CL')}
+                                                            {res.legacy_debt_end_date && ` hasta ${new Date(res.legacy_debt_end_date).toLocaleDateString('es-CL')}`}
                                                         </div>
                                                     )}
                                                 </div>
@@ -486,6 +484,7 @@ export function AdminPlotManager({ reservations, allClients, userId, initialUser
                                                         is_legacy: res.is_legacy,
                                                         is_promo: res.is_promo,
                                                         legacy_debt_start_date: res.legacy_debt_start_date,
+                                                        legacy_debt_end_date: res.legacy_debt_end_date,
                                                         legacy_installment_start_date: res.legacy_installment_start_date,
                                                         legacy_installment_ranges: res.legacy_installment_ranges,
                                                         receipts: res.receipts

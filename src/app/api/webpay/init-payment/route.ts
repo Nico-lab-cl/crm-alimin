@@ -131,7 +131,9 @@ export async function POST(request: Request) {
                     chileNow,
                     // @ts-ignore - Prisma client cache issue
                     Boolean(reservation.mora_frozen),
-                    reservation.legacy_debt_start_date
+                    reservation.legacy_debt_start_date,
+                    // @ts-ignore
+                    reservation.legacy_debt_end_date
                 );
 
                 if (interest > 0) {
