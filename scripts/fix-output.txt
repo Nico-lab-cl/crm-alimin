@@ -1,0 +1,6 @@
+﻿­ƒôè Recibos INSTALLMENT aprobados: 4
+­ƒôï Estado actual:
+   installments_paid = 4
+   next_payment_date = null
+
+Ô£à Ya est├í correcto. No se necesitan cambios.

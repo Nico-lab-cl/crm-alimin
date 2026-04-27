@@ -9,6 +9,53 @@ import { memoryCache } from '@/lib/cache';
 const POSTVENTA_CACHE_KEY = 'postventa_data';
 const RECEIPTS_PAGINATED_CACHE_KEY = 'receipts_paginated_';
 
+export async function deletePaymentReceipt(receiptId: string) {
+    const session = await auth();
+    const isPostventa = session?.user?.email === 'postventa@lomasdelmar.cl' || session?.user?.email === 'postventa@aliminspa.cl';
+    if (!session?.user || (session.user.role !== 'ADMIN' && !isPostventa)) {
+        return { error: 'No autorizado' };
+    }
+
+    try {
+        const receipt = await prisma.paymentReceipt.findUnique({
+            where: { id: receiptId },
+            include: { reservation: true }
+        });
+
+        if (!receipt) return { error: 'Recibo no encontrado' };
+
+        // Revert reservation state if approved
+        if (receipt.status === 'APPROVED') {
+            if (receipt.scope === 'INSTALLMENT') {
+                await prisma.reservation.update({
+                    where: { id: receipt.reservation_id },
+                    data: {
+                        installments_paid: { decrement: 1 }
+                    }
+                });
+            } else if (receipt.scope === 'PIE') {
+                await prisma.reservation.update({
+                    where: { id: receipt.reservation_id },
+                    data: { pie_status: 'PENDING' }
+                });
+            }
+        }
+
+        await prisma.paymentReceipt.delete({
+            where: { id: receiptId }
+        });
+
+        memoryCache.deleteByPrefix('postventa_full_');
+        memoryCache.deleteByPrefix('receipts_paginated_');
+        revalidatePath('/admin/dashboard');
+
+        return { success: true };
+    } catch (error) {
+        console.error("Error deleting receipt:", error);
+        return { error: 'Error al eliminar el recibo' };
+    }
+}
+
 export async function getPaginatedReceipts({
     page = 1,
     pageSize = 20,

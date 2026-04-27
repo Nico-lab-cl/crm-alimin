@@ -1,0 +1,10 @@
+﻿­ƒôè Clientes legacy con fecha de inicio custom: 3
+
+  Luis  Toledo (Lote 36)
+    05-03-2026 ÔåÆ 05-04-2026
+  Naslo Castro (Lote 41)
+    05-03-2026 ÔåÆ 05-04-2026
+  Marcela Navarrete  (Lote 34)
+    05-03-2026 ÔåÆ 05-04-2026
+
+Ô£à Migrados: 3 clientes.

@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
-import { approvePaymentReceipt, rejectPaymentReceipt } from '@/actions/receipts';
+import { approvePaymentReceipt, rejectPaymentReceipt, deletePaymentReceipt } from '@/actions/receipts';
 import { syncLegacyReceipts, getReservationReceipts, registerPostventaPayment } from '@/actions/postventa';
 import { toggleMoraFreeze } from '@/actions/dashboard';
 import { toast } from 'sonner';
@@ -96,6 +96,7 @@ export function PostventaMobileDashboard({
     const [isLoadingReceipts, setIsLoadingReceipts] = useState(false);
     const [manualAmount, setManualAmount] = useState('');
     const [manualScope, setManualScope] = useState<'PIE' | 'INSTALLMENT' | 'GASTOS_OPERACIONALES'>('INSTALLMENT');
+    const [manualFile, setManualFile] = useState<File | null>(null);
     const [isRegistering, setIsRegistering] = useState(false);
     const ALERTS_PER_PAGE = 10;
     
@@ -184,14 +185,36 @@ export function PostventaMobileDashboard({
 
             if (!res.ok) throw new Error("Error al eliminar");
             
-            const { invalidatePostventaCache } = await import("@/actions/postventa");
-            await invalidatePostventaCache();
-
             toast.success("Documento eliminado correctamente");
-            window.location.reload();
+            refreshData();
         } catch (error) {
             console.error(error);
             toast.error("No se pudo eliminar el documento");
+        }
+    };
+
+    const handleDeleteReceipt = async (receiptId: string) => {
+        if (!confirm('¿Estás seguro de que deseas eliminar este registro de pago? Esto también revertirá el contador de cuotas si aplica.')) return;
+        
+        try {
+            const res = await deletePaymentReceipt(receiptId);
+            if (res.error) {
+                toast.error(res.error);
+                return;
+            }
+            
+            toast.success("Pago eliminado correctamente");
+            
+            // Refresh history
+            if (selectedClientLedger?.id) {
+                const updatedRes = await getReservationReceipts(selectedClientLedger.id);
+                if (updatedRes.success) setClientReceipts(updatedRes.receipts || []);
+            }
+            
+            refreshData();
+        } catch (error) {
+            console.error(error);
+            toast.error("No se pudo eliminar el pago");
         }
     };
 
@@ -1271,26 +1294,65 @@ export function PostventaMobileDashboard({
                                     </div>
                                 </div>
 
+                                <div className="space-y-1.5">
+                                    <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">Comprobante (Opcional)</label>
+                                    <div className="relative group">
+                                        <input 
+                                            type="file"
+                                            onChange={(e) => setManualFile(e.target.files?.[0] || null)}
+                                            className="hidden"
+                                            id="manual-receipt-upload"
+                                            accept="image/*,.pdf"
+                                        />
+                                        <label 
+                                            htmlFor="manual-receipt-upload"
+                                            className={cn(
+                                                "flex items-center gap-2 px-3 h-10 rounded-xl border border-dashed transition-all cursor-pointer text-[10px] font-bold uppercase",
+                                                manualFile 
+                                                    ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400" 
+                                                    : "bg-black/20 border-white/5 text-gray-500 hover:border-white/10"
+                                            )}
+                                        >
+                                            <UploadCloud className="w-3.5 h-3.5 shrink-0" />
+                                            <span className="truncate">{manualFile ? manualFile.name : "Subir Comprobante"}</span>
+                                        </label>
+                                    </div>
+                                </div>
+
                                 <div className="flex items-end">
                                     <Button
                                         onClick={async () => {
                                             if (!manualAmount || isRegistering) return;
                                             setIsRegistering(true);
                                             try {
+                                                let receiptUrl = 'MANUAL_POSTVENTA';
+                                                
+                                                if (manualFile) {
+                                                    const reader = new FileReader();
+                                                    const base64Promise = new Promise<string>((resolve) => {
+                                                        reader.onload = () => resolve(reader.result as string);
+                                                        reader.readAsDataURL(manualFile);
+                                                    });
+                                                    receiptUrl = await base64Promise;
+                                                }
+
                                                 const res = await registerPostventaPayment({
                                                     reservationId: selectedClientLedger.id,
                                                     amount: parseInt(manualAmount),
-                                                    scope: manualScope
+                                                    scope: manualScope,
+                                                    receiptUrl
                                                 });
                                                 if (res.error) toast.error(res.error);
                                                 else {
                                                     toast.success("Pago registrado exitosamente");
                                                     setManualAmount('');
+                                                    setManualFile(null);
                                                     // Refresh the listing
                                                     setIsLoadingReceipts(true);
                                                     const updatedRes = await getReservationReceipts(selectedClientLedger.id);
                                                     if ('receipts' in updatedRes) setClientReceipts(updatedRes.receipts as any[]);
                                                     setIsLoadingReceipts(false);
+                                                    refreshData();
                                                 }
                                             } catch (e) {
                                                 toast.error("Error al procesar el pago");
@@ -1350,7 +1412,7 @@ export function PostventaMobileDashboard({
                                             </button>
                                             {!p.isAuto && (
                                                 <button 
-                                                    onClick={() => handleDeleteDocument(selectedClientLedger.id, p.category, p.url)}
+                                                    onClick={() => handleDeleteReceipt(p.id)}
                                                     className="p-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg transition-all"
                                                     title="Eliminar"
                                                 >

@@ -1,0 +1,315 @@
+﻿
+Macarena Carrasco  | Lote 1 | legacy=false | 6/23 cuotas
+  base: 05-10-2025 | customDueDay=5
+  Ô£à Cuota 1: 05 oct 2025
+  Ô£à Cuota 2: 05 nov 2025
+  Ô£à Cuota 3: 05 dic 2025
+  Ô£à Cuota 4: 05 ene 2026
+  Ô£à Cuota 5: 05 feb 2026
+  Ô£à Cuota 6: 05 mar 2026
+
+Jose Domingo Torres Prieto  | Lote 13 | legacy=false | 1/64 cuotas
+  base: 05-03-2026 | customDueDay=5
+  Ô£à Cuota 1: 05 mar 2026
+  Ô¼£ Ôùä Cuota 2: 05 abr 2026
+  Ô¼£ Cuota 3: 05 may 2026
+  Ô¼£ Cuota 4: 05 jun 2026
+  Ô¼£ Cuota 5: 05 jul 2026
+  Ô¼£ Cuota 6: 05 ago 2026
+
+Nicolas Andres Correa Irribarra  | Lote 16 | legacy=false | 1/64 cuotas
+  base: 05-03-2026 | customDueDay=5
+  Ô£à Cuota 1: 05 mar 2026
+  Ô¼£ Ôùä Cuota 2: 05 abr 2026
+  Ô¼£ Cuota 3: 05 may 2026
+  Ô¼£ Cuota 4: 05 jun 2026
+  Ô¼£ Cuota 5: 05 jul 2026
+  Ô¼£ Cuota 6: 05 ago 2026
+
+Carolina del Carmen Rojas Donoso  | Lote 17 | legacy=false | 1/64 cuotas
+  base: 15-02-2026 | customDueDay=15
+  Ô£à Cuota 1: 15 feb 2026
+  Ô¼£ Ôùä Cuota 2: 15 mar 2026
+  Ô¼£ Cuota 3: 15 abr 2026
+  Ô¼£ Cuota 4: 15 may 2026
+  Ô¼£ Cuota 5: 15 jun 2026
+  Ô¼£ Cuota 6: 15 jul 2026
+
+Luisa Molina  | Lote 2 | legacy=false | 2/41 cuotas
+  base: 05-02-2026 | customDueDay=5
+  Ô£à Cuota 1: 05 feb 2026
+  Ô£à Cuota 2: 05 mar 2026
+  Ô¼£ Ôùä Cuota 3: 05 abr 2026
+  Ô¼£ Cuota 4: 05 may 2026
+  Ô¼£ Cuota 5: 05 jun 2026
+  Ô¼£ Cuota 6: 05 jul 2026
+
+Alexis Patricio Leiva pardo  | Lote 20 | legacy=false | 1/64 cuotas
+  base: 05-03-2026 | customDueDay=5
+  Ô£à Cuota 1: 05 mar 2026
+  Ô¼£ Ôùä Cuota 2: 05 abr 2026
+  Ô¼£ Cuota 3: 05 may 2026
+  Ô¼£ Cuota 4: 05 jun 2026
+  Ô¼£ Cuota 5: 05 jul 2026
+  Ô¼£ Cuota 6: 05 ago 2026
+
+Nicolas Cabrera  | Lote 28 | legacy=false | 1/64 cuotas
+  base: 05-03-2026 | customDueDay=5
+  Ô£à Cuota 1: 05 mar 2026
+  Ô¼£ Ôùä Cuota 2: 05 abr 2026
+  Ô¼£ Cuota 3: 05 may 2026
+  Ô¼£ Cuota 4: 05 jun 2026
+  Ô¼£ Cuota 5: 05 jul 2026
+  Ô¼£ Cuota 6: 05 ago 2026
+
+Ricardo Salazar  | Lote 3 | legacy=false | 1/64 cuotas
+  base: 05-03-2026 | customDueDay=5
+  Ô£à Cuota 1: 05 mar 2026
+  Ô¼£ Ôùä Cuota 2: 05 abr 2026
+  Ô¼£ Cuota 3: 05 may 2026
+  Ô¼£ Cuota 4: 05 jun 2026
+  Ô¼£ Cuota 5: 05 jul 2026
+  Ô¼£ Cuota 6: 05 ago 2026
+
+Gloria Sauzo  | Lote 32 | legacy=false | 1/78 cuotas
+  base: 05-03-2026 | customDueDay=5
+  Ô£à Cuota 1: 05 mar 2026
+  Ô¼£ Ôùä Cuota 2: 05 abr 2026
+  Ô¼£ Cuota 3: 05 may 2026
+  Ô¼£ Cuota 4: 05 jun 2026
+  Ô¼£ Cuota 5: 05 jul 2026
+  Ô¼£ Cuota 6: 05 ago 2026
+
+Marcelo Alejandro Marquez Aldana  | Lote 33 | legacy=false | 2/77 cuotas
+  base: 05-03-2026 | customDueDay=5
+  Ô£à Cuota 1: 05 mar 2026
+  Ô£à Cuota 2: 05 abr 2026
+  Ô¼£ Ôùä Cuota 3: 05 may 2026
+  Ô¼£ Cuota 4: 05 jun 2026
+  Ô¼£ Cuota 5: 05 jul 2026
+  Ô¼£ Cuota 6: 05 ago 2026
+
+Marcela Navarrete  | Lote 34 | legacy=true | 0/52 cuotas
+  base: 05-04-2026 | customDueDay=5
+  Ô¼£ Ôùä Cuota 1: 05 abr 2026
+  Ô¼£ Cuota 2: 05 may 2026
+  Ô¼£ Cuota 3: 05 jun 2026
+  Ô¼£ Cuota 4: 05 jul 2026
+  Ô¼£ Cuota 5: 05 ago 2026
+  Ô¼£ Cuota 6: 05 sept 2026
+
+Soledad Bravo lopez  | Lote 36 | legacy=false | 1/77 cuotas
+  base: 05-03-2026 | customDueDay=5
+  Ô£à Cuota 1: 05 mar 2026
+  Ô¼£ Ôùä Cuota 2: 05 abr 2026
+  Ô¼£ Cuota 3: 05 may 2026
+  Ô¼£ Cuota 4: 05 jun 2026
+  Ô¼£ Cuota 5: 05 jul 2026
+  Ô¼£ Cuota 6: 05 ago 2026
+
+Luis  Toledo | Lote 36 | legacy=true | 0/58 cuotas
+  base: 05-04-2026 | customDueDay=5
+  Ô¼£ Ôùä Cuota 1: 05 abr 2026
+  Ô¼£ Cuota 2: 05 may 2026
+  Ô¼£ Cuota 3: 05 jun 2026
+  Ô¼£ Cuota 4: 05 jul 2026
+  Ô¼£ Cuota 5: 05 ago 2026
+  Ô¼£ Cuota 6: 05 sept 2026
+
+Eugenia Rojas  | Lote 37 | legacy=false | 1/52 cuotas
+  base: 19-01-2026 | customDueDay=19
+  Ô£à Cuota 1: 19 ene 2026
+  Ô¼£ Ôùä Cuota 2: 19 feb 2026
+  Ô¼£ Cuota 3: 19 mar 2026
+  Ô¼£ Cuota 4: 19 abr 2026
+  Ô¼£ Cuota 5: 19 may 2026
+  Ô¼£ Cuota 6: 19 jun 2026
+
+Caroline Macarena Vera Maulen  | Lote 37 | legacy=false | 1/77 cuotas
+  base: 05-03-2026 | customDueDay=5
+  Ô£à Cuota 1: 05 mar 2026
+  Ô¼£ Ôùä Cuota 2: 05 abr 2026
+  Ô¼£ Cuota 3: 05 may 2026
+  Ô¼£ Cuota 4: 05 jun 2026
+  Ô¼£ Cuota 5: 05 jul 2026
+  Ô¼£ Cuota 6: 05 ago 2026
+
+Jessica Aravena  | Lote 38 | legacy=false | 1/52 cuotas
+  base: 05-03-2026 | customDueDay=5
+  Ô£à Cuota 1: 05 mar 2026
+  Ô¼£ Ôùä Cuota 2: 05 abr 2026
+  Ô¼£ Cuota 3: 05 may 2026
+  Ô¼£ Cuota 4: 05 jun 2026
+  Ô¼£ Cuota 5: 05 jul 2026
+  Ô¼£ Cuota 6: 05 ago 2026
+
+Diego Alexander oyanedel arriaza  | Lote 38 | legacy=false | 1/77 cuotas
+  base: 05-03-2026 | customDueDay=5
+  Ô£à Cuota 1: 05 mar 2026
+  Ô¼£ Ôùä Cuota 2: 05 abr 2026
+  Ô¼£ Cuota 3: 05 may 2026
+  Ô¼£ Cuota 4: 05 jun 2026
+  Ô¼£ Cuota 5: 05 jul 2026
+  Ô¼£ Cuota 6: 05 ago 2026
+
+franco baeza ocares  | Lote 39 | legacy=false | 1/77 cuotas
+  base: 05-02-2026 | customDueDay=5
+  Ô£à Cuota 1: 05 feb 2026
+  Ô¼£ Ôùä Cuota 2: 05 mar 2026
+  Ô¼£ Cuota 3: 05 abr 2026
+  Ô¼£ Cuota 4: 05 may 2026
+  Ô¼£ Cuota 5: 05 jun 2026
+  Ô¼£ Cuota 6: 05 jul 2026
+
+Bernardita Herrera  | Lote 39 | legacy=false | 6/57 cuotas
+  base: 05-04-2026 | customDueDay=5
+  Ô£à Cuota 1: 05 abr 2026
+  Ô£à Cuota 2: 05 may 2026
+  Ô£à Cuota 3: 05 jun 2026
+  Ô£à Cuota 4: 05 jul 2026
+  Ô£à Cuota 5: 05 ago 2026
+  Ô£à Cuota 6: 05 sept 2026
+
+Maria jose vergara diaz  | Lote 40 | legacy=false | 1/78 cuotas
+  base: 05-03-2026 | customDueDay=5
+  Ô£à Cuota 1: 05 mar 2026
+  Ô¼£ Ôùä Cuota 2: 05 abr 2026
+  Ô¼£ Cuota 3: 05 may 2026
+  Ô¼£ Cuota 4: 05 jun 2026
+  Ô¼£ Cuota 5: 05 jul 2026
+  Ô¼£ Cuota 6: 05 ago 2026
+
+Alexis Marcel Urrutia Navarrete  | Lote 40 | legacy=false | 1/77 cuotas
+  base: 05-03-2026 | customDueDay=5
+  Ô£à Cuota 1: 05 mar 2026
+  Ô¼£ Ôùä Cuota 2: 05 abr 2026
+  Ô¼£ Cuota 3: 05 may 2026
+  Ô¼£ Cuota 4: 05 jun 2026
+  Ô¼£ Cuota 5: 05 jul 2026
+  Ô¼£ Cuota 6: 05 ago 2026
+
+Naslo Castro | Lote 41 | legacy=true | 0/52 cuotas
+  base: 05-04-2026 | customDueDay=5
+  Ô¼£ Ôùä Cuota 1: 05 abr 2026
+  Ô¼£ Cuota 2: 05 may 2026
+  Ô¼£ Cuota 3: 05 jun 2026
+  Ô¼£ Cuota 4: 05 jul 2026
+  Ô¼£ Cuota 5: 05 ago 2026
+  Ô¼£ Cuota 6: 05 sept 2026
+
+Eduardo Arroyo  | Lote 42 | legacy=false | 6/56 cuotas
+  base: 05-01-2026 | customDueDay=5
+  Ô£à Cuota 1: 05 ene 2026
+  Ô£à Cuota 2: 05 feb 2026
+  Ô£à Cuota 3: 05 mar 2026
+  Ô£à Cuota 4: 05 abr 2026
+  Ô£à Cuota 5: 05 may 2026
+  Ô£à Cuota 6: 05 jun 2026
+
+Rodrigo Marquez  | Lote 42 | legacy=false | 2/82 cuotas
+  base: 05-03-2026 | customDueDay=5
+  Ô£à Cuota 1: 05 mar 2026
+  Ô£à Cuota 2: 05 abr 2026
+  Ô¼£ Ôùä Cuota 3: 05 may 2026
+  Ô¼£ Cuota 4: 05 jun 2026
+  Ô¼£ Cuota 5: 05 jul 2026
+  Ô¼£ Cuota 6: 05 ago 2026
+
+Guillermo Eduardo Aguirre Guti├®rrez  | Lote 43 | legacy=false | 1/77 cuotas
+  base: 05-03-2026 | customDueDay=5
+  Ô£à Cuota 1: 05 mar 2026
+  Ô¼£ Ôùä Cuota 2: 05 abr 2026
+  Ô¼£ Cuota 3: 05 may 2026
+  Ô¼£ Cuota 4: 05 jun 2026
+  Ô¼£ Cuota 5: 05 jul 2026
+  Ô¼£ Cuota 6: 05 ago 2026
+
+Karina Astorga  | Lote 44 | legacy=false | 0/52 cuotas
+  base: 05-04-2026 | customDueDay=5
+  Ô¼£ Ôùä Cuota 1: 05 abr 2026
+  Ô¼£ Cuota 2: 05 may 2026
+  Ô¼£ Cuota 3: 05 jun 2026
+  Ô¼£ Cuota 4: 05 jul 2026
+  Ô¼£ Cuota 5: 05 ago 2026
+  Ô¼£ Cuota 6: 05 sept 2026
+
+Nicole Leyton  | Lote 45 | legacy=false | 3/52 cuotas
+  base: 05-02-2026 | customDueDay=5
+  Ô£à Cuota 1: 05 feb 2026
+  Ô£à Cuota 2: 05 mar 2026
+  Ô£à Cuota 3: 05 abr 2026
+  Ô¼£ Ôùä Cuota 4: 05 may 2026
+  Ô¼£ Cuota 5: 05 jun 2026
+  Ô¼£ Cuota 6: 05 jul 2026
+
+Johanna Lucero  | Lote 46 | legacy=false | 1/78 cuotas
+  base: 05-03-2026 | customDueDay=5
+  Ô£à Cuota 1: 05 mar 2026
+  Ô¼£ Ôùä Cuota 2: 05 abr 2026
+  Ô¼£ Cuota 3: 05 may 2026
+  Ô¼£ Cuota 4: 05 jun 2026
+  Ô¼£ Cuota 5: 05 jul 2026
+  Ô¼£ Cuota 6: 05 ago 2026
+
+Pamela Salazar  | Lote 46 | legacy=false | 1/52 cuotas
+  base: 05-03-2026 | customDueDay=5
+  Ô£à Cuota 1: 05 mar 2026
+  Ô¼£ Ôùä Cuota 2: 05 abr 2026
+  Ô¼£ Cuota 3: 05 may 2026
+  Ô¼£ Cuota 4: 05 jun 2026
+  Ô¼£ Cuota 5: 05 jul 2026
+  Ô¼£ Cuota 6: 05 ago 2026
+
+Luis Varela  | Lote 47 | legacy=false | 4/43 cuotas
+  base: 04-01-2026 | customDueDay=4
+  Ô£à Cuota 1: 04 ene 2026
+  Ô£à Cuota 2: 04 feb 2026
+  Ô£à Cuota 3: 04 mar 2026
+  Ô£à Cuota 4: 04 abr 2026
+  Ô¼£ Ôùä Cuota 5: 04 may 2026
+  Ô¼£ Cuota 6: 04 jun 2026
+
+Monica Rios  | Lote 47 | legacy=false | 2/64 cuotas
+  base: 05-02-2026 | customDueDay=5
+  Ô£à Cuota 1: 05 feb 2026
+  Ô£à Cuota 2: 05 mar 2026
+  Ô¼£ Ôùä Cuota 3: 05 abr 2026
+  Ô¼£ Cuota 4: 05 may 2026
+  Ô¼£ Cuota 5: 05 jun 2026
+  Ô¼£ Cuota 6: 05 jul 2026
+
+Francisca Canales | Lote 5 | legacy=false | 2/43 cuotas
+  base: 05-02-2026 | customDueDay=5
+  Ô£à Cuota 1: 05 feb 2026
+  Ô£à Cuota 2: 05 mar 2026
+  Ô¼£ Ôùä Cuota 3: 05 abr 2026
+  Ô¼£ Cuota 4: 05 may 2026
+  Ô¼£ Cuota 5: 05 jun 2026
+  Ô¼£ Cuota 6: 05 jul 2026
+
+Paola Riquelme  | Lote 6 | legacy=false | 2/43 cuotas
+  base: 05-01-2026 | customDueDay=5
+  Ô£à Cuota 1: 05 ene 2026
+  Ô£à Cuota 2: 05 feb 2026
+  Ô¼£ Ôùä Cuota 3: 05 mar 2026
+  Ô¼£ Cuota 4: 05 abr 2026
+  Ô¼£ Cuota 5: 05 may 2026
+  Ô¼£ Cuota 6: 05 jun 2026
+
+Guillermo Silva | Lote 8 | legacy=false | 7/23 cuotas
+  base: 05-10-2025 | customDueDay=5
+  Ô£à Cuota 1: 05 oct 2025
+  Ô£à Cuota 2: 05 nov 2025
+  Ô£à Cuota 3: 05 dic 2025
+  Ô£à Cuota 4: 05 ene 2026
+  Ô£à Cuota 5: 05 feb 2026
+  Ô£à Cuota 6: 05 mar 2026
+
+Eduardo Contreras Ibarra  | Lote 9 | legacy=false | 1/64 cuotas
+  base: 05-03-2026 | customDueDay=5
+  Ô£à Cuota 1: 05 mar 2026
+  Ô¼£ Ôùä Cuota 2: 05 abr 2026
+  Ô¼£ Cuota 3: 05 may 2026
+  Ô¼£ Cuota 4: 05 jun 2026
+  Ô¼£ Cuota 5: 05 jul 2026
+  Ô¼£ Cuota 6: 05 ago 2026

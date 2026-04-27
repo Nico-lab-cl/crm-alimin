@@ -1,0 +1,81 @@
+﻿Ô£à Conectado via Prisma.
+
+ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ
+­ƒôï CLIENTE: Luis Varela 
+   Email: luis.danie.varela@gmail.com
+   Reservation ID: 58185313-260d-4115-8963-361709cc299d
+   Estado: paid
+ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ
+
+­ƒôè DATOS CRUDOS:
+ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+   Lote:                       47 (Etapa 2)
+   installments_paid (DB):     4
+   legacy_current_installment: 4
+   total cuotas:               43
+   valor_cuota:                $550.000
+   precio_total:               $27.900.000
+   pie (reservation):          $4.500.000
+   pie (lot):                  $4.500.000
+   pie_status:                 PAID
+   is_legacy:                  false
+   is_promo:                   false
+   mora_frozen:                false
+
+­ƒôà FECHAS:
+ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+   created_at:                     Thu Mar 05 2026 22:03:24 GMT-0300 (hora de verano de Chile)
+   legacy_installment_start_date:  Fri Dec 05 2025 00:00:00 GMT-0300 (hora de verano de Chile)
+   legacy_debt_start_date:         null
+   next_payment_date (MANUAL):     null
+   legacy_installment_ranges:      []
+
+­ƒÆ│ RECIBOS:
+ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+   1. $4.500.000 | PIE          | APPROVED | 2026-03-12 | #- | LEGACY
+   2. $550.000 | INSTALLMENT  | APPROVED | 2026-03-12 | #- | LEGACY
+   3. $550.000 | INSTALLMENT  | APPROVED | 2026-03-12 | #- | LEGACY
+   4. $550.000 | INSTALLMENT  | APPROVED | 2026-03-12 | #- | LEGACY
+   5. $550.000 | INSTALLMENT  | APPROVED | 2026-04-01 | #4 | UPLOAD
+
+   ­ƒôî Recibos INSTALLMENT aprobados: 4
+
+­ƒö¼ SIMULACI├ôN:
+ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+   paidCuotas = 4
+   totalCuotas = 43
+   isLegacy = false
+   baseDate = 2025-12-05T03:00:00.000Z
+   customDueDay = 5
+   ­ƒº« CALCULA: cuota 5 ÔåÆ 05-04-2026
+
+­ƒûÑ´©Å  MUESTRA EN DASHBOARD:
+ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+   ┬½Cuotas Pagadas: 4 / 43┬╗
+   ┬½Pr├│ximo Pago:   05 de abril de 2026┬╗
+
+­ƒôÉ CALENDARIO:
+ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+   Ô£à Cuota  1: 05 dic 2025
+   Ô£à Cuota  2: 05 ene 2026
+   Ô£à Cuota  3: 05 feb 2026
+   Ô£à Cuota  4: 05 mar 2026
+   Ô¼£ Cuota  5: 05 abr 2026 ÔùäÔöÇÔöÇ PR├ôXIMA
+   Ô¼£ Cuota  6: 05 may 2026
+   Ô¼£ Cuota  7: 05 jun 2026
+   Ô¼£ Cuota  8: 05 jul 2026
+   Ô¼£ Cuota  9: 05 ago 2026
+   Ô¼£ Cuota 10: 05 sept 2026
+   Ô¼£ Cuota 11: 05 oct 2026
+   Ô¼£ Cuota 12: 05 nov 2026
+   Ô¼£ Cuota 13: 05 dic 2026
+   Ô¼£ Cuota 14: 05 ene 2027
+   Ô¼£ Cuota 15: 05 feb 2027
+
+­ƒöì DIAGN├ôSTICO:
+ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+   Ô£à Consistente: installments_paid=4 = recibos=4
+   ÔÜá´©Å  legacy_current_installment=4 Ôëá expected 5 (installments_paid+1)
+
+
+­ƒöî Listo.

@@ -1,0 +1,20 @@
+﻿Cliente: Luis Varela
+is_legacy: false
+ANTES: legacy_installment_start_date = Fri Dec 05 2025 00:00:00 GMT-0300 (hora de verano de Chile)
+ANTES: installments_paid = 4
+ANTES: next_payment_date = null
+
+DESPU├ëS: legacy_installment_start_date = Sun Jan 04 2026 21:00:00 GMT-0300 (hora de verano de Chile)
+DESPU├ëS: next_payment_date = null
+
+Calendario corregido:
+   Ô£à Cuota 1: 05 enero de 2026
+   Ô£à Cuota 2: 05 febrero de 2026
+   Ô£à Cuota 3: 05 marzo de 2026
+   Ô£à Cuota 4: 05 abril de 2026
+   Ô¼£ Cuota 5: 05 mayo de 2026 ÔùäÔöÇÔöÇ PR├ôXIMA
+   Ô¼£ Cuota 6: 05 junio de 2026
+   Ô¼£ Cuota 7: 05 julio de 2026
+   Ô¼£ Cuota 8: 05 agosto de 2026
+
+Ô£à Corregido.
