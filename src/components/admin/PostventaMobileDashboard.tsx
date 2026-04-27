@@ -13,13 +13,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { 
     Loader2, CheckCircle, XCircle, Eye, MapPin, CreditCard, Clock, Receipt, BookOpen, 
     AlertTriangle, Search, Filter, FileSignature, Gavel, Wallet, CalendarDays, ArrowRight, ShieldAlert, RefreshCw,
-    FileText, Download, Trash2, Edit, Map, Snowflake
+    FileText, Download, Trash2, Edit, Map, Snowflake, Calendar as CalendarIcon
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { approvePaymentReceipt, rejectPaymentReceipt, deletePaymentReceipt } from '@/actions/receipts';
 import { syncLegacyReceipts, getReservationReceipts, registerPostventaPayment } from '@/actions/postventa';
-import { toggleMoraFreeze } from '@/actions/dashboard';
+import { toggleMoraFreeze, updateMoraDates } from '@/actions/dashboard';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { UniversalDocumentViewer } from "@/components/shared/UniversalDocumentViewer";
@@ -29,6 +29,8 @@ import { exportToExcel } from '@/lib/export-utils';
 import { AdminMoraManager } from "@/components/admin/AdminMoraManager"
 import { AssignOwnerModal } from "@/components/dashboard/AssignOwnerModal";
 import { AdminLotList } from "@/components/dashboard/AdminLotList";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 
 export type PostventaTab = 'mora' | 'ledger' | 'alertas' | 'terrenos';
 
@@ -98,6 +100,17 @@ export function PostventaMobileDashboard({
     const [manualScope, setManualScope] = useState<'PIE' | 'INSTALLMENT' | 'GASTOS_OPERACIONALES'>('INSTALLMENT');
     const [manualFile, setManualFile] = useState<File | null>(null);
     const [isRegistering, setIsRegistering] = useState(false);
+
+    const [moraStartDate, setMoraStartDate] = useState<Date | undefined>(undefined);
+    const [moraEndDate, setMoraEndDate] = useState<Date | undefined>(undefined);
+    const [isUpdatingMora, setIsUpdatingMora] = useState(false);
+
+    useEffect(() => {
+        if (selectedClientLedger) {
+            setMoraStartDate(selectedClientLedger.legacy_debt_start_date ? new Date(selectedClientLedger.legacy_debt_start_date) : undefined);
+            setMoraEndDate(selectedClientLedger.legacy_debt_end_date ? new Date(selectedClientLedger.legacy_debt_end_date) : undefined);
+        }
+    }, [selectedClientLedger]);
     const ALERTS_PER_PAGE = 10;
     
     const router = useRouter();
@@ -1014,6 +1027,74 @@ export function PostventaMobileDashboard({
                                                 <Snowflake className="w-3 h-3 mr-2" />
                                                 {selectedClientLedger.isMoraFrozen ? "Activar Mora" : "Congelar Mora"}
                                             </Button>
+
+                                            <div className="bg-black/40 backdrop-blur-md rounded-2xl p-4 border border-white/5 w-full max-w-[250px] space-y-3">
+                                                <div className="flex items-center justify-between">
+                                                    <p className="text-[10px] text-[#3f6066] font-black uppercase tracking-widest">Rango de Mora Manual</p>
+                                                    <ShieldAlert className="w-3 h-3 text-amber-500" />
+                                                </div>
+                                                
+                                                <div className="space-y-2">
+                                                    <div className="space-y-1">
+                                                        <p className="text-[8px] text-gray-500 font-bold uppercase ml-1">Inicio</p>
+                                                        <Popover>
+                                                            <PopoverTrigger asChild>
+                                                                <Button variant="outline" size="sm" className="w-full h-8 bg-white/5 border-white/5 text-[10px] font-bold text-[#8eb2b8] justify-start px-2">
+                                                                    <CalendarIcon className="w-3 h-3 mr-2 opacity-50" />
+                                                                    {moraStartDate ? format(moraStartDate, 'dd/MM/yy') : "Normal"}
+                                                                </Button>
+                                                            </PopoverTrigger>
+                                                            <PopoverContent className="w-auto p-0 bg-[#0a1622] border-white/10" align="end">
+                                                                <div className="p-2 border-b border-white/5 flex justify-between items-center">
+                                                                    <span className="text-[9px] font-black text-white uppercase ml-2">Inicio de Mora</span>
+                                                                    <Button variant="ghost" size="sm" className="h-6 text-[8px] text-red-400 font-bold" onClick={() => setMoraStartDate(undefined)}>Limpiar</Button>
+                                                                </div>
+                                                                <Calendar mode="single" selected={moraStartDate} onSelect={setMoraStartDate} initialFocus className="bg-transparent text-white" />
+                                                            </PopoverContent>
+                                                        </Popover>
+                                                    </div>
+
+                                                    <div className="space-y-1">
+                                                        <p className="text-[8px] text-gray-500 font-bold uppercase ml-1">Fin (Cierre)</p>
+                                                        <Popover>
+                                                            <PopoverTrigger asChild>
+                                                                <Button variant="outline" size="sm" className="w-full h-8 bg-white/5 border-white/5 text-[10px] font-bold text-[#8eb2b8] justify-start px-2">
+                                                                    <CalendarIcon className="w-3 h-3 mr-2 opacity-50" />
+                                                                    {moraEndDate ? format(moraEndDate, 'dd/MM/yy') : "Hasta Hoy"}
+                                                                </Button>
+                                                            </PopoverTrigger>
+                                                            <PopoverContent className="w-auto p-0 bg-[#0a1622] border-white/10" align="end">
+                                                                <div className="p-2 border-b border-white/5 flex justify-between items-center">
+                                                                    <span className="text-[9px] font-black text-white uppercase ml-2">Término de Mora</span>
+                                                                    <Button variant="ghost" size="sm" className="h-6 text-[8px] text-red-400 font-bold" onClick={() => setMoraEndDate(undefined)}>Hasta Hoy</Button>
+                                                                </div>
+                                                                <Calendar mode="single" selected={moraEndDate} onSelect={setMoraEndDate} initialFocus className="bg-transparent text-white" />
+                                                            </PopoverContent>
+                                                        </Popover>
+                                                    </div>
+
+                                                    <Button 
+                                                        onClick={async () => {
+                                                            setIsUpdatingMora(true);
+                                                            const res = await updateMoraDates(
+                                                                selectedClientLedger.id, 
+                                                                moraStartDate?.toISOString() || null, 
+                                                                moraEndDate?.toISOString() || null
+                                                            );
+                                                            setIsUpdatingMora(false);
+                                                            if (res.error) toast.error(res.error);
+                                                            else {
+                                                                toast.success(res.message);
+                                                                window.location.reload();
+                                                            }
+                                                        }}
+                                                        disabled={isUpdatingMora}
+                                                        className="w-full h-8 bg-[#3f6066] hover:bg-[#3f6066]/80 text-white text-[9px] font-black uppercase tracking-widest rounded-xl mt-2"
+                                                    >
+                                                        {isUpdatingMora ? <Loader2 className="w-3 h-3 animate-spin" /> : "Guardar Fechas"}
+                                                    </Button>
+                                                </div>
+                                            </div>
 
                                             {selectedClientLedger.observation && (
                                                 <div className="mt-2 w-full max-w-[250px] p-3 rounded-xl bg-[#3f6066]/10 border border-[#3f6066]/30 text-left backdrop-blur-md shadow-inner">

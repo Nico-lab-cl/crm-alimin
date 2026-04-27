@@ -732,6 +732,37 @@ export async function toggleMoraFreeze(reservationId: string, freeze: boolean) {
     }
 }
 
+export async function updateMoraDates(reservationId: string, startDate: string | null, endDate: string | null) {
+    const session = await auth();
+    if (session?.user?.role !== Role.ADMIN) return { error: "No autorizado" };
+
+    try {
+        await prisma.reservation.update({
+            where: { id: reservationId },
+            data: {
+                legacy_debt_start_date: startDate ? new Date(startDate) : null,
+                legacy_debt_end_date: endDate ? new Date(endDate) : null
+            }
+        });
+
+        await logAdminAction({
+            action: 'UPDATE',
+            entity: 'Reservation',
+            entityId: reservationId,
+            details: `Actualización manual de fechas de mora: Inicio=${startDate || 'Normal'}, Fin=${endDate || 'Hoy'}`,
+            pk: reservationId
+        });
+
+        revalidatePath('/admin/dashboard');
+        memoryCache.deleteByPrefix('postventa_full_');
+        memoryCache.deleteByPrefix('receipts_paginated_');
+        return { success: true, message: "Fechas de mora actualizadas correctamente." };
+    } catch (error) {
+        console.error("Error updating mora dates:", error);
+        return { error: "Error al actualizar fechas de mora" };
+    }
+}
+
 export async function triggerLegacyWorkflow(reservationId: string) {
     const session = await auth()
     const isPostventa = session?.user?.email === 'postventa@lomasdelmar.cl';
