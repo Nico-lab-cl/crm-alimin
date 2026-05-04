@@ -153,7 +153,11 @@ export function PaymentButtons({ reservationId, lot, reservation, acquisitionDat
             reservation.legacy_debt_start_date,
             reservation.legacy_debt_end_date
         );
-        if (interest > 0) {
+        const iGrace = new Date(iDue);
+        iGrace.setDate(iDue.getDate() + 5);
+        iGrace.setHours(23, 59, 59, 999);
+
+        if (interest > 0 || checkDate > iGrace) {
             overdueCount++;
         } else {
             break;
