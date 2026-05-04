@@ -438,11 +438,18 @@ export function PaymentButtons({ reservationId, lot, reservation, acquisitionDat
                                             Estás pagando:
                                         </div>
                                         {count === 1 ? (
-                                            <div className="flex justify-between text-blue-700 font-medium bg-blue-50 p-2 rounded relative">
-                                                <span>Cuota {paidCuotas + 1}</span>
-                                                <span>Vence: {formatDateChile(firstDue)}</span>
+                                            <div className="flex flex-col bg-blue-50 p-2 rounded relative">
+                                                <div className="flex justify-between text-blue-700 font-medium">
+                                                    <span>Cuota {paidCuotas + 1}</span>
+                                                    <span>Vence: {formatDateChile(firstDue)}</span>
+                                                </div>
                                                 {overdueCount >= 1 && (
-                                                    <span className="absolute -top-2 -left-1 bg-red-600 text-white text-[8px] px-1 rounded">OBLIGATORIO</span>
+                                                    <div className="flex justify-between items-center mt-1">
+                                                        <span className="bg-red-600 text-white text-[8px] px-1 rounded font-bold">OBLIGATORIO</span>
+                                                        {calculatedInterest > 0 && (
+                                                            <span className="text-[10px] text-red-600 font-bold">+ {formatCurrency(calculatedInterest)} interés</span>
+                                                        )}
+                                                    </div>
                                                 )}
                                             </div>
                                         ) : (
@@ -451,10 +458,43 @@ export function PaymentButtons({ reservationId, lot, reservation, acquisitionDat
                                                     const instNum = paidCuotas + 1 + i;
                                                     const isOverdue = i < overdueCount;
                                                     const due = getInstallmentDueDate(baseDate, instNum, isLegacyBool, customDueDay, isPromoBool);
+                                                    
+                                                    // Calculate individual interest for this display line
+                                                    const instInterest = calculateTotalInterest(
+                                                        lot.price_total_clp || 0,
+                                                        lot.area_m2 || 200,
+                                                        due,
+                                                        isLegacyBool,
+                                                        checkDate,
+                                                        Boolean(reservation.mora_frozen),
+                                                        reservation.legacy_debt_start_date,
+                                                        reservation.legacy_debt_end_date
+                                                    );
+
+                                                    const instBaseAmount = getInstallmentAmount(
+                                                        instNum,
+                                                        totalCuotas,
+                                                        valorCuota,
+                                                        lastInstallmentPrice,
+                                                        reservation.legacy_installment_ranges
+                                                    );
+
                                                     return (
-                                                        <div key={instNum} className={`flex justify-between font-medium text-xs p-1 rounded ${isOverdue ? 'text-red-700 bg-red-50' : 'text-blue-700 bg-blue-50'}`}>
-                                                            <span>Cuota {instNum} {isOverdue && '(ATRÁSADA)'}</span>
-                                                            <span>{formatDateChile(due)}</span>
+                                                        <div key={instNum} className={`flex flex-col p-2 rounded ${isOverdue ? 'bg-red-50 border border-red-100' : 'bg-blue-50'}`}>
+                                                            <div className="flex justify-between font-medium text-xs">
+                                                                <span className={isOverdue ? 'text-red-700 font-bold' : 'text-blue-700'}>
+                                                                    Cuota {instNum} {isOverdue && '(ATRÁSADA)'}
+                                                                </span>
+                                                                <span className={isOverdue ? 'text-red-700' : 'text-blue-700'}>
+                                                                    {formatDateChile(due)}
+                                                                </span>
+                                                            </div>
+                                                            <div className="flex justify-between text-[10px] mt-1">
+                                                                <span className="text-gray-500">Monto: {formatCurrency(instBaseAmount)}</span>
+                                                                {instInterest > 0 && (
+                                                                    <span className="text-red-600 font-bold">Interés: +{formatCurrency(instInterest)}</span>
+                                                                )}
+                                                            </div>
                                                         </div>
                                                     );
                                                 })}
