@@ -59,14 +59,17 @@ export function calculateTotalInterest(
     
     if (legacyDebtEndDate) {
         const endDate = new Date(legacyDebtEndDate);
-        // If the current date (paymentDate) is AFTER the fixed end date, 
-        // we only calculate up to that fixed end date.
         if (pDate > endDate) {
             pDate.setTime(endDate.getTime());
         }
     }
 
     pDate.setHours(0, 0, 0, 0);
+
+    // Safety: An installment cannot be overdue if its due date hasn't passed yet
+    const effectiveDueDate = new Date(dueDate);
+    effectiveDueDate.setHours(0, 0, 0, 0);
+    if (pDate <= effectiveDueDate) return 0;
 
     let gDate: Date;
 
