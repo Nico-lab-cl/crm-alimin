@@ -72,6 +72,33 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                 session.user.role = token.role as Role
                 session.user.id = token.id as string
                 session.user.mustChangePassword = token.mustChangePassword as boolean;
+
+                // --- Administrative Impersonation Support ---
+                // If the logged-in user is an ADMIN and an 'impersonation_token' exists,
+                // we override the session with the impersonated user's data.
+                if (session.user.role === Role.ADMIN) {
+                    try {
+                        const { cookies } = await import('next/headers');
+                        const cookieStore = await cookies();
+                        const impersonationToken = cookieStore.get('impersonation_token')?.value;
+
+                        if (impersonationToken) {
+                            const { verifyMobileToken } = await import('@/lib/mobile-auth');
+                            const payload = await verifyMobileToken(impersonationToken);
+
+                            if (payload && payload.userId) {
+                                // Inject impersonated user data into the session returned to the client
+                                session.user.id = payload.userId;
+                                session.user.email = payload.email || session.user.email;
+                                session.user.role = (payload.role as Role) || Role.USER;
+                                (session as any).isImpersonating = true;
+                                console.log(`[Auth] Admin ${token.email} is impersonating User ID: ${payload.userId}`);
+                            }
+                        }
+                    } catch (err) {
+                        console.error("[Auth] Impersonation error:", err);
+                    }
+                }
             }
             return session
         },

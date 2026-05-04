@@ -8,6 +8,8 @@ import { logAdminAction } from "@/lib/logger"
 import { SignJWT } from "jose"
 import { sendPieWebhook, sendContractSignedWebhook } from "@/lib/webhooks"
 import { memoryCache } from "@/lib/cache"
+import { cookies } from "next/headers"
+import { createMobileToken } from "@/lib/mobile-auth"
 
 const POSTVENTA_CACHE_KEY = 'postventa_data';
 const ADMIN_STATS_CACHE_KEY = 'admin_stats_data';
@@ -1066,6 +1068,53 @@ export async function adminForceSignContract(reservationId: string, contractType
     } catch (error) {
         console.error("Error forcing signature:", error);
         return { error: "Error al forzar la firma del contrato" };
+    }
+}
+
+// ADMIN: IMPERSONATE USER
+export async function impersonateUser(targetUserId: string) {
+    const session = await auth();
+    if (session?.user?.role !== Role.ADMIN) return { error: "No autorizado" };
+
+    try {
+        const user = await prisma.user.findUnique({
+            where: { id: targetUserId },
+            select: { id: true, email: true, role: true }
+        });
+
+        if (!user) return { error: "Usuario no encontrado" };
+
+        // Create a mobile token that the user portal can use for impersonation
+        const token = await createMobileToken({
+            userId: user.id,
+            email: user.email,
+            role: user.role
+        });
+
+        // Set the token in a cookie that the user portal will look for
+        const cookieStore = await cookies();
+        cookieStore.set('impersonation_token', token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            maxAge: 60 * 30, // 30 minutes
+            path: '/'
+        });
+
+        return { success: true };
+    } catch (error) {
+        console.error("Error in impersonateUser:", error);
+        return { error: "Error al intentar ver como usuario" };
+    }
+}
+
+// ADMIN: STOP IMPERSONATING
+export async function stopImpersonating() {
+    try {
+        const cookieStore = await cookies();
+        cookieStore.delete('impersonation_token');
+        return { success: true };
+    } catch (error) {
+        return { error: "Error al detener simulación" };
     }
 }
 

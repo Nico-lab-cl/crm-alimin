@@ -40,6 +40,11 @@ interface Reservation {
 
 import { SignContractModal } from "@/components/SignContractModal";
 import { PaymentButtons } from "@/components/user/PaymentButtons";
+import { stopImpersonating } from "@/actions/dashboard";
+import { AlertTriangle, LogOut } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 export default function UserPlotsPage() {
     const { data: session, status } = useSession();
@@ -95,8 +100,33 @@ export default function UserPlotsPage() {
         <div className="min-h-screen relative flex flex-col items-center pt-10 pb-12 px-4 bg-black/95">
             <div className="absolute inset-0 bg-[url('/terreno-bg.JPG')] bg-cover bg-center opacity-20 blur-sm fixed" />
 
+            {/* Impersonation Banner */}
+            {(session as any)?.isImpersonating && (
+                <div className="fixed top-0 left-0 right-0 z-[100] bg-amber-600 text-white px-4 py-2 flex items-center justify-between shadow-lg animate-in slide-in-from-top duration-300">
+                    <div className="flex items-center gap-2">
+                        <AlertTriangle className="h-5 w-5 animate-pulse" />
+                        <p className="text-sm font-bold">
+                            MODO SIMULACIÓN: <span className="font-normal opacity-90">Viendo como </span> {session?.user?.email}
+                        </p>
+                    </div>
+                    <Button 
+                        variant="secondary" 
+                        size="sm" 
+                        className="h-8 bg-white text-amber-700 hover:bg-amber-50 border-none font-bold"
+                        onClick={async () => {
+                            await stopImpersonating();
+                            toast.success("Simulación finalizada. Recargando...");
+                            window.location.reload();
+                        }}
+                    >
+                        <LogOut className="h-4 w-4 mr-2" />
+                        Salir y Volver a Admin
+                    </Button>
+                </div>
+            )}
+
             <div className="container mx-auto relative z-10">
-                <header className="mb-12 text-center">
+                <header className={cn("mb-12 text-center", (session as any)?.isImpersonating && "mt-12")}>
                     <h1 className="text-5xl font-extrabold mb-4 text-[#36595F] drop-shadow-[0_2px_4px_rgba(255,255,255,0.1)] tracking-tight">
                         Mis Terrenos
                     </h1>

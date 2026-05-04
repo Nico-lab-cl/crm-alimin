@@ -5,9 +5,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { assignLegacyLotOwner } from "@/actions/dashboard"
+import { assignLegacyLotOwner, impersonateUser } from "@/actions/dashboard"
 import { toast } from "sonner"
-import { Loader2, Calendar as CalendarIcon } from "lucide-react"
+import { Loader2, Calendar as CalendarIcon, Eye } from "lucide-react"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
 import { format } from "date-fns"
@@ -27,6 +27,7 @@ interface AssignOwnerModalProps {
 
 export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSuccess, existingReservation }: AssignOwnerModalProps) {
     const [loading, setLoading] = useState(false)
+    const [impersonating, setImpersonating] = useState(false)
     const [formData, setFormData] = useState({
         name: "",
         last_name: "",
@@ -198,6 +199,30 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
             toast.error("Ocurrió un error inesperado")
         } finally {
             setLoading(false)
+        }
+    }
+
+    const handleImpersonate = async () => {
+        if (!existingReservation?.buyer?.id) {
+            toast.error("Este cliente aún no tiene un usuario asociado. Primero debes 'Activar Workflow' o guardar los cambios.")
+            return
+        }
+
+        setImpersonating(true)
+        try {
+            const result = await impersonateUser(existingReservation.buyer.id)
+            if (result.success) {
+                toast.success("Sesión de simulación activa. Redirigiendo...")
+                // Open in new tab to keep the dashboard open
+                window.open('/user/plots', '_blank')
+            } else {
+                toast.error(result.error || "Error al intentar ver como usuario")
+            }
+        } catch (error) {
+            console.error("Impersonation error:", error)
+            toast.error("Ocurrió un error al procesar la solicitud")
+        } finally {
+            setImpersonating(false)
         }
     }
 
@@ -897,14 +922,30 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
                         </div>
                     </div>
 
-                    <div className="flex justify-end gap-2 pt-4 border-t mt-4">
-                        <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                            Cancelar
-                        </Button>
-                        <Button type="submit" className="bg-[#36595F] text-white hover:bg-[#2A464B]" disabled={loading}>
-                            {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-                            {existingReservation ? "Guardar Cambios" : "Asignar Dueño"}
-                        </Button>
+                    <div className="flex justify-between items-center pt-4 border-t mt-4">
+                        <div>
+                            {existingReservation?.buyer?.id && (
+                                <Button 
+                                    type="button" 
+                                    variant="outline" 
+                                    className="border-amber-500 text-amber-700 hover:bg-amber-50 hover:text-amber-800"
+                                    onClick={handleImpersonate}
+                                    disabled={loading || impersonating}
+                                >
+                                    {impersonating ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Eye className="w-4 h-4 mr-2" />}
+                                    Ver como usuario
+                                </Button>
+                            )}
+                        </div>
+                        <div className="flex gap-2">
+                            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+                                Cancelar
+                            </Button>
+                            <Button type="submit" className="bg-[#36595F] text-white hover:bg-[#2A464B]" disabled={loading}>
+                                {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                                {existingReservation ? "Guardar Cambios" : "Asignar Dueño"}
+                            </Button>
+                        </div>
                     </div>
                 </form>
             </DialogContent>
