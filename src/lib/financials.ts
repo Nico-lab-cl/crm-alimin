@@ -113,7 +113,7 @@ export function calculateTotalInterest(
     }
 
     const diffTime = pDate.getTime() - gDate.getTime();
-    let daysLate = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    let daysLate = Math.round(diffTime / (1000 * 60 * 60 * 24));
 
     // If late, the first day of penalty (the start of the debt) is also counted
     if (daysLate > 0) {
