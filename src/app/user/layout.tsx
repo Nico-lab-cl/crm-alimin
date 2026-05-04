@@ -2,7 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home } from "lucide-react";
+import { Home, Eye, LogOut } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { stopImpersonating } from "@/actions/dashboard";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 
 const tabs = [
     { href: "/user/plots", label: "🏡 Terrenos" },
@@ -15,9 +19,29 @@ export default function UserLayout({
     children: React.ReactNode;
 }) {
     const pathname = usePathname();
+    const { data: session } = useSession();
+
+    const handleStopImpersonating = async () => {
+        await stopImpersonating();
+        toast.success("Regresando a vista administrador...");
+        window.location.reload();
+    };
 
     return (
         <div className="min-h-screen bg-background">
+            {/* Impersonation Banner (Requested Style) */}
+            {(session as any)?.isImpersonating && (
+                <div className="fixed top-4 left-4 z-[100] animate-in fade-in slide-in-from-top-2 duration-500">
+                    <button
+                        onClick={handleStopImpersonating}
+                        className="flex items-center gap-2 bg-[#FFC107] hover:bg-[#EBB106] text-black px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider shadow-[0_4px_12px_rgba(255,193,7,0.3)] transition-all transform hover:scale-105"
+                    >
+                        <Eye className="w-3.5 h-3.5" />
+                        VOLVER A VISTA ADMIN
+                    </button>
+                </div>
+            )}
+
             {/* Tab Navigation */}
             <nav className="fixed top-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-md border-b border-white/10">
                 <div className="container mx-auto px-3 sm:px-6">
