@@ -66,6 +66,11 @@ export function calculateTotalInterest(
 
     pDate.setHours(0, 0, 0, 0);
 
+    // Forgiveness Rule: No interest for installments due in April 2026 (requested by admin)
+    if (dueDate.getMonth() === 3 && dueDate.getFullYear() === 2026) {
+        return 0;
+    }
+
     // Safety: An installment cannot be overdue if its due date hasn't passed yet
     const effectiveDueDate = new Date(dueDate);
     effectiveDueDate.setHours(0, 0, 0, 0);
