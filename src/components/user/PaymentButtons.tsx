@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -18,7 +18,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { Loader2, CreditCard } from 'lucide-react';
+import { Loader2, CreditCard, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { getInstallmentDueDate, calculateDailyInterest, calculateTotalInterest } from '@/lib/financials';
 import { uploadPaymentReceipt } from '@/actions/receipts';
@@ -101,11 +101,19 @@ function getInstallmentAmount(
 
 export function PaymentButtons({ reservationId, lot, reservation, acquisitionDate, isAdminView, simulatedDate, comparisonDate }: PaymentButtonsProps) {
     const [isLoading, setIsLoading] = useState(false);
-    
     const [selectedCuotas, setSelectedCuotas] = useState<string>("1");
     const [isPieModalOpen, setIsPieModalOpen] = useState(false);
     const [isCuotasModalOpen, setIsCuotasModalOpen] = useState(false);
     const [fileBase64, setFileBase64] = useState<string | null>(null);
+
+    // Initial config for date calculations
+    const customStart = reservation.legacy_installment_start_date ? new Date(reservation.legacy_installment_start_date) : null;
+    const customDueDay = customStart ? customStart.getDate() : null;
+    const baseDate = customStart
+        ? customStart.toISOString()
+        : (acquisitionDate || new Date().toISOString());
+    const isLegacyBool = Boolean(reservation.is_legacy);
+    const isPromoBool = Boolean(reservation.is_promo);
 
     // Pending Receipt Checks
     const pendingPieReceipt = reservation.receipts?.find((r: any) => r.scope === 'PIE' && r.status === 'PENDING');
@@ -127,7 +135,40 @@ export function PaymentButtons({ reservationId, lot, reservation, acquisitionDat
     const remainingCuotas = Math.max(0, totalCuotas - paidCuotas);
     const isCuotasPaid = remainingCuotas === 0;
 
-    // Custom Logic for Last Installment
+    // MANDATORY OVERDUE CALCULATION
+    const checkDate = simulatedDate ? new Date(simulatedDate) : new Date();
+    checkDate.setHours(0, 0, 0, 0);
+
+    let overdueCount = 0;
+    for (let i = 1; i <= remainingCuotas; i++) {
+        const instNum = paidCuotas + i;
+        const iDue = getInstallmentDueDate(baseDate, instNum, isLegacyBool, customDueDay, isPromoBool);
+        const interest = calculateTotalInterest(
+            lot.price_total_clp || 0,
+            lot.area_m2 || 200,
+            iDue,
+            isLegacyBool,
+            checkDate,
+            Boolean(reservation.mora_frozen),
+            reservation.legacy_debt_start_date,
+            reservation.legacy_debt_end_date
+        );
+        if (interest > 0) {
+            overdueCount++;
+        } else {
+            break;
+        }
+    }
+
+    const minRequired = Math.max(1, overdueCount);
+
+    // Sync selectedCuotas with minRequired
+    useEffect(() => {
+        if (parseInt(selectedCuotas) < minRequired) {
+            setSelectedCuotas(String(minRequired));
+        }
+    }, [minRequired]);
+
     const count = parseInt(selectedCuotas);
     const startInstallment = paidCuotas + 1;
     const endInstallment = startInstallment + count - 1;
@@ -135,9 +176,16 @@ export function PaymentButtons({ reservationId, lot, reservation, acquisitionDat
     const lastInstallmentPrice = lot.last_installment_amount || valorCuota;
 
     let totalToPay = 0;
-    // Iterate over each installment being paid in this transaction to accumulate exact price
+    let accumulatedInterest = 0;
+    let maxDaysLate = 0;
+    let earliestRangeStart: Date | null = null;
+    let latestRangeEnd: Date | null = null;
+
+    // Iterate over each installment being paid in this transaction
     for (let i = 0; i < count; i++) {
         const instNum = paidCuotas + 1 + i;
+        
+        // Accumulate Base Price
         totalToPay += getInstallmentAmount(
             instNum,
             totalCuotas,
@@ -145,7 +193,48 @@ export function PaymentButtons({ reservationId, lot, reservation, acquisitionDat
             lastInstallmentPrice,
             reservation.legacy_installment_ranges
         );
+
+        // Accumulate Interest for this specific installment
+        const iDue = getInstallmentDueDate(baseDate, instNum, isLegacyBool, customDueDay, isPromoBool);
+        const interest = calculateTotalInterest(
+            lot.price_total_clp || 0,
+            lot.area_m2 || 200,
+            iDue,
+            isLegacyBool,
+            checkDate,
+            Boolean(reservation.mora_frozen),
+            reservation.legacy_debt_start_date,
+            reservation.legacy_debt_end_date
+        );
+
+        if (interest > 0) {
+            accumulatedInterest += interest;
+            const daily = calculateDailyInterest(lot.price_total_clp || 0, lot.area_m2 || 200);
+            const days = daily > 0 ? Math.round(interest / daily) : 0;
+            if (days > maxDaysLate) maxDaysLate = days;
+
+            // Track range for display
+            const rangeStart = reservation.legacy_debt_start_date 
+                ? new Date(reservation.legacy_debt_start_date)
+                : new Date(iDue);
+            if (!reservation.legacy_debt_start_date) rangeStart.setDate(rangeStart.getDate() + 5);
+            
+            if (!earliestRangeStart || rangeStart < earliestRangeStart) earliestRangeStart = rangeStart;
+            if (!latestRangeEnd || checkDate > latestRangeEnd) latestRangeEnd = checkDate;
+        }
     }
+
+    const calculatedInterest = accumulatedInterest;
+    const daysLateForDisplay = maxDaysLate;
+    let lateRangeDisplay = "";
+    if (earliestRangeStart && latestRangeEnd) {
+        lateRangeDisplay = `${earliestRangeStart.toLocaleDateString('es-CL', { day: '2-digit', month: '2-digit' })} - ${latestRangeEnd.toLocaleDateString('es-CL', { day: '2-digit', month: '2-digit' })}`;
+    }
+
+    const finalTotal = totalToPay + calculatedInterest;
+
+    const firstDue = getInstallmentDueDate(baseDate, paidCuotas + 1, isLegacyBool, customDueDay, isPromoBool);
+    const lastDue = getInstallmentDueDate(baseDate, paidCuotas + count, isLegacyBool, customDueDay, isPromoBool);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -192,87 +281,6 @@ export function PaymentButtons({ reservationId, lot, reservation, acquisitionDat
     const formatCurrency = (amount: number) => {
         return new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(amount);
     };
-
-    // Calculate For Display (Admin Preview & User Payment)
-    let previewInterest = 0;
-    let previewDays = 0;
-
-    let calculatedInterest = 0;
-    let daysLateForDisplay = 0;
-    let lateRangeDisplay = "";
-
-    const customStart = reservation.legacy_installment_start_date ? new Date(reservation.legacy_installment_start_date) : null;
-    const customDueDay = customStart ? customStart.getDate() : null;
-    const baseDate = customStart
-        ? customStart.toISOString()
-        : (acquisitionDate || new Date().toISOString());
-    const isLegacyBool = Boolean(reservation.is_legacy);
-    const isPromoBool = Boolean(reservation.is_promo);
-
-    // Re-calcula para iteración (UI list) usando SIMULATOR DATES SI ES ADMIN
-    // Si isAdmin === false, usar paymentDate real.
-    const effectivePaymentDate = (isAdminView && comparisonDate) ? comparisonDate : new Date();
-
-    const firstDue = getInstallmentDueDate(baseDate, paidCuotas + 1, isLegacyBool, customDueDay, isPromoBool);
-    const lastDue = getInstallmentDueDate(baseDate, paidCuotas + count, isLegacyBool, customDueDay, isPromoBool);
-
-    if (totalCuotas > 0 && count > 0) {
-        const effectiveDate = comparisonDate || simulatedDate || new Date();
-        const targetDate = new Date(effectiveDate);
-        targetDate.setHours(0, 0, 0, 0);
-
-        // Check ONLY the first pending quota for interest calculation
-        const instNum = paidCuotas + 1;
-        if (instNum <= totalCuotas) {
-
-            const iDue = getInstallmentDueDate(baseDate, instNum, isLegacyBool, customDueDay, isPromoBool);
-            const totalPrice = lot.price_total_clp || 0;
-            const lotAreaM2 = lot.area_m2 || 200;
-
-            const interestForThisInstallment = calculateTotalInterest(
-                totalPrice,
-                lotAreaM2,
-                iDue,
-                Boolean(reservation.is_legacy),
-                targetDate,
-                Boolean(reservation.mora_frozen),
-                reservation.legacy_debt_start_date,
-                reservation.legacy_debt_end_date
-            );
-
-            if (interestForThisInstallment > 0) {
-                const daily = calculateDailyInterest(totalPrice, lotAreaM2);
-                const calculatedDays = daily > 0 ? Math.round(interestForThisInstallment / daily) : 0;
-
-                // Admin Preview
-                previewInterest = interestForThisInstallment;
-                previewDays = calculatedDays;
-
-                // User Payment
-                calculatedInterest = interestForThisInstallment;
-                daysLateForDisplay = calculatedDays;
-                
-                // Determinamos el inicio del periodo de multa para el display
-                // Si es legacy con deuda manual, el rango empieza en esa fecha
-                // Si no, empieza el día después del fin de la gracia (iDue + 5 días)
-                const rangeStart = reservation.legacy_debt_start_date 
-                    ? new Date(reservation.legacy_debt_start_date)
-                    : new Date(iDue);
-                
-                if (!reservation.legacy_debt_start_date) {
-                    rangeStart.setDate(rangeStart.getDate() + 5);
-                }
-
-                const rangeEnd = reservation.legacy_debt_end_date && new Date(reservation.legacy_debt_end_date) < targetDate
-                    ? new Date(reservation.legacy_debt_end_date)
-                    : targetDate;
-
-                lateRangeDisplay = `${rangeStart.toLocaleDateString('es-CL', { day: '2-digit', month: '2-digit' })} - ${rangeEnd.toLocaleDateString('es-CL', { day: '2-digit', month: '2-digit' })}`;
-            }
-        }
-    }
-
-    const finalTotal = totalToPay + calculatedInterest;
 
     return (
         <div className="flex flex-col gap-3 mt-4">
@@ -370,9 +378,10 @@ export function PaymentButtons({ reservationId, lot, reservation, acquisitionDat
                             Pagar Cuotas
                         </Button>
                     </DialogTrigger>
-                    {calculatedInterest > 0 && isAdminView && (
-                        <div className="mt-2 text-[10px] text-center text-red-400 bg-red-900/10 border border-red-500/20 rounded p-1">
-                            Simulación: +{formatCurrency(calculatedInterest)}/cuota ({daysLateForDisplay} días)
+                    {overdueCount > 0 && (
+                        <div className="mt-2 text-[10px] text-center text-red-600 bg-red-50 border border-red-200 rounded p-2 flex items-center justify-center gap-1 font-bold">
+                            <AlertCircle className="h-3 w-3" />
+                            Tienes {overdueCount} {overdueCount === 1 ? 'cuota atrasada' : 'cuotas atrasadas'} obligatorias.
                         </div>
                     )}
                     <DialogContent className="bg-white text-black">
@@ -391,11 +400,19 @@ export function PaymentButtons({ reservationId, lot, reservation, acquisitionDat
                                     </SelectTrigger>
                                     <SelectContent className="bg-white border-gray-200 text-black">
                                         {Array.from({ length: remainingCuotas }, (_, i) => i + 1)
-                                            .map((num) => (
-                                            <SelectItem key={num} value={String(num)} className="hover:bg-gray-100 focus:bg-gray-100 focus:text-black">
-                                                {num} {num === 1 ? 'Cuota' : 'Cuotas'}
-                                            </SelectItem>
-                                        ))}
+                                            .map((num) => {
+                                                const isMandatory = num <= overdueCount;
+                                                return (
+                                                    <SelectItem 
+                                                        key={num} 
+                                                        value={String(num)} 
+                                                        disabled={num < minRequired}
+                                                        className="hover:bg-gray-100 focus:bg-gray-100 focus:text-black"
+                                                    >
+                                                        {num} {num === 1 ? 'Cuota' : 'Cuotas'} {isMandatory ? '(OBLIGATORIO)' : ''}
+                                                    </SelectItem>
+                                                );
+                                            })}
                                     </SelectContent>
                                 </Select>
                             </div>
@@ -421,32 +438,38 @@ export function PaymentButtons({ reservationId, lot, reservation, acquisitionDat
                                             Estás pagando:
                                         </div>
                                         {count === 1 ? (
-                                            <div className="flex justify-between text-blue-700 font-medium bg-blue-50 p-2 rounded">
+                                            <div className="flex justify-between text-blue-700 font-medium bg-blue-50 p-2 rounded relative">
                                                 <span>Cuota {paidCuotas + 1}</span>
                                                 <span>Vence: {formatDateChile(firstDue)}</span>
+                                                {overdueCount >= 1 && (
+                                                    <span className="absolute -top-2 -left-1 bg-red-600 text-white text-[8px] px-1 rounded">OBLIGATORIO</span>
+                                                )}
                                             </div>
                                         ) : (
                                             <div className="space-y-1">
-                                                <div className="flex justify-between text-blue-700 font-medium text-xs">
-                                                    <span>Desde Cuota {paidCuotas + 1}</span>
-                                                    <span>{formatDateChile(firstDue)}</span>
-                                                </div>
-                                                <div className="flex justify-between text-blue-700 font-medium text-xs">
-                                                    <span>Hasta Cuota {paidCuotas + count}</span>
-                                                    <span>{formatDateChile(lastDue)}</span>
-                                                </div>
+                                                {Array.from({ length: count }, (_, i) => {
+                                                    const instNum = paidCuotas + 1 + i;
+                                                    const isOverdue = i < overdueCount;
+                                                    const due = getInstallmentDueDate(baseDate, instNum, isLegacyBool, customDueDay, isPromoBool);
+                                                    return (
+                                                        <div key={instNum} className={`flex justify-between font-medium text-xs p-1 rounded ${isOverdue ? 'text-red-700 bg-red-50' : 'text-blue-700 bg-blue-50'}`}>
+                                                            <span>Cuota {instNum} {isOverdue && '(ATRÁSADA)'}</span>
+                                                            <span>{formatDateChile(due)}</span>
+                                                        </div>
+                                                    );
+                                                })}
                                             </div>
                                         )}
 
                                         {calculatedInterest > 0 && (
                                             <div className="flex flex-col text-red-600 font-bold text-sm mt-2 border-t border-red-100 pt-1">
                                                 <div className="flex justify-between">
-                                                    <span>Interés por mora:</span>
+                                                    <span>Interés por mora acumulado:</span>
                                                     <span>{formatCurrency(calculatedInterest)}</span>
                                                 </div>
                                                 {lateRangeDisplay && (
                                                     <div className="text-xs font-normal text-red-500 text-right">
-                                                        ({lateRangeDisplay}: {daysLateForDisplay} días)
+                                                        ({lateRangeDisplay}: hasta {daysLateForDisplay} días de atraso)
                                                     </div>
                                                 )}
                                             </div>
@@ -496,7 +519,7 @@ export function PaymentButtons({ reservationId, lot, reservation, acquisitionDat
                                 className="bg-[#36595F] text-white"
                             >
                                 {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                                {pendingInstReceipt ? "Verificando Pago Anteriror..." : "Subir Comprobante"}
+                                {pendingInstReceipt ? "Verificando Pago Anterior..." : "Subir Comprobante"}
                             </Button>
                         </DialogFooter>
                     </DialogContent>
