@@ -71,22 +71,23 @@ export function calculateTotalInterest(
     effectiveDueDate.setHours(0, 0, 0, 0);
     if (pDate <= effectiveDueDate) return 0;
 
+    // 2. Determine Grace Period End (Dynamic)
+    const gracePeriodEnd = new Date(dueDate);
+    // Rule: Grace period ends exactly 5 days after the due date.
+    gracePeriodEnd.setDate(dueDate.getDate() + 5);
+    gracePeriodEnd.setHours(23, 59, 59, 999);
+
     let gDate: Date;
 
     if (legacyDebtStartDate) {
-        // For users with a manual debt start date, we use that date directly
-        gDate = new Date(legacyDebtStartDate);
+        const manualStart = new Date(legacyDebtStartDate);
+        manualStart.setHours(0, 0, 0, 0);
+        // Business Rule: Use the LATER of the manual start date and the original grace period end.
+        // This ensures interest doesn't start for a month before it's actually due, 
+        // while still respecting the admin's manual override for older debt.
+        gDate = manualStart > gracePeriodEnd ? manualStart : gracePeriodEnd;
     } else {
-        // 1. Determine Grace Period End (Dynamic)
-        const gracePeriodEnd = new Date(dueDate);
-        // Rule: Grace period ends exactly 5 days after the due date.
-        gracePeriodEnd.setDate(dueDate.getDate() + 5);
-        gracePeriodEnd.setHours(23, 59, 59, 999);
         gDate = gracePeriodEnd;
-
-        if (paymentDate <= gracePeriodEnd) {
-            return 0;
-        }
     }
     gDate.setHours(0, 0, 0, 0);
 
