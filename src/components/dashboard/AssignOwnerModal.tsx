@@ -48,7 +48,7 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
         valor_cuota: 0,
         last_installment_amount: 0,
         price_total_clp: 0,
-        legacy_current_installment: 1,
+        legacy_current_installment: 0,
         isPiePaid: true,
         reserva_firmada: false,
         compraventa_firmada: false,
@@ -89,7 +89,7 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
                 valor_cuota: existingReservation.lot?.valor_cuota || 0,
                 last_installment_amount: existingReservation.lot?.last_installment_amount || 0,
                 price_total_clp: existingReservation.lot?.price_total_clp || 0,
-                legacy_current_installment: existingReservation.installments_paid ? existingReservation.installments_paid + 1 : 1,
+                legacy_current_installment: existingReservation.installments_paid || 0,
                 isPiePaid: existingReservation.pie_status !== 'PENDING',
                 reserva_firmada: !!existingReservation.signed_at,
                 compraventa_firmada: !!existingReservation.promesa_signed_at,
@@ -142,7 +142,7 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
                 name: "", last_name: "", email: "", phone: "", rut: "",
                 marital_status: "", profession: "", nationality: "Chilena",
                 address_street: "", address_number: "", address_commune: "", address_region: "",
-                reservation_amount_clp: 500000, pie: 0, cuotas: 0, valor_cuota: 0, last_installment_amount: 0, price_total_clp: 0, legacy_current_installment: 1, isPiePaid: true,
+                reservation_amount_clp: 500000, pie: 0, cuotas: 0, valor_cuota: 0, last_installment_amount: 0, price_total_clp: 0, legacy_current_installment: 0, isPiePaid: true,
                 reserva_firmada: false, compraventa_firmada: false, is_promo: false, mora_frozen: false,
                 advisor: "", observation: "",
                 extra_paid_amount: 0, pending_amount: 0, has_operational_expenses: false
@@ -179,7 +179,7 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
                     name: "", last_name: "", email: "", phone: "", rut: "",
                     marital_status: "", profession: "", nationality: "Chilena",
                     address_street: "", address_number: "", address_commune: "", address_region: "",
-                    reservation_amount_clp: 500000, pie: 0, cuotas: 0, valor_cuota: 0, last_installment_amount: 0, price_total_clp: 0, legacy_current_installment: 1, isPiePaid: true,
+                    reservation_amount_clp: 500000, pie: 0, cuotas: 0, valor_cuota: 0, last_installment_amount: 0, price_total_clp: 0, legacy_current_installment: 0, isPiePaid: true,
                     reserva_firmada: false, compraventa_firmada: false, is_promo: false, mora_frozen: false,
                     advisor: "", observation: "",
                     extra_paid_amount: 0, pending_amount: 0, has_operational_expenses: false
@@ -682,7 +682,7 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
                         <h4 className="font-semibold text-blue-900 border-b border-blue-200 pb-2">Estado de Pagos Actual</h4>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <Label htmlFor="legacy_current_installment">Cuotas ya pagadas por el cliente</Label>
+                                <Label htmlFor="legacy_current_installment">Cuotas ya PAGADAS por el cliente</Label>
                                 <Input
                                     id="legacy_current_installment"
                                     type="number"
@@ -691,7 +691,7 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
                                     value={formData.legacy_current_installment}
                                     onChange={(e) => setFormData({ ...formData, legacy_current_installment: Number(e.target.value) })}
                                 />
-                                <p className="text-xs text-blue-600">Ej: Si pagó 5 cuotas (Ene-May), pon 5. La próxima será la 6.</p>
+                                <p className="text-xs text-blue-600 font-medium">Indica el número total de cuotas que el cliente ya tiene canceladas. Ej: Si pagó 2, pon 2.</p>
                             </div>
 
                             <div className="space-y-2">

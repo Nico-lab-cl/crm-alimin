@@ -547,8 +547,8 @@ export async function assignLegacyLotOwner(data: {
 
         // Base assumption: if pie is set, it's paid. If they gave us current installment, we calculate how many they've paid.
         let paidInstallments = 0;
-        if (legacy_current_installment && legacy_current_installment > 1) {
-            paidInstallments = legacy_current_installment - 1;
+        if (legacy_current_installment && legacy_current_installment > 0) {
+            paidInstallments = legacy_current_installment;
         }
 
         // Update the Lot first to persist the financial constants
