@@ -48,6 +48,7 @@ interface PaymentButtonsProps {
         legacy_installment_ranges?: any;
         receipts?: any[];
         pie?: number | null;
+        next_installment_discount?: number | null;
     };
     acquisitionDate?: string | null;
     isAdminView?: boolean;
@@ -235,7 +236,8 @@ export function PaymentButtons({ reservationId, lot, reservation, acquisitionDat
         lateRangeDisplay = `${earliestRangeStart.toLocaleDateString('es-CL', { day: '2-digit', month: '2-digit' })} - ${latestRangeEnd.toLocaleDateString('es-CL', { day: '2-digit', month: '2-digit' })}`;
     }
 
-    const finalTotal = totalToPay + calculatedInterest;
+    const discount = reservation.next_installment_discount || 0;
+    const finalTotal = Math.max(0, totalToPay + calculatedInterest - discount);
 
     const firstDue = getInstallmentDueDate(baseDate, paidCuotas + 1, isLegacyBool, customDueDay, isPromoBool);
     const lastDue = getInstallmentDueDate(baseDate, paidCuotas + count, isLegacyBool, customDueDay, isPromoBool);
@@ -516,6 +518,13 @@ export function PaymentButtons({ reservationId, lot, reservation, acquisitionDat
                                                         ({lateRangeDisplay}: hasta {daysLateForDisplay} días de atraso)
                                                     </div>
                                                 )}
+                                            </div>
+                                        )}
+
+                                        {discount > 0 && (
+                                            <div className="flex justify-between text-green-600 font-bold text-sm mt-2 border-t border-green-100 pt-1">
+                                                <span>Descuento compensatorio:</span>
+                                                <span>-{formatCurrency(discount)}</span>
                                             </div>
                                         )}
 

@@ -119,6 +119,7 @@ model Reservation {
   buyer    User?   @relation("BuyerReservations", fields: [buyer_id], references: [id])
 
   next_payment_date DateTime?
+  next_installment_discount Int? @default(0)
 }
 
 model Contact {
