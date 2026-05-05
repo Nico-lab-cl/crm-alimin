@@ -222,10 +222,9 @@ export function AdminPlotManager({ reservations, allClients, userId, initialUser
                                                      : end;
                                                  
                                                  const diffTime = calculationEnd.getTime() - debtStart.getTime();
-                                                 let lateDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                                                 const lateDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
  
                                                  if (lateDays > 0) {
-                                                     lateDays += 1; // Match calculateTotalInterest logic
                                                      const totalPrice = res.lot.price_total_clp || 0;
                                                      const lotAreaM2 = res.lot.area_m2 || 200;
                                                      const dailyInterest = calculateDailyInterest(totalPrice, lotAreaM2);

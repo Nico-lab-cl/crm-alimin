@@ -115,13 +115,7 @@ export function calculateTotalInterest(
     const diffTime = pDate.getTime() - gDate.getTime();
     let daysLate = Math.round(diffTime / (1000 * 60 * 60 * 24));
 
-    // If late, the first day of penalty (the start of the debt) is also counted
-    if (daysLate > 0) {
-        daysLate += 1;
-    }
-
-    if (daysLate <= 0) return 0;
-
+    // The number of days late is the difference between the payment date and the grace period end date
     const dailyInterest = calculateDailyInterest(totalLotPrice, lotAreaM2);
-    return dailyInterest * daysLate;
+    return dailyInterest * (daysLate > 0 ? daysLate : 0);
 }
