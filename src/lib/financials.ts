@@ -73,8 +73,16 @@ export function calculateTotalInterest(
     // Penalty starts on the 11th.
     gracePeriodEnd.setDate(dueDate.getDate() + 5);
     gracePeriodEnd.setHours(23, 59, 59, 999);
+    
+    // Determine the absolute start of mora (prioritize manual date if it exists)
+    let effectiveMoraStart = gracePeriodEnd;
+    if (legacyDebtStartDate) {
+        const manualStart = new Date(legacyDebtStartDate);
+        manualStart.setHours(0, 0, 0, 0);
+        effectiveMoraStart = manualStart;
+    }
 
-    if (pDate <= gracePeriodEnd) return 0;
+    if (pDate < effectiveMoraStart) return 0;
 
     let gDate: Date;
 
@@ -82,11 +90,9 @@ export function calculateTotalInterest(
         const manualStart = new Date(legacyDebtStartDate);
         manualStart.setHours(0, 0, 0, 0);
         // Business Rule: For legacy debt, the start date is the FIRST day of penalty.
-        // So we anchor the calculation to the day BEFORE to ensure a difference of 1 on the start date.
-        const dayBefore = new Date(manualStart.getTime() - (1000 * 60 * 60 * 24));
-        
-        // We still respect the grace period of the current installment if it's later
-        gDate = dayBefore > gracePeriodEnd ? dayBefore : gracePeriodEnd;
+        // We anchor to the day BEFORE so that diff is 1 on the start date.
+        // This manual date takes priority over the standard grace period.
+        gDate = new Date(manualStart.getTime() - (1000 * 60 * 60 * 24));
     } else {
         gDate = gracePeriodEnd;
     }
