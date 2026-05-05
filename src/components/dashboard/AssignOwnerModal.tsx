@@ -101,7 +101,7 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
                 extra_paid_amount: existingReservation.extra_paid_amount || 0,
                 pending_amount: existingReservation.pending_amount || 0,
                 has_operational_expenses: !!existingReservation.has_operational_expenses,
-                next_installment_discount: existingReservation.next_installment_discount || 0,
+                next_installment_discount: Number(existingReservation.next_installment_discount) || 0,
             })
             if (existingReservation.legacy_debt_start_date) {
                 setHasDebt(true)
