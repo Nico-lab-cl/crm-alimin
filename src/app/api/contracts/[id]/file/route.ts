@@ -134,7 +134,7 @@ export async function GET(
                         }
                     }
 
-                    return new NextResponse(content, {
+                    return new NextResponse(content as any, {
                         headers: { 
                             'Content-Type': mime, 
                             'Content-Disposition': `inline; filename="${fileName}"`,
@@ -151,7 +151,7 @@ export async function GET(
         const fileContent = matches[2];
         const buffer = Buffer.from(fileContent, 'base64');
 
-        return new NextResponse(buffer, {
+        return new NextResponse(buffer as any, {
             headers: {
                 'Content-Type': mimeType,
                 'Content-Disposition': `inline; filename="${fileName}"`,
