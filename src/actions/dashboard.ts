@@ -684,6 +684,12 @@ export async function assignLegacyLotOwner(data: {
             details: `Asignación manual de dueño a lote ${lotId}. Usuario: ${email} (${isNewUser ? 'NUEVO' : 'EXISTENTE'}). Datos financieros cargados.`,
             pk: String(lotId)
         })
+        
+        // Clear caches to ensure dashboard shows fresh data
+        memoryCache.del(ADMIN_LOTS_CACHE_KEY);
+        memoryCache.del(ADMIN_STATS_CACHE_KEY);
+        revalidatePath('/admin/dashboard')
+        revalidatePath('/seller/dashboard')
 
         // --- META CAPI: Offline Conversion Tracking ---
         // Fire a 'Purchase' event to Meta to enrich the pixel AI with offline buyers demography
