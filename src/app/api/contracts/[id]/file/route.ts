@@ -112,21 +112,38 @@ export async function GET(
             }
         }
 
-        const matches = base64Data.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+        const matches = base64Data.trim().match(/^data:([a-zA-Z0-9.\-\+/]+);base64,(.+)$/);
         
         if (!matches || matches.length !== 3) {
-            // Check if it's a data URI but not base64 (e.g. data:text/plain,hello)
+            // Fallback for non-base64 Data URIs or malformed matches
             if (base64Data.startsWith('data:')) {
                 const parts = base64Data.split(',');
                 if (parts.length > 1) {
                     const meta = parts[0];
-                    const content = decodeURIComponent(parts[1]);
-                    const mime = meta.split(':')[1].split(';')[0];
+                    const isBase64 = meta.includes('base64');
+                    const mime = meta.split(':')[1]?.split(';')[0] || 'application/octet-stream';
+                    
+                    let content: Buffer | string;
+                    if (isBase64) {
+                        content = Buffer.from(parts[1], 'base64');
+                    } else {
+                        try {
+                            content = decodeURIComponent(parts[1]);
+                        } catch (e) {
+                            content = parts[1];
+                        }
+                    }
+
                     return new NextResponse(content, {
-                        headers: { 'Content-Type': mime, 'Content-Disposition': `inline; filename="${fileName}"` }
+                        headers: { 
+                            'Content-Type': mime, 
+                            'Content-Disposition': `inline; filename="${fileName}"`,
+                            'Cache-Control': 'public, max-age=31536000, immutable'
+                        }
                     });
                 }
             }
+            console.error(`[File Proxy] Invalid file format in DB for reservation ${id}`);
             return NextResponse.json({ error: 'Invalid file format stored in database' }, { status: 500 });
         }
 
