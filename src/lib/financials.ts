@@ -74,12 +74,16 @@ export function calculateTotalInterest(
     gracePeriodEnd.setDate(dueDate.getDate() + 5);
     gracePeriodEnd.setHours(23, 59, 59, 999);
     
-    // Determine the absolute start of mora (prioritize manual date if it exists)
+    // Determine the absolute start of mora
+    // For legacy debt, we respect the manual date but ONLY if the installment is actually due.
+    // Future installments should not be affected by the legacy start date.
     let effectiveMoraStart = gracePeriodEnd;
     if (legacyDebtStartDate) {
         const manualStart = new Date(legacyDebtStartDate);
         manualStart.setHours(0, 0, 0, 0);
-        effectiveMoraStart = manualStart;
+        // If the manual start is LATER than the grace period (e.g. specialized delay), we use it.
+        // Otherwise, the grace period of the installment is the natural limit for future ones.
+        effectiveMoraStart = manualStart > gracePeriodEnd ? manualStart : gracePeriodEnd;
     }
 
     if (pDate < effectiveMoraStart) return 0;
@@ -89,10 +93,12 @@ export function calculateTotalInterest(
     if (legacyDebtStartDate) {
         const manualStart = new Date(legacyDebtStartDate);
         manualStart.setHours(0, 0, 0, 0);
-        // Business Rule: For legacy debt, the start date is the FIRST day of penalty.
-        // We anchor to the day BEFORE so that diff is 1 on the start date.
-        // This manual date takes priority over the standard grace period.
-        gDate = new Date(manualStart.getTime() - (1000 * 60 * 60 * 24));
+        
+        // Use the LATER of the manual start or the installment's grace end
+        const baseAnchor = manualStart > gracePeriodEnd ? manualStart : gracePeriodEnd;
+        
+        // We anchor to the day BEFORE the calculated start so that diff is 1 on the start date.
+        gDate = new Date(baseAnchor.getTime() - (1000 * 60 * 60 * 24));
     } else {
         gDate = gracePeriodEnd;
     }
