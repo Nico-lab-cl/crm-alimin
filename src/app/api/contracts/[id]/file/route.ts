@@ -98,17 +98,16 @@ export async function GET(
 
         // Support standard Data URLs: data:[<mediatype>][;base64],<data>
         if (!base64Data.startsWith('data:')) {
-            // Check if it looks like base64. If it has spaces or special chars not in b64, it might be a malformed path/string
-            const isBase64 = /^[A-Za-z0-9+/]*={0,2}$/.test(base64Data.trim());
+            // Clean the string from newlines/spaces for detection
+            const cleanData = base64Data.replace(/[\n\r\s]/g, '');
+            const isBase64 = /^[A-Za-z0-9+/]*={0,2}$/.test(cleanData);
             
-            if (isBase64) {
-                // Assume it's an old direct base64 encoded PDF string if no prefix is found.
-                base64Data = `data:application/pdf;base64,${base64Data.trim()}`;
-            } else {
-                // It's not a Data URL, not an HTTP URL, and not valid Base64. 
-                // It might be a local path or a filename stored incorrectly.
-                console.error(`[File Proxy] Unrecognized file format in DB for reservation ${id}: ${base64Data.substring(0, 50)}...`);
-                return NextResponse.json({ error: 'Unrecognized file format stored in database' }, { status: 500 });
+            if (isBase64 && cleanData.length > 0) {
+                // Assume it's an old direct base64 encoded PDF string
+                base64Data = `data:application/pdf;base64,${cleanData}`;
+            } else if (base64Data.length > 0) {
+                console.error(`[File Proxy] Unrecognized format for reservation ${id}: ${base64Data.substring(0, 30)}...`);
+                return NextResponse.json({ error: 'Unrecognized file format' }, { status: 500 });
             }
         }
 
@@ -125,7 +124,7 @@ export async function GET(
                     
                     let content: Buffer | string;
                     if (isBase64) {
-                        content = Buffer.from(parts[1], 'base64');
+                        content = Buffer.from(parts[1].replace(/[\n\r\s]/g, ''), 'base64');
                     } else {
                         try {
                             content = decodeURIComponent(parts[1]);
@@ -137,24 +136,23 @@ export async function GET(
                     return new NextResponse(content as any, {
                         headers: { 
                             'Content-Type': mime, 
-                            'Content-Disposition': `inline; filename="${fileName}"`,
+                            'Content-Disposition': `inline; filename="${encodeURIComponent(fileName)}"; filename*=UTF-8''${encodeURIComponent(fileName)}`,
                             'Cache-Control': 'public, max-age=31536000, immutable'
                         }
                     });
                 }
             }
-            console.error(`[File Proxy] Invalid file format in DB for reservation ${id}`);
-            return NextResponse.json({ error: 'Invalid file format stored in database' }, { status: 500 });
+            return NextResponse.json({ error: 'Invalid file data' }, { status: 500 });
         }
 
         const mimeType = matches[1];
-        const fileContent = matches[2];
+        const fileContent = matches[2].replace(/[\n\r\s]/g, '');
         const buffer = Buffer.from(fileContent, 'base64');
 
         return new NextResponse(buffer as any, {
             headers: {
                 'Content-Type': mimeType,
-                'Content-Disposition': `inline; filename="${fileName}"`,
+                'Content-Disposition': `inline; filename="${encodeURIComponent(fileName)}"; filename*=UTF-8''${encodeURIComponent(fileName)}`,
                 'Cache-Control': 'public, max-age=31536000, immutable'
             },
         });
