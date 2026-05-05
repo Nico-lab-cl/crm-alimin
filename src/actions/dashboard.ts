@@ -686,8 +686,8 @@ export async function assignLegacyLotOwner(data: {
         })
         
         // Clear caches to ensure dashboard shows fresh data
-        memoryCache.del(ADMIN_LOTS_CACHE_KEY);
-        memoryCache.del(ADMIN_STATS_CACHE_KEY);
+        memoryCache.delete(ADMIN_LOTS_CACHE_KEY);
+        memoryCache.delete(ADMIN_STATS_CACHE_KEY);
         revalidatePath('/admin/dashboard')
         revalidatePath('/seller/dashboard')
 
