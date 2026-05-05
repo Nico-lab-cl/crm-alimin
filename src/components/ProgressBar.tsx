@@ -28,11 +28,13 @@ export const ProgressBar = ({ lots }: ProgressBarProps) => {
   });
 
   const totalLots = filteredLots.length;
-  const soldLots = filteredLots.filter(lot => lot.status === 'sold').length;
+  const soldLots = filteredLots.filter(lot => lot.status === 'sold' || lot.status === 'blocked').length;
   const reservedLots = filteredLots.filter(lot => lot.status === 'reserved').length;
   const availableLots = filteredLots.filter(lot => lot.status === 'available').length;
-  const soldPercentage = Math.round((soldLots / totalLots) * 100) || 0;
+  
+  // Progress includes everything that is no longer available (Sold, Reserved, and Blocked)
   const progressPercentage = Math.round(((soldLots + reservedLots) / totalLots) * 100) || 0;
+  const soldPercentage = progressPercentage; // Set main display to match project progress
 
   return (
     <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-alimin-green via-[#2A454A] to-[#1E3337] p-8 md:p-12 shadow-2xl border-2 border-alimin-green/20">
