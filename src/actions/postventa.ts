@@ -204,21 +204,34 @@ export async function getFullPostventaData({
 
                 const lotAreaM2 = lot.area_m2 || 200;
                 
-                penaltyAmount = calculateTotalInterest(
-                    totalToPay,
-                    lotAreaM2,
-                    nextDueDate,
-                    isLegacyBool,
-                    currentDate,
-                    // @ts-ignore
-                    Boolean(res.mora_frozen),
-                    res.legacy_debt_start_date,
-                    res.legacy_debt_end_date
-                );
+                // --- SUM INTEREST FOR ALL REMAINING INSTALLMENTS ---
+                const remainingCount = totalCuotas - paidCuotas;
+                for (let i = 1; i <= remainingCount; i++) {
+                    const instNum = paidCuotas + i;
+                    const iDue = getInstallmentDueDate(baseDate, instNum, isLegacyBool, customDueDay, Boolean(res.is_promo));
+                    
+                    const instInterest = calculateTotalInterest(
+                        totalToPay,
+                        lotAreaM2,
+                        iDue,
+                        isLegacyBool,
+                        currentDate,
+                        // @ts-ignore
+                        Boolean(res.mora_frozen),
+                        res.legacy_debt_start_date,
+                        res.legacy_debt_end_date
+                    );
+                    
+                    if (instInterest > 0) {
+                        penaltyAmount += instInterest;
+                    } else {
+                        // If one isn't late, future ones won't be either (ordered by date)
+                        break;
+                    }
+                }
 
                 if (penaltyAmount > 0) {
                     const daily = calculateDailyInterest(totalToPay, lotAreaM2);
-                    // Standardized day count: penalty / daily, rounded to avoid float issues
                     lateDays = daily > 0 ? Math.round(penaltyAmount / daily) : 0;
                 }
             }
