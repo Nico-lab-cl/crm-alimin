@@ -287,9 +287,7 @@ export async function getSoldLotsForPostventa() {
                 stage: true,
                 status: true,
                 area_m2: true,
-                price_total_clp: true,
-                next_payment_date: true,
-                next_installment_discount: true
+                price_total_clp: true
             },
             orderBy: { number: 'asc' }
         })
