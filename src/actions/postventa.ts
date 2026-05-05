@@ -126,7 +126,6 @@ export async function getFullPostventaData({
                 pie: true,
                 status: true,
                 next_payment_date: true,
-                // @ts-ignore
                 next_installment_discount: true
             }
         }) as any[];

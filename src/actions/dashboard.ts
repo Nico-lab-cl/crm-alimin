@@ -288,6 +288,8 @@ export async function getSoldLotsForPostventa() {
                 status: true,
                 area_m2: true,
                 price_total_clp: true,
+                next_payment_date: true,
+                next_installment_discount: true
             },
             orderBy: { number: 'asc' }
         })
@@ -634,7 +636,6 @@ export async function assignLegacyLotOwner(data: {
             // @ts-ignore
             pie: pie !== undefined ? Number(pie) : (existingReservation?.pie || 0),
             next_payment_date: (next_payment_date !== undefined) ? (next_payment_date ? new Date(next_payment_date) : null) : (existingReservation?.next_payment_date ? new Date(existingReservation.next_payment_date) : null),
-            // @ts-ignore
             next_installment_discount: next_installment_discount !== undefined ? Number(next_installment_discount) : (existingReservation?.next_installment_discount || 0)
         };
 
