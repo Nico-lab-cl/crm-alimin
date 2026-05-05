@@ -206,6 +206,8 @@ export async function getFullPostventaData({
                 
                 // --- SUM INTEREST FOR ALL REMAINING INSTALLMENTS ---
                 const remainingCount = totalCuotas - paidCuotas;
+                const daily = calculateDailyInterest(totalToPay, lotAreaM2);
+
                 for (let i = 1; i <= remainingCount; i++) {
                     const instNum = paidCuotas + i;
                     const iDue = getInstallmentDueDate(baseDate, instNum, isLegacyBool, customDueDay, Boolean(res.is_promo));
@@ -224,15 +226,12 @@ export async function getFullPostventaData({
                     
                     if (instInterest > 0) {
                         penaltyAmount += instInterest;
+                        // Track maximum days late for display
+                        const currentInstDays = daily > 0 ? Math.round(instInterest / daily) : 0;
+                        if (currentInstDays > lateDays) lateDays = currentInstDays;
                     } else {
-                        // If one isn't late, future ones won't be either (ordered by date)
                         break;
                     }
-                }
-
-                if (penaltyAmount > 0) {
-                    const daily = calculateDailyInterest(totalToPay, lotAreaM2);
-                    lateDays = daily > 0 ? Math.round(penaltyAmount / daily) : 0;
                 }
             }
 
