@@ -81,8 +81,12 @@ export function calculateTotalInterest(
     if (legacyDebtStartDate) {
         const manualStart = new Date(legacyDebtStartDate);
         manualStart.setHours(0, 0, 0, 0);
-        // Business Rule: Use the LATER of the manual start date and the original grace period end.
-        gDate = manualStart > gracePeriodEnd ? manualStart : gracePeriodEnd;
+        // Business Rule: For legacy debt, the start date is the FIRST day of penalty.
+        // So we anchor the calculation to the day BEFORE to ensure a difference of 1 on the start date.
+        const dayBefore = new Date(manualStart.getTime() - (1000 * 60 * 60 * 24));
+        
+        // We still respect the grace period of the current installment if it's later
+        gDate = dayBefore > gracePeriodEnd ? dayBefore : gracePeriodEnd;
     } else {
         gDate = gracePeriodEnd;
     }
@@ -108,12 +112,13 @@ export function calculateTotalInterest(
     }
 
     // 4. Calculate Days Late
-    // Rule: If grace ends at 23:59:59 on the 10th.
-    // At 00:00:01 on the 11th, it's 1 day late.
-    // At 23:59:59 on the 11th, it's 1 day late.
-    // At 00:00:01 on the 12th, it's 2 days late.
-    const diffTime = pDate.getTime() - gDate.getTime();
-    let daysLate = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    // We use a robust midnight-counting approach to avoid TZ issues
+    const start = new Date(gDate);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(pDate);
+    end.setHours(0, 0, 0, 0);
+    
+    let daysLate = Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
 
     const dailyInterest = calculateDailyInterest(totalLotPrice, lotAreaM2);
     return dailyInterest * (daysLate > 0 ? daysLate : 0);
