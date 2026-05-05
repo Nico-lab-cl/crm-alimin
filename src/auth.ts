@@ -76,7 +76,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                 // --- Administrative Impersonation Support ---
                 // If the logged-in user is an ADMIN and an 'impersonation_token' exists,
                 // we override the session with the impersonated user's data.
-                if (session.user.role === Role.ADMIN) {
+                if (token.role === Role.ADMIN) {
                     try {
                         const { cookies } = await import('next/headers');
                         const cookieStore = await cookies();
@@ -92,6 +92,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                                 session.user.email = payload.email || session.user.email;
                                 session.user.role = (payload.role as Role) || Role.USER;
                                 (session as any).isImpersonating = true;
+                                (session as any).adminEmail = token.email; 
                                 console.log(`[Auth] Admin ${token.email} is impersonating User ID: ${payload.userId}`);
                             }
                         }

@@ -174,6 +174,7 @@ export function AdminPipelineCard({
                             reservationId={reservation.id}
                             reservationName={reservation.name}
                             label="Subir Promesa de Compraventa"
+                            type="PROMESA"
                         />
                     </div>
                 )}

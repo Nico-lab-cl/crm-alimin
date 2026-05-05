@@ -103,9 +103,23 @@ export const Header = ({ projectName }: HeaderProps) => {
                   <DropdownMenuLabel className="font-normal">
                     <div className="flex flex-col space-y-1">
                       <p className="text-sm font-medium leading-none">{session.user?.name}</p>
-                      <p className="text-xs leading-none text-muted-foreground">
-                        {session.user?.email}
-                      </p>
+                      {(session as any).isImpersonating ? (
+                        <>
+                          <p className="text-[10px] font-black text-amber-500 uppercase tracking-widest mt-1">
+                            Simulando a:
+                          </p>
+                          <p className="text-xs leading-none text-amber-600 font-bold">
+                            {session.user?.email}
+                          </p>
+                          <p className="text-[10px] text-muted-foreground mt-1">
+                            Vía: {(session as any).adminEmail}
+                          </p>
+                        </>
+                      ) : (
+                        <p className="text-xs leading-none text-muted-foreground">
+                          {session.user?.email}
+                        </p>
+                      )}
                       <p className="text-xs font-semibold text-primary mt-1">
                         {session.user?.role === 'ADMIN' ? 'Administrador' :
                           session.user?.role === 'SELLER' ? 'Vendedor' : 'Cliente'}
@@ -177,9 +191,32 @@ export const Header = ({ projectName }: HeaderProps) => {
                   )}
 
                   <DropdownMenuSeparator />
+                  
+                  {(session as any).isImpersonating && (
+                    <DropdownMenuItem 
+                      className="bg-amber-50 text-amber-700 font-bold focus:bg-amber-100 focus:text-amber-800 cursor-pointer"
+                      onClick={async () => {
+                        const { stopImpersonating } = await import('@/actions/dashboard');
+                        await stopImpersonating();
+                        window.location.href = '/admin/dashboard';
+                      }}
+                    >
+                      <Settings className="mr-2 h-4 w-4" />
+                      <span>Volver a Vista Admin</span>
+                    </DropdownMenuItem>
+                  )}
+
                   <DropdownMenuItem
                     className="text-red-600 focus:text-red-600 cursor-pointer"
-                    onClick={() => signOut({ callbackUrl: '/' })}
+                    onClick={async () => {
+                      if ((session as any).isImpersonating) {
+                        try {
+                          const { stopImpersonating } = await import('@/actions/dashboard');
+                          await stopImpersonating();
+                        } catch (e) {}
+                      }
+                      signOut({ callbackUrl: '/' });
+                    }}
                   >
                     <LogOut className="mr-2 h-4 w-4" />
                     <span>Cerrar Sesión</span>

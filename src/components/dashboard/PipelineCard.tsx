@@ -97,10 +97,26 @@ export function PipelineCard({ reservation, onMove }: { reservation: Reservation
                     </Dialog>
                 </div>
 
-                {(effectiveStage === "PROMESA_COMPRAVENTA" || effectiveStage === "PIE_POR_PAGAR") && (
+                {effectiveStage === "PIE_POR_PAGAR" && (
+                    <div className="pt-2">
+                        <ContractUploadAction 
+                            reservationId={reservation.id} 
+                            reservationName={reservation.name} 
+                            label="Subir Reserva Firmada"
+                            type="RESERVA"
+                        />
+                    </div>
+                )}
+
+                {effectiveStage === "PROMESA_COMPRAVENTA" && (
                     <div className="pt-2">
                         <PromesaGeneratorAction reservationId={reservation.id} reservationName={reservation.name} />
-                        <ContractUploadAction reservationId={reservation.id} reservationName={reservation.name} />
+                        <ContractUploadAction 
+                            reservationId={reservation.id} 
+                            reservationName={reservation.name} 
+                            label="Subir Promesa Firmada"
+                            type="PROMESA"
+                        />
                     </div>
                 )}
 

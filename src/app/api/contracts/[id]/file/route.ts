@@ -51,14 +51,18 @@ export async function GET(
             let legacyDocs: any[] = [];
             if (reservation.legacy_uploaded_contracts) {
                 try {
-                    legacyDocs = typeof reservation.legacy_uploaded_contracts === 'string' 
-                        ? JSON.parse(reservation.legacy_uploaded_contracts) 
-                        : reservation.legacy_uploaded_contracts;
-                } catch (e) {}
+                    const raw = reservation.legacy_uploaded_contracts;
+                    legacyDocs = typeof raw === 'string' ? JSON.parse(raw) : raw;
+                } catch (e) {
+                    console.error("[File Proxy] Error parsing legacy_uploaded_contracts:", e);
+                }
             }
-            if (legacyDocs.length > 0 && legacyDocs[0].url) {
-                base64Data = legacyDocs[0].url;
-                fileName = legacyDocs[0].name || 'Promesa_Compraventa.pdf';
+            
+            // Ensure legacyDocs is an array before accessing [0]
+            const docsArray = Array.isArray(legacyDocs) ? legacyDocs : (legacyDocs ? [legacyDocs] : []);
+            if (docsArray.length > 0 && docsArray[0].url) {
+                base64Data = docsArray[0].url;
+                fileName = docsArray[0].name || 'Promesa_Compraventa.pdf';
             }
         } 
         // 3. Check Manual Documents
@@ -66,14 +70,16 @@ export async function GET(
             let manualDocs: any[] = [];
             if (reservation.manual_documents) {
                 try {
-                    manualDocs = Array.isArray(reservation.manual_documents) 
-                        ? (reservation.manual_documents as any[]) 
-                        : JSON.parse(reservation.manual_documents as string);
-                } catch (e) {}
+                    const raw = reservation.manual_documents;
+                    manualDocs = Array.isArray(raw) ? (raw as any[]) : (typeof raw === 'string' ? JSON.parse(raw) : [raw]);
+                } catch (e) {
+                    console.error("[File Proxy] Error parsing manual_documents:", e);
+                }
             }
             
-            // Find the precise document by type and name match
-            const docMatch = manualDocs.find(d => d.category === type && (!name || d.name === name));
+            // Safe find in array
+            const docsArray = Array.isArray(manualDocs) ? manualDocs : [];
+            const docMatch = docsArray.find(d => d && d.category === type && (!name || d.name === name));
             if (docMatch) {
                 base64Data = docMatch.url;
                 fileName = docMatch.name || 'Documento';
