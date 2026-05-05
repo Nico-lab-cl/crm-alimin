@@ -88,7 +88,10 @@ export function calculateTotalInterest(
     }
 
     // 3. Apply Web Rule Cutoff (March 11, 2026) for non-legacy users
-    if (!isLegacy) {
+    // If a user has a manual debt start date, we treat them as legacy (ignore the web cutoff)
+    const effectiveIsLegacy = isLegacy || !!legacyDebtStartDate;
+
+    if (!effectiveIsLegacy) {
         const webCutoff = new Date(PENALTY_START_DATE_WEB);
         webCutoff.setHours(0, 0, 0, 0); // March 11 00:00:00
 

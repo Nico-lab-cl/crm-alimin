@@ -211,7 +211,8 @@ export function AdminPlotManager({ reservations, allClients, userId, initialUser
                                         // -----------------------------------------------------------------
                                         // LEGACY DEBT CALCULATION
                                         // -----------------------------------------------------------------
-                                         if (res.is_legacy && res.legacy_debt_start_date) {
+                                         const effectiveIsLegacy = res.is_legacy || !!res.legacy_debt_start_date;
+                                         if (effectiveIsLegacy && res.legacy_debt_start_date) {
                                              const debtStart = new Date(res.legacy_debt_start_date);
                                              debtStart.setHours(0, 0, 0, 0);
  
