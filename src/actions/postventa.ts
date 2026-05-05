@@ -42,7 +42,7 @@ export async function getFullPostventaData({
         };
 
         // We cast to any[] because we manually added columns via SQL that aren't in Prisma schema yet
-        const allReservations: any[] = await prisma.reservation.findMany({
+        const allReservationsRaw: any[] = await prisma.reservation.findMany({
             where: whereStats,
             orderBy: { created_at: 'desc' },
             select: {
@@ -128,6 +128,20 @@ export async function getFullPostventaData({
                 next_payment_date: true
             }
         }) as any[];
+
+        // DEDUPLICATION: Only keep the most recent reservation per Lot Number
+        // This prevents old owners of resold lots from cluttering the Postventa dashboard
+        const lotMap = new Map<string, any>();
+        allReservationsRaw.forEach(res => {
+            const lotKey = `${res.lot.stage}-${res.lot.number}`;
+            if (!lotMap.has(lotKey)) {
+                lotMap.set(lotKey, res);
+            } else {
+                // Since they are ordered by created_at desc, the first one we find is the latest
+                // We could potentially check if status is 'paid' vs others, but latest is usually correct.
+            }
+        });
+        const allReservations = Array.from(lotMap.values());
 
         const processedData = allReservations.map(res => {
             const lot = res.lot;
@@ -218,6 +232,7 @@ export async function getFullPostventaData({
 
                 if (penaltyAmount > 0) {
                     const daily = calculateDailyInterest(totalToPay, lotAreaM2);
+                    // Standardized day count: penalty / daily, rounded to avoid float issues
                     lateDays = daily > 0 ? Math.round(penaltyAmount / daily) : 0;
                 }
             }

@@ -54,28 +54,27 @@ export function calculateTotalInterest(
 ): number {
     if (moraFrozen) return 0;
 
-    // 1. Calculate effective end date for interest
-    const pDate = new Date(paymentDate);
-    
+    // 1. Establish Calculation Date (capped by legacy debt end date if present)
+    let pDate = new Date(paymentDate);
     if (legacyDebtEndDate) {
         const endDate = new Date(legacyDebtEndDate);
         if (pDate > endDate) {
             pDate.setTime(endDate.getTime());
         }
     }
+    pDate.setHours(12, 0, 0, 0); // Use mid-day to avoid TZ shifts near boundaries
 
-    pDate.setHours(0, 0, 0, 0);
-
-    // Safety: An installment cannot be overdue if its due date hasn't passed yet
     const effectiveDueDate = new Date(dueDate);
     effectiveDueDate.setHours(0, 0, 0, 0);
-    if (pDate <= effectiveDueDate) return 0;
-
+    
     // 2. Determine Grace Period End (Dynamic)
     const gracePeriodEnd = new Date(dueDate);
-    // Rule: Grace period ends exactly 5 days after the due date.
+    // Rule: Grace period is 5 days. If due is 5th, grace is 6, 7, 8, 9, 10.
+    // Penalty starts on the 11th.
     gracePeriodEnd.setDate(dueDate.getDate() + 5);
     gracePeriodEnd.setHours(23, 59, 59, 999);
+
+    if (pDate <= gracePeriodEnd) return 0;
 
     let gDate: Date;
 
@@ -83,39 +82,36 @@ export function calculateTotalInterest(
         const manualStart = new Date(legacyDebtStartDate);
         manualStart.setHours(0, 0, 0, 0);
         // Business Rule: Use the LATER of the manual start date and the original grace period end.
-        // This ensures interest doesn't start for a month before it's actually due, 
-        // while still respecting the admin's manual override for older debt.
         gDate = manualStart > gracePeriodEnd ? manualStart : gracePeriodEnd;
     } else {
         gDate = gracePeriodEnd;
     }
-    gDate.setHours(0, 0, 0, 0);
 
     // 3. Apply Web Rule Cutoff (March 11, 2026) for non-legacy users
-    // If a non-legacy user is late, we ONLY count days late starting from March 11.
-    // If their due date/grace period was BEFORE March 11, we act as if their grace period
-    // magically extended until March 10, so day 1 of penalty is March 11.
     if (!isLegacy) {
         const webCutoff = new Date(PENALTY_START_DATE_WEB);
-        webCutoff.setHours(0, 0, 0, 0);
+        webCutoff.setHours(0, 0, 0, 0); // March 11 00:00:00
 
-        // If the payment is happening before or on March 10, no penalty.
+        // If the payment is happening before March 11, no penalty.
         if (pDate < webCutoff) {
             return 0;
         }
 
-        // If the grace period end was before March 10, we move the starting line to March 10,
-        // so that the first day of penalty calculated is March 11.
+        // If the grace period end was before March 11, we move the starting line to March 10 23:59:59,
+        // so that the first day of penalty (diff > 0) is March 11.
         if (gDate < webCutoff) {
-            gDate.setTime(webCutoff.getTime());
-            gDate.setDate(gDate.getDate() - 1); 
+            gDate = new Date(webCutoff.getTime() - 1000); // March 10 23:59:59
         }
     }
 
+    // 4. Calculate Days Late
+    // Rule: If grace ends at 23:59:59 on the 10th.
+    // At 00:00:01 on the 11th, it's 1 day late.
+    // At 23:59:59 on the 11th, it's 1 day late.
+    // At 00:00:01 on the 12th, it's 2 days late.
     const diffTime = pDate.getTime() - gDate.getTime();
-    let daysLate = Math.round(diffTime / (1000 * 60 * 60 * 24));
+    let daysLate = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-    // The number of days late is the difference between the payment date and the grace period end date
     const dailyInterest = calculateDailyInterest(totalLotPrice, lotAreaM2);
     return dailyInterest * (daysLate > 0 ? daysLate : 0);
 }
