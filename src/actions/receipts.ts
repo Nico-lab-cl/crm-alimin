@@ -309,3 +309,92 @@ export async function rejectPaymentReceipt(receiptId: string, reason: string, se
         throw new Error("Error al rechazar comprobante");
     }
 }
+
+/**
+ * Edit the amount of an existing payment receipt.
+ * Creates an audit log entry for traceability.
+ */
+export async function editReceiptAmount(receiptId: string, newAmount: number, reason: string) {
+    const session = await auth();
+    const isPostventa = session?.user?.email === 'postventa@lomasdelmar.cl' || session?.user?.email === 'postventa@aliminspa.cl';
+    if (!session?.user || (session.user.role !== 'ADMIN' && !isPostventa)) {
+        return { error: 'No autorizado' };
+    }
+
+    if (!newAmount || newAmount <= 0) {
+        return { error: 'El monto debe ser mayor a 0' };
+    }
+
+    try {
+        const receipt = await prisma.paymentReceipt.findUnique({
+            where: { id: receiptId },
+            include: { 
+                reservation: { 
+                    include: { 
+                        lot: { select: { number: true, stage: true } },
+                        buyer: { select: { name: true, email: true } }
+                    } 
+                } 
+            }
+        });
+
+        if (!receipt) return { error: 'Recibo no encontrado' };
+
+        const oldAmount = receipt.amount_clp;
+
+        if (oldAmount === newAmount) {
+            return { error: 'El monto nuevo es igual al actual' };
+        }
+
+        // 1. Update the receipt amount
+        await prisma.paymentReceipt.update({
+            where: { id: receiptId },
+            data: { amount_clp: newAmount }
+        });
+
+        // 2. Create audit log entry
+        const clientName = receipt.reservation?.buyer?.name || 'Desconocido';
+        const lotNumber = receipt.reservation?.lot?.number || 'N/A';
+        const lotStage = receipt.reservation?.lot?.stage || 'N/A';
+
+        await prisma.auditLog.create({
+            data: {
+                action: 'UPDATE',
+                entity: 'PaymentReceipt',
+                entity_id: receiptId,
+                details: JSON.stringify({
+                    type: 'EDIT_RECEIPT_AMOUNT',
+                    oldAmount,
+                    newAmount,
+                    difference: newAmount - oldAmount,
+                    reason: reason || 'Sin motivo especificado',
+                    clientName,
+                    lotNumber,
+                    lotStage,
+                    scope: receipt.scope,
+                    receiptDate: receipt.created_at,
+                    editedBy: session.user.email
+                }),
+                pk: receipt.reservation_id,
+                user_id: session.user.id,
+                user_email: session.user.email,
+            }
+        });
+
+        // 3. Invalidate caches
+        memoryCache.deleteByPrefix('postventa_full_');
+        memoryCache.deleteByPrefix('receipts_paginated_');
+        revalidatePath('/admin/receipts');
+        revalidatePath('/admin/dashboard');
+        revalidatePath('/user/plots');
+
+        return { 
+            success: true, 
+            message: `Monto actualizado de $${oldAmount.toLocaleString('es-CL')} a $${newAmount.toLocaleString('es-CL')}` 
+        };
+
+    } catch (error) {
+        console.error("Error editing receipt amount:", error);
+        return { error: 'Error al editar el monto del recibo' };
+    }
+}

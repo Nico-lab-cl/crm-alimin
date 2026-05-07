@@ -13,11 +13,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { 
     Loader2, CheckCircle, XCircle, Eye, MapPin, CreditCard, Clock, Receipt, BookOpen, 
     AlertTriangle, Search, Filter, FileSignature, Gavel, Wallet, CalendarDays, ArrowRight, ShieldAlert, RefreshCw,
-    FileText, Download, Trash2, Edit, Map, Snowflake, Calendar as CalendarIcon, UploadCloud
+    FileText, Download, Trash2, Edit, Map, Snowflake, Calendar as CalendarIcon, UploadCloud, Pencil
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
-import { approvePaymentReceipt, rejectPaymentReceipt, deletePaymentReceipt } from '@/actions/receipts';
+import { approvePaymentReceipt, rejectPaymentReceipt, deletePaymentReceipt, editReceiptAmount } from '@/actions/receipts';
 import { syncLegacyReceipts, getReservationReceipts, registerPostventaPayment } from '@/actions/postventa';
 import { toggleMoraFreeze, updateMoraDates } from '@/actions/dashboard';
 import { toast } from 'sonner';
@@ -104,6 +104,12 @@ export function PostventaMobileDashboard({
     const [moraStartDate, setMoraStartDate] = useState<Date | undefined>(undefined);
     const [moraEndDate, setMoraEndDate] = useState<Date | undefined>(undefined);
     const [isUpdatingMora, setIsUpdatingMora] = useState(false);
+
+    // Edit Receipt Amount State
+    const [editingReceipt, setEditingReceipt] = useState<any | null>(null);
+    const [editAmount, setEditAmount] = useState('');
+    const [editReason, setEditReason] = useState('');
+    const [isEditingAmount, setIsEditingAmount] = useState(false);
 
     useEffect(() => {
         if (selectedClientLedger) {
@@ -228,6 +234,37 @@ export function PostventaMobileDashboard({
         } catch (error) {
             console.error(error);
             toast.error("No se pudo eliminar el pago");
+        }
+    };
+
+    const handleEditReceiptAmount = async () => {
+        if (!editingReceipt || !editAmount || isEditingAmount) return;
+        const newAmount = parseInt(editAmount);
+        if (isNaN(newAmount) || newAmount <= 0) {
+            toast.error('Ingresa un monto válido');
+            return;
+        }
+        setIsEditingAmount(true);
+        try {
+            const res = await editReceiptAmount(editingReceipt.id, newAmount, editReason);
+            if (res.error) {
+                toast.error(res.error);
+            } else {
+                toast.success(res.message || 'Monto actualizado');
+                setEditingReceipt(null);
+                setEditAmount('');
+                setEditReason('');
+                // Refresh receipts list
+                if (selectedClientLedger?.id) {
+                    const updatedRes = await getReservationReceipts(selectedClientLedger.id);
+                    if (updatedRes.success) setClientReceipts(updatedRes.receipts || []);
+                }
+                refreshData();
+            }
+        } catch (e) {
+            toast.error('Error al editar el monto');
+        } finally {
+            setIsEditingAmount(false);
         }
     };
 
@@ -1324,6 +1361,95 @@ export function PostventaMobileDashboard({
                 </DialogContent>
             </Dialog>
 
+        {/* Edit Receipt Amount Modal */}
+        <Dialog open={!!editingReceipt} onOpenChange={(open) => { if (!open) { setEditingReceipt(null); setEditAmount(''); setEditReason(''); } }}>
+            <DialogContent className="max-w-[90vw] md:max-w-md bg-[#0a1622] border-white/10 rounded-3xl">
+                <DialogHeader>
+                    <DialogTitle className="text-white font-black uppercase tracking-tight flex items-center gap-3">
+                        <Pencil className="w-5 h-5 text-amber-400" />
+                        Editar Monto de Pago
+                    </DialogTitle>
+                    <DialogDescription className="text-gray-500 text-xs">
+                        Modifica el monto registrado. Se guardará un registro de auditoría con el cambio.
+                    </DialogDescription>
+                </DialogHeader>
+                {editingReceipt && (
+                    <div className="py-4 space-y-5">
+                        {/* Current info */}
+                        <div className="bg-white/5 border border-white/10 rounded-2xl p-4 space-y-2">
+                            <div className="flex justify-between items-center">
+                                <span className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Monto Actual</span>
+                                <span className="text-lg font-black text-red-400 line-through tabular-nums">{formatCurrency(editingReceipt.amount_clp)}</span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                                <span className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Tipo</span>
+                                <span className="text-[10px] font-bold text-[#8eb2b8] uppercase">{editingReceipt.scope === 'PIE' ? 'Pago de Pie' : 'Cuota'}</span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                                <span className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Fecha</span>
+                                <span className="text-[10px] font-bold text-gray-400">{format(new Date(editingReceipt.created_at), 'dd/MM/yyyy HH:mm')}</span>
+                            </div>
+                        </div>
+
+                        {/* New Amount */}
+                        <div className="space-y-1.5">
+                            <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">Nuevo Monto (CLP)</label>
+                            <Input
+                                type="number"
+                                placeholder="Ej: 550000"
+                                value={editAmount}
+                                onChange={(e) => setEditAmount(e.target.value)}
+                                className="bg-black/20 border-white/10 h-12 text-lg text-white placeholder:text-gray-700 font-black tabular-nums"
+                                autoFocus
+                            />
+                            {editAmount && parseInt(editAmount) !== editingReceipt.amount_clp && (
+                                <div className={`text-[10px] font-bold ml-1 ${parseInt(editAmount) > editingReceipt.amount_clp ? 'text-emerald-400' : 'text-red-400'}`}>
+                                    {parseInt(editAmount) > editingReceipt.amount_clp ? '▲' : '▼'} Diferencia: {formatCurrency(Math.abs(parseInt(editAmount) - editingReceipt.amount_clp))}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Reason */}
+                        <div className="space-y-1.5">
+                            <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">Motivo del Cambio</label>
+                            <Textarea
+                                placeholder="Ej: Cliente pagó monto completo sin descuento aplicado..."
+                                value={editReason}
+                                onChange={(e) => setEditReason(e.target.value)}
+                                rows={2}
+                                className="bg-black/20 border-white/10 text-xs text-white placeholder:text-gray-700"
+                            />
+                        </div>
+
+                        {/* Audit badge */}
+                        <div className="bg-amber-500/5 border border-amber-500/20 rounded-xl p-3 flex items-start gap-2">
+                            <ShieldAlert className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                            <p className="text-[9px] text-amber-400/80 font-bold leading-relaxed">
+                                Este cambio quedará registrado en el log de auditoría con tu usuario, la fecha y el motivo especificado.
+                            </p>
+                        </div>
+                    </div>
+                )}
+                <div className="flex flex-col-reverse sm:flex-row justify-end gap-2">
+                    <Button
+                        variant="outline"
+                        onClick={() => { setEditingReceipt(null); setEditAmount(''); setEditReason(''); }}
+                        className="min-h-[44px] bg-white/5 border-white/10 text-white hover:bg-white/10 font-black uppercase text-[10px] tracking-widest rounded-xl"
+                    >
+                        Cancelar
+                    </Button>
+                    <Button
+                        onClick={handleEditReceiptAmount}
+                        disabled={isEditingAmount || !editAmount || parseInt(editAmount) === editingReceipt?.amount_clp}
+                        className="min-h-[44px] bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 border border-amber-500/30 font-black uppercase text-[10px] tracking-widest rounded-xl"
+                    >
+                        {isEditingAmount ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Pencil className="w-4 h-4 mr-2" />}
+                        Confirmar Cambio
+                    </Button>
+                </div>
+            </DialogContent>
+        </Dialog>
+
             {/* Global History Modal */}
             <Dialog open={showPaymentsModal} onOpenChange={setShowPaymentsModal}>
                 <DialogContent className="max-w-2xl w-[95vw] h-[80vh] bg-[#0a1622] border-white/5 p-0 overflow-hidden flex flex-col rounded-[2.5rem]">
@@ -1490,6 +1616,17 @@ export function PostventaMobileDashboard({
                                                 title="Ver"
                                             >
                                                 <Eye className="w-4 h-4" />
+                                            </button>
+                                            <button 
+                                                onClick={() => {
+                                                    setEditingReceipt(p);
+                                                    setEditAmount(String(p.amount_clp));
+                                                    setEditReason('');
+                                                }}
+                                                className="p-2 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 rounded-lg transition-all"
+                                                title="Editar Monto"
+                                            >
+                                                <Pencil className="w-4 h-4" />
                                             </button>
                                             {!p.isAuto && (
                                                 <button 
