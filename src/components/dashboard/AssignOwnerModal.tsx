@@ -199,8 +199,14 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
             } else {
                 toast.error(result.error || "Error al asignar dueño")
             }
-        } catch (error) {
-            toast.error("Ocurrió un error inesperado")
+        } catch (error: any) {
+            console.error("Submit error:", error)
+            if (error?.message?.includes("was not found on the server") || error?.message?.includes("UnrecognizedActionError")) {
+                toast.info("Actualización detectada. Recargando la página...")
+                setTimeout(() => window.location.reload(), 1500)
+            } else {
+                toast.error("Ocurrió un error inesperado")
+            }
         } finally {
             setLoading(false)
         }
@@ -222,9 +228,14 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
             } else {
                 toast.error(result.error || "Error al intentar ver como usuario")
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error("Impersonation error:", error)
-            toast.error("Ocurrió un error al procesar la solicitud")
+            if (error?.message?.includes("was not found on the server") || error?.message?.includes("UnrecognizedActionError")) {
+                toast.info("Nueva versión del sistema detectada. Actualizando...")
+                setTimeout(() => window.location.reload(), 1500)
+            } else {
+                toast.error("Ocurrió un error al procesar la solicitud")
+            }
         } finally {
             setImpersonating(false)
         }
