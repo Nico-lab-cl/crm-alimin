@@ -438,7 +438,6 @@ export async function getAdminStats() {
     }
 }
 
-import { hash } from "bcryptjs"
 
 export async function createVerifiedUser(data: any) {
     const session = await auth()
