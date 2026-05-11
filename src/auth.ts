@@ -35,7 +35,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                             throw new Error("Por favor verifica tu correo electrónico antes de iniciar sesión.");
                         }
 
-                        const passwordsMatch = await bcrypt.compare(password, user.password);
+                        const passwordsMatch = await bcrypt.compare(password.trim(), user.password);
                         if (passwordsMatch) {
                             console.log(`[Auth] Login successful for: ${email}`);
                             return user;
@@ -49,6 +49,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                     return null;
                 } catch (error) {
                     console.error("[Auth] Error in authorize:", error);
+                    // If it's our custom error, throw it so NextAuth knows about it
+                    if (error instanceof Error && error.message.includes("verifica tu correo")) {
+                         throw error;
+                    }
                     return null;
                 }
             },

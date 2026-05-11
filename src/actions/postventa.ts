@@ -117,7 +117,6 @@ export async function getFullPostventaData({
                 legacy_installment_ranges: true,
                 legacy_current_installment: true,
                 promesa_signed_at: true,
-                legacy_uploaded_contracts: true,
                 // @ts-ignore
                 extra_paid_amount: true,
                 // @ts-ignore

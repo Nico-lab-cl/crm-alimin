@@ -120,6 +120,11 @@ model Reservation {
 
   next_payment_date DateTime?
   next_installment_discount Int? @default(0)
+
+  @@index([lot_id])
+  @@index([buyer_id])
+  @@index([seller_id])
+  @@index([lot_id, created_at])
 }
 
 model Contact {
@@ -305,4 +310,8 @@ model PaymentReceipt {
   lot_id              Int
   reservation         Reservation @relation(fields: [reservation_id], references: [id])
   lot                 Lot         @relation(fields: [lot_id], references: [id])
+
+  @@index([reservation_id])
+  @@index([lot_id])
+  @@index([reservation_id, status])
 }
