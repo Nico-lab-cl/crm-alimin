@@ -7,7 +7,7 @@ import { memoryCache } from "@/lib/cache"
 import { revalidatePath } from "next/cache"
 
 const POSTVENTA_CACHE_KEY = 'postventa_data';
-const CACHE_TTL = 300; // 5 minutes
+const CACHE_TTL = 3600; // 1 hour for postventa data
 
 export async function invalidatePostventaCache() {
     memoryCache.deleteByPrefix('postventa_full_');

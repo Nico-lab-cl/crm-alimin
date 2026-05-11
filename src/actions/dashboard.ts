@@ -16,8 +16,8 @@ const ADMIN_STATS_CACHE_KEY = 'admin_stats_data';
 const ADMIN_PIPELINE_CACHE_KEY = 'admin_pipeline_data';
 const ADMIN_LOTS_CACHE_KEY = 'admin_lots_data';
 const ADMIN_USERS_CACHE_KEY = 'admin_users_data';
-const CACHE_TTL_SHORT = 60; // 1 minute for global admin
-const CACHE_TTL_POSTVENTA = 300; // 5 minutes
+const CACHE_TTL_SHORT = 600; // 10 minutes (was 1)
+const CACHE_TTL_POSTVENTA = 3600; // 1 hour
 
 export async function getSellerPipeline() {
     const session = await auth()
@@ -444,7 +444,7 @@ export async function createVerifiedUser(data: any) {
     if (session?.user?.role !== Role.ADMIN) return { error: "No autorizado" }
 
     const { name, email: rawEmail, password, role } = data
-    const email = rawEmail.toLowerCase();
+    const email = rawEmail.trim().toLowerCase();
 
     try {
         const existingUser = await prisma.user.findUnique({ where: { email } })
@@ -536,7 +536,7 @@ export async function assignLegacyLotOwner(data: {
         next_installment_discount
     } = data
 
-    const email = rawEmail?.toLowerCase();
+    const email = rawEmail?.trim().toLowerCase();
 
     console.log("[assignLegacyLotOwner] Data received:", { lotId, email, next_payment_date, legacy_debt_start_date });
 
@@ -548,7 +548,7 @@ export async function assignLegacyLotOwner(data: {
         // If user doesn't exist, create one with temp password in SILENCE
         if (!user) {
             isNewUser = true
-            const tempPassword = Math.random().toString(36).slice(-8)
+            const tempPassword = Math.random().toString(36).substring(2, 10);
             const hashedPassword = await hash(tempPassword, 10)
 
             user = await prisma.user.create({
@@ -562,13 +562,14 @@ export async function assignLegacyLotOwner(data: {
                 }
             })
         } else {
-            // Update the global User name if it was changed in the editor
-            if (user.name !== name) {
-                user = await prisma.user.update({
-                    where: { id: user.id },
-                    data: { name }
-                });
-            }
+            // Ensure existing user is verified if assigned by admin
+            user = await prisma.user.update({
+                where: { id: user.id },
+                data: { 
+                    name,
+                    emailVerified: user.emailVerified || new Date()
+                }
+            });
         }
 
         // Base assumption: if pie is set, it's paid. If they gave us current installment, we calculate how many they've paid.
@@ -834,8 +835,8 @@ export async function triggerLegacyWorkflow(reservationId: string) {
 
         // 1. Send to Temporal Password Webhook (as Welcome Email) if new user
         if (user.mustChangePassword) {
-            // Generate a fresh random password since we couldn't store the plain text one from assignment
-            const randomPassword = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8);
+            // Generate a fresh random password (12 characters, alphanumeric only)
+            const randomPassword = Math.random().toString(36).substring(2, 8) + Math.random().toString(36).substring(2, 8);
             const hashedPassword = await hash(randomPassword, 10);
 
             await prisma.user.update({
