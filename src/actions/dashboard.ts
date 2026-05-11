@@ -10,6 +10,7 @@ import { sendPieWebhook, sendContractSignedWebhook } from "@/lib/webhooks"
 import { memoryCache } from "@/lib/cache"
 import { cookies } from "next/headers"
 import { createMobileToken } from "@/lib/mobile-auth"
+import { hash } from "bcryptjs"
 
 const POSTVENTA_CACHE_KEY = 'postventa_data';
 const ADMIN_STATS_CACHE_KEY = 'admin_stats_data';
