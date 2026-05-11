@@ -450,7 +450,8 @@ export async function createVerifiedUser(data: any) {
         const existingUser = await prisma.user.findUnique({ where: { email } })
         if (existingUser) return { error: "El correo ya está registrado" }
 
-        const hashedPassword = await hash(password, 10)
+        const cleanPassword = password.trim();
+        const hashedPassword = await hash(cleanPassword, 10)
 
         await prisma.user.create({
             data: {
@@ -1037,7 +1038,8 @@ export async function adminResetUserPassword(userId: string, newPassword: string
     }
 
     try {
-        const hashedPassword = await hash(newPassword, 10);
+        const cleanPassword = newPassword.trim();
+        const hashedPassword = await hash(cleanPassword, 10);
 
         await prisma.user.update({
             where: { id: userId },
