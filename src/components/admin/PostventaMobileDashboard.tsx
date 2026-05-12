@@ -1210,10 +1210,17 @@ export function PostventaMobileDashboard({
                                                             docInfo.url = selectedClientLedger.uploaded_contract_url;
                                                             docInfo.date = selectedClientLedger.signed_at;
                                                         } else if (cat.id === 'PROMESA') {
-                                                            const parsedLegacy = selectedClientLedger.legacy_uploaded_contracts ? JSON.parse(selectedClientLedger.legacy_uploaded_contracts) : null;
-                                                            if (parsedLegacy && parsedLegacy.length > 0) {
-                                                                docInfo.url = parsedLegacy[0].url;
-                                                                docInfo.name = parsedLegacy[0].name;
+                                                            const match = manualDocs.find((d: any) => d.category === cat.id);
+                                                            if (match) {
+                                                                docInfo.url = match.url;
+                                                                docInfo.date = match.uploadedAt;
+                                                                docInfo.name = match.name;
+                                                            } else {
+                                                                const parsedLegacy = selectedClientLedger.legacy_uploaded_contracts ? JSON.parse(selectedClientLedger.legacy_uploaded_contracts) : null;
+                                                                if (parsedLegacy && parsedLegacy.length > 0) {
+                                                                    docInfo.url = parsedLegacy[0].url;
+                                                                    docInfo.name = parsedLegacy[0].name;
+                                                                }
                                                             }
                                                         } else {
                                                             // Find matching manual document

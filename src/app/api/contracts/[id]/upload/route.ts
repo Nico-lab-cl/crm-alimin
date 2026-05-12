@@ -159,6 +159,19 @@ export async function DELETE(
             updateData.uploaded_contract_url = null;
         } else if (type?.toUpperCase() === "PROMESA") {
             updateData.legacy_uploaded_contracts = null;
+            let docs: any[] = [];
+            if (reservation.manual_documents) {
+                try {
+                    docs = Array.isArray(reservation.manual_documents) 
+                        ? (reservation.manual_documents as any[]) 
+                        : JSON.parse(reservation.manual_documents as string);
+                } catch (e) {}
+            }
+            if (name) {
+                updateData.manual_documents = docs.filter(d => !(d.category === 'PROMESA' && d.name === name));
+            } else {
+                updateData.manual_documents = docs.filter(d => d.category !== 'PROMESA');
+            }
         } else if (type === "legacy") {
             let docs: any[] = [];
             if (reservation.legacy_uploaded_contracts) {

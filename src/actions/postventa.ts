@@ -60,6 +60,7 @@ export async function getFullPostventaData({
                 legacy_installment_start_date: true,
                 legacy_debt_start_date: true,
                 legacy_debt_end_date: true,
+                legacy_uploaded_contracts: true,
                 // @ts-ignore
                 mora_frozen: true,
                 // @ts-ignore
