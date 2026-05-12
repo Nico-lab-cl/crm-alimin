@@ -447,7 +447,11 @@ export async function createVerifiedUser(data: any) {
     const email = rawEmail.trim().toLowerCase();
 
     try {
-        const existingUser = await prisma.user.findUnique({ where: { email } })
+        const existingUser = await prisma.user.findFirst({ 
+            where: { 
+                email: { equals: email, mode: 'insensitive' } 
+            } 
+        })
         if (existingUser) return { error: "El correo ya está registrado" }
 
         const cleanPassword = password.trim();
@@ -542,7 +546,11 @@ export async function assignLegacyLotOwner(data: {
     console.log("[assignLegacyLotOwner] Data received:", { lotId, email, next_payment_date, legacy_debt_start_date });
 
     try {
-        let user = await prisma.user.findUnique({ where: { email } })
+        let user = await prisma.user.findFirst({ 
+            where: { 
+                email: { equals: email, mode: 'insensitive' } 
+            } 
+        })
         let isNewUser = false
         let resetLink = null
 

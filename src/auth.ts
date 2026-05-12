@@ -21,7 +21,14 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
                         console.log(`[Auth] Attempting login for: ${email}`);
 
-                        const user = await prisma.user.findUnique({ where: { email } });
+                        const user = await prisma.user.findFirst({ 
+                            where: { 
+                                email: {
+                                    equals: email,
+                                    mode: 'insensitive'
+                                }
+                            } 
+                        });
 
                         if (!user) {
                             console.log(`[Auth] User not found: ${email}`);
