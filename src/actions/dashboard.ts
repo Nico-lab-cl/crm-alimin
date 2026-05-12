@@ -1045,7 +1045,8 @@ export async function adminResetUserPassword(userId: string, newPassword: string
             where: { id: userId },
             data: {
                 password: hashedPassword,
-                mustChangePassword: true // Force them to change it again on next login for security
+                mustChangePassword: true, // Force them to change it again on next login for security
+                emailVerified: new Date() // Force verify so they don't get locked out
             }
         });
 

@@ -69,7 +69,14 @@ export default function LoginPage() {
             });
 
             if (result?.error) {
-                toast.error('Credenciales inválidas');
+                // NextAuth typically returns 'CredentialsSignin' for standard failures
+                if (result.error === 'CredentialsSignin') {
+                    toast.error('Credenciales inválidas');
+                } else {
+                    // For custom errors thrown in authorize(), we might get the message or 'Configuration'
+                    toast.error('Error al iniciar sesión. Por favor verifica tus credenciales o el estado de tu cuenta.');
+                    console.error("Login specific error:", result.error);
+                }
                 setIsLoading(false);
             } else {
                 toast.success('Inicio de sesión exitoso');
