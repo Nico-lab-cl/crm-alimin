@@ -123,6 +123,8 @@ export async function getFullPostventaData({
                 // @ts-ignore
                 pending_amount: true,
                 // @ts-ignore
+                pending_amount_reason: true,
+                // @ts-ignore
                 pie: true,
                 status: true,
                 next_payment_date: true,
@@ -340,10 +342,12 @@ export async function getFullPostventaData({
                 lateDays,
                 penaltyAmount,
                 pending_amount: (res as any).pending_amount || 0,
+                pending_amount_reason: (res as any).pending_amount_reason || null,
                 isUpcoming,
                 isLate: penaltyAmount > 0 || ((res as any).pending_amount || 0) > 0,
-                isUpToDate: !isGracePeriod && penaltyAmount <= 0 && !isUpcoming,
+                isUpToDate: !isGracePeriod && penaltyAmount <= 0 && !isUpcoming && ((res as any).pending_amount || 0) <= 0,
                 status: (penaltyAmount > 0 && !Boolean(res.mora_frozen)) ? 'LATE' : 
+                        (((res as any).pending_amount || 0) > 0 && !Boolean(res.mora_frozen)) ? 'LATE' :
                         (isGracePeriod && !Boolean(res.mora_frozen)) ? 'GRACE' : 
                         (isUpcoming && !Boolean(res.mora_frozen)) ? 'UPCOMING' : 'OK',
                 reservationStatus: res.status,
