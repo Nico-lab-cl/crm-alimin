@@ -149,7 +149,7 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
                 reservation_amount_clp: 500000, pie: 0, cuotas: 0, valor_cuota: 0, last_installment_amount: 0, price_total_clp: 0, legacy_current_installment: 0, isPiePaid: true,
                 reserva_firmada: false, compraventa_firmada: false, is_promo: false, mora_frozen: false,
                 advisor: "", observation: "",
-                extra_paid_amount: 0, pending_amount: 0, has_operational_expenses: false,
+                extra_paid_amount: 0, pending_amount: 0, pending_amount_reason: "", has_operational_expenses: false,
                 next_installment_discount: 0
             })
             setHasDebt(false)
