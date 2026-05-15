@@ -50,6 +50,7 @@ interface PaymentButtonsProps {
         pie?: number | null;
         next_installment_discount?: number | null;
         pending_amount?: number | null;
+        pending_amount_reason?: string | null;
     };
     acquisitionDate?: string | null;
     isAdminView?: boolean;
@@ -524,9 +525,16 @@ export function PaymentButtons({ reservationId, lot, reservation, acquisitionDat
                                         )}
 
                                         {additionalDebt > 0 && (
-                                            <div className="flex justify-between text-red-600 font-bold text-sm mt-2 border-t border-red-100 pt-1">
-                                                <span>Mora Fija / Deuda Adicional:</span>
-                                                <span>{formatCurrency(additionalDebt)}</span>
+                                            <div className="mt-2 border-t border-red-100 pt-1">
+                                                <div className="flex justify-between text-red-600 font-bold text-sm">
+                                                    <span>Mora Fija / Deuda Adicional:</span>
+                                                    <span>{formatCurrency(additionalDebt)}</span>
+                                                </div>
+                                                {reservation.pending_amount_reason && (
+                                                    <div className="text-xs text-red-500 mt-1 bg-red-50 p-2 rounded-md border border-red-100">
+                                                        <span className="font-bold">Motivo:</span> {reservation.pending_amount_reason}
+                                                    </div>
+                                                )}
                                             </div>
                                         )}
 

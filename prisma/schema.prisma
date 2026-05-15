@@ -61,6 +61,7 @@ model Reservation {
   pie                   Int?      @default(0)
   extra_paid_amount     Int?      @default(0)
   pending_amount        Int?      @default(0)
+  pending_amount_reason String?
   uploaded_contract_url String?
   address_street        String?
   address_number        String?

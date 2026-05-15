@@ -58,6 +58,7 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
         observation: "",
         extra_paid_amount: 0,
         pending_amount: 0,
+        pending_amount_reason: "",
         has_operational_expenses: false,
         next_installment_discount: 0,
     })
@@ -100,6 +101,7 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
                 observation: existingReservation.observation || "",
                 extra_paid_amount: existingReservation.extra_paid_amount || 0,
                 pending_amount: existingReservation.pending_amount || 0,
+                pending_amount_reason: existingReservation.pending_amount_reason || "",
                 has_operational_expenses: !!existingReservation.has_operational_expenses,
                 next_installment_discount: Number(existingReservation.next_installment_discount) || 0,
             })
@@ -185,7 +187,7 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
                     reservation_amount_clp: 500000, pie: 0, cuotas: 0, valor_cuota: 0, last_installment_amount: 0, price_total_clp: 0, legacy_current_installment: 0, isPiePaid: true,
                     reserva_firmada: false, compraventa_firmada: false, is_promo: false, mora_frozen: false,
                     advisor: "", observation: "",
-                    extra_paid_amount: 0, pending_amount: 0, has_operational_expenses: false,
+                    extra_paid_amount: 0, pending_amount: 0, pending_amount_reason: "", has_operational_expenses: false,
                     next_installment_discount: 0
                 })
                 setHasDebt(false)
@@ -490,6 +492,18 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
                                 placeholder="Ej: Saldo pendiente"
                             />
                             <p className="text-[10px] text-red-600">Monto EXTRA que el cliente aún debe por otros conceptos.</p>
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="pending_amount_reason" className="text-red-900 font-semibold">Motivo de la Deuda Adicional</Label>
+                            <Input
+                                id="pending_amount_reason"
+                                type="text"
+                                value={formData.pending_amount_reason}
+                                onChange={(e) => setFormData({ ...formData, pending_amount_reason: e.target.value })}
+                                placeholder="Ej: Multa por atraso en firma de contrato"
+                                disabled={!formData.pending_amount || formData.pending_amount === 0}
+                            />
+                            <p className="text-[10px] text-red-600">Este motivo será visible para el cliente en su módulo de pagos.</p>
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="next_installment_discount" className="text-green-900 font-semibold">Descuento Compensatorio (CLP)</Label>

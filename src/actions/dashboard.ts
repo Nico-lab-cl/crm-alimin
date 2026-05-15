@@ -276,6 +276,7 @@ export async function getAdminLots() {
                         observation: true,
                         extra_paid_amount: true,
                         pending_amount: true,
+                        pending_amount_reason: true,
                         has_operational_expenses: true,
                         next_payment_date: true,
                         next_installment_discount: true,
@@ -519,6 +520,7 @@ export async function assignLegacyLotOwner(data: {
     observation?: string | null;
     extra_paid_amount?: number;
     pending_amount?: number;
+    pending_amount_reason?: string | null;
     reservationId?: string;
     has_operational_expenses?: boolean;
     next_payment_date?: string | null;
@@ -535,7 +537,7 @@ export async function assignLegacyLotOwner(data: {
         price_total_clp, legacy_current_installment, legacy_debt_start_date, legacy_debt_end_date, legacy_installment_start_date, legacy_installment_ranges, isPiePaid,
         reserva_firmada, compraventa_firmada, is_promo, mora_frozen,
         advisor, observation,
-        extra_paid_amount, pending_amount,
+        extra_paid_amount, pending_amount, pending_amount_reason,
         reservationId, has_operational_expenses,
         next_payment_date,
         next_installment_discount
@@ -665,6 +667,8 @@ export async function assignLegacyLotOwner(data: {
             extra_paid_amount: extra_paid_amount !== undefined ? Number(extra_paid_amount) : (existingReservation?.extra_paid_amount || 0),
             // @ts-ignore
             pending_amount: pending_amount !== undefined ? Number(pending_amount) : (existingReservation?.pending_amount || 0),
+            // @ts-ignore
+            pending_amount_reason: pending_amount_reason !== undefined ? (pending_amount_reason || null) : ((existingReservation as any)?.pending_amount_reason || null),
             // @ts-ignore
             pie: pie !== undefined ? Number(pie) : (existingReservation?.pie || 0),
             next_payment_date: (next_payment_date !== undefined) ? (next_payment_date ? new Date(next_payment_date) : null) : (existingReservation?.next_payment_date ? new Date(existingReservation.next_payment_date) : null),
