@@ -49,6 +49,7 @@ interface PaymentButtonsProps {
         receipts?: any[];
         pie?: number | null;
         next_installment_discount?: number | null;
+        pending_amount?: number | null;
     };
     acquisitionDate?: string | null;
     isAdminView?: boolean;
@@ -237,7 +238,8 @@ export function PaymentButtons({ reservationId, lot, reservation, acquisitionDat
     }
 
     const discount = reservation.next_installment_discount || 0;
-    const finalTotal = Math.max(0, totalToPay + calculatedInterest - discount);
+    const additionalDebt = reservation.pending_amount || 0;
+    const finalTotal = Math.max(0, totalToPay + calculatedInterest + additionalDebt - discount);
 
     const firstDue = getInstallmentDueDate(baseDate, paidCuotas + 1, isLegacyBool, customDueDay, isPromoBool);
     const lastDue = getInstallmentDueDate(baseDate, paidCuotas + count, isLegacyBool, customDueDay, isPromoBool);
@@ -518,6 +520,13 @@ export function PaymentButtons({ reservationId, lot, reservation, acquisitionDat
                                                         ({lateRangeDisplay}: hasta {daysLateForDisplay} días de atraso)
                                                     </div>
                                                 )}
+                                            </div>
+                                        )}
+
+                                        {additionalDebt > 0 && (
+                                            <div className="flex justify-between text-red-600 font-bold text-sm mt-2 border-t border-red-100 pt-1">
+                                                <span>Mora Fija / Deuda Adicional:</span>
+                                                <span>{formatCurrency(additionalDebt)}</span>
                                             </div>
                                         )}
 

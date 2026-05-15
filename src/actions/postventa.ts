@@ -339,8 +339,9 @@ export async function getFullPostventaData({
                 is_legacy: Boolean(res.is_legacy),
                 lateDays,
                 penaltyAmount,
+                pending_amount: (res as any).pending_amount || 0,
                 isUpcoming,
-                isLate: penaltyAmount > 0,
+                isLate: penaltyAmount > 0 || ((res as any).pending_amount || 0) > 0,
                 isUpToDate: !isGracePeriod && penaltyAmount <= 0 && !isUpcoming,
                 status: (penaltyAmount > 0 && !Boolean(res.mora_frozen)) ? 'LATE' : 
                         (isGracePeriod && !Boolean(res.mora_frozen)) ? 'GRACE' : 

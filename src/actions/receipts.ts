@@ -254,12 +254,19 @@ export async function approvePaymentReceipt(receiptId: string, serverAuthOverrid
             const currentInstallmentsPaid = receipt.reservation.installments_paid || 0;
             const newInstallmentsPaid = currentInstallmentsPaid + (receipt.installments_count || 1);
 
+            const currentPendingAmount = (receipt.reservation as any).pending_amount || 0;
+            const currentExtraPaid = (receipt.reservation as any).extra_paid_amount || 0;
+
             await prisma.reservation.update({
                 where: { id: receipt.reservation_id },
                 data: {
                     installments_paid: newInstallmentsPaid,
                     pipeline_stage: 'PAGO_CUOTAS',
-                    next_payment_date: null // Clear manual override so system recalculates
+                    next_payment_date: null, // Clear manual override so system recalculates
+                    // @ts-ignore
+                    extra_paid_amount: currentExtraPaid + currentPendingAmount,
+                    // @ts-ignore
+                    pending_amount: 0
                 }
             });
         }

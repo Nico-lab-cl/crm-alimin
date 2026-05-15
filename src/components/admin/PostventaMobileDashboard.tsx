@@ -342,7 +342,7 @@ export function PostventaMobileDashboard({
             return {
                 ...alert,
                 statusLabel,
-                pendingAmount: formatCurrency(alert.penaltyAmount || alert.monto_cuota || 0),
+                pendingAmount: formatCurrency((alert.penaltyAmount || alert.monto_cuota || 0) + (alert.pending_amount || 0)),
                 displayDueDate: alert.displayDueDate ? format(new Date(alert.displayDueDate), 'dd/MM/yyyy') : 'N/A',
                 paidCuotas: alert.paidCuotas || 0
             };
@@ -888,7 +888,7 @@ export function PostventaMobileDashboard({
                                                 <div className="flex justify-between">
                                                     <span className="text-[6px] text-gray-500 font-black uppercase tracking-widest">Monto</span>
                                                     <span className={`font-black ${accentClass} text-[10px]`}>
-                                                        {isOK ? formatCurrency(alert.cuotasAmount) : formatCurrency(isLate ? alert.penaltyAmount : (alert.monto_cuota || 0))}
+                                                        {isOK ? formatCurrency(alert.cuotasAmount + (alert.pending_amount || 0)) : formatCurrency((isLate ? alert.penaltyAmount : (alert.monto_cuota || 0)) + (alert.pending_amount || 0))}
                                                     </span>
                                                 </div>
                                                 <div className="flex justify-between">

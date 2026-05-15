@@ -142,8 +142,10 @@ export async function POST(request: Request) {
                 }
             }
 
-            amount += totalInterest;
-            console.log(`Total Amount: ${amount} (Includes Interest: ${totalInterest})`);
+            const additionalDebt = (reservation as any).pending_amount || 0;
+            const discount = (reservation as any).next_installment_discount || 0;
+            amount = Math.max(0, amount + totalInterest + additionalDebt - discount);
+            console.log(`Total Amount: ${amount} (Includes Interest: ${totalInterest}, Additional Debt: ${additionalDebt}, Discount: ${discount})`);
 
             buyOrderScope = 'CUOTA';
             installmentsCount = installments;
