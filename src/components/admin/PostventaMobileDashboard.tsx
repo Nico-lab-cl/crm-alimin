@@ -31,6 +31,7 @@ import { AssignOwnerModal } from "@/components/dashboard/AssignOwnerModal";
 import { AdminLotList } from "@/components/dashboard/AdminLotList";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
+import { PaymentButtons } from "@/components/user/PaymentButtons";
 
 export type PostventaTab = 'mora' | 'ledger' | 'alertas' | 'terrenos';
 
