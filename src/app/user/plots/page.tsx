@@ -36,6 +36,7 @@ interface Reservation {
     legacy_installment_start_date?: string | null;
     legacy_installment_ranges?: any;
     next_installment_discount?: number;
+    pending_amount?: number | null;
     receipts?: any[];
 }
 
@@ -251,6 +252,7 @@ export default function UserPlotsPage() {
                                                     legacy_installment_start_date: res.legacy_installment_start_date,
                                                     legacy_installment_ranges: res.legacy_installment_ranges,
                                                     next_installment_discount: res.next_installment_discount,
+                                                    pending_amount: res.pending_amount,
                                                     receipts: res.receipts
                                                 }}
                                                 acquisitionDate={res.created_at}
