@@ -361,13 +361,13 @@ export function PostventaMobileDashboard({
     let content;
     if (activeTab === 'terrenos') {
         content = (
-            <div className="space-y-4 pb-24 animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <div className="space-y-4 pb-24 font-sans text-gray-900 bg-gray-50 min-h-screen -m-4 p-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
                 <div className="flex items-center gap-4 mb-8">
-                    <div className="p-4 rounded-2xl bg-white/5 border border-white/10 shadow-inner">
+                    <div className="p-4 rounded-2xl bg-gray-50 border border-gray-200 shadow-inner">
                         <Map className="w-8 h-8 text-[#E0B457]" />
                     </div>
                     <div className="flex-1">
-                        <h1 className="text-3xl font-black text-white tracking-tight uppercase">
+                        <h1 className="text-3xl font-black text-gray-900 tracking-tight uppercase">
                             Gestión de Terrenos
                         </h1>
                         <p className="text-[#E0B457] text-xs font-bold tracking-[0.2em] uppercase opacity-70">
@@ -384,7 +384,7 @@ export function PostventaMobileDashboard({
                     </Button>
                 </div>
 
-                <div className="bg-black/40 backdrop-blur-md rounded-[2rem] p-6 border border-white/10 shadow-xl">
+                <div className="bg-white backdrop-blur-md rounded-[2rem] p-6 border border-gray-200 shadow-sm">
                     <AdminLotList lots={fullLots} />
                 </div>
             </div>
@@ -417,9 +417,9 @@ export function PostventaMobileDashboard({
         );
 
         content = (
-            <div className="space-y-4 pb-24 animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <div className="space-y-4 pb-24 font-sans text-gray-900 bg-gray-50 min-h-screen -m-4 p-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
                 {/* Header & Controls - Premium Glassmorphism */}
-                <div className="bg-[#0a1622]/60 backdrop-blur-xl border border-[#3f6066]/20 p-4 md:p-6 rounded-[2rem] space-y-4 shadow-2xl relative overflow-hidden">
+                <div className="bg-white backdrop-blur-xl border border-[#3f6066]/20 p-4 md:p-6 rounded-[2rem] space-y-4 shadow-sm relative overflow-hidden">
                     <div className="absolute top-0 right-0 p-8 opacity-5">
                         <BookOpen className="w-24 h-24 text-[#3f6066]" />
                     </div>
@@ -427,10 +427,10 @@ export function PostventaMobileDashboard({
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10">
                         <div className="flex items-center gap-3">
                             <div className="bg-[#3f6066]/20 p-2.5 rounded-2xl border border-[#3f6066]/30">
-                                <BookOpen className="w-5 h-5 text-[#8eb2b8]" />
+                                <BookOpen className="w-5 h-5 text-[#4A6E75]" />
                             </div>
                             <div>
-                                <h2 className="text-xl font-black text-white tracking-tight uppercase">Estado de Cuentas</h2>
+                                <h2 className="text-xl font-black text-gray-900 tracking-tight uppercase">Estado de Cuentas</h2>
                                 <p className="text-[10px] text-[#3f6066] font-black uppercase tracking-widest">Cartera de Clientes Postventa</p>
                             </div>
                         </div>
@@ -447,7 +447,7 @@ export function PostventaMobileDashboard({
                                         window.location.reload();
                                     }
                                 }}
-                                className="bg-[#3f6066]/10 border-[#3f6066]/30 text-[#8eb2b8] hover:bg-[#3f6066]/20 text-[10px] font-black uppercase tracking-widest h-9"
+                                className="bg-[#3f6066]/10 border-[#3f6066]/30 text-[#4A6E75] hover:bg-[#3f6066]/20 text-[10px] font-black uppercase tracking-widest h-9"
                             >
                                 <Clock className="w-3.5 h-3.5 mr-2" />
                                 Sincronizar Recibos
@@ -470,8 +470,8 @@ export function PostventaMobileDashboard({
                                     key={s}
                                     onClick={() => { setLedgerStage(s); setLedgerPage(1); }}
                                     className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all border shrink-0 cursor-pointer ${ledgerStage === s
-                                        ? 'bg-[#3f6066] text-white border-[#3f6066] shadow-[0_0_15px_rgba(63,96,102,0.3)]'
-                                        : 'bg-white/5 text-gray-500 border-white/5 hover:border-[#3f6066]/40 hover:text-gray-300'
+                                        ? 'bg-[#3f6066] text-gray-900 border-[#3f6066] shadow-[0_0_15px_rgba(63,96,102,0.3)]'
+                                        : 'bg-gray-50 text-gray-500 border-gray-200 hover:border-gray-300 hover:shadow-md hover:text-gray-700'
                                         }`}
                                 >
                                     {s === 'ALL' ? 'Todas' : `Etapa ${s}`}
@@ -481,40 +481,40 @@ export function PostventaMobileDashboard({
                     </div>
 
                     {/* Month and Status Filters */}
-                    <div className="flex flex-wrap items-center gap-3 relative z-10 py-2 border-t border-white/5">
-                        <div className="flex items-center gap-2 bg-black/40 rounded-2xl p-1 border border-white/5">
+                    <div className="flex flex-wrap items-center gap-3 relative z-10 py-2 border-t border-gray-200">
+                        <div className="flex items-center gap-2 bg-white rounded-2xl p-1 border border-gray-200">
                             <select 
                                 value={ledgerStatus}
                                 onChange={(e) => { setLedgerStatus(e.target.value as any); setLedgerPage(1); }}
-                                className="bg-transparent text-white text-[10px] font-black uppercase tracking-widest px-3 py-2 outline-none cursor-pointer"
+                                className="bg-transparent text-gray-900 text-[10px] font-black uppercase tracking-widest px-3 py-2 outline-none cursor-pointer"
                             >
-                                <option value="ALL" className="bg-[#0a1622]">Estado: Todos</option>
-                                <option value="PAID" className="bg-[#0a1622]">Pagados</option>
-                                <option value="PENDING" className="bg-[#0a1622]">Sin Pagar</option>
+                                <option value="ALL" className="bg-white">Estado: Todos</option>
+                                <option value="PAID" className="bg-white">Pagados</option>
+                                <option value="PENDING" className="bg-white">Sin Pagar</option>
                             </select>
                         </div>
 
-                        <div className="flex items-center gap-2 bg-black/40 rounded-2xl p-1 border border-white/5">
+                        <div className="flex items-center gap-2 bg-white rounded-2xl p-1 border border-gray-200">
                             <select 
                                 value={ledgerMonth}
                                 onChange={(e) => { setLedgerMonth(e.target.value === 'ALL' ? 'ALL' : Number(e.target.value)); setLedgerPage(1); }}
-                                className="bg-transparent text-white text-[10px] font-black uppercase tracking-widest px-3 py-2 outline-none cursor-pointer"
+                                className="bg-transparent text-gray-900 text-[10px] font-black uppercase tracking-widest px-3 py-2 outline-none cursor-pointer"
                             >
-                                <option value="ALL" className="bg-[#0a1622]">Mes: Todos</option>
+                                <option value="ALL" className="bg-white">Mes: Todos</option>
                                 {['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'].map((m, i) => (
-                                    <option key={i} value={i} className="bg-[#0a1622]">{m}</option>
+                                    <option key={i} value={i} className="bg-white">{m}</option>
                                 ))}
                             </select>
                         </div>
 
-                        <div className="flex items-center gap-2 bg-black/40 rounded-2xl p-1 border border-white/5">
+                        <div className="flex items-center gap-2 bg-white rounded-2xl p-1 border border-gray-200">
                             <select 
                                 value={ledgerYear}
                                 onChange={(e) => { setLedgerYear(Number(e.target.value)); setLedgerPage(1); }}
-                                className="bg-transparent text-white text-[10px] font-black uppercase tracking-widest px-3 py-2 outline-none cursor-pointer"
+                                className="bg-transparent text-gray-900 text-[10px] font-black uppercase tracking-widest px-3 py-2 outline-none cursor-pointer"
                             >
                                 {[2024, 2025, 2026, 2027].map(y => (
-                                    <option key={y} value={y} className="bg-[#0a1622]">{y}</option>
+                                    <option key={y} value={y} className="bg-white">{y}</option>
                                 ))}
                             </select>
                         </div>
@@ -535,14 +535,14 @@ export function PostventaMobileDashboard({
                             onKeyDown={(e) => {
                                 if (e.key === 'Enter') setLedgerPage(1);
                             }}
-                            className="bg-black/60 border-white/5 rounded-2xl pl-11 h-12 text-sm text-white placeholder:text-gray-700 focus:ring-[#3f6066]/20 focus:border-[#3f6066]/40 transition-all font-medium"
+                            className="bg-white border-gray-200 rounded-2xl pl-11 h-12 text-sm text-gray-900 placeholder:text-gray-400 focus:ring-[#3f6066]/20 focus:border-[#3f6066]/40 transition-all font-medium"
                         />
                         <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
                              {ledgerSearch && (
                                 <Button 
                                     size="sm"
                                     onClick={() => setLedgerPage(1)}
-                                    className="bg-[#3f6066] text-white hover:bg-[#3f6066]/80 h-8 rounded-xl text-[9px] font-black uppercase tracking-tighter"
+                                    className="bg-[#3f6066] text-gray-900 hover:bg-[#3f6066]/80 h-8 rounded-xl text-[9px] font-black uppercase tracking-tighter"
                                 >
                                     <Search className="w-3 h-3 mr-1.5" />
                                     Buscar
@@ -553,7 +553,7 @@ export function PostventaMobileDashboard({
                                     variant="ghost" 
                                     size="sm"
                                     onClick={() => { setLedgerSearch(''); setLedgerPage(1); }}
-                                    className="text-[9px] font-black text-[#3f6066] hover:text-white uppercase transition-colors h-8"
+                                    className="text-[9px] font-black text-[#3f6066] hover:text-gray-900 uppercase transition-colors h-8"
                                 >
                                     Limpiar
                                 </Button>
@@ -575,53 +575,53 @@ export function PostventaMobileDashboard({
                             <div 
                                 key={client.id} 
                                 onClick={() => setSelectedClientLedger(client)}
-                                className="bg-[#0a1622]/80 backdrop-blur-xl border border-[#3f6066]/10 p-4 md:p-5 rounded-2xl flex flex-col gap-3 relative overflow-hidden transition-all duration-500 hover:border-[#3f6066]/40 hover:scale-[1.02] active:scale-[0.98] shadow-2xl group cursor-pointer"
+                                className="bg-white backdrop-blur-xl border border-gray-200 p-4 md:p-5 rounded-2xl flex flex-col gap-3 relative overflow-hidden transition-all duration-500 hover:border-gray-300 hover:shadow-md hover:scale-[1.02] active:scale-[0.98] shadow-sm group cursor-pointer"
                             >
                                 <div className="absolute -top-4 -right-4 w-12 h-12 bg-[#3f6066]/5 rounded-full blur-xl group-hover:bg-[#3f6066]/15 transition-all duration-700" />
 
                                 <div className="space-y-1">
                                     <div className="flex justify-between items-start gap-2">
-                                        <p className="font-black text-white text-[11px] md:text-sm leading-tight tracking-tight truncate flex-1 uppercase">{client.clientName}</p>
-                                        <Badge variant="outline" className="text-[8px] md:text-[10px] font-black bg-[#3f6066]/10 text-[#8eb2b8] border-[#3f6066]/20 px-1.5 py-0 shrink-0 uppercase">
+                                        <p className="font-black text-gray-900 text-[11px] md:text-sm leading-tight tracking-tight truncate flex-1 uppercase">{client.clientName}</p>
+                                        <Badge variant="outline" className="text-[8px] md:text-[10px] font-black bg-[#3f6066]/10 text-[#4A6E75] border-[#3f6066]/20 px-1.5 py-0 shrink-0 uppercase">
                                             T-{client.lotNumber}
                                         </Badge>
                                     </div>
                                     <p className="text-[8px] md:text-[10px] text-[#3f6066] font-black uppercase tracking-[0.2em] leading-none">Etapa {client.lotStage}</p>
                                 </div>
 
-                                <div className="flex items-center gap-2 py-2 border-y border-white/5">
+                                <div className="flex items-center gap-2 py-2 border-y border-gray-200">
                                     <div className="flex items-center gap-1.5" title="Contrato Reserva (Auto)">
-                                        <CheckCircle className={`w-3 h-3 ${hasReserva ? 'text-emerald-400' : 'text-gray-800'}`} />
-                                        <span className={`text-[7px] md:text-[8px] font-black ${hasReserva ? 'text-emerald-400/80' : 'text-gray-800'}`}>RES</span>
+                                        <CheckCircle className={`w-3 h-3 ${hasReserva ? 'text-emerald-400' : 'text-gray-300'}`} />
+                                        <span className={`text-[7px] md:text-[8px] font-black ${hasReserva ? 'text-emerald-400/80' : 'text-gray-300'}`}>RES</span>
                                     </div>
                                     <div className="flex items-center gap-1.5" title="Comprobantes (Auto)">
-                                        <Receipt className={`w-3 h-3 ${hasReceipts ? 'text-blue-400' : 'text-gray-800'}`} />
-                                        <span className={`text-[7px] md:text-[8px] font-black ${hasReceipts ? 'text-blue-400/80' : 'text-gray-800'}`}>COM</span>
+                                        <Receipt className={`w-3 h-3 ${hasReceipts ? 'text-blue-400' : 'text-gray-300'}`} />
+                                        <span className={`text-[7px] md:text-[8px] font-black ${hasReceipts ? 'text-blue-400/80' : 'text-gray-300'}`}>COM</span>
                                     </div>
                                     <div className="flex items-center gap-1.5" title="Promesa (Manual)">
-                                        <FileSignature className={`w-3 h-3 ${hasPromesa ? 'text-cyan-400' : 'text-gray-800'}`} />
-                                        <span className={`text-[7px] md:text-[8px] font-black ${hasPromesa ? 'text-cyan-400/80' : 'text-gray-800'}`}>PRM</span>
+                                        <FileSignature className={`w-3 h-3 ${hasPromesa ? 'text-cyan-400' : 'text-gray-300'}`} />
+                                        <span className={`text-[7px] md:text-[8px] font-black ${hasPromesa ? 'text-cyan-400/80' : 'text-gray-300'}`}>PRM</span>
                                     </div>
                                     <div className="flex items-center gap-1.5" title="Gastos (Manual)">
-                                        <Gavel className={`w-3 h-3 ${hasGastos ? 'text-amber-400' : 'text-gray-800'}`} />
-                                        <span className={`text-[7px] md:text-[8px] font-black ${hasGastos ? 'text-amber-400/80' : 'text-gray-800'}`}>GST</span>
+                                        <Gavel className={`w-3 h-3 ${hasGastos ? 'text-amber-400' : 'text-gray-300'}`} />
+                                        <span className={`text-[7px] md:text-[8px] font-black ${hasGastos ? 'text-amber-400/80' : 'text-gray-300'}`}>GST</span>
                                     </div>
                                 </div>
 
                                 <div className="space-y-1.5">
                                     <div className="flex justify-between items-baseline">
                                         <span className="text-[7px] md:text-[8px] text-gray-600 font-black uppercase tracking-widest">Invertido</span>
-                                        <span className="text-[11px] md:text-sm text-white font-black">{formatCurrency(client.totalPaid)}</span>
+                                        <span className="text-[11px] md:text-sm text-gray-900 font-black">{formatCurrency(client.totalPaid)}</span>
                                     </div>
                                     <div className="flex justify-between items-baseline">
                                         <span className="text-[7px] md:text-[8px] text-gray-600 font-black uppercase tracking-widest">Próximo</span>
-                                        <span className="text-[9px] md:text-[11px] text-[#8eb2b8] font-black tabular-nums">
+                                        <span className="text-[9px] md:text-[11px] text-[#4A6E75] font-black tabular-nums">
                                             {client.nextDueDate ? format(new Date(client.nextDueDate), 'dd MMM yy', { locale: es }) : 'Finalizado'}
                                         </span>
                                     </div>
                                 </div>
 
-                                <div className="mt-1 h-1 w-full bg-white/5 rounded-full overflow-hidden">
+                                <div className="mt-1 h-1 w-full bg-gray-50 rounded-full overflow-hidden">
                                     <div 
                                         className="h-full bg-[#3f6066] shadow-[0_0_8px_#3f6066] transition-all duration-1000" 
                                         style={{ width: `${(client.paidCuotas / (client.totalCuotas || 1)) * 100}%` }}
@@ -632,7 +632,7 @@ export function PostventaMobileDashboard({
                     })}
 
                     {paginatedLedger.length === 0 && (
-                        <div className="col-span-full text-center py-20 bg-white/5 border border-dashed border-white/10 rounded-[2rem]">
+                        <div className="col-span-full text-center py-20 bg-gray-50 border border-dashed border-gray-200 rounded-[2rem]">
                             <Search className="w-10 h-10 text-gray-700 mx-auto mb-3 opacity-20" />
                             <p className="text-gray-500 font-black uppercase text-xs tracking-widest">
                                 {ledgerSearch ? 'Sin resultados para la búsqueda' : 'No hay clientes registrados'}
@@ -643,20 +643,20 @@ export function PostventaMobileDashboard({
 
                 {/* Pagination - Premium Styled */}
                 {totalLedgerPages > 1 && (
-                    <div className="flex justify-between items-center bg-[#0a1622]/60 backdrop-blur-xl border border-white/5 rounded-2xl p-3">
+                    <div className="flex justify-between items-center bg-white backdrop-blur-xl border border-gray-200 rounded-2xl p-3">
                         <Button
                             variant="ghost"
                             size="sm"
                             onClick={() => setLedgerPage(ledgerPage - 1)}
                             disabled={ledgerPage === 1}
-                            className="text-[10px] font-black uppercase tracking-widest text-[#3f6066] hover:text-white"
+                            className="text-[10px] font-black uppercase tracking-widest text-[#3f6066] hover:text-gray-900"
                         >
                             <ArrowRight className="w-3 h-3 mr-2 rotate-180" />
                             Anterior
                         </Button>
                         <div className="flex items-center gap-3">
                             <span className="text-[10px] text-gray-600 font-black uppercase tracking-widest">Página</span>
-                            <span className="text-sm text-white font-black px-3 py-1 bg-[#3f6066]/20 rounded-lg border border-[#3f6066]/30">
+                            <span className="text-sm text-gray-900 font-black px-3 py-1 bg-[#3f6066]/20 rounded-lg border border-[#3f6066]/30">
                                 {ledgerPage} <span className="text-[#3f6066] text-xs mx-1">/</span> {totalLedgerPages}
                             </span>
                         </div>
@@ -665,7 +665,7 @@ export function PostventaMobileDashboard({
                             size="sm"
                             onClick={() => setLedgerPage(ledgerPage + 1)}
                             disabled={ledgerPage === totalLedgerPages}
-                            className="text-[10px] font-black uppercase tracking-widest text-[#3f6066] hover:text-white"
+                            className="text-[10px] font-black uppercase tracking-widest text-[#3f6066] hover:text-gray-900"
                         >
                             Siguiente
                             <ArrowRight className="w-3 h-3 ml-2" />
@@ -691,7 +691,7 @@ export function PostventaMobileDashboard({
         );
 
         content = (
-            <div className="space-y-6 pb-24">
+            <div className="space-y-6 pb-24 font-sans text-gray-900 bg-gray-50 min-h-screen -m-4 p-4">
                 {/* Dashboard Header */}
                 <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
                     <div className="space-y-1">
@@ -699,7 +699,7 @@ export function PostventaMobileDashboard({
                             <div className="bg-red-500/20 p-2 rounded-lg">
                                 <AlertTriangle className="w-5 h-5 text-red-500" />
                             </div>
-                            <h2 className="text-2xl font-black text-white tracking-tight">Gestión de Clientes</h2>
+                            <h2 className="text-2xl font-black text-gray-900 tracking-tight">Gestión de Clientes</h2>
                         </div>
                         <p className="text-xs text-gray-500 font-medium uppercase tracking-[0.2em] ml-11">
                             {format(today, "EEEE d 'de' MMMM 'de' yyyy", { locale: es })}
@@ -708,14 +708,14 @@ export function PostventaMobileDashboard({
 
                     {/* Actions and Badges */}
                     <div className="flex items-center gap-3 self-start md:self-end">
-                        <Badge variant="outline" className="md:hidden font-bold bg-white/5 border-white/10 text-white px-3 py-1">
+                        <Badge variant="outline" className="md:hidden font-bold bg-gray-50 border-gray-200 text-gray-900 px-3 py-1">
                             {filteredAlerts.length} Clientes Filtrados
                         </Badge>
                         <Button 
                             variant="outline" 
                             size="sm"
                             onClick={() => handleExportAlerts(filteredAlerts)}
-                            className="bg-white/5 border-white/10 text-white hover:bg-white/10 font-bold text-[10px] uppercase tracking-wider px-4 h-10 rounded-xl"
+                            className="bg-gray-50 border-gray-200 text-gray-900 hover:bg-gray-100 font-bold text-[10px] uppercase tracking-wider px-4 h-10 rounded-xl"
                         >
                             <Download className="w-4 h-4 mr-2" />
                             Exportar
@@ -728,28 +728,28 @@ export function PostventaMobileDashboard({
                     {/* Sidebar / Filters Panel */}
                     <aside className="space-y-6 lg:sticky lg:top-4 z-20">
                         {/* Summary Stats Card (Desktop Only) */}
-                        <div className="hidden lg:block bg-[#1a1a1a]/60 backdrop-blur-xl border border-white/10 rounded-2xl p-5 space-y-4 shadow-2xl">
+                        <div className="hidden lg:block bg-white backdrop-blur-xl border border-gray-200 rounded-2xl p-5 space-y-4 shadow-sm">
                             <div className="flex items-center justify-between">
-                                <h3 className="text-white font-bold text-xs uppercase tracking-wider opacity-60">Panorama General</h3>
-                                <Badge className="bg-white/10 text-[10px]">{stats.total}</Badge>
+                                <h3 className="text-gray-900 font-bold text-xs uppercase tracking-wider opacity-60">Panorama General</h3>
+                                <Badge className="bg-gray-100 text-[10px]">{stats.total}</Badge>
                             </div>
 
                             <div className="grid grid-cols-2 gap-3 mt-2">
                                 <div className="bg-red-500/5 border border-red-500/10 p-3 rounded-xl transition-colors hover:bg-red-500/10">
                                     <p className="text-red-500 text-[9px] font-black uppercase tracking-tighter mb-1">Mora</p>
-                                    <p className="text-white text-xl font-black">{stats.late}</p>
+                                    <p className="text-gray-900 text-xl font-black">{stats.late}</p>
                                 </div>
                                 <div className="bg-amber-500/5 border border-amber-500/10 p-3 rounded-xl transition-colors hover:bg-amber-500/10">
                                     <p className="text-amber-500 text-[9px] font-black uppercase tracking-tighter mb-1">Gracia</p>
-                                    <p className="text-white text-xl font-black">{stats.grace}</p>
+                                    <p className="text-gray-900 text-xl font-black">{stats.grace}</p>
                                 </div>
                                 <div className="bg-blue-500/5 border border-blue-500/10 p-3 rounded-xl transition-colors hover:bg-blue-500/10">
                                     <p className="text-blue-500 text-[9px] font-black uppercase tracking-tighter mb-1">Próximo</p>
-                                    <p className="text-white text-xl font-black">{stats.upcoming}</p>
+                                    <p className="text-gray-900 text-xl font-black">{stats.upcoming}</p>
                                 </div>
                                 <div className="bg-green-500/5 border border-green-500/10 p-3 rounded-xl transition-colors hover:bg-green-500/10">
                                     <p className="text-green-500 text-[9px] font-black uppercase tracking-tighter mb-1">Al Día</p>
-                                    <p className="text-white text-xl font-black">{stats.ok}</p>
+                                    <p className="text-gray-900 text-xl font-black">{stats.ok}</p>
                                 </div>
                             </div>
                         </div>
@@ -761,7 +761,7 @@ export function PostventaMobileDashboard({
                                 placeholder="Buscar cliente..." 
                                 value={alertSearch}
                                 onChange={(e) => { setAlertSearch(e.target.value); setAlertPage(1); }}
-                                className="bg-[#1a1a1a]/40 border-white/5 rounded-2xl pl-11 h-12 text-sm text-white placeholder:text-gray-700 focus:ring-[#3f6066]/20 focus:border-[#3f6066]/40 transition-all font-medium"
+                                className="bg-white border-gray-200 rounded-2xl pl-11 h-12 text-sm text-gray-900 placeholder:text-gray-400 focus:ring-[#3f6066]/20 focus:border-[#3f6066]/40 transition-all font-medium"
                             />
                             <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
                                 {alertSearch && (
@@ -769,7 +769,7 @@ export function PostventaMobileDashboard({
                                         size="sm"
                                         variant="ghost"
                                         onClick={() => { setAlertSearch(''); setAlertPage(1); }}
-                                        className="h-8 text-[9px] font-black text-gray-500 hover:text-white uppercase"
+                                        className="h-8 text-[9px] font-black text-gray-500 hover:text-gray-900 uppercase"
                                     >
                                         Limpiar
                                     </Button>
@@ -778,7 +778,7 @@ export function PostventaMobileDashboard({
                         </div>
 
                         {/* Filter Sections */}
-                        <div className="space-y-6 bg-[#1a1a1a]/40 lg:bg-transparent p-4 lg:p-0 rounded-2xl border border-white/5 lg:border-none backdrop-blur-md lg:backdrop-blur-none transition-all">
+                        <div className="space-y-6 bg-white lg:bg-transparent p-4 lg:p-0 rounded-2xl border border-gray-200 lg:border-none backdrop-blur-md lg:backdrop-blur-none transition-all">
                             {/* Filter: Status */}
                             <div className="space-y-3">
                                 <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest px-1">Estado de Pago</p>
@@ -788,8 +788,8 @@ export function PostventaMobileDashboard({
                                             key={f}
                                             onClick={() => { setAlertFilter(f); setAlertPage(1); }}
                                             className={`px-4 py-2.5 rounded-xl text-[11px] font-bold whitespace-nowrap transition-all border flex items-center gap-2 flex-grow lg:flex-grow-0 cursor-pointer ${alertFilter === f
-                                                ? 'bg-[#36595F] text-white border-[#36595F] shadow-lg shadow-[#36595F]/20 translate-x-1'
-                                                : 'bg-white/5 text-gray-400 border-white/10 hover:bg-white/10 hover:border-white/20'
+                                                ? 'bg-[#36595F] text-gray-900 border-[#36595F] shadow-sm shadow-[#36595F]/20 translate-x-1'
+                                                : 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100 hover:border-gray-300'
                                                 }`}
                                         >
                                             <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{
@@ -812,7 +812,7 @@ export function PostventaMobileDashboard({
                                             onClick={() => { setAlertStage(s); setAlertPage(1); }}
                                             className={`px-4 py-2.5 rounded-xl text-[11px] font-bold transition-all border shrink-0 cursor-pointer ${alertStage === s
                                                 ? 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30'
-                                                : 'bg-white/5 text-gray-500 border-white/5 hover:border-white/20'
+                                                : 'bg-gray-50 text-gray-500 border-gray-200 hover:border-gray-300'
                                                 }`}
                                         >
                                             {s === 'ALL' ? 'Todas' : `Etapa ${s}`}
@@ -829,15 +829,15 @@ export function PostventaMobileDashboard({
                         <div className="lg:hidden flex gap-2 overflow-x-auto pb-2 no-scrollbar">
                             <div className="bg-red-500/10 border border-red-500/20 px-4 py-2 rounded-lg shrink-0">
                                 <span className="text-red-400 font-bold text-xs uppercase mr-2">Mora:</span>
-                                <span className="text-white font-black text-sm">{stats.late}</span>
+                                <span className="text-gray-900 font-black text-sm">{stats.late}</span>
                             </div>
                             <div className="bg-amber-500/10 border border-amber-500/20 px-4 py-2 rounded-lg shrink-0">
                                 <span className="text-amber-400 font-bold text-xs uppercase mr-2">Gracia:</span>
-                                <span className="text-white font-black text-sm">{stats.grace}</span>
+                                <span className="text-gray-900 font-black text-sm">{stats.grace}</span>
                             </div>
                             <div className="bg-blue-500/10 border border-blue-500/20 px-4 py-2 rounded-lg shrink-0">
                                 <span className="text-blue-400 font-bold text-xs uppercase mr-2">Próximo:</span>
-                                <span className="text-white font-black text-sm">{stats.upcoming}</span>
+                                <span className="text-gray-900 font-black text-sm">{stats.upcoming}</span>
                             </div>
                         </div>
 
@@ -850,7 +850,7 @@ export function PostventaMobileDashboard({
                                 const isFrozen = Boolean(alert.isMoraFrozen);
                                 const isOK = alert.isUpToDate || isFrozen;
 
-                                let colorClass = 'bg-[#0a1622]/80 border-[#3f6066]/20';
+                                let colorClass = 'bg-white border-[#3f6066]/20';
                                 if (isLate) colorClass = 'bg-red-500/5 border-red-500/20 shadow-[0_0_15px_rgba(239,68,68,0.1)]';
                                 if (isGrace) colorClass = 'bg-amber-500/5 border-amber-500/20 shadow-[0_0_15px_rgba(245,158,11,0.1)]';
                                 if (isUpcoming) colorClass = 'bg-blue-500/5 border-blue-500/20 shadow-[0_0_15px_rgba(59,130,246,0.1)]';
@@ -866,7 +866,7 @@ export function PostventaMobileDashboard({
                                 return (
                                     <div 
                                         key={alert.id} 
-                                        className={`${colorClass} p-3 rounded-2xl border backdrop-blur-xl transition-all duration-500 hover:scale-[1.03] active:scale-[0.98] flex flex-col justify-between relative overflow-hidden shadow-2xl group cursor-pointer`}
+                                        className={`${colorClass} p-3 rounded-2xl border backdrop-blur-xl transition-all duration-500 hover:scale-[1.03] active:scale-[0.98] flex flex-col justify-between relative overflow-hidden shadow-sm group cursor-pointer`}
                                         onClick={() => { 
                                             setSelectedClientLedger(alert); 
                                         }}
@@ -874,17 +874,17 @@ export function PostventaMobileDashboard({
                                         <div className="space-y-2">
                                             <div className="flex justify-between items-start gap-1">
                                                 <div className="min-w-0 flex-1">
-                                                    <p className="font-black text-white text-[10px] truncate tracking-tight uppercase leading-none">{alert.clientName}</p>
+                                                    <p className="font-black text-gray-900 text-[10px] truncate tracking-tight uppercase leading-none">{alert.clientName}</p>
                                                     <div className="flex items-center gap-1 mt-1">
-                                                        <span className="text-[7px] font-black px-1 py-0 rounded bg-[#3f6066]/10 text-[#8eb2b8] border border-[#3f6066]/20 uppercase">T-{alert.lotNumber}</span>
+                                                        <span className="text-[7px] font-black px-1 py-0 rounded bg-[#3f6066]/10 text-[#4A6E75] border border-[#3f6066]/20 uppercase">T-{alert.lotNumber}</span>
                                                     </div>
                                                 </div>
-                                                <Badge className={`bg-black/50 ${accentClass} border-${accentClass.split('-')[1]}-500/20 text-[7px] font-black uppercase tracking-wider px-1 py-0.5`}>
+                                                <Badge className={`bg-white/80 ${accentClass} border-${accentClass.split('-')[1]}-500/20 text-[7px] font-black uppercase tracking-wider px-1 py-0.5`}>
                                                     {badgeLabel}
                                                 </Badge>
                                             </div>
 
-                                            <div className="bg-black/40 rounded-xl p-2.5 border border-white/5 space-y-1">
+                                            <div className="bg-white rounded-xl p-2.5 border border-gray-200 space-y-1">
                                                 <div className="flex justify-between">
                                                     <span className="text-[6px] text-gray-500 font-black uppercase tracking-widest">Monto</span>
                                                     <span className={`font-black ${accentClass} text-[10px]`}>
@@ -893,7 +893,7 @@ export function PostventaMobileDashboard({
                                                 </div>
                                                 <div className="flex justify-between">
                                                     <span className="text-[6px] text-gray-500 font-black uppercase tracking-widest">Fecha</span>
-                                                    <span className="text-[9px] text-white font-black">
+                                                    <span className="text-[9px] text-gray-900 font-black">
                                                         {alert.displayDueDate ? format(new Date(alert.displayDueDate), 'dd MMM', { locale: es }) : 'N/A'}
                                                     </span>
                                                 </div>
@@ -910,35 +910,35 @@ export function PostventaMobileDashboard({
                         </div>
 
                         {filteredAlerts.length === 0 && (
-                            <div className="text-center py-16 bg-white/5 border border-dashed border-white/10 rounded-3xl">
+                            <div className="text-center py-16 bg-gray-50 border border-dashed border-gray-200 rounded-3xl">
                                 <CheckCircle className="w-12 h-12 text-green-500/40 mx-auto mb-4" />
-                                <p className="text-gray-400 font-bold text-lg">No hay clientes aquí</p>
+                                <p className="text-gray-600 font-bold text-lg">No hay clientes aquí</p>
                                 <p className="text-gray-600 text-sm mt-1 uppercase tracking-widest font-medium">Búsqueda impecable</p>
                             </div>
                         )}
 
                         {/* Pagination */}
                         {totalAlertPages > 1 && (
-                            <div className="flex justify-between items-center bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl p-4 mt-8">
+                            <div className="flex justify-between items-center bg-white backdrop-blur-xl border border-gray-200 rounded-2xl p-4 mt-8">
                                 <Button
                                     variant="outline"
                                     size="sm"
                                     onClick={() => setAlertPage(alertPage - 1)}
                                     disabled={alertPage === 1}
-                                    className="h-9 px-4 text-[11px] font-black uppercase bg-white/5 border-white/10 text-white hover:bg-white/10 transition-all cursor-pointer"
+                                    className="h-9 px-4 text-[11px] font-black uppercase bg-gray-50 border-gray-200 text-gray-900 hover:bg-gray-100 transition-all cursor-pointer"
                                 >
                                     Anterior
                                 </Button>
                                 <div className="flex flex-col items-center">
                                     <span className="text-[10px] text-gray-500 font-black uppercase tracking-widest">Página</span>
-                                    <span className="text-sm text-white font-black">{alertPage} <span className="text-gray-600 text-xs">de {totalAlertPages}</span></span>
+                                    <span className="text-sm text-gray-900 font-black">{alertPage} <span className="text-gray-600 text-xs">de {totalAlertPages}</span></span>
                                 </div>
                                 <Button
                                     variant="outline"
                                     size="sm"
                                     onClick={() => setAlertPage(alertPage + 1)}
                                     disabled={alertPage === totalAlertPages}
-                                    className="h-9 px-4 text-[11px] font-black uppercase bg-white/5 border-white/10 text-white hover:bg-white/10 transition-all cursor-pointer"
+                                    className="h-9 px-4 text-[11px] font-black uppercase bg-gray-50 border-gray-200 text-gray-900 hover:bg-gray-100 transition-all cursor-pointer"
                                 >
                                     Siguiente
                                 </Button>
@@ -950,13 +950,13 @@ export function PostventaMobileDashboard({
         );
     } else if (activeTab === 'mora') {
         content = (
-            <div className="space-y-4 pb-24">
+            <div className="space-y-4 pb-24 font-sans text-gray-900 bg-gray-50 min-h-screen -m-4 p-4">
                 <MoraExplainerCard soldLots={soldLots} />
             </div>
         );
     } else {
         content = (
-            <div className="space-y-4 pb-24">
+            <div className="space-y-4 pb-24 font-sans text-gray-900 bg-gray-50 min-h-screen -m-4 p-4">
                 {/* Header */}
             </div>
         );
@@ -968,7 +968,7 @@ export function PostventaMobileDashboard({
 
             {/* Global Client Detail Modal */}
             <Dialog open={!!selectedClientLedger} onOpenChange={(open) => !open && setSelectedClientLedger(null)}>
-                <DialogContent className="max-w-5xl w-[95vw] h-[90vh] bg-[#0a1622] border-[#3f6066]/20 p-0 overflow-hidden rounded-[2.5rem] shadow-[0_0_80px_rgba(0,0,0,0.8)] flex flex-col">
+                <DialogContent className="max-w-5xl w-[95vw] h-[90vh] bg-white border-[#3f6066]/20 p-0 overflow-hidden rounded-[2.5rem] shadow-[0_0_80px_rgba(0,0,0,0.8)] flex flex-col">
                     <DialogTitle className="sr-only">Detalles del Cliente</DialogTitle>
                     <DialogDescription className="sr-only">
                         Información detallada del estado de cuenta, cuotas y pagos del cliente.
@@ -977,39 +977,39 @@ export function PostventaMobileDashboard({
                         <>
                             <div className="flex-1 overflow-y-auto no-scrollbar">
                                 {/* Modal Header - Brand Immersive */}
-                                <div className="bg-gradient-to-br from-[#3f6066]/20 to-transparent p-8 border-b border-white/5 relative overflow-hidden">
+                                <div className="bg-gradient-to-br from-[#3f6066]/20 to-transparent p-8 border-b border-gray-200 relative overflow-hidden">
                                     <div className="absolute top-0 right-0 w-80 h-80 bg-[#3f6066]/10 rounded-full blur-[100px] -mr-40 -mt-40" />
                                     <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-8">
                                         <div className="flex items-center gap-6">
-                                            <div className="w-16 h-16 rounded-2xl bg-[#3f6066] flex items-center justify-center shadow-2xl shadow-[#3f6066]/20 flex-shrink-0 border border-white/10">
-                                                <span className="text-2xl font-black text-white">
+                                            <div className="w-16 h-16 rounded-2xl bg-[#3f6066] flex items-center justify-center shadow-sm shadow-[#3f6066]/20 flex-shrink-0 border border-gray-200">
+                                                <span className="text-2xl font-black text-gray-900">
                                                     {selectedClientLedger.clientName?.charAt(0)}
                                                 </span>
                                             </div>
                                             <div className="space-y-2">
                                                 <div className="flex items-center gap-3">
-                                                    <h2 className="text-2xl font-black text-white uppercase tracking-tight leading-none">{selectedClientLedger.clientName}</h2>
+                                                    <h2 className="text-2xl font-black text-gray-900 uppercase tracking-tight leading-none">{selectedClientLedger.clientName}</h2>
                                                     {selectedClientLedger.is_legacy && (
                                                         <Badge className="bg-amber-500/20 text-amber-500 border-amber-500/30 text-[8px] font-black uppercase">Legacy</Badge>
                                                     )}
                                                 </div>
                                                 <div className="flex items-center gap-4">
-                                                    <Badge className="bg-black/50 text-[#8eb2b8] border-[#3f6066]/30 text-[9px] font-black uppercase px-2 py-0.5">Lote {selectedClientLedger.lotNumber}</Badge>
-                                                    <Badge className="bg-black/50 text-[#8eb2b8] border-[#3f6066]/30 text-[9px] font-black uppercase px-2 py-0.5">Etapa {selectedClientLedger.lotStage}</Badge>
+                                                    <Badge className="bg-white/80 text-[#4A6E75] border-[#3f6066]/30 text-[9px] font-black uppercase px-2 py-0.5">Lote {selectedClientLedger.lotNumber}</Badge>
+                                                    <Badge className="bg-white/80 text-[#4A6E75] border-[#3f6066]/30 text-[9px] font-black uppercase px-2 py-0.5">Etapa {selectedClientLedger.lotStage}</Badge>
                                                 </div>
                                             </div>
                                         </div>
                                         <div className="flex flex-col items-end gap-3">
-                                            <div className="bg-black/40 backdrop-blur-md rounded-2xl p-5 border border-white/5 text-right min-w-[200px] flex flex-col gap-3">
+                                            <div className="bg-white backdrop-blur-md rounded-2xl p-5 border border-gray-200 text-right min-w-[200px] flex flex-col gap-3">
                                                 <div>
                                                     <p className="text-[10px] text-[#3f6066] font-black uppercase tracking-[0.2em]">Total Invertido</p>
-                                                    <p className="text-3xl font-black text-white leading-none mt-1.5 tabular-nums">
+                                                    <p className="text-3xl font-black text-gray-900 leading-none mt-1.5 tabular-nums">
                                                         {formatCurrency(selectedClientLedger.totalPaid)}
                                                     </p>
                                                 </div>
-                                                <div className="pt-3 border-t border-white/5">
+                                                <div className="pt-3 border-t border-gray-200">
                                                     <p className="text-[9px] text-[#3f6066] font-black uppercase tracking-[0.2em]">Valor Total Terreno</p>
-                                                    <p className="text-lg font-black text-[#8eb2b8] leading-none mt-1 tabular-nums">
+                                                    <p className="text-lg font-black text-[#4A6E75] leading-none mt-1 tabular-nums">
                                                         {formatCurrency(selectedClientLedger.totalToPay)}
                                                     </p>
                                                 </div>
@@ -1026,7 +1026,7 @@ export function PostventaMobileDashboard({
                                                         window.location.reload();
                                                     }
                                                 }}
-                                                className="h-8 text-[9px] font-black text-[#8eb2b8] hover:text-white uppercase tracking-widest bg-white/5 hover:bg-[#3f6066]/20 border-white/5 rounded-xl px-4"
+                                                className="h-8 text-[9px] font-black text-[#4A6E75] hover:text-gray-900 uppercase tracking-widest bg-gray-50 hover:bg-[#3f6066]/20 border-gray-200 rounded-xl px-4"
                                             >
                                                 <RefreshCw className="w-3 h-3 mr-2" />
                                                 Sincronizar Datos
@@ -1036,7 +1036,7 @@ export function PostventaMobileDashboard({
                                                 variant="outline" 
                                                 size="sm"
                                                 onClick={() => setIsEditModalOpen(true)}
-                                                className="h-8 text-[9px] font-black text-[#8eb2b8] hover:text-white uppercase tracking-widest bg-white/5 hover:bg-[#3f6066]/20 border-white/5 rounded-xl px-4"
+                                                className="h-8 text-[9px] font-black text-[#4A6E75] hover:text-gray-900 uppercase tracking-widest bg-gray-50 hover:bg-[#3f6066]/20 border-gray-200 rounded-xl px-4"
                                             >
                                                 <Edit className="w-3 h-3 mr-2" />
                                                 Editar Cliente
@@ -1055,7 +1055,7 @@ export function PostventaMobileDashboard({
                                                     }
                                                 }}
                                                 className={cn(
-                                                    "h-8 text-[9px] font-black uppercase tracking-widest rounded-xl px-4 border-white/5",
+                                                    "h-8 text-[9px] font-black uppercase tracking-widest rounded-xl px-4 border-gray-200",
                                                     selectedClientLedger.isMoraFrozen 
                                                         ? "bg-red-500/20 text-red-400 hover:bg-red-500/30" 
                                                         : "bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500/20"
@@ -1065,7 +1065,7 @@ export function PostventaMobileDashboard({
                                                 {selectedClientLedger.isMoraFrozen ? "Activar Mora" : "Congelar Mora"}
                                             </Button>
 
-                                            <div className="bg-black/40 backdrop-blur-md rounded-2xl p-4 border border-white/5 w-full max-w-[250px] space-y-3">
+                                            <div className="bg-white backdrop-blur-md rounded-2xl p-4 border border-gray-200 w-full max-w-[250px] space-y-3">
                                                 <div className="flex items-center justify-between">
                                                     <p className="text-[10px] text-[#3f6066] font-black uppercase tracking-widest">Rango de Mora Manual</p>
                                                     <ShieldAlert className="w-3 h-3 text-amber-500" />
@@ -1076,17 +1076,17 @@ export function PostventaMobileDashboard({
                                                         <p className="text-[8px] text-gray-500 font-bold uppercase ml-1">Inicio</p>
                                                         <Popover>
                                                             <PopoverTrigger asChild>
-                                                                <Button variant="outline" size="sm" className="w-full h-8 bg-white/5 border-white/5 text-[10px] font-bold text-[#8eb2b8] justify-start px-2">
+                                                                <Button variant="outline" size="sm" className="w-full h-8 bg-gray-50 border-gray-200 text-[10px] font-bold text-[#4A6E75] justify-start px-2">
                                                                     <CalendarIcon className="w-3 h-3 mr-2 opacity-50" />
                                                                     {moraStartDate ? format(moraStartDate, 'dd/MM/yy') : "Normal"}
                                                                 </Button>
                                                             </PopoverTrigger>
-                                                            <PopoverContent className="w-auto p-0 bg-[#0a1622] border-white/10" align="end">
-                                                                <div className="p-2 border-b border-white/5 flex justify-between items-center">
-                                                                    <span className="text-[9px] font-black text-white uppercase ml-2">Inicio de Mora</span>
+                                                            <PopoverContent className="w-auto p-0 bg-white border-gray-200" align="end">
+                                                                <div className="p-2 border-b border-gray-200 flex justify-between items-center">
+                                                                    <span className="text-[9px] font-black text-gray-900 uppercase ml-2">Inicio de Mora</span>
                                                                     <Button variant="ghost" size="sm" className="h-6 text-[8px] text-red-400 font-bold" onClick={() => setMoraStartDate(undefined)}>Limpiar</Button>
                                                                 </div>
-                                                                <Calendar mode="single" selected={moraStartDate} onSelect={setMoraStartDate} initialFocus className="bg-transparent text-white" />
+                                                                <Calendar mode="single" selected={moraStartDate} onSelect={setMoraStartDate} initialFocus className="bg-transparent text-gray-900" />
                                                             </PopoverContent>
                                                         </Popover>
                                                     </div>
@@ -1095,17 +1095,17 @@ export function PostventaMobileDashboard({
                                                         <p className="text-[8px] text-gray-500 font-bold uppercase ml-1">Fin (Cierre)</p>
                                                         <Popover>
                                                             <PopoverTrigger asChild>
-                                                                <Button variant="outline" size="sm" className="w-full h-8 bg-white/5 border-white/5 text-[10px] font-bold text-[#8eb2b8] justify-start px-2">
+                                                                <Button variant="outline" size="sm" className="w-full h-8 bg-gray-50 border-gray-200 text-[10px] font-bold text-[#4A6E75] justify-start px-2">
                                                                     <CalendarIcon className="w-3 h-3 mr-2 opacity-50" />
                                                                     {moraEndDate ? format(moraEndDate, 'dd/MM/yy') : "Hasta Hoy"}
                                                                 </Button>
                                                             </PopoverTrigger>
-                                                            <PopoverContent className="w-auto p-0 bg-[#0a1622] border-white/10" align="end">
-                                                                <div className="p-2 border-b border-white/5 flex justify-between items-center">
-                                                                    <span className="text-[9px] font-black text-white uppercase ml-2">Término de Mora</span>
+                                                            <PopoverContent className="w-auto p-0 bg-white border-gray-200" align="end">
+                                                                <div className="p-2 border-b border-gray-200 flex justify-between items-center">
+                                                                    <span className="text-[9px] font-black text-gray-900 uppercase ml-2">Término de Mora</span>
                                                                     <Button variant="ghost" size="sm" className="h-6 text-[8px] text-red-400 font-bold" onClick={() => setMoraEndDate(undefined)}>Hasta Hoy</Button>
                                                                 </div>
-                                                                <Calendar mode="single" selected={moraEndDate} onSelect={setMoraEndDate} initialFocus className="bg-transparent text-white" />
+                                                                <Calendar mode="single" selected={moraEndDate} onSelect={setMoraEndDate} initialFocus className="bg-transparent text-gray-900" />
                                                             </PopoverContent>
                                                         </Popover>
                                                     </div>
@@ -1126,7 +1126,7 @@ export function PostventaMobileDashboard({
                                                             }
                                                         }}
                                                         disabled={isUpdatingMora}
-                                                        className="w-full h-8 bg-[#3f6066] hover:bg-[#3f6066]/80 text-white text-[9px] font-black uppercase tracking-widest rounded-xl mt-2"
+                                                        className="w-full h-8 bg-[#3f6066] hover:bg-[#3f6066]/80 text-gray-900 text-[9px] font-black uppercase tracking-widest rounded-xl mt-2"
                                                     >
                                                         {isUpdatingMora ? <Loader2 className="w-3 h-3 animate-spin" /> : "Guardar Fechas"}
                                                     </Button>
@@ -1135,11 +1135,11 @@ export function PostventaMobileDashboard({
 
                                             {selectedClientLedger.observation && (
                                                 <div className="mt-2 w-full max-w-[250px] p-3 rounded-xl bg-[#3f6066]/10 border border-[#3f6066]/30 text-left backdrop-blur-md shadow-inner">
-                                                    <p className="text-[9px] font-black text-[#8eb2b8] uppercase tracking-widest mb-1 flex items-center gap-1">
+                                                    <p className="text-[9px] font-black text-[#4A6E75] uppercase tracking-widest mb-1 flex items-center gap-1">
                                                         <FileText className="w-3 h-3" />
                                                         Observación
                                                     </p>
-                                                    <p className="text-xs text-white/90 leading-relaxed whitespace-pre-wrap">
+                                                    <p className="text-xs text-gray-900/90 leading-relaxed whitespace-pre-wrap">
                                                         {selectedClientLedger.observation}
                                                     </p>
                                                 </div>
@@ -1157,21 +1157,21 @@ export function PostventaMobileDashboard({
                                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
                                         {[
                                             { label: 'Cuotas Pagadas', value: `${selectedClientLedger.paidCuotas} / ${selectedClientLedger.totalCuotas}`, icon: Wallet },
-                                            { label: 'Próximo Pago', value: selectedClientLedger.nextDueDate ? format(new Date(selectedClientLedger.nextDueDate), 'dd MMM yy', { locale: es }) : 'N/A', icon: CalendarDays, color: 'text-[#8eb2b8]' },
+                                            { label: 'Próximo Pago', value: selectedClientLedger.nextDueDate ? format(new Date(selectedClientLedger.nextDueDate), 'dd MMM yy', { locale: es }) : 'N/A', icon: CalendarDays, color: 'text-[#4A6E75]' },
                                             { label: 'Monto Cuota', value: formatCurrency(selectedClientLedger.valor_cuota || 0), icon: CreditCard },
                                             { label: 'Estado Pie', value: selectedClientLedger.pieStatus, badge: true }
                                         ].map((stat, i) => (
-                                            <div key={i} className="bg-white/5 rounded-3xl p-5 border border-white/5 flex flex-col items-center text-center group hover:bg-[#3f6066]/5 hover:border-[#3f6066]/20 transition-all">
+                                            <div key={i} className="bg-gray-50 rounded-3xl p-5 border border-gray-200 flex flex-col items-center text-center group hover:bg-[#3f6066]/5 hover:border-[#3f6066]/20 transition-all">
                                                 <p className="text-[9px] text-gray-500 font-black uppercase tracking-widest mb-3 flex items-center gap-2">
                                                     {stat.icon && <stat.icon className="w-3.5 h-3.5 text-[#3f6066]" />}
                                                     {stat.label}
                                                 </p>
                                                 {stat.badge ? (
-                                                    <Badge className={`${selectedClientLedger.pieStatus === 'PAID' ? 'bg-emerald-500 shadow-emerald-500/20' : 'bg-amber-500 shadow-amber-500/20'} text-white font-black text-[10px] px-3 py-1 rounded-xl uppercase`}>
+                                                    <Badge className={`${selectedClientLedger.pieStatus === 'PAID' ? 'bg-emerald-500 shadow-emerald-500/20' : 'bg-amber-500 shadow-amber-500/20'} text-gray-900 font-black text-[10px] px-3 py-1 rounded-xl uppercase`}>
                                                         {selectedClientLedger.pieStatus}
                                                     </Badge>
                                                 ) : (
-                                                    <p className={`text-xl font-black ${stat.color || 'text-white'} tabular-nums`}>{stat.value}</p>
+                                                    <p className={`text-xl font-black ${stat.color || 'text-gray-900'} tabular-nums`}>{stat.value}</p>
                                                 )}
                                             </div>
                                         ))}
@@ -1179,13 +1179,13 @@ export function PostventaMobileDashboard({
                                     
                                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
                                         {/* Left: Documents Section */}
-                                        <div className="bg-white/[0.02] rounded-[2rem] border border-white/5 p-8 flex flex-col gap-6">
+                                        <div className="bg-white/[0.02] rounded-[2rem] border border-gray-200 p-8 flex flex-col gap-6">
                                             <div className="flex items-center justify-between">
                                                 <div className="flex items-center gap-3">
                                                     <div className="bg-[#8eb2b8]/10 p-2.5 rounded-2xl">
-                                                        <Receipt className="w-5 h-5 text-[#8eb2b8]" />
+                                                        <Receipt className="w-5 h-5 text-[#4A6E75]" />
                                                     </div>
-                                                    <h3 className="text-lg font-black text-white uppercase tracking-tight">Documentación</h3>
+                                                    <h3 className="text-lg font-black text-gray-900 uppercase tracking-tight">Documentación</h3>
                                                 </div>
                                             </div>
 
@@ -1244,13 +1244,13 @@ export function PostventaMobileDashboard({
                                                     return (
                                                         <>
                                                             {allDocs.map((doc, idx) => (
-                                                                <div key={doc.category || idx} className="bg-black/40 border border-white/5 rounded-2xl p-4 flex items-center justify-between group hover:bg-white/5 transition-all">
+                                                                <div key={doc.category || idx} className="bg-white border border-gray-200 rounded-2xl p-4 flex items-center justify-between group hover:bg-gray-50 transition-all">
                                                                     <div className="flex items-center gap-4">
-                                                                        <div className="bg-white/5 p-2 rounded-xl group-hover:bg-[#3f6066]/20 transition-all">
-                                                                            <FileText className="w-4 h-4 text-gray-500 group-hover:text-[#8eb2b8]" />
+                                                                        <div className="bg-gray-50 p-2 rounded-xl group-hover:bg-[#3f6066]/20 transition-all">
+                                                                            <FileText className="w-4 h-4 text-gray-500 group-hover:text-[#4A6E75]" />
                                                                         </div>
                                                                         <div>
-                                                                            <p className="text-[10px] font-black text-white uppercase tracking-widest">{doc.label || doc.name}</p>
+                                                                            <p className="text-[10px] font-black text-gray-900 uppercase tracking-widest">{doc.label || doc.name}</p>
                                                                             <p className="text-[8px] text-gray-600 font-bold uppercase mt-0.5 tracking-tight">
                                                                                 {doc.date ? `Cargado el ${format(new Date(doc.date), 'dd/MM/yyyy')}` : (doc.url ? 'Documento disponible' : 'Pendiente de carga')}
                                                                             </p>
@@ -1261,7 +1261,7 @@ export function PostventaMobileDashboard({
                                                                             <div className="flex gap-2">
                                                                                 <button 
                                                                                     onClick={() => setViewerConfig({ isOpen: true, url: doc.url!, name: doc.label || doc.name || 'Documento', category: doc.category })}
-                                                                                    className="p-2 bg-[#3f6066]/20 hover:bg-[#3f6066]/30 text-[#8eb2b8] rounded-lg transition-all"
+                                                                                    className="p-2 bg-[#3f6066]/20 hover:bg-[#3f6066]/30 text-[#4A6E75] rounded-lg transition-all"
                                                                                     title="Ver"
                                                                                 >
                                                                                     <Eye className="w-4 h-4" />
@@ -1287,7 +1287,7 @@ export function PostventaMobileDashboard({
                                                                 </div>
                                                             ))}
                                                             
-                                                            <div className="mt-4 pt-4 border-t border-white/5">
+                                                            <div className="mt-4 pt-4 border-t border-gray-200">
                                                                 <ContractUploadAction 
                                                                     reservationId={selectedClientLedger.id} 
                                                                     reservationName={selectedClientLedger.clientName}
@@ -1307,19 +1307,19 @@ export function PostventaMobileDashboard({
                                         </div>
 
                                         {/* Right: Payment Timeline */}
-                                        <div className="bg-white/[0.02] rounded-[2rem] border border-white/5 p-8 flex flex-col gap-6">
+                                        <div className="bg-white/[0.02] rounded-[2rem] border border-gray-200 p-8 flex flex-col gap-6">
                                             <div className="flex items-center justify-between">
                                                 <div className="flex items-center gap-3">
                                                     <div className="bg-emerald-500/10 p-2.5 rounded-2xl">
                                                         <Clock className="w-5 h-5 text-emerald-400" />
                                                     </div>
-                                                    <h3 className="text-lg font-black text-white uppercase tracking-tight">Historial de Pagos</h3>
+                                                    <h3 className="text-lg font-black text-gray-900 uppercase tracking-tight">Historial de Pagos</h3>
                                                 </div>
                                                 <Button
                                                     variant="ghost"
                                                     size="sm"
                                                     onClick={() => setShowPaymentsModal(true)}
-                                                    className="text-[9px] font-black text-[#8eb2b8] hover:text-white uppercase tracking-tighter"
+                                                    className="text-[9px] font-black text-[#4A6E75] hover:text-gray-900 uppercase tracking-tighter"
                                                 >
                                                     Ver Listado <ArrowRight className="w-3.5 h-3.5 ml-2" />
                                                 </Button>
@@ -1329,14 +1329,14 @@ export function PostventaMobileDashboard({
                                                 {clientReceipts.slice(0, 3).map((r, i) => (
                                                     <div key={i} className="flex gap-4 relative">
                                                         {i < clientReceipts.slice(0, 3).length - 1 && (
-                                                            <div className="absolute left-4 top-10 bottom-0 w-px bg-white/5" />
+                                                            <div className="absolute left-4 top-10 bottom-0 w-px bg-gray-50" />
                                                         )}
-                                                        <div className={`w-8 h-8 rounded-full border border-white/10 flex items-center justify-center shrink-0 ${r.status === 'APPROVED' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400'}`}>
+                                                        <div className={`w-8 h-8 rounded-full border border-gray-200 flex items-center justify-center shrink-0 ${r.status === 'APPROVED' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400'}`}>
                                                             <CheckCircle className="w-4 h-4" />
                                                         </div>
                                                         <div className="flex-1 min-w-0">
                                                             <div className="flex justify-between items-start">
-                                                                <p className="text-[10px] font-black text-white uppercase tracking-widest">{formatCurrency(r.amount_clp)}</p>
+                                                                <p className="text-[10px] font-black text-gray-900 uppercase tracking-widest">{formatCurrency(r.amount_clp)}</p>
                                                                 <span className="text-[8px] text-gray-600 font-bold tabular-nums">{format(new Date(r.created_at), 'dd/MM/yyyy')}</span>
                                                             </div>
                                                             <p className="text-[8px] text-[#3f6066] font-black uppercase tracking-tight mt-0.5">{r.scope === 'PIE' ? 'Pago de Pie' : 'Abono Cuota'}</p>
@@ -1355,10 +1355,10 @@ export function PostventaMobileDashboard({
                                 </div>
                             </div>
                             
-                            <div className="p-4 bg-black/40 border-t border-white/5 flex justify-end gap-3 z-20">
+                            <div className="p-4 bg-white border-t border-gray-200 flex justify-end gap-3 z-20">
                                 <Button
                                     onClick={() => setSelectedClientLedger(null)}
-                                    className="bg-white/5 hover:bg-white/10 text-white font-black uppercase text-[10px] tracking-widest h-10 px-8 rounded-xl border border-white/5"
+                                    className="bg-gray-50 hover:bg-gray-100 text-gray-900 font-black uppercase text-[10px] tracking-widest h-10 px-8 rounded-xl border border-gray-200"
                                 >
                                     Cerrar Expediente
                                 </Button>
@@ -1370,9 +1370,9 @@ export function PostventaMobileDashboard({
 
         {/* Edit Receipt Amount Modal */}
         <Dialog open={!!editingReceipt} onOpenChange={(open) => { if (!open) { setEditingReceipt(null); setEditAmount(''); setEditReason(''); } }}>
-            <DialogContent className="max-w-[90vw] md:max-w-md bg-[#0a1622] border-white/10 rounded-3xl">
+            <DialogContent className="max-w-[90vw] md:max-w-md bg-white border-gray-200 rounded-3xl">
                 <DialogHeader>
-                    <DialogTitle className="text-white font-black uppercase tracking-tight flex items-center gap-3">
+                    <DialogTitle className="text-gray-900 font-black uppercase tracking-tight flex items-center gap-3">
                         <Pencil className="w-5 h-5 text-amber-400" />
                         Editar Monto de Pago
                     </DialogTitle>
@@ -1383,18 +1383,18 @@ export function PostventaMobileDashboard({
                 {editingReceipt && (
                     <div className="py-4 space-y-5">
                         {/* Current info */}
-                        <div className="bg-white/5 border border-white/10 rounded-2xl p-4 space-y-2">
+                        <div className="bg-gray-50 border border-gray-200 rounded-2xl p-4 space-y-2">
                             <div className="flex justify-between items-center">
                                 <span className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Monto Actual</span>
                                 <span className="text-lg font-black text-red-400 line-through tabular-nums">{formatCurrency(editingReceipt.amount_clp)}</span>
                             </div>
                             <div className="flex justify-between items-center">
                                 <span className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Tipo</span>
-                                <span className="text-[10px] font-bold text-[#8eb2b8] uppercase">{editingReceipt.scope === 'PIE' ? 'Pago de Pie' : 'Cuota'}</span>
+                                <span className="text-[10px] font-bold text-[#4A6E75] uppercase">{editingReceipt.scope === 'PIE' ? 'Pago de Pie' : 'Cuota'}</span>
                             </div>
                             <div className="flex justify-between items-center">
                                 <span className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Fecha</span>
-                                <span className="text-[10px] font-bold text-gray-400">{format(new Date(editingReceipt.created_at), 'dd/MM/yyyy HH:mm')}</span>
+                                <span className="text-[10px] font-bold text-gray-600">{format(new Date(editingReceipt.created_at), 'dd/MM/yyyy HH:mm')}</span>
                             </div>
                         </div>
 
@@ -1406,7 +1406,7 @@ export function PostventaMobileDashboard({
                                 placeholder="Ej: 550000"
                                 value={editAmount}
                                 onChange={(e) => setEditAmount(e.target.value)}
-                                className="bg-black/20 border-white/10 h-12 text-lg text-white placeholder:text-gray-700 font-black tabular-nums"
+                                className="bg-white/20 border-gray-200 h-12 text-lg text-gray-900 placeholder:text-gray-400 font-black tabular-nums"
                                 autoFocus
                             />
                             {editAmount && parseInt(editAmount) !== editingReceipt.amount_clp && (
@@ -1424,7 +1424,7 @@ export function PostventaMobileDashboard({
                                 value={editReason}
                                 onChange={(e) => setEditReason(e.target.value)}
                                 rows={2}
-                                className="bg-black/20 border-white/10 text-xs text-white placeholder:text-gray-700"
+                                className="bg-white/20 border-gray-200 text-xs text-gray-900 placeholder:text-gray-400"
                             />
                         </div>
 
@@ -1441,7 +1441,7 @@ export function PostventaMobileDashboard({
                     <Button
                         variant="outline"
                         onClick={() => { setEditingReceipt(null); setEditAmount(''); setEditReason(''); }}
-                        className="min-h-[44px] bg-white/5 border-white/10 text-white hover:bg-white/10 font-black uppercase text-[10px] tracking-widest rounded-xl"
+                        className="min-h-[44px] bg-gray-50 border-gray-200 text-gray-900 hover:bg-gray-100 font-black uppercase text-[10px] tracking-widest rounded-xl"
                     >
                         Cancelar
                     </Button>
@@ -1459,22 +1459,22 @@ export function PostventaMobileDashboard({
 
             {/* Global History Modal */}
             <Dialog open={showPaymentsModal} onOpenChange={setShowPaymentsModal}>
-                <DialogContent className="max-w-2xl w-[95vw] h-[80vh] bg-[#0a1622] border-white/5 p-0 overflow-hidden flex flex-col rounded-[2.5rem]">
-                    <DialogHeader className="p-8 pb-4 border-b border-white/10">
-                        <DialogTitle className="text-xl font-black text-white uppercase tracking-tighter flex items-center gap-3">
-                            <Clock className="w-6 h-6 text-[#8eb2b8]" />
+                <DialogContent className="max-w-2xl w-[95vw] h-[80vh] bg-white border-gray-200 p-0 overflow-hidden flex flex-col rounded-[2.5rem]">
+                    <DialogHeader className="p-8 pb-4 border-b border-gray-200">
+                        <DialogTitle className="text-xl font-black text-gray-900 uppercase tracking-tighter flex items-center gap-3">
+                            <Clock className="w-6 h-6 text-[#4A6E75]" />
                             Detalle de Movimientos
                         </DialogTitle>
                     </DialogHeader>
                     
                     <div className="flex-1 overflow-y-auto p-6 space-y-6 no-scrollbar">
                         {/* New: Manual Payment Registration Section */}
-                        <div className="bg-white/5 border border-white/10 rounded-3xl p-6 space-y-4">
+                        <div className="bg-gray-50 border border-gray-200 rounded-3xl p-6 space-y-4">
                             <div className="flex items-center gap-3 mb-2">
                                 <div className="bg-emerald-500/10 p-2 rounded-xl">
                                     <Wallet className="w-4 h-4 text-emerald-400" />
                                 </div>
-                                <h4 className="text-[11px] font-black text-white uppercase tracking-wider">Registrar Nuevo Pago Manual</h4>
+                                <h4 className="text-[11px] font-black text-gray-900 uppercase tracking-wider">Registrar Nuevo Pago Manual</h4>
                             </div>
                             
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -1485,7 +1485,7 @@ export function PostventaMobileDashboard({
                                         placeholder="Ej: 500000"
                                         value={manualAmount}
                                         onChange={(e) => setManualAmount(e.target.value)}
-                                        className="bg-black/20 border-white/5 h-10 text-xs text-white placeholder:text-gray-700 font-bold"
+                                        className="bg-white/20 border-gray-200 h-10 text-xs text-gray-900 placeholder:text-gray-400 font-bold"
                                     />
                                 </div>
                                 
@@ -1498,8 +1498,8 @@ export function PostventaMobileDashboard({
                                                 onClick={() => setManualScope(s)}
                                                 className={`flex-1 h-10 rounded-xl text-[8px] font-black uppercase transition-all border ${
                                                     manualScope === s 
-                                                    ? 'bg-[#3f6066] text-white border-[#3f6066]' 
-                                                    : 'bg-white/5 text-gray-500 border-white/5 hover:border-white/10'
+                                                    ? 'bg-[#3f6066] text-gray-900 border-[#3f6066]' 
+                                                    : 'bg-gray-50 text-gray-500 border-gray-200 hover:border-gray-200'
                                                 }`}
                                             >
                                                 {s === 'PIE' ? 'Pie' : s === 'INSTALLMENT' ? 'Cuota' : 'Gastos'}
@@ -1524,7 +1524,7 @@ export function PostventaMobileDashboard({
                                                 "flex items-center gap-2 px-3 h-10 rounded-xl border border-dashed transition-all cursor-pointer text-[10px] font-bold uppercase",
                                                 manualFile 
                                                     ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400" 
-                                                    : "bg-black/20 border-white/5 text-gray-500 hover:border-white/10"
+                                                    : "bg-white/20 border-gray-200 text-gray-500 hover:border-gray-200"
                                             )}
                                         >
                                             <UploadCloud className="w-3.5 h-3.5 shrink-0" />
@@ -1599,17 +1599,17 @@ export function PostventaMobileDashboard({
                             </div>
                         ) : (
                             <>
-                                <div className="p-3 bg-white/5 rounded-2xl border border-white/5 mb-4">
+                                <div className="p-3 bg-gray-50 rounded-2xl border border-gray-200 mb-4">
                                      <p className="text-[8px] text-[#3f6066] font-black uppercase tracking-widest text-center">Mostrando {clientReceipts.length} recibos históricos registrados</p>
                                 </div>
                                 {clientReceipts.map((p, idx) => (
-                                    <div key={idx} className="bg-black/40 border border-white/5 rounded-2xl p-4 flex items-center justify-between group hover:bg-white/5 transition-all">
+                                    <div key={idx} className="bg-white border border-gray-200 rounded-2xl p-4 flex items-center justify-between group hover:bg-gray-50 transition-all">
                                         <div className="flex items-center gap-4">
-                                            <div className="bg-white/5 p-3 rounded-xl">
-                                                <CreditCard className="w-5 h-5 text-[#8eb2b8]" />
+                                            <div className="bg-gray-50 p-3 rounded-xl">
+                                                <CreditCard className="w-5 h-5 text-[#4A6E75]" />
                                             </div>
                                             <div>
-                                                <p className="text-xs font-black text-white uppercase">{formatCurrency(p.amount_clp)}</p>
+                                                <p className="text-xs font-black text-gray-900 uppercase">{formatCurrency(p.amount_clp)}</p>
                                                 <p className="text-[9px] text-gray-500 font-bold uppercase mt-0.5 tracking-tight">
                                                     {p.scope === 'PIE' ? 'Pago de Pie' : `${(p.installments_count || 1) > 1 ? p.installments_count + ' Cuotas' : 'Cuota'}`} · {format(new Date(p.created_at), 'dd/MM/yyyy HH:mm')}
                                                 </p>
@@ -1619,7 +1619,7 @@ export function PostventaMobileDashboard({
                                             {getStatusBadge(p.status)}
                                             <button 
                                                 onClick={() => setViewerConfig({ isOpen: true, url: p.receipt_url, name: `Recibo ${format(new Date(p.created_at), 'dd/MM/yyyy')}`, category: 'PAGO' })}
-                                                className="p-2 bg-[#3f6066]/20 hover:bg-[#3f6066]/30 text-[#8eb2b8] rounded-lg transition-all"
+                                                className="p-2 bg-[#3f6066]/20 hover:bg-[#3f6066]/30 text-[#4A6E75] rounded-lg transition-all"
                                                 title="Ver"
                                             >
                                                 <Eye className="w-4 h-4" />
@@ -1652,10 +1652,10 @@ export function PostventaMobileDashboard({
                     </div>
                 </div>
                 
-                <div className="p-4 bg-black/20 border-t border-white/5">
+                <div className="p-4 bg-white/20 border-t border-gray-200">
                     <Button
                         onClick={() => setShowPaymentsModal(false)}
-                        className="w-full bg-[#3f6066] hover:bg-[#3f6066]/80 text-white font-black uppercase text-[10px] tracking-widest h-10 rounded-xl"
+                        className="w-full bg-[#3f6066] hover:bg-[#3f6066]/80 text-gray-900 font-black uppercase text-[10px] tracking-widest h-10 rounded-xl"
                     >
                         Cerrar Historial
                     </Button>
@@ -1684,18 +1684,18 @@ export function PostventaMobileDashboard({
 
         {/* Global Reject Dialog (for receipts tab) */}
         <Dialog open={!!rejectingId} onOpenChange={(open) => !open && setRejectingId(null)}>
-            <DialogContent className="max-w-[90vw] md:max-w-md bg-[#0a1622] border-white/10">
+            <DialogContent className="max-w-[90vw] md:max-w-md bg-white border-gray-200">
                 <DialogHeader>
                     <DialogTitle>Rechazar Transferencia</DialogTitle>
                 </DialogHeader>
                 <div className="py-4">
-                    <label className="text-sm font-medium mb-2 block text-gray-300">Motivo del rechazo:</label>
+                    <label className="text-sm font-medium mb-2 block text-gray-700">Motivo del rechazo:</label>
                     <Textarea
                         value={rejectionReason}
                         onChange={(e) => setRejectionReason(e.target.value)}
                         placeholder="Ej: El monto no corresponde, imagen borrosa..."
                         rows={3}
-                        className="bg-black/40 border-white/5"
+                        className="bg-white border-gray-200"
                     />
                 </div>
                 <div className="flex flex-col-reverse sm:flex-row justify-end gap-2">
