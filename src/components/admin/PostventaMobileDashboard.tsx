@@ -98,6 +98,7 @@ export function PostventaMobileDashboard({
     const [isLoadingReceipts, setIsLoadingReceipts] = useState(false);
     const [manualAmount, setManualAmount] = useState('');
     const [manualScope, setManualScope] = useState<'PIE' | 'INSTALLMENT' | 'GASTOS_OPERACIONALES'>('INSTALLMENT');
+    const [isUserView, setIsUserView] = useState(false);
     const [manualFile, setManualFile] = useState<File | null>(null);
     const [isRegistering, setIsRegistering] = useState(false);
 
@@ -563,7 +564,7 @@ export function PostventaMobileDashboard({
                 </div>
                 
                 {/* Optimized Desktop Grid - Reduced Density for Readability */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
                     {paginatedLedger.map(client => {
                         const hasReserva = !!client.signed_at;
                         const hasReceipts = client.receipts && client.receipts.length > 0;
@@ -575,7 +576,7 @@ export function PostventaMobileDashboard({
                             <div 
                                 key={client.id} 
                                 onClick={() => setSelectedClientLedger(client)}
-                                className="bg-white backdrop-blur-xl border border-gray-200 p-4 md:p-5 rounded-2xl flex flex-col gap-3 relative overflow-hidden transition-all duration-500 hover:border-gray-300 hover:shadow-md hover:scale-[1.02] active:scale-[0.98] shadow-sm group cursor-pointer"
+                                className="bg-white border-2 border-gray-200 p-5 rounded-[2rem] flex flex-col gap-3 relative overflow-hidden transition-all duration-500 hover:border-[#3f6066]/30 hover:shadow-[0_20px_50px_rgba(0,0,0,0.1)] hover:scale-[1.02] active:scale-[0.98] shadow-sm group cursor-pointer"
                             >
                                 <div className="absolute -top-4 -right-4 w-12 h-12 bg-[#3f6066]/5 rounded-full blur-xl group-hover:bg-[#3f6066]/15 transition-all duration-700" />
 
@@ -589,7 +590,7 @@ export function PostventaMobileDashboard({
                                     <p className="text-[8px] md:text-[10px] text-[#3f6066] font-black uppercase tracking-[0.2em] leading-none">Etapa {client.lotStage}</p>
                                 </div>
 
-                                <div className="flex items-center gap-2 py-2 border-y border-gray-200">
+                                <div className="flex items-center gap-2 py-2 border-y border-gray-100">
                                     <div className="flex items-center gap-1.5" title="Contrato Reserva (Auto)">
                                         <CheckCircle className={`w-3 h-3 ${hasReserva ? 'text-emerald-400' : 'text-gray-300'}`} />
                                         <span className={`text-[7px] md:text-[8px] font-black ${hasReserva ? 'text-emerald-400/80' : 'text-gray-300'}`}>RES</span>
@@ -1043,6 +1044,21 @@ export function PostventaMobileDashboard({
                                             </Button>
 
                                             <Button 
+                                                variant="outline" 
+                                                size="sm"
+                                                onClick={() => setIsUserView(!isUserView)}
+                                                className={cn(
+                                                    "h-8 text-[9px] font-black uppercase tracking-widest border-gray-200 rounded-xl px-4",
+                                                    isUserView 
+                                                        ? "bg-amber-500 text-black hover:bg-amber-600 border-amber-600" 
+                                                        : "bg-gray-50 text-[#4A6E75] hover:bg-[#3f6066]/20"
+                                                )}
+                                            >
+                                                <Eye className="w-3 h-3 mr-2" />
+                                                {isUserView ? "Volver a Admin" : "Ver como Usuario"}
+                                            </Button>
+
+                                            <Button 
                                                 variant={selectedClientLedger.isMoraFrozen ? "destructive" : "outline"} 
                                                 size="sm"
                                                 onClick={async () => {
@@ -1306,6 +1322,49 @@ export function PostventaMobileDashboard({
                                             </div>
                                         </div>
 
+                                        {isUserView && (
+                                            <div className="md:col-span-2 border-4 border-dashed border-amber-500/30 rounded-[3rem] p-8 bg-amber-50/50 relative overflow-hidden">
+                                                <div className="absolute top-4 right-8 flex items-center gap-2">
+                                                    <div className="w-2 h-2 bg-amber-500 rounded-full animate-ping" />
+                                                    <span className="text-[10px] font-black text-amber-600 uppercase tracking-[0.2em]">Vista de Cliente Activa</span>
+                                                </div>
+                                                <div className="max-w-4xl mx-auto space-y-8">
+                                                    <div className="bg-white rounded-[2rem] p-8 shadow-xl border border-amber-200">
+                                                        <h4 className="text-xl font-black text-gray-900 mb-6 flex items-center gap-3">
+                                                            <div className="bg-amber-500/10 p-2 rounded-xl">
+                                                                <CreditCard className="w-5 h-5 text-amber-600" />
+                                                            </div>
+                                                            Módulo de Pagos del Cliente
+                                                        </h4>
+                                                        <PaymentButtons 
+                                                            reservationId={selectedClientLedger.id}
+                                                            lot={selectedClientLedger.lot}
+                                                            reservation={selectedClientLedger}
+                                                            acquisitionDate={selectedClientLedger.created_at}
+                                                            isAdminView={false}
+                                                        />
+                                                    </div>
+                                                    
+                                                    {!selectedClientLedger.signed_at && (
+                                                        <div className="bg-white rounded-[2rem] p-8 shadow-xl border border-amber-200">
+                                                            <h4 className="text-xl font-black text-gray-900 mb-6 flex items-center gap-3">
+                                                                <div className="bg-amber-500/10 p-2 rounded-xl">
+                                                                    <FileSignature className="w-5 h-5 text-amber-600" />
+                                                                </div>
+                                                                Contrato Pendiente de Firma
+                                                            </h4>
+                                                            <SignContractModal 
+                                                                reservationId={selectedClientLedger.id}
+                                                                lotNumber={selectedClientLedger.lotNumber}
+                                                                lotStage={selectedClientLedger.lotStage}
+                                                                onSuccess={() => window.location.reload()}
+                                                            />
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        )}
+                                        
                                         {/* Right: Payment Timeline */}
                                         <div className="bg-white/[0.02] rounded-[2rem] border border-gray-200 p-8 flex flex-col gap-6">
                                             <div className="flex items-center justify-between">

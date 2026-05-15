@@ -88,32 +88,32 @@ export function LotBottomSheet({ lot, open, onOpenChange, onStatusChange, onAssi
 
     return (
         <Drawer open={open} onOpenChange={onOpenChange}>
-            <DrawerContent className="bg-gray-950 border-white/10 text-white max-h-[85vh]">
+            <DrawerContent className="bg-white border-t border-gray-200 text-gray-900 max-h-[85vh]">
                 <DrawerHeader className="text-left pb-2">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                             <div className={cn(
-                                'w-12 h-12 rounded-xl flex items-center justify-center text-lg font-black',
+                                'w-12 h-12 rounded-2xl flex items-center justify-center text-lg font-black',
                                 (isSold || isBlocked)
-                                    ? 'bg-red-900/40 text-red-400 border border-red-500/30'
-                                    : 'bg-green-900/40 text-green-400 border border-green-500/30'
+                                    ? 'bg-red-50 text-red-500 border border-red-200'
+                                    : 'bg-emerald-50 text-emerald-500 border border-emerald-200'
                             )}>
                                 {lot.number}
                             </div>
                             <div>
-                                <DrawerTitle className="text-white text-lg">
+                                <DrawerTitle className="text-gray-900 text-lg font-black uppercase tracking-tight">
                                     Terreno {lot.number}
                                 </DrawerTitle>
-                                <DrawerDescription className="text-gray-400 text-sm">
+                                <DrawerDescription className="text-gray-500 text-[10px] font-black uppercase tracking-widest">
                                     Etapa {lot.stage} · {lot.area_m2}m²
                                 </DrawerDescription>
                             </div>
                         </div>
                         <span className={cn(
-                            'px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider',
+                            'px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border',
                             (isSold || isBlocked)
-                                ? 'bg-red-900/30 text-red-400 border border-red-500/20'
-                                : 'bg-green-900/30 text-green-400 border border-green-500/20'
+                                ? 'bg-red-50 text-red-600 border-red-200'
+                                : 'bg-emerald-50 text-emerald-600 border-emerald-200'
                         )}>
                             {isBlocked ? 'Bloqueado' : (isSold ? 'Vendido' : 'Disponible')}
                         </span>
@@ -123,21 +123,22 @@ export function LotBottomSheet({ lot, open, onOpenChange, onStatusChange, onAssi
                 <div className="px-4 py-3 space-y-4 overflow-y-auto">
                     {/* Financial Info */}
                     {lot.price_total_clp && (
-                        <div className="bg-white/5 rounded-xl p-3 border border-white/5 space-y-2">
-                            <div className="flex justify-between text-sm">
-                                <span className="text-gray-400">Precio Total</span>
-                                <span className="font-semibold text-alimin-gold">{CLP(lot.price_total_clp)}</span>
+                        <div className="bg-gray-50 rounded-[2rem] p-5 border border-gray-100 space-y-3">
+                            <div className="flex justify-between text-xs items-center">
+                                <span className="text-gray-500 font-black uppercase tracking-widest">Precio Total</span>
+                                <span className="font-black text-gray-900 text-base">{CLP(lot.price_total_clp)}</span>
                             </div>
+                            <div className="h-px bg-gray-200/50" />
                             {lot.pie && (
-                                <div className="flex justify-between text-sm">
-                                    <span className="text-gray-400">Pie</span>
-                                    <span className="text-white">{CLP(lot.pie)}</span>
+                                <div className="flex justify-between text-xs items-center">
+                                    <span className="text-gray-500 font-black uppercase tracking-widest">Pie</span>
+                                    <span className="text-gray-900 font-bold">{CLP(lot.pie)}</span>
                                 </div>
                             )}
                             {lot.cuotas && lot.valor_cuota && (
-                                <div className="flex justify-between text-sm">
-                                    <span className="text-gray-400">Cuotas ({lot.cuotas})</span>
-                                    <span className="text-white">{CLP(lot.valor_cuota)}/mes</span>
+                                <div className="flex justify-between text-xs items-center">
+                                    <span className="text-gray-500 font-black uppercase tracking-widest">Cuotas ({lot.cuotas})</span>
+                                    <span className="text-gray-900 font-bold">{CLP(lot.valor_cuota)}/mes</span>
                                 </div>
                             )}
                         </div>
@@ -145,31 +146,45 @@ export function LotBottomSheet({ lot, open, onOpenChange, onStatusChange, onAssi
 
                     {/* Owner Info */}
                     {hasOwner && (
-                        <div className="bg-alimin-green/10 rounded-xl p-3 border border-alimin-green/20">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-full bg-alimin-green flex items-center justify-center text-alimin-gold font-bold text-lg">
+                        <div className="bg-[#3f6066]/5 rounded-[2rem] p-5 border border-[#3f6066]/10">
+                            <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 rounded-full bg-[#3f6066]/20 flex items-center justify-center text-[#4A6E75] font-black text-xl border border-[#3f6066]/30">
                                     {owner?.name?.charAt(0).toUpperCase()}
                                 </div>
-                                <div>
-                                    <p className="font-semibold text-white text-sm">{owner?.name}</p>
-                                    <p className="text-gray-400 text-xs">{owner?.email}</p>
+                                <div className="flex-1 min-w-0">
+                                    <p className="font-black text-gray-900 text-sm uppercase truncate">{owner?.name}</p>
+                                    <p className="text-gray-500 text-[10px] font-bold truncate">{owner?.email}</p>
                                 </div>
                             </div>
+                            
+                            {/* Ver como Usuario button for mobile */}
+                            <Button
+                                onClick={() => {
+                                    // In the dashboard, we can't easily impersonate from here without state lifting
+                                    // But we can redirect or show instructions
+                                    toast.info("Para ver como usuario, ve a la pestaña 'Estado de Cuentas' y selecciona al cliente.");
+                                }}
+                                variant="outline"
+                                className="w-full mt-4 h-10 text-[10px] font-black uppercase tracking-widest rounded-xl bg-white border-gray-200 text-[#4A6E75] hover:bg-gray-50"
+                            >
+                                <Maximize2 className="w-4 h-4 mr-2" />
+                                Ver Ficha Completa
+                            </Button>
                         </div>
                     )}
 
                     {/* Quick Actions */}
-                    <div className="space-y-3">
+                    <div className="space-y-3 pt-2">
                         {!isSold && (
                             <Button
                                 onClick={handleToggleStatus}
                                 disabled={isToggling}
                                 className={cn(
-                                    'w-full h-12 text-base font-bold rounded-xl transition-all duration-200',
+                                    'w-full h-12 text-xs font-black uppercase tracking-widest rounded-2xl transition-all duration-300 shadow-sm',
                                     'active:scale-[0.98]',
                                     isBlocked
-                                        ? 'bg-green-600 hover:bg-green-700 text-white'
-                                        : 'bg-red-600 hover:bg-red-700 text-white'
+                                        ? 'bg-emerald-500 hover:bg-emerald-600 text-white shadow-emerald-200'
+                                        : 'bg-red-500 hover:bg-red-600 text-white shadow-red-200'
                                 )}
                             >
                                 {isToggling ? (
@@ -190,7 +205,7 @@ export function LotBottomSheet({ lot, open, onOpenChange, onStatusChange, onAssi
                                     onAssignOwner(lot.id, lot.number);
                                     onOpenChange(false);
                                 }}
-                                className="w-full h-12 text-base font-bold rounded-xl bg-alimin-gold hover:bg-[#d4aa52] text-alimin-green active:scale-[0.98] transition-all duration-200"
+                                className="w-full h-12 text-xs font-black uppercase tracking-widest rounded-2xl bg-amber-400 hover:bg-amber-500 text-black active:scale-[0.98] transition-all duration-300 shadow-sm shadow-amber-200"
                             >
                                 <UserPlus className="w-5 h-5 mr-2" />
                                 Asignar Dueño
@@ -199,9 +214,9 @@ export function LotBottomSheet({ lot, open, onOpenChange, onStatusChange, onAssi
                     </div>
                 </div>
 
-                <DrawerFooter className="pt-2">
+                <DrawerFooter className="pt-2 pb-8">
                     <DrawerClose asChild>
-                        <Button variant="ghost" className="text-gray-400 hover:text-white hover:bg-white/5 h-11">
+                        <Button variant="ghost" className="text-gray-500 font-black uppercase text-[10px] tracking-widest hover:bg-gray-100 h-11 rounded-xl">
                             Cerrar
                         </Button>
                     </DrawerClose>

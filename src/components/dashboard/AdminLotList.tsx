@@ -129,23 +129,23 @@ export const AdminLotList = ({ lots: initialLots }: AdminLotListProps) => {
 
     return (
         <div className="space-y-4 overflow-x-hidden max-w-full">
-            <div className="flex flex-col md:flex-row gap-3 md:gap-4 items-center bg-white/5 p-3 md:p-4 rounded-xl border border-white/10">
+            <div className="flex flex-col md:flex-row gap-3 md:gap-4 items-center bg-gray-50 p-3 md:p-4 rounded-2xl border border-gray-200 shadow-sm">
                 <div className="flex items-center gap-2 w-full md:w-auto flex-1">
                     <Search className="w-5 h-5 text-gray-400" />
                     <Input
                         placeholder="Buscar terreno..."
                         value={filter}
                         onChange={(e) => handleFilterChange(e.target.value)}
-                        className="bg-transparent border-none text-white focus-visible:ring-0 placeholder:text-gray-500 w-full"
+                        className="bg-transparent border-none text-gray-900 focus-visible:ring-0 placeholder:text-gray-500 w-full font-bold"
                     />
                 </div>
 
                 <div className="w-full md:w-48">
                     <Select value={selectedStage} onValueChange={handleStageChange}>
-                        <SelectTrigger className="bg-white/10 border-white/20 text-white">
+                        <SelectTrigger className="bg-white border-gray-200 text-gray-900 rounded-xl font-bold">
                             <SelectValue placeholder="Filtrar por Etapa" />
                         </SelectTrigger>
-                        <SelectContent className="bg-gray-900 border-white/10 text-white">
+                        <SelectContent className="bg-white border-gray-200 text-gray-900">
                             <SelectItem value="all">Todas las Etapas</SelectItem>
                             {stages.map(stage => (
                                 <SelectItem key={stage} value={String(stage)}>
@@ -180,55 +180,55 @@ export const AdminLotList = ({ lots: initialLots }: AdminLotListProps) => {
                                 }
                             }}
                             className={`
-                                relative p-2 md:p-3 rounded-xl border transition-all duration-200 flex flex-col items-center gap-1.5 md:gap-2
+                                relative p-4 rounded-[2rem] border-2 transition-all duration-300 flex flex-col items-center gap-2
                                 ${ (isSold || lot.status === 'blocked')
-                                    ? 'bg-red-900/20 border-red-500/30 hover:bg-red-900/30'
-                                    : 'bg-green-900/20 border-green-500/30 hover:bg-green-900/30'
+                                    ? 'bg-red-50/50 border-red-200 hover:border-red-400 hover:shadow-lg'
+                                    : 'bg-emerald-50/50 border-emerald-200 hover:border-emerald-400 hover:shadow-lg'
                                 }
-                                md:cursor-default cursor-pointer active:scale-[0.97] md:active:scale-100
+                                md:cursor-default cursor-pointer active:scale-[0.97] md:active:scale-100 shadow-sm
                             `}
                         >
                             <div className="text-center">
-                                <span className={`text-[10px] md:text-xs uppercase font-bold tracking-wider ${ (isSold || lot.status === 'blocked') ? 'text-red-400' : 'text-green-400'}`}>
+                                <span className={`text-[10px] uppercase font-black tracking-widest ${ (isSold || lot.status === 'blocked') ? 'text-red-600' : 'text-emerald-600'}`}>
                                     {lot.status === 'blocked' ? 'BLOQUEADO' : (isSold ? 'VENDIDO' : 'DISPONIBLE')}
                                 </span>
-                                <p className="text-white font-bold text-sm md:text-lg">
+                                <p className="text-gray-900 font-black text-base mt-1">
                                     Terreno {lot.number}
                                 </p>
-                                <p className="text-white/50 text-[10px] md:text-xs">
+                                <p className="text-gray-500 text-[10px] font-bold uppercase tracking-widest">
                                     Etapa {lot.stage}
                                 </p>
                                 {/* Desktop: Show financial details inline */}
                                 <div className="hidden md:block">
                                     {(lot.cuotas && lot.cuotas > 0) ? (
-                                        <div className="mt-2 text-[10px] text-gray-400 space-y-0.5">
+                                        <div className="mt-2 text-[10px] text-gray-500 space-y-0.5">
                                             <div className="flex justify-between">
                                                 <span>Cuotas ({((lot.cuotas || 0) - 1)}):</span>
-                                                <span className="text-white font-medium">
+                                                <span className="text-gray-900 font-bold">
                                                     {new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(lot.valor_cuota || 0)}
                                                 </span>
                                             </div>
                                             <div className="flex justify-between">
                                                 <span>Última Cuota:</span>
-                                                <span className="text-white font-medium">
+                                                <span className="text-gray-900 font-bold">
                                                     {new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(lot.last_installment_amount || 0)}
                                                 </span>
                                             </div>
                                             <div className="flex justify-between">
                                                 <span>Pie:</span>
-                                                <span className="text-white font-medium">
+                                                <span className="text-gray-900 font-bold">
                                                     {new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(lot.pie || 0)}
                                                 </span>
                                             </div>
                                             <div className="flex justify-between">
                                                 <span>Reserva:</span>
-                                                <span className="text-white font-medium">
+                                                <span className="text-gray-900 font-bold">
                                                     {new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(lot.reservation_amount_clp || 0)}
                                                 </span>
                                             </div>
-                                            <div className="flex justify-between pt-0.5 border-t border-white/10 mt-0.5">
+                                            <div className="flex justify-between pt-0.5 border-t border-gray-200 mt-0.5">
                                                 <span>Total:</span>
-                                                <span className="text-[#E0B457] font-medium">
+                                                <span className="text-[#3f6066] font-black">
                                                     {new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(
                                                         (((lot.cuotas || 0) - 1) * (lot.valor_cuota || 0)) +
                                                         (lot.last_installment_amount || 0) +
@@ -248,7 +248,7 @@ export const AdminLotList = ({ lots: initialLots }: AdminLotListProps) => {
                                     onValueChange={(val) => handleStatusChange(lot.id, val)}
                                     disabled={isLoading}
                                 >
-                                    <SelectTrigger className="h-7 text-xs bg-white/5 border-white/10 text-white">
+                                    <SelectTrigger className="h-7 text-xs bg-white border-gray-200 text-gray-900 rounded-lg">
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -333,18 +333,18 @@ export const AdminLotList = ({ lots: initialLots }: AdminLotListProps) => {
                     <button
                         onClick={() => { setCurrentPage(p => Math.max(1, p - 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
                         disabled={currentPage === 1}
-                        className="flex items-center justify-center gap-1 min-h-[44px] px-4 rounded-xl bg-white/5 border border-white/10 text-white text-xs font-bold disabled:opacity-30 disabled:cursor-not-allowed active:scale-[0.95] transition-all"
+                        className="flex items-center justify-center gap-1 min-h-[44px] px-4 rounded-xl bg-white border border-gray-200 text-gray-900 text-xs font-black uppercase tracking-widest disabled:opacity-30 disabled:cursor-not-allowed active:scale-[0.95] transition-all shadow-sm"
                     >
                         <ChevronLeft className="w-4 h-4" />
                         Anterior
                     </button>
-                    <span className="text-xs text-gray-400 font-mono">
-                        {currentPage}/{totalPages}
+                    <span className="text-xs text-gray-500 font-black">
+                        {currentPage} / {totalPages}
                     </span>
                     <button
                         onClick={() => { setCurrentPage(p => Math.min(totalPages, p + 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
                         disabled={currentPage === totalPages}
-                        className="flex items-center justify-center gap-1 min-h-[44px] px-4 rounded-xl bg-white/5 border border-white/10 text-white text-xs font-bold disabled:opacity-30 disabled:cursor-not-allowed active:scale-[0.95] transition-all"
+                        className="flex items-center justify-center gap-1 min-h-[44px] px-4 rounded-xl bg-white border border-gray-200 text-gray-900 text-xs font-black uppercase tracking-widest disabled:opacity-30 disabled:cursor-not-allowed active:scale-[0.95] transition-all shadow-sm"
                     >
                         Siguiente
                         <ChevronRight className="w-4 h-4" />
