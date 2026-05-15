@@ -32,7 +32,7 @@ import { AdminLotList } from "@/components/dashboard/AdminLotList";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { PaymentButtons } from "@/components/user/PaymentButtons";
-import { SignContractModal } from "@/components/dashboard/SignContractModal";
+import { SignContractModal } from "@/components/SignContractModal";
 
 export type PostventaTab = 'mora' | 'ledger' | 'alertas' | 'terrenos';
 
