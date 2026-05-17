@@ -7,6 +7,7 @@ import {
     Table, TableBody, TableCell, TableHead, TableHeader, TableRow
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Loader2, CheckCircle, XCircle, Eye, MapPin, CreditCard, Clock, Download, ChevronLeft, ChevronRight, Filter, FileText } from "lucide-react";
@@ -37,6 +38,7 @@ export default function ReceiptsClient({
     const [rejectingId, setRejectingId] = useState<string | null>(null);
     const [rejectionReason, setRejectionReason] = useState("");
     const [isProcessing, setIsProcessing] = useState<string | null>(null);
+    const [activeTab, setActiveTab] = useState<string>("pagos");
 
     const pendingCount = receipts.filter(r => r.status === 'PENDING').length;
 
@@ -124,247 +126,32 @@ export default function ReceiptsClient({
                 </div>
             </div>
 
-            {/* ===== DESKTOP TABLE (md+) ===== */}
-            <div className="hidden md:block rounded-md border overflow-x-auto">
-                <Table>
-                    <TableHeader className="bg-gray-50">
-                        <TableRow>
-                            <TableHead>Fecha</TableHead>
-                            <TableHead>Cliente</TableHead>
-                            <TableHead>Terreno</TableHead>
-                            <TableHead>Tipo</TableHead>
-                            <TableHead>Monto</TableHead>
-                            <TableHead>Estado</TableHead>
-                            <TableHead className="text-right">Acciones</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {receipts.map((receipt) => (
-                            <TableRow key={receipt.id}>
-                                <TableCell className="whitespace-nowrap">
-                                    {format(new Date(receipt.created_at), "dd MMM yyyy, HH:mm", { locale: es })}
-                                </TableCell>
-                                <TableCell>
-                                    <div className="font-medium text-sm">
-                                        {receipt.reservation.buyer?.name}
-                                    </div>
-                                    <div className="text-xs text-gray-500">{receipt.reservation.buyer?.email}</div>
-                                </TableCell>
-                                <TableCell>
-                                    Etapa {receipt.reservation.lot?.stage} - Terreno {receipt.reservation.lot?.number}
-                                </TableCell>
-                                <TableCell>
-                                    {receipt.scope === 'PIE' ? (
-                                        <Badge className="bg-blue-100 text-blue-800 border min-w-[70px] text-center">Pie</Badge>
-                                    ) : (
-                                        <Badge className="bg-purple-100 text-purple-800 border min-w-[70px] text-center">
-                                            {receipt.installments_count > 1 ? `${receipt.installments_count} Cuotas` : '1 Cuota'}
-                                        </Badge>
-                                    )}
-                                </TableCell>
-                                <TableCell className="font-semibold whitespace-nowrap">
-                                    {formatCurrency(receipt.amount_clp)}
-                                </TableCell>
-                                <TableCell>
-                                    {getStatusBadge(receipt.status)}
-                                </TableCell>
-                                <TableCell className="text-right">
-                                    <div className="flex justify-end gap-2">
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={() => setSelectedReceipt({ id: receipt.id, url: receipt.receipt_url || '', status: receipt.status })}
-                                            title="Ver Comprobante Subido"
-                                        >
-                                            <Eye className="w-4 h-4" />
-                                        </Button>
-                                        
-                                        {receipt.receipt_url && receipt.receipt_url !== 'LEGACY_SYNC' && !receipt.receipt_url.includes('MANUAL') && (
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                asChild
-                                                title="Descargar Comprobante Subido"
-                                            >
-                                                <a href={receipt.receipt_url} download target="_blank" rel="noopener noreferrer">
-                                                    <Download className="w-4 h-4" />
-                                                </a>
-                                            </Button>
-                                        )}
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                <TabsList className="mb-4">
+                    <TabsTrigger value="pagos">Pagos (Pie / Cuotas)</TabsTrigger>
+                    <TabsTrigger value="reservas">Reservas Manuales</TabsTrigger>
+                </TabsList>
 
-                                        {receipt.status === 'APPROVED' && (
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                className="border-green-500/30 bg-green-50 hover:bg-green-100 text-green-700 hover:text-green-800"
-                                                title="Descargar PDF Generado"
-                                                asChild
-                                            >
-                                                <a href={`/api/receipt/${receipt.id}/pdf`} target="_blank" rel="noopener noreferrer">
-                                                    <Download className="w-4 h-4" />
-                                                </a>
-                                            </Button>
-                                        )}
+                <TabsContent value="pagos" className="mt-0">
+                    <ReceiptsTable 
+                        data={receipts.filter(r => r.scope !== 'RESERVATION')} 
+                        onView={(id: string, url: string, status: string) => setSelectedReceipt({ id, url, status })}
+                        onApprove={handleApprove}
+                        onReject={(id: string) => setRejectingId(id)}
+                        isProcessing={isProcessing}
+                    />
+                </TabsContent>
 
-                                        {receipt.status === 'PENDING' && (
-                                            <>
-                                                <Button
-                                                    variant="default"
-                                                    size="sm"
-                                                    className="bg-green-600 hover:bg-green-700 text-white"
-                                                    onClick={() => handleApprove(receipt.id)}
-                                                    disabled={isProcessing === receipt.id}
-                                                >
-                                                    {isProcessing === receipt.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4 mr-1" />}
-                                                    Aprobar
-                                                </Button>
-                                                <Button
-                                                    variant="destructive"
-                                                    size="sm"
-                                                    onClick={() => setRejectingId(receipt.id)}
-                                                    disabled={isProcessing === receipt.id}
-                                                >
-                                                    <XCircle className="w-4 h-4 mr-1" />
-                                                    Rechazar
-                                                </Button>
-                                            </>
-                                        )}
-                                    </div>
-                                    {receipt.rejection_reason && (
-                                        <div className="text-xs text-red-500 mt-1 max-w-[150px] truncate text-right float-right" title={receipt.rejection_reason}>
-                                            {receipt.rejection_reason}
-                                        </div>
-                                    )}
-                                </TableCell>
-                            </TableRow>
-                        ))}
-                        {receipts.length === 0 && (
-                            <TableRow>
-                                <TableCell colSpan={7} className="text-center py-8 text-gray-500">
-                                    No hay comprobantes de pago subidos aún.
-                                </TableCell>
-                            </TableRow>
-                        )}
-                    </TableBody>
-                </Table>
-            </div>
-
-            {/* ===== MOBILE CARD LIST (<md) ===== */}
-            <div className="md:hidden space-y-3">
-                {receipts.map((receipt) => (
-                    <div
-                        key={receipt.id}
-                        className={`rounded-xl border p-4 space-y-3 transition-colors ${receipt.status === 'PENDING'
-                            ? 'bg-yellow-50/50 border-yellow-200'
-                            : receipt.status === 'APPROVED'
-                                ? 'bg-green-50/30 border-green-200'
-                                : receipt.status === 'REJECTED'
-                                    ? 'bg-red-50/30 border-red-200'
-                                    : 'bg-gray-50 border-gray-200'
-                            }`}
-                    >
-                        {/* Top Row: Client + Status */}
-                        <div className="flex items-start justify-between gap-2">
-                            <div className="min-w-0">
-                                <p className="font-bold text-gray-900 text-sm truncate">
-                                    {receipt.reservation.buyer?.name || 'Sin nombre'}
-                                </p>
-                                <p className="text-[11px] text-gray-500 truncate">
-                                    {receipt.reservation.buyer?.email}
-                                </p>
-                            </div>
-                            {getStatusBadge(receipt.status)}
-                        </div>
-
-                        {/* Info Row */}
-                        <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-600">
-                            <span className="flex items-center gap-1">
-                                <MapPin className="w-3 h-3 text-gray-400" />
-                                T-{receipt.reservation.lot?.number} · Etapa {receipt.reservation.lot?.stage}
-                            </span>
-                            <span className="flex items-center gap-1">
-                                <CreditCard className="w-3 h-3 text-gray-400" />
-                                {receipt.scope === 'PIE' ? 'Pie' : `${receipt.installments_count > 1 ? receipt.installments_count + ' Cuotas' : '1 Cuota'}`}
-                            </span>
-                            <span className="flex items-center gap-1">
-                                <Clock className="w-3 h-3 text-gray-400" />
-                                {format(new Date(receipt.created_at), "dd MMM, HH:mm", { locale: es })}
-                            </span>
-                        </div>
-
-                        {/* Amount */}
-                        <div className="flex items-center justify-between bg-white rounded-lg px-3 py-2 border">
-                            <span className="text-xs text-gray-500">Monto</span>
-                            <span className="text-base font-bold text-gray-900">{formatCurrency(receipt.amount_clp)}</span>
-                        </div>
-
-                        {/* Rejection Reason */}
-                        {receipt.rejection_reason && (
-                            <div className="bg-red-50 border border-red-200 rounded-lg px-3 py-2">
-                                <p className="text-xs text-red-600">
-                                    <span className="font-semibold">Motivo: </span>
-                                    {receipt.rejection_reason}
-                                </p>
-                            </div>
-                        )}
-
-                        {/* Action Buttons — 44px min height */}
-                        <div className="flex gap-2 text-center">
-                            <button
-                                onClick={() => setSelectedReceipt({ id: receipt.id, url: receipt.receipt_url || '', status: receipt.status })}
-                                className="flex items-center justify-center gap-1.5 flex-1 min-h-[44px] rounded-lg bg-gray-100 text-gray-700 text-xs font-semibold hover:bg-gray-200 transition-colors active:scale-[0.97]"
-                                title="Ver Comprobante Subido"
-                            >
-                                <Eye className="w-4 h-4" />
-                                Img
-                            </button>
-
-                            {receipt.status === 'APPROVED' && (
-                                <a
-                                    href={`/api/receipt/${receipt.id}/pdf`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="flex items-center justify-center gap-1.5 flex-1 min-h-[44px] rounded-lg bg-green-50 text-green-700 border border-green-200 text-xs font-semibold hover:bg-green-100 transition-colors active:scale-[0.97]"
-                                    title="Descargar PDF Generado"
-                                >
-                                    <Download className="w-4 h-4" />
-                                    PDF
-                                </a>
-                            )}
-
-                            {receipt.status === 'PENDING' && (
-                                <>
-                                    <button
-                                        onClick={() => handleApprove(receipt.id)}
-                                        disabled={isProcessing === receipt.id}
-                                        className="flex items-center justify-center gap-1.5 flex-1 min-h-[44px] rounded-lg bg-green-600 text-white text-xs font-semibold hover:bg-green-700 transition-colors active:scale-[0.97] disabled:opacity-50"
-                                    >
-                                        {isProcessing === receipt.id ? (
-                                            <Loader2 className="w-4 h-4 animate-spin" />
-                                        ) : (
-                                            <CheckCircle className="w-4 h-4" />
-                                        )}
-                                        Aprobar
-                                    </button>
-                                    <button
-                                        onClick={() => setRejectingId(receipt.id)}
-                                        disabled={isProcessing === receipt.id}
-                                        className="flex items-center justify-center gap-1.5 flex-1 min-h-[44px] rounded-lg bg-red-600 text-white text-xs font-semibold hover:bg-red-700 transition-colors active:scale-[0.97] disabled:opacity-50"
-                                    >
-                                        <XCircle className="w-4 h-4" />
-                                        Rechazar
-                                    </button>
-                                </>
-                            )}
-                        </div>
-                    </div>
-                ))}
-                {receipts.length === 0 && (
-                    <div className="p-8 text-center text-gray-500 text-sm">
-                        No hay comprobantes de pago subidos aún.
-                    </div>
-                )}
-            </div>
+                <TabsContent value="reservas" className="mt-0">
+                    <ReceiptsTable 
+                        data={receipts.filter(r => r.scope === 'RESERVATION')} 
+                        onView={(id: string, url: string, status: string) => setSelectedReceipt({ id, url, status })}
+                        onApprove={handleApprove}
+                        onReject={(id: string) => setRejectingId(id)}
+                        isProcessing={isProcessing}
+                    />
+                </TabsContent>
+            </Tabs>
 
             {/* Pagination Controls */}
             {totalPages > 1 && (
@@ -505,5 +292,266 @@ export default function ReceiptsClient({
                 </DialogContent>
             </Dialog>
         </div>
+    );
+}
+
+function ReceiptsTable({ data, onView, onApprove, onReject, isProcessing }: any) {
+    const formatCurrency = (amount: number) => {
+        return new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(amount);
+    };
+
+    const getStatusBadge = (status: string) => {
+        if (status === 'PENDING') return <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 text-[10px]">Pendiente</Badge>;
+        if (status === 'APPROVED') return <Badge className="bg-green-100 text-green-800 text-[10px]">Aprobado</Badge>;
+        if (status === 'REJECTED') return <Badge variant="destructive" className="text-[10px]">Rechazado</Badge>;
+        return null;
+    };
+
+    return (
+        <>
+            {/* ===== DESKTOP TABLE (md+) ===== */}
+            <div className="hidden md:block rounded-md border overflow-x-auto">
+                <Table>
+                    <TableHeader className="bg-gray-50">
+                        <TableRow>
+                            <TableHead>Fecha</TableHead>
+                            <TableHead>Cliente</TableHead>
+                            <TableHead>Terreno</TableHead>
+                            <TableHead>Tipo</TableHead>
+                            <TableHead>Monto</TableHead>
+                            <TableHead>Estado</TableHead>
+                            <TableHead className="text-right">Acciones</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {data.map((receipt: any) => (
+                            <TableRow key={receipt.id}>
+                                <TableCell className="whitespace-nowrap">
+                                    {format(new Date(receipt.created_at), "dd MMM yyyy, HH:mm", { locale: es })}
+                                </TableCell>
+                                <TableCell>
+                                    <div className="font-medium text-sm">
+                                        {receipt.reservation?.buyer?.name}
+                                    </div>
+                                    <div className="text-xs text-gray-500">{receipt.reservation?.buyer?.email}</div>
+                                </TableCell>
+                                <TableCell>
+                                    Etapa {receipt.reservation?.lot?.stage} - Terreno {receipt.reservation?.lot?.number}
+                                </TableCell>
+                                <TableCell>
+                                    {receipt.scope === 'PIE' ? (
+                                        <Badge className="bg-blue-100 text-blue-800 border min-w-[70px] text-center">Pie</Badge>
+                                    ) : receipt.scope === 'RESERVATION' ? (
+                                        <Badge className="bg-amber-100 text-amber-800 border min-w-[70px] text-center">Reserva</Badge>
+                                    ) : (
+                                        <Badge className="bg-purple-100 text-purple-800 border min-w-[70px] text-center">
+                                            {receipt.installments_count > 1 ? `${receipt.installments_count} Cuotas` : '1 Cuota'}
+                                        </Badge>
+                                    )}
+                                </TableCell>
+                                <TableCell className="font-semibold whitespace-nowrap">
+                                    {formatCurrency(receipt.amount_clp)}
+                                </TableCell>
+                                <TableCell>
+                                    {getStatusBadge(receipt.status)}
+                                </TableCell>
+                                <TableCell className="text-right">
+                                    <div className="flex justify-end gap-2">
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => onView(receipt.id, receipt.receipt_url || '', receipt.status)}
+                                            title="Ver Comprobante Subido"
+                                        >
+                                            <Eye className="w-4 h-4" />
+                                        </Button>
+                                        
+                                        {receipt.receipt_url && receipt.receipt_url !== 'LEGACY_SYNC' && !receipt.receipt_url.includes('MANUAL') && (
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                asChild
+                                                title="Descargar Comprobante Subido"
+                                            >
+                                                <a href={receipt.receipt_url} download target="_blank" rel="noopener noreferrer">
+                                                    <Download className="w-4 h-4" />
+                                                </a>
+                                            </Button>
+                                        )}
+
+                                        {receipt.status === 'APPROVED' && (
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                className="border-green-500/30 bg-green-50 hover:bg-green-100 text-green-700 hover:text-green-800"
+                                                title="Descargar PDF Generado"
+                                                asChild
+                                            >
+                                                <a href={`/api/receipt/${receipt.id}/pdf`} target="_blank" rel="noopener noreferrer">
+                                                    <Download className="w-4 h-4" />
+                                                </a>
+                                            </Button>
+                                        )}
+
+                                        {receipt.status === 'PENDING' && (
+                                            <>
+                                                <Button
+                                                    variant="default"
+                                                    size="sm"
+                                                    className="bg-green-600 hover:bg-green-700 text-white"
+                                                    onClick={() => onApprove(receipt.id)}
+                                                    disabled={isProcessing === receipt.id}
+                                                >
+                                                    {isProcessing === receipt.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4 mr-1" />}
+                                                    Aprobar
+                                                </Button>
+                                                <Button
+                                                    variant="destructive"
+                                                    size="sm"
+                                                    onClick={() => onReject(receipt.id)}
+                                                    disabled={isProcessing === receipt.id}
+                                                >
+                                                    <XCircle className="w-4 h-4 mr-1" />
+                                                    Rechazar
+                                                </Button>
+                                            </>
+                                        )}
+                                    </div>
+                                    {receipt.rejection_reason && (
+                                        <div className="text-xs text-red-500 mt-1 max-w-[150px] truncate text-right float-right" title={receipt.rejection_reason}>
+                                            {receipt.rejection_reason}
+                                        </div>
+                                    )}
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                        {data.length === 0 && (
+                            <TableRow>
+                                <TableCell colSpan={7} className="text-center py-8 text-gray-500">
+                                    No hay comprobantes para mostrar.
+                                </TableCell>
+                            </TableRow>
+                        )}
+                    </TableBody>
+                </Table>
+            </div>
+
+            {/* ===== MOBILE CARD LIST (<md) ===== */}
+            <div className="md:hidden space-y-3">
+                {data.map((receipt: any) => (
+                    <div
+                        key={receipt.id}
+                        className={`rounded-xl border p-4 space-y-3 transition-colors ${receipt.status === 'PENDING'
+                            ? 'bg-yellow-50/50 border-yellow-200'
+                            : receipt.status === 'APPROVED'
+                                ? 'bg-green-50/30 border-green-200'
+                                : receipt.status === 'REJECTED'
+                                    ? 'bg-red-50/30 border-red-200'
+                                    : 'bg-gray-50 border-gray-200'
+                            }`}
+                    >
+                        {/* Top Row: Client + Status */}
+                        <div className="flex items-start justify-between gap-2">
+                            <div className="min-w-0">
+                                <p className="font-bold text-gray-900 text-sm truncate">
+                                    {receipt.reservation?.buyer?.name || 'Sin nombre'}
+                                </p>
+                                <p className="text-[11px] text-gray-500 truncate">
+                                    {receipt.reservation?.buyer?.email}
+                                </p>
+                            </div>
+                            {getStatusBadge(receipt.status)}
+                        </div>
+
+                        {/* Info Row */}
+                        <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-600">
+                            <span className="flex items-center gap-1">
+                                <MapPin className="w-3 h-3 text-gray-400" />
+                                T-{receipt.reservation?.lot?.number} · Etapa {receipt.reservation?.lot?.stage}
+                            </span>
+                            <span className="flex items-center gap-1">
+                                <CreditCard className="w-3 h-3 text-gray-400" />
+                                {receipt.scope === 'PIE' ? 'Pie' : receipt.scope === 'RESERVATION' ? 'Reserva' : `${receipt.installments_count > 1 ? receipt.installments_count + ' Cuotas' : '1 Cuota'}`}
+                            </span>
+                            <span className="flex items-center gap-1">
+                                <Clock className="w-3 h-3 text-gray-400" />
+                                {format(new Date(receipt.created_at), "dd MMM, HH:mm", { locale: es })}
+                            </span>
+                        </div>
+
+                        {/* Amount */}
+                        <div className="flex items-center justify-between bg-white rounded-lg px-3 py-2 border">
+                            <span className="text-xs text-gray-500">Monto</span>
+                            <span className="text-base font-bold text-gray-900">{formatCurrency(receipt.amount_clp)}</span>
+                        </div>
+
+                        {/* Rejection Reason */}
+                        {receipt.rejection_reason && (
+                            <div className="bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+                                <p className="text-xs text-red-600">
+                                    <span className="font-semibold">Motivo: </span>
+                                    {receipt.rejection_reason}
+                                </p>
+                            </div>
+                        )}
+
+                        {/* Action Buttons — 44px min height */}
+                        <div className="flex gap-2 text-center">
+                            <button
+                                onClick={() => onView(receipt.id, receipt.receipt_url || '', receipt.status)}
+                                className="flex items-center justify-center gap-1.5 flex-1 min-h-[44px] rounded-lg bg-gray-100 text-gray-700 text-xs font-semibold hover:bg-gray-200 transition-colors active:scale-[0.97]"
+                                title="Ver Comprobante Subido"
+                            >
+                                <Eye className="w-4 h-4" />
+                                Img
+                            </button>
+
+                            {receipt.status === 'APPROVED' && (
+                                <a
+                                    href={`/api/receipt/${receipt.id}/pdf`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center justify-center gap-1.5 flex-1 min-h-[44px] rounded-lg bg-green-50 text-green-700 border border-green-200 text-xs font-semibold hover:bg-green-100 transition-colors active:scale-[0.97]"
+                                    title="Descargar PDF Generado"
+                                >
+                                    <Download className="w-4 h-4" />
+                                    PDF
+                                </a>
+                            )}
+
+                            {receipt.status === 'PENDING' && (
+                                <>
+                                    <button
+                                        onClick={() => onApprove(receipt.id)}
+                                        disabled={isProcessing === receipt.id}
+                                        className="flex items-center justify-center gap-1.5 flex-1 min-h-[44px] rounded-lg bg-green-600 text-white text-xs font-semibold hover:bg-green-700 transition-colors active:scale-[0.97] disabled:opacity-50"
+                                    >
+                                        {isProcessing === receipt.id ? (
+                                            <Loader2 className="w-4 h-4 animate-spin" />
+                                        ) : (
+                                            <CheckCircle className="w-4 h-4" />
+                                        )}
+                                        Aprobar
+                                    </button>
+                                    <button
+                                        onClick={() => onReject(receipt.id)}
+                                        disabled={isProcessing === receipt.id}
+                                        className="flex items-center justify-center gap-1.5 flex-1 min-h-[44px] rounded-lg bg-red-600 text-white text-xs font-semibold hover:bg-red-700 transition-colors active:scale-[0.97] disabled:opacity-50"
+                                    >
+                                        <XCircle className="w-4 h-4" />
+                                        Rechazar
+                                    </button>
+                                </>
+                            )}
+                        </div>
+                    </div>
+                ))}
+                {data.length === 0 && (
+                    <div className="p-8 text-center text-gray-500 text-sm">
+                        No hay comprobantes para mostrar.
+                    </div>
+                )}
+            </div>
+        </>
     );
 }
