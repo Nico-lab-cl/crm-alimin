@@ -24,11 +24,18 @@ export const ProgressBar = ({ lots }: ProgressBarProps) => {
   const filteredLots = lots.filter(lot => {
     const lotNumber = String(lot.number);
     const lotStage = lot.displayStage || lot.stage;
-    return !excludedLots.some(ex => ex.number === lotNumber && ex.stage === lotStage);
+    
+    // Excluir lotes cancelados/excluidos solicitados por el cliente
+    const isExcluded = excludedLots.some(ex => ex.number === lotNumber && ex.stage === lotStage);
+    
+    // Excluir toda la etapa 4 del conteo porque está completamente bloqueada
+    const isStage4 = lotStage === 4;
+    
+    return !isExcluded && !isStage4;
   });
 
   const totalLots = filteredLots.length;
-  const soldLots = filteredLots.filter(lot => lot.status === 'sold' || lot.status === 'blocked').length;
+  const soldLots = filteredLots.filter(lot => lot.status === 'sold').length;
   const reservedLots = filteredLots.filter(lot => lot.status === 'reserved').length;
   const availableLots = filteredLots.filter(lot => lot.status === 'available').length;
   
