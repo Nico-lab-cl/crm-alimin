@@ -1,6 +1,7 @@
 import React from 'react';
 import { Document, Page, Text, View, StyleSheet, Image, Font } from '@react-pdf/renderer';
 import { Reservation, Lot as PrismaLot } from '@prisma/client';
+import { getInstallmentDueDate } from '@/lib/financials';
 
 // Register fonts if needed, but standard ones are built-in (Helvetica, Times-Roman)
 // Font.register({ family: 'Roboto', src: 'path/to/font' });
@@ -131,6 +132,21 @@ export const ReservationContract = ({ reservation, lot, logoPath, signaturePath 
     const saldoPie = Math.max(0, pieLote - reservaAmount);
     const calculoSaldoPie = formatCurrency(saldoPie);
 
+    // Calculate dynamic first due date
+    const isLegacyBool = Boolean(reservation.is_legacy);
+    const customStart = reservation.legacy_installment_start_date ? new Date(reservation.legacy_installment_start_date) : null;
+    const customDueDay = customStart ? customStart.getDate() : null;
+    const isPromoBool = Boolean(reservation.is_promo);
+
+    const firstDue = getInstallmentDueDate(
+        contractDate,
+        1,
+        isLegacyBool,
+        customDueDay,
+        isPromoBool
+    );
+    const firstDueText = getFullDateText(firstDue);
+
     let textoCuotas = '';
     if (lotAny.cuotas && lotAny.cuotas > 0) {
         const valorCuotaFormatted = formatCurrency(lotAny.valor_cuota);
@@ -138,9 +154,9 @@ export const ReservationContract = ({ reservation, lot, logoPath, signaturePath 
         if (lotAny.last_installment_amount && lotAny.last_installment_amount > 0) {
             const regularCuotas = lotAny.cuotas - 1;
             const lastInstallmentFormatted = formatCurrency(lotAny.last_installment_amount);
-            textoCuotas = `${regularCuotas} cuotas mensuales de ${valorCuotaFormatted} y una última cuota de ${lastInstallmentFormatted}, comenzando la primera cuota a partir del 5 de Marzo`;
+            textoCuotas = `${regularCuotas} cuotas mensuales de ${valorCuotaFormatted} y una última cuota de ${lastInstallmentFormatted}, comenzando la primera cuota a partir del ${firstDueText}`;
         } else {
-            textoCuotas = `${lotAny.cuotas} cuotas mensuales de ${valorCuotaFormatted}, comenzando la primera cuota a partir del 5 de Marzo`;
+            textoCuotas = `${lotAny.cuotas} cuotas mensuales de ${valorCuotaFormatted}, comenzando la primera cuota a partir del ${firstDueText}`;
         }
     }
 
