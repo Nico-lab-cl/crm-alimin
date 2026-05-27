@@ -12,7 +12,7 @@ export const CyberPromo = () => {
         {
             icon: Scale,
             title: "Asesoría Legal Gratuita",
-            description: "Nosotros nos encargamos de todo de manera gratuita. Asesoría legal completa, estudio de títulos y redacción de promesa."
+            description: "Asesoría legal completa, redacción de promesa, resuelve todas tus dudas legales con nosotros"
         },
         {
             icon: Laptop,
@@ -39,7 +39,7 @@ export const CyberPromo = () => {
                     {promoItems.map((item, index) => (
                         <div
                             key={index}
-                            className="bg-white rounded-2xl p-8 shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border border-slate-100/85 flex flex-col items-center text-center group relative overflow-hidden"
+                            className="bg-white rounded-2xl p-8 shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border border-slate-100/85 flex flex-col items-start text-left group relative overflow-hidden"
                         >
                             {/* Gold Top line */}
                             <div className="absolute top-0 left-0 w-full h-1 bg-alimin-gold" />
