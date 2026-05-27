@@ -589,6 +589,16 @@ export const LotReservationPopup = ({ lot, isOpen, onClose, onConfirm, isTempora
           </div>
 
 
+          {/* Cyber Monday Benefit Info Alert */}
+          <div className="bg-alimin-green text-white p-4 rounded-xl mb-6 border-l-4 border-alimin-gold flex flex-col gap-1 text-left select-none">
+            <h4 className="font-bold text-base flex items-center gap-1.5 text-alimin-gold">
+              🔥 ¡Reserva ahora el Lote {lotLabel} con beneficios Cyber!
+            </h4>
+            <p className="text-xs text-white/90 leading-relaxed font-medium">
+              Reserva hoy y obtén Pie en 3 cuotas sin interés + Asesoría Legal Gratuita + Compra 100% segura.
+            </p>
+          </div>
+
           {/* Contact Form - 2 columns on larger devices */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
             <div className="group space-y-2">
@@ -821,7 +831,7 @@ export const LotReservationPopup = ({ lot, isOpen, onClose, onConfirm, isTempora
             <Button
               onClick={handleSubmit}
               disabled={isSubmitting || isTemporarilyLocked}
-              className="flex-1 gap-2 transition-all duration-200 hover:scale-[1.02] hover:shadow-lg"
+              className="flex-1 gap-2 transition-all duration-200 hover:scale-[1.02] hover:shadow-lg bg-alimin-gold hover:bg-alimin-gold/90 text-alimin-green font-black"
             >
               {isSubmitting ? (
                 <>
@@ -830,8 +840,7 @@ export const LotReservationPopup = ({ lot, isOpen, onClose, onConfirm, isTempora
                 </>
               ) : (
                 <>
-                  <CreditCard className="w-4 h-4" />
-                  Reservar y Pagar
+                  <span>🛒 Asegurar mi Terreno con 3 Cuotas</span>
                 </>
               )}
             </Button>

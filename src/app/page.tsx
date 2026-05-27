@@ -43,6 +43,7 @@ import { InvestmentThesis } from '@/components/InvestmentThesis';
 import { VideoGallery } from '@/components/VideoGallery';
 import { ProjectFeatures } from '@/components/ProjectFeatures';
 import { GoogleMapsButton } from '@/components/GoogleMapsButton';
+import { CyberPromo } from '@/components/CyberPromo';
 
 import { Footer } from '@/components/Footer';
 import { AdminLogin } from '@/components/AdminLogin';
@@ -489,6 +490,9 @@ export default function Home() {
       {/* Hero Section - First Visual Impact */}
       <Hero onExploreClick={scrollToMap} />
 
+      {/* Cyber Monday Promotion Details */}
+      <CyberPromo />
+
       {/* Trust Banner - Key Value Propositions */}
       <TrustBanner />
 
@@ -504,7 +508,7 @@ export default function Home() {
       </div>
 
       {/* MOBILE MAP SECTION - VISIBLE ONLY ON MOBILE */}
-      <section ref={mobileMapSectionRef} className="w-full pt-16 pb-24 animate-in fade-in duration-1000 block md:hidden">
+      <section id="map-section-mobile" ref={mobileMapSectionRef} className="w-full pt-16 pb-24 animate-in fade-in duration-1000 block md:hidden">
         <div className="container mx-auto px-4 text-center mb-10 overflow-hidden">
           <div className="flex flex-col items-center justify-center gap-6 mb-6">
             <img src="/logo.png" alt="Lomas del Mar" className="h-16 w-auto object-contain drop-shadow-sm" />
@@ -561,7 +565,7 @@ export default function Home() {
         </div>
 
         {/* 2. Vista Satelital (Secundaria) - Immersive Full Bleed - DESKTOP ONLY */}
-        <section ref={mapSectionRef} className="w-full pt-16 pb-24 animate-in fade-in duration-1000 hidden md:block">
+        <section id="map-section-desktop" ref={mapSectionRef} className="w-full pt-16 pb-24 animate-in fade-in duration-1000 hidden md:block">
           <div className="container mx-auto px-4 text-center mb-10 overflow-hidden">
             <div className="flex flex-col md:flex-row items-center justify-center gap-6 mb-6">
               <img

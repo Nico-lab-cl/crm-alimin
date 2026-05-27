@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from 'react';
+import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { NotificationBell } from '@/components/NotificationBell';
@@ -24,21 +25,17 @@ interface HeaderProps {
 }
 
 export const Header = ({ projectName }: HeaderProps) => {
-  // const [isVisible, setIsVisible] = useState(false); // Removed for always-visible header
+  const pathname = usePathname();
+  const isHomePage = pathname === '/';
   const { data: session } = useSession();
 
-  // useEffect(() => {
-  //   const handleScroll = () => {
-  //     // Show header after scrolling past the hero (viewport height)
-  //     const scrolled = window.scrollY > window.innerHeight - 100;
-  //     setIsVisible(scrolled);
-  //   };
-
-  //   window.addEventListener('scroll', handleScroll);
-  //   handleScroll(); // Check initial state
-
-  //   return () => window.removeEventListener('scroll', handleScroll);
-  // }, []);
+  useEffect(() => {
+    if (isHomePage) {
+      document.documentElement.style.setProperty('--header-height', '128px');
+    } else {
+      document.documentElement.style.setProperty('--header-height', '88px');
+    }
+  }, [isHomePage]);
 
   const getInitials = (name: string) => {
     return name
@@ -51,10 +48,26 @@ export const Header = ({ projectName }: HeaderProps) => {
 
   return (
     <header
-      className="bg-alimin-green/95 backdrop-blur-md border-b border-alimin-gold/20 fixed top-0 left-0 right-0 z-50 transition-none"
-      style={{ height: 'var(--header-height)' }}
+      className="bg-alimin-green/95 backdrop-blur-md border-b border-alimin-gold/20 fixed top-0 left-0 right-0 z-50 transition-all duration-300"
+      style={{ height: isHomePage ? '128px' : '88px' }}
     >
-      <div className="container mx-auto px-4 h-full flex items-center">
+      {isHomePage && (
+        <div className="bg-alimin-gold text-alimin-green text-xs md:text-sm font-black py-2.5 px-4 text-center flex items-center justify-center gap-2 select-none shadow-inner h-10 overflow-hidden">
+          <span>🔥 Cyber Alimin Reserva hoy tu terreno con Pie en 3 cuotas sin interés + Asesoría Legal Gratuita</span>
+          <button
+            onClick={() => {
+              const element = document.getElementById('map-section-desktop') || document.getElementById('map-section-mobile');
+              if (element) {
+                element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              }
+            }}
+            className="underline hover:text-alimin-green/80 transition-colors ml-2 cursor-pointer font-bold"
+          >
+            Ver Terrenos Disponibles
+          </button>
+        </div>
+      )}
+      <div className="container mx-auto px-4 h-[88px] flex items-center">
         <div className="flex items-center justify-between w-full">
           <div className="flex items-center gap-2 md:gap-4">
             <Link
