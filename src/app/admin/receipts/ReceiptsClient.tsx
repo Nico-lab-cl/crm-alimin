@@ -24,13 +24,17 @@ interface ReceiptsClientProps {
     totalPages: number;
     currentPage: number;
     currentStatus: string;
+    initialPendingCount: number;
+    initialTab: string;
 }
 
 export default function ReceiptsClient({ 
     initialReceipts,
     totalPages,
     currentPage,
-    currentStatus
+    currentStatus,
+    initialPendingCount,
+    initialTab
 }: ReceiptsClientProps) {
     const router = useRouter();
     const [receipts, setReceipts] = useState(initialReceipts);
@@ -38,12 +42,11 @@ export default function ReceiptsClient({
     const [rejectingId, setRejectingId] = useState<string | null>(null);
     const [rejectionReason, setRejectionReason] = useState("");
     const [isProcessing, setIsProcessing] = useState<string | null>(null);
-    const [activeTab, setActiveTab] = useState<string>("pagos");
+    const [activeTab, setActiveTab] = useState<string>(initialTab || "pagos");
+    const [pendingCount, setPendingCount] = useState(initialPendingCount || 0);
 
-    const pendingCount = receipts.filter(r => r.status === 'PENDING').length;
-
-    const navigate = (page: number, status: string) => {
-        router.push(`/admin/receipts?page=${page}&status=${status}`);
+    const navigate = (page: number, status: string, tab: string = activeTab) => {
+        router.push(`/admin/receipts?page=${page}&status=${status}&tab=${tab}`);
         setTimeout(() => {
             router.refresh();
             window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -55,6 +58,7 @@ export default function ReceiptsClient({
         try {
             await approvePaymentReceipt(id);
             setReceipts(prev => prev.map(r => r.id === id ? { ...r, status: 'APPROVED' } : r));
+            setPendingCount(prev => Math.max(0, prev - 1));
             toast.success("Pago verificado y aprobado exitosamente.");
         } catch (error) {
             console.error(error);
@@ -73,6 +77,7 @@ export default function ReceiptsClient({
         try {
             await rejectPaymentReceipt(id, rejectionReason);
             setReceipts(prev => prev.map(r => r.id === id ? { ...r, status: 'REJECTED', rejection_reason: rejectionReason } : r));
+            setPendingCount(prev => Math.max(0, prev - 1));
             setRejectingId(null);
             setRejectionReason("");
             toast.success("Transferencia bancaria rechazada.");
@@ -126,7 +131,14 @@ export default function ReceiptsClient({
                 </div>
             </div>
 
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <Tabs 
+                value={activeTab} 
+                onValueChange={(val) => {
+                    setActiveTab(val);
+                    navigate(1, currentStatus, val);
+                }} 
+                className="w-full"
+            >
                 <TabsList className="mb-4">
                     <TabsTrigger value="pagos">Pagos (Pie / Cuotas)</TabsTrigger>
                     <TabsTrigger value="reservas">Reservas Manuales</TabsTrigger>
@@ -134,7 +146,7 @@ export default function ReceiptsClient({
 
                 <TabsContent value="pagos" className="mt-0">
                     <ReceiptsTable 
-                        data={receipts.filter(r => r.scope !== 'RESERVATION')} 
+                        data={receipts} 
                         onView={(id: string, url: string, status: string) => setSelectedReceipt({ id, url, status })}
                         onApprove={handleApprove}
                         onReject={(id: string) => setRejectingId(id)}
@@ -144,7 +156,7 @@ export default function ReceiptsClient({
 
                 <TabsContent value="reservas" className="mt-0">
                     <ReceiptsTable 
-                        data={receipts.filter(r => r.scope === 'RESERVATION')} 
+                        data={receipts} 
                         onView={(id: string, url: string, status: string) => setSelectedReceipt({ id, url, status })}
                         onApprove={handleApprove}
                         onReject={(id: string) => setRejectingId(id)}

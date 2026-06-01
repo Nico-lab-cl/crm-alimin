@@ -48,6 +48,7 @@ export async function deletePaymentReceipt(receiptId: string) {
         memoryCache.deleteByPrefix('postventa_full_');
         memoryCache.deleteByPrefix('receipts_paginated_');
         revalidatePath('/admin/dashboard');
+        revalidatePath('/admin/receipts');
 
         return { success: true };
     } catch (error) {
@@ -61,12 +62,14 @@ export async function getPaginatedReceipts({
     pageSize = 20,
     status,
     search,
+    scope,
     serverAuthOverride = false
 }: {
     page?: number;
     pageSize?: number;
     status?: string | null;
     search?: string;
+    scope?: 'PAGOS' | 'RESERVATION' | string;
     serverAuthOverride?: boolean;
 } = {}) {
     if (!serverAuthOverride) {
@@ -76,7 +79,7 @@ export async function getPaginatedReceipts({
         }
     }
 
-    const cacheKey = `${RECEIPTS_PAGINATED_CACHE_KEY}${page}_${pageSize}_${status || 'all'}_${search || ''}`;
+    const cacheKey = `${RECEIPTS_PAGINATED_CACHE_KEY}${page}_${pageSize}_${status || 'all'}_${search || ''}_${scope || 'all'}`;
     const cached = memoryCache.get(cacheKey);
     if (cached) return cached;
 
@@ -86,6 +89,12 @@ export async function getPaginatedReceipts({
             where.status = status;
         }
 
+        if (scope === 'RESERVATION') {
+            where.scope = 'RESERVATION';
+        } else if (scope === 'PAGOS') {
+            where.scope = { not: 'RESERVATION' };
+        }
+
         if (search) {
             where.OR = [
                 { reservation: { buyer: { name: { contains: search, mode: 'insensitive' } } } },
@@ -93,7 +102,9 @@ export async function getPaginatedReceipts({
             ];
         }
 
-        const [receipts, totalCount] = await Promise.all([
+        const pendingWhere = { ...where, status: 'PENDING' };
+
+        const [receipts, totalCount, pendingCount] = await Promise.all([
             prisma.paymentReceipt.findMany({
                 where,
                 skip: (page - 1) * pageSize,
@@ -121,7 +132,8 @@ export async function getPaginatedReceipts({
                     }
                 }
             }),
-            prisma.paymentReceipt.count({ where })
+            prisma.paymentReceipt.count({ where }),
+            prisma.paymentReceipt.count({ where: pendingWhere })
         ]);
 
         const result = {
@@ -129,7 +141,8 @@ export async function getPaginatedReceipts({
             receipts,
             totalCount,
             totalPages: Math.ceil(totalCount / pageSize),
-            currentPage: page
+            currentPage: page,
+            pendingCount
         };
 
         memoryCache.set(cacheKey, result, 60); // 1 minute cache
@@ -186,6 +199,9 @@ export async function uploadPaymentReceipt({
 
         // Trigger webhook or notification logic if necessary
 
+        memoryCache.deleteByPrefix('postventa_full_');
+        memoryCache.deleteByPrefix('receipts_paginated_');
+        revalidatePath('/admin/receipts');
         revalidatePath('/user/plots');
         return { success: true, receipt };
 

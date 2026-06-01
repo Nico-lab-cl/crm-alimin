@@ -499,6 +499,7 @@ export async function syncLegacyReceipts() {
         memoryCache.deleteByPrefix('postventa_full_');
         memoryCache.deleteByPrefix('receipts_paginated_');
         revalidatePath('/admin/dashboard');
+        revalidatePath('/admin/receipts');
 
         return { success: true, syncedCount };
     } catch (error) {
@@ -606,6 +607,7 @@ export async function registerPostventaPayment({
         memoryCache.deleteByPrefix('postventa_full_');
         memoryCache.deleteByPrefix('receipts_paginated_');
         revalidatePath('/admin/dashboard');
+        revalidatePath('/admin/receipts');
 
         return { success: true, receipt };
     } catch (error) {

@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic';
 export default async function ReceiptsPage({ 
     searchParams 
 }: { 
-    searchParams: { page?: string, status?: string } 
+    searchParams: { page?: string, status?: string, tab?: string } 
 }) {
     const session = await auth();
 
@@ -18,12 +18,14 @@ export default async function ReceiptsPage({
 
     const page = parseInt(searchParams.page || '1');
     const status = searchParams.status || 'ALL';
+    const tab = searchParams.tab || 'pagos';
 
     try {
         const result = await getPaginatedReceipts({
             page,
             pageSize: 20,
-            status
+            status,
+            scope: tab === 'reservas' ? 'RESERVATION' : 'PAGOS'
         });
 
         return (
@@ -38,11 +40,13 @@ export default async function ReceiptsPage({
                 </div>
 
                 <ReceiptsClient 
-                    key={`receipts-${page}-${status}`}
+                    key={`receipts-${page}-${status}-${tab}`}
                     initialReceipts={(result as any).receipts || []} 
                     totalPages={(result as any).totalPages || 1}
                     currentPage={page}
                     currentStatus={status}
+                    initialPendingCount={(result as any).pendingCount || 0}
+                    initialTab={tab}
                 />
             </div>
         );
