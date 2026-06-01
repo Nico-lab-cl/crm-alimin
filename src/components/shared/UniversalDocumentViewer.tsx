@@ -18,6 +18,7 @@ import {
     Eye,
     Receipt
 } from "lucide-react";
+import { formatReceiptUrl } from "@/lib/utils";
 
 interface UniversalDocumentViewerProps {
     isOpen: boolean;
@@ -30,12 +31,14 @@ interface UniversalDocumentViewerProps {
 export function UniversalDocumentViewer({ 
     isOpen, 
     onClose, 
-    url, 
+    url: rawUrl, 
     name,
     category 
 }: UniversalDocumentViewerProps) {
     const [blobUrl, setBlobUrl] = useState<string | null>(null);
     const [isGenerating, setIsGenerating] = useState(false);
+
+    const url = formatReceiptUrl(rawUrl);
 
     const isPdf = url?.toLowerCase().includes('.pdf') || 
                   url?.startsWith('data:application/pdf') || 
@@ -75,7 +78,14 @@ export function UniversalDocumentViewer({
     const handleDownload = () => {
         const link = document.createElement('a');
         link.href = url;
-        link.download = name || 'documento';
+        let downloadName = name || 'documento';
+        if (url.startsWith('data:application/pdf') && !downloadName.toLowerCase().endsWith('.pdf')) {
+            downloadName += '.pdf';
+        } else if (url.startsWith('data:image/') && !/\.(jpg|jpeg|png|gif|webp)$/i.test(downloadName)) {
+            const ext = url.split(';')[0].split('/')[1] || 'jpg';
+            downloadName += `.${ext}`;
+        }
+        link.download = downloadName;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);

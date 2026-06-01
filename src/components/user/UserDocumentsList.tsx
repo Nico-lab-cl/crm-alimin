@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileText, Download, CheckCircle, Clock, Folder, Briefcase, Eye, FileSignature, Receipt, CreditCard, X, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { UniversalDocumentViewer } from "@/components/shared/UniversalDocumentViewer";
+import { formatReceiptUrl } from "@/lib/utils";
 
 interface Reservation {
     id: string;
@@ -107,7 +108,7 @@ export function UserDocumentsList({ reservations }: { reservations: Reservation[
                                                     Visualizar
                                                 </button>
                                                 <a
-                                                    href={reservaUrl}
+                                                    href={formatReceiptUrl(reservaUrl)}
                                                     download={reservaName}
                                                     className="inline-flex items-center gap-2 px-6 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest text-[#8eb2b8] transition-all"
                                                 >
@@ -172,7 +173,7 @@ export function UserDocumentsList({ reservations }: { reservations: Reservation[
                                                     Visualizar
                                                 </button>
                                                 <a
-                                                    href={promesaUrl}
+                                                    href={formatReceiptUrl(promesaUrl)}
                                                     download={promesaName}
                                                     className="inline-flex items-center gap-2 px-6 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest text-[#8eb2b8] transition-all"
                                                 >
@@ -293,7 +294,7 @@ export function UserDocumentsList({ reservations }: { reservations: Reservation[
                                                                     >
                                                                         <Eye className="h-4 w-4" />
                                                                     </button>
-                                                                <a href={doc.url} download={doc.name} className="text-gray-600 hover:text-[#8eb2b8] transition-colors" title={getLabel()}>
+                                                                <a href={formatReceiptUrl(doc.url)} download={doc.name} className="text-gray-600 hover:text-[#8eb2b8] transition-colors" title={getLabel()}>
                                                                     <Download className="h-4 w-4" />
                                                                 </a>
                                                             </div>

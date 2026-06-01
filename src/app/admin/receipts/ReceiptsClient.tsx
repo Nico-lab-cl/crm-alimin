@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Loader2, CheckCircle, XCircle, Eye, MapPin, CreditCard, Clock, Download, ChevronLeft, ChevronRight, Filter, FileText } from "lucide-react";
 import { approvePaymentReceipt, rejectPaymentReceipt } from "@/actions/receipts";
 import { toast } from "sonner";
+import { formatReceiptUrl } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
 import { useRouter } from "next/navigation";
 import {
@@ -308,14 +309,7 @@ export default function ReceiptsClient({
                         }
 
                         // Fix raw base64 missing data prefix
-                        let finalUrl = url;
-                        if (!url.startsWith('http') && !url.startsWith('data:') && !url.startsWith('/api') && url.length > 100) {
-                            if (url.startsWith('JVBERi')) {
-                                finalUrl = `data:application/pdf;base64,${url}`;
-                            } else {
-                                finalUrl = `data:image/jpeg;base64,${url}`;
-                            }
-                        }
+                        const finalUrl = formatReceiptUrl(url);
 
                         const isPdfData = finalUrl.startsWith('data:application/pdf') || finalUrl.includes('/pdf') || finalUrl.endsWith('.pdf');
 
@@ -442,18 +436,23 @@ function ReceiptsTable({ data, onView, onApprove, onReject, isProcessing }: any)
                                             <Eye className="w-4 h-4" />
                                         </Button>
                                         
-                                        {receipt.receipt_url && receipt.receipt_url !== 'LEGACY_SYNC' && !receipt.receipt_url.includes('MANUAL') && (
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                asChild
-                                                title="Descargar Comprobante Subido"
-                                            >
-                                                <a href={receipt.receipt_url} download target="_blank" rel="noopener noreferrer">
-                                                    <Download className="w-4 h-4" />
-                                                </a>
-                                            </Button>
-                                        )}
+                                        {receipt.receipt_url && receipt.receipt_url !== 'LEGACY_SYNC' && !receipt.receipt_url.includes('MANUAL') && (() => {
+                                            const cleanUrl = formatReceiptUrl(receipt.receipt_url);
+                                            const ext = cleanUrl.startsWith('data:application/pdf') ? 'pdf' : 'jpg';
+                                            const filename = `comprobante_subido_${receipt.id}.${ext}`;
+                                            return (
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    asChild
+                                                    title="Descargar Comprobante Subido"
+                                                >
+                                                    <a href={cleanUrl} download={filename} target="_blank" rel="noopener noreferrer">
+                                                        <Download className="w-4 h-4" />
+                                                    </a>
+                                                </Button>
+                                            );
+                                        })()}
 
                                         {receipt.status === 'APPROVED' && (
                                             <Button

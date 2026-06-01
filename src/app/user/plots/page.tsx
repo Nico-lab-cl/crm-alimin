@@ -43,7 +43,7 @@ interface Reservation {
 
 import { SignContractModal } from "@/components/SignContractModal";
 import { PaymentButtons } from "@/components/user/PaymentButtons";
-import { cn } from "@/lib/utils";
+import { cn, formatReceiptUrl } from "@/lib/utils";
 
 export default function UserPlotsPage() {
     const { data: session, status } = useSession();
@@ -199,7 +199,7 @@ export default function UserPlotsPage() {
                                                     {(typeof res.legacy_uploaded_contracts === 'string' ? JSON.parse(res.legacy_uploaded_contracts) : res.legacy_uploaded_contracts).map((doc: any, i: number) => (
                                                         <a
                                                             key={i}
-                                                            href={doc.url}
+                                                            href={formatReceiptUrl(doc.url)}
                                                             download={doc.name}
                                                             className="w-full py-2 px-4 bg-indigo-900/30 text-indigo-400 border border-indigo-500/30 rounded text-center text-sm flex items-center justify-center gap-2 hover:bg-indigo-900/50 transition-colors cursor-pointer"
                                                         >
@@ -225,7 +225,7 @@ export default function UserPlotsPage() {
                                                         {manualList.map((doc: any, i: number) => (
                                                             <a
                                                                 key={i}
-                                                                href={doc.url}
+                                                                href={formatReceiptUrl(doc.url)}
                                                                 download={doc.name}
                                                                 className="w-full py-2 px-4 bg-white/5 text-gray-400 border border-white/10 rounded-xl text-center text-xs flex items-center justify-between hover:bg-white/10 transition-colors cursor-pointer group"
                                                             >
