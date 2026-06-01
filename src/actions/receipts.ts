@@ -63,6 +63,8 @@ export async function getPaginatedReceipts({
     status,
     search,
     scope,
+    startDate,
+    endDate,
     serverAuthOverride = false
 }: {
     page?: number;
@@ -70,6 +72,8 @@ export async function getPaginatedReceipts({
     status?: string | null;
     search?: string;
     scope?: 'PAGOS' | 'RESERVATION' | string;
+    startDate?: string;
+    endDate?: string;
     serverAuthOverride?: boolean;
 } = {}) {
     if (!serverAuthOverride) {
@@ -79,7 +83,7 @@ export async function getPaginatedReceipts({
         }
     }
 
-    const cacheKey = `${RECEIPTS_PAGINATED_CACHE_KEY}${page}_${pageSize}_${status || 'all'}_${search || ''}_${scope || 'all'}`;
+    const cacheKey = `${RECEIPTS_PAGINATED_CACHE_KEY}${page}_${pageSize}_${status || 'all'}_${search || ''}_${scope || 'all'}_${startDate || ''}_${endDate || ''}`;
     const cached = memoryCache.get(cacheKey);
     if (cached) return cached;
 
@@ -93,6 +97,16 @@ export async function getPaginatedReceipts({
             where.scope = 'RESERVATION';
         } else if (scope === 'PAGOS') {
             where.scope = { not: 'RESERVATION' };
+        }
+
+        if (startDate || endDate) {
+            where.created_at = {};
+            if (startDate) {
+                where.created_at.gte = new Date(`${startDate}T00:00:00.000Z`);
+            }
+            if (endDate) {
+                where.created_at.lte = new Date(`${endDate}T23:59:59.999Z`);
+            }
         }
 
         if (search) {

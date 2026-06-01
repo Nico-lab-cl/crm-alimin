@@ -8,24 +8,29 @@ export const dynamic = 'force-dynamic';
 export default async function ReceiptsPage({ 
     searchParams 
 }: { 
-    searchParams: { page?: string, status?: string, tab?: string } 
+    searchParams: Promise<{ page?: string, status?: string, tab?: string, startDate?: string, endDate?: string }> 
 }) {
+    const resolvedSearchParams = await searchParams;
     const session = await auth();
 
     if (!session?.user || session.user.role !== "ADMIN") {
         redirect("/login");
     }
 
-    const page = parseInt(searchParams.page || '1');
-    const status = searchParams.status || 'ALL';
-    const tab = searchParams.tab || 'pagos';
+    const page = parseInt(resolvedSearchParams.page || '1');
+    const status = resolvedSearchParams.status || 'ALL';
+    const tab = resolvedSearchParams.tab || 'pagos';
+    const startDate = resolvedSearchParams.startDate;
+    const endDate = resolvedSearchParams.endDate;
 
     try {
         const result = await getPaginatedReceipts({
             page,
             pageSize: 20,
             status,
-            scope: tab === 'reservas' ? 'RESERVATION' : 'PAGOS'
+            scope: tab === 'reservas' ? 'RESERVATION' : 'PAGOS',
+            startDate,
+            endDate
         });
 
         return (
@@ -40,13 +45,15 @@ export default async function ReceiptsPage({
                 </div>
 
                 <ReceiptsClient 
-                    key={`receipts-${page}-${status}-${tab}`}
+                    key={`receipts-${page}-${status}-${tab}-${startDate || ''}-${endDate || ''}`}
                     initialReceipts={(result as any).receipts || []} 
                     totalPages={(result as any).totalPages || 1}
                     currentPage={page}
                     currentStatus={status}
                     initialPendingCount={(result as any).pendingCount || 0}
                     initialTab={tab}
+                    initialStartDate={startDate}
+                    initialEndDate={endDate}
                 />
             </div>
         );

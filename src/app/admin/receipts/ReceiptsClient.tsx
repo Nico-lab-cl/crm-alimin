@@ -26,6 +26,8 @@ interface ReceiptsClientProps {
     currentStatus: string;
     initialPendingCount: number;
     initialTab: string;
+    initialStartDate?: string;
+    initialEndDate?: string;
 }
 
 export default function ReceiptsClient({ 
@@ -34,7 +36,9 @@ export default function ReceiptsClient({
     currentPage,
     currentStatus,
     initialPendingCount,
-    initialTab
+    initialTab,
+    initialStartDate = "",
+    initialEndDate = ""
 }: ReceiptsClientProps) {
     const router = useRouter();
     const [receipts, setReceipts] = useState(initialReceipts);
@@ -44,13 +48,40 @@ export default function ReceiptsClient({
     const [isProcessing, setIsProcessing] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState<string>(initialTab || "pagos");
     const [pendingCount, setPendingCount] = useState(initialPendingCount || 0);
+    const [startDate, setStartDate] = useState(initialStartDate);
+    const [endDate, setEndDate] = useState(initialEndDate);
 
-    const navigate = (page: number, status: string, tab: string = activeTab) => {
-        router.push(`/admin/receipts?page=${page}&status=${status}&tab=${tab}`);
+    const navigate = (
+        page: number, 
+        status: string, 
+        tab: string = activeTab, 
+        start: string = startDate, 
+        end: string = endDate
+    ) => {
+        let url = `/admin/receipts?page=${page}&status=${status}&tab=${tab}`;
+        if (start) url += `&startDate=${start}`;
+        if (end) url += `&endDate=${end}`;
+        router.push(url);
         setTimeout(() => {
             router.refresh();
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }, 100);
+    };
+
+    const handleDateChange = (type: 'startDate' | 'endDate', val: string) => {
+        if (type === 'startDate') {
+            setStartDate(val);
+            navigate(1, currentStatus, activeTab, val, endDate);
+        } else {
+            setEndDate(val);
+            navigate(1, currentStatus, activeTab, startDate, val);
+        }
+    };
+
+    const handleClearDates = () => {
+        setStartDate("");
+        setEndDate("");
+        navigate(1, currentStatus, activeTab, "", "");
     };
 
     const handleApprove = async (id: string) => {
@@ -110,24 +141,57 @@ export default function ReceiptsClient({
                     )}
                 </h2>
 
-                <div className="flex items-center gap-2 w-full md:w-auto">
-                   <Select 
-                     value={currentStatus} 
-                     onValueChange={(val) => navigate(1, val)}
-                   >
-                       <SelectTrigger className="w-full md:w-[180px] bg-gray-50">
-                           <div className="flex items-center gap-2">
-                               <Filter className="w-4 h-4 text-gray-500" />
-                               <SelectValue placeholder="Estado" />
-                           </div>
-                       </SelectTrigger>
-                       <SelectContent>
-                           <SelectItem value="ALL">Todos</SelectItem>
-                           <SelectItem value="PENDING">Pendientes</SelectItem>
-                           <SelectItem value="APPROVED">Aprobados</SelectItem>
-                           <SelectItem value="REJECTED">Rechazados</SelectItem>
-                       </SelectContent>
-                   </Select>
+                <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
+                    <div className="flex flex-row items-center gap-2 w-full sm:w-auto">
+                        <div className="flex items-center gap-1.5 bg-gray-50 border rounded-lg px-2.5 py-1.5 text-xs w-full sm:w-auto">
+                            <span className="text-gray-500 font-medium whitespace-nowrap">Desde:</span>
+                            <input 
+                                type="date" 
+                                value={startDate} 
+                                onChange={(e) => handleDateChange('startDate', e.target.value)}
+                                className="bg-transparent border-none outline-none focus:ring-0 text-gray-700 w-full cursor-pointer h-5 p-0"
+                            />
+                        </div>
+                        <div className="flex items-center gap-1.5 bg-gray-50 border rounded-lg px-2.5 py-1.5 text-xs w-full sm:w-auto">
+                            <span className="text-gray-500 font-medium whitespace-nowrap">Hasta:</span>
+                            <input 
+                                type="date" 
+                                value={endDate} 
+                                onChange={(e) => handleDateChange('endDate', e.target.value)}
+                                className="bg-transparent border-none outline-none focus:ring-0 text-gray-700 w-full cursor-pointer h-5 p-0"
+                            />
+                        </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-start">
+                        {(startDate || endDate) && (
+                            <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                onClick={handleClearDates}
+                                className="h-9 px-2 text-xs text-red-500 hover:text-red-600 hover:bg-red-50 font-semibold rounded-lg"
+                            >
+                                Limpiar fechas
+                            </Button>
+                        )}
+                        <Select 
+                          value={currentStatus} 
+                          onValueChange={(val) => navigate(1, val)}
+                        >
+                            <SelectTrigger className="w-[150px] sm:w-[180px] bg-gray-50 h-9">
+                                <div className="flex items-center gap-2">
+                                    <Filter className="w-4 h-4 text-gray-500" />
+                                    <SelectValue placeholder="Estado" />
+                                </div>
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="ALL">Todos</SelectItem>
+                                <SelectItem value="PENDING">Pendientes</SelectItem>
+                                <SelectItem value="APPROVED">Aprobados</SelectItem>
+                                <SelectItem value="REJECTED">Rechazados</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
                 </div>
             </div>
 
