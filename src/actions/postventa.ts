@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma"
 import { getInstallmentDueDate, calculateTotalInterest, calculateDailyInterest } from "@/lib/financials"
 import { memoryCache } from "@/lib/cache"
 import { revalidatePath } from "next/cache"
+import { addReceiptToManualDocuments } from "@/actions/receipts"
 
 const POSTVENTA_CACHE_KEY = 'postventa_data';
 const CACHE_TTL = 3600; // 1 hour for postventa data
@@ -585,6 +586,14 @@ export async function registerPostventaPayment({
                 processed_at: new Date(date),
                 created_at: new Date(date)
             }
+        });
+
+        // Load digital receipt in the client portal
+        await addReceiptToManualDocuments(reservationId, {
+            id: receipt.id,
+            scope: receipt.scope,
+            nominal_installment_number: receipt.nominal_installment_number,
+            nominal_installment_range: receipt.nominal_installment_range
         });
 
         // 2. Update Reservation State

@@ -90,10 +90,13 @@ export async function GET(
             return NextResponse.json({ error: 'File not found in database' }, { status: 404 });
         }
 
-        // --- NEW: Handle direct URLs (S3, External, etc.) ---
-        if (base64Data.startsWith('http')) {
-            console.log(`[File Proxy] Redirecting to external URL: ${base64Data}`);
-            return NextResponse.redirect(base64Data);
+        // --- NEW: Handle direct URLs (S3, External, etc. or local API paths) ---
+        if (base64Data.startsWith('http') || base64Data.startsWith('/')) {
+            console.log(`[File Proxy] Redirecting to URL: ${base64Data}`);
+            const redirectUrl = base64Data.startsWith('/')
+                ? `${request.nextUrl.origin}${base64Data}`
+                : base64Data;
+            return NextResponse.redirect(new URL(redirectUrl));
         }
 
         // Support standard Data URLs: data:[<mediatype>][;base64],<data>

@@ -26,6 +26,7 @@ export async function deletePaymentReceipt(receiptId: string) {
 
         // Revert reservation state if approved
         if (receipt.status === 'APPROVED') {
+            await removeReceiptFromManualDocuments(receipt.reservation_id, receiptId);
             if (receipt.scope === 'INSTALLMENT') {
                 await prisma.reservation.update({
                     where: { id: receipt.reservation_id },
@@ -271,6 +272,14 @@ export async function approvePaymentReceipt(receiptId: string, serverAuthOverrid
             }
         });
 
+        // Load digital receipt in the client portal
+        await addReceiptToManualDocuments(receipt.reservation_id, {
+            id: receiptId,
+            scope: receipt.scope,
+            nominal_installment_number: nominalNumber,
+            nominal_installment_range: nominalRange
+        });
+
         // 2. Process Business Logic (similar to webpay commit)
         if (receipt.scope === 'PIE') {
             await prisma.reservation.update({
@@ -435,3 +444,109 @@ export async function editReceiptAmount(receiptId: string, newAmount: number, re
         return { error: 'Error al editar el monto del recibo' };
     }
 }
+
+export async function addReceiptToManualDocuments(
+    reservationId: string,
+    receipt: {
+        id: string;
+        scope: string;
+        nominal_installment_number?: number | null;
+        nominal_installment_range?: string | null;
+    }
+) {
+    try {
+        const reservation = await prisma.reservation.findUnique({
+            where: { id: reservationId },
+            select: { manual_documents: true }
+        });
+
+        if (!reservation) return;
+
+        let manualDocs: any[] = [];
+        if (reservation.manual_documents) {
+            try {
+                manualDocs = Array.isArray(reservation.manual_documents)
+                    ? (reservation.manual_documents as any[])
+                    : JSON.parse(reservation.manual_documents as string);
+            } catch (e) {
+                console.error("Error parsing manual_documents:", e);
+            }
+        }
+
+        const pdfUrl = `/api/receipt/${receipt.id}/pdf`;
+
+        // Check if it already exists to avoid duplicates
+        const alreadyExists = manualDocs.some((doc: any) => doc.url === pdfUrl || doc.url?.includes(receipt.id));
+        if (alreadyExists) return;
+
+        let category = 'OTRO';
+        let docName = 'Comprobante';
+        if (receipt.scope === 'PIE') {
+            category = 'PIE';
+            docName = 'Comprobante de Pie';
+        } else if (receipt.scope === 'INSTALLMENT') {
+            category = 'CUOTAS';
+            const num = receipt.nominal_installment_number;
+            const range = receipt.nominal_installment_range;
+            if (range) {
+                docName = `Comprobante de Cuotas #${range}`;
+            } else if (num) {
+                docName = `Comprobante de Cuota #${num}`;
+            } else {
+                docName = `Comprobante de Cuota`;
+            }
+        }
+
+        manualDocs.push({
+            name: `${docName}.pdf`,
+            url: pdfUrl,
+            category: category,
+            uploadedAt: new Date().toISOString()
+        });
+
+        await prisma.reservation.update({
+            where: { id: reservationId },
+            data: {
+                manual_documents: manualDocs
+            }
+        });
+    } catch (err) {
+        console.error("Error adding receipt to manual_documents:", err);
+    }
+}
+
+export async function removeReceiptFromManualDocuments(reservationId: string, receiptId: string) {
+    try {
+        const reservation = await prisma.reservation.findUnique({
+            where: { id: reservationId },
+            select: { manual_documents: true }
+        });
+
+        if (!reservation || !reservation.manual_documents) return;
+
+        let manualDocs: any[] = [];
+        try {
+            manualDocs = Array.isArray(reservation.manual_documents)
+                ? (reservation.manual_documents as any[])
+                : JSON.parse(reservation.manual_documents as string);
+        } catch (e) {
+            console.error("Error parsing manual_documents:", e);
+            return;
+        }
+
+        const pdfUrl = `/api/receipt/${receiptId}/pdf`;
+        const updatedDocs = manualDocs.filter((doc: any) => doc.url !== pdfUrl && !doc.url?.includes(receiptId));
+
+        if (updatedDocs.length !== manualDocs.length) {
+            await prisma.reservation.update({
+                where: { id: reservationId },
+                data: {
+                    manual_documents: updatedDocs
+                }
+            });
+        }
+    } catch (err) {
+        console.error("Error removing receipt from manual_documents:", err);
+    }
+}
+
