@@ -291,23 +291,29 @@ export async function approvePaymentReceipt(receiptId: string, serverAuthOverrid
                 }
             });
         } else if (receipt.scope === 'INSTALLMENT') {
-            const { installments_paid: newInstallmentsPaid, next_payment_date: nextPaymentDate } = 
-                await recalculateReservationState(receipt.reservation_id, prisma);
-
+            const incrementBy = receipt.installments_count || 1;
             const currentPendingAmount = (receipt.reservation as any).pending_amount || 0;
             const currentExtraPaid = (receipt.reservation as any).extra_paid_amount || 0;
 
-            await prisma.reservation.update({
+            // Atomic increment - safe against race conditions
+            const updatedReservation = await prisma.reservation.update({
                 where: { id: receipt.reservation_id },
                 data: {
-                    installments_paid: newInstallmentsPaid,
+                    installments_paid: { increment: incrementBy },
                     pipeline_stage: 'PAGO_CUOTAS',
-                    next_payment_date: nextPaymentDate,
                     // @ts-ignore
                     extra_paid_amount: currentExtraPaid + currentPendingAmount,
                     // @ts-ignore
                     pending_amount: 0
-                }
+                },
+                include: { lot: true }
+            });
+
+            // Calculate next_payment_date based on the new installments_paid
+            const nextPaymentDate = calculateNextPaymentDate(updatedReservation);
+            await prisma.reservation.update({
+                where: { id: receipt.reservation_id },
+                data: { next_payment_date: nextPaymentDate }
             });
         }
 
@@ -551,57 +557,31 @@ export async function removeReceiptFromManualDocuments(reservationId: string, re
     }
 }
 
-export async function recalculateReservationState(reservationId: string, tx = prisma) {
-    const reservation = await tx.reservation.findUnique({
-        where: { id: reservationId },
-        include: {
-            lot: true,
-            receipts: {
-                where: {
-                    status: 'APPROVED',
-                    scope: 'INSTALLMENT'
-                }
-            }
-        }
-    });
-
-    if (!reservation) {
-        throw new Error("Reserva no encontrada");
-    }
-
-    const approvedReceipts = reservation.receipts;
-    const legacySyncedCount = approvedReceipts.filter(r => r.receipt_url === 'LEGACY_SYNC').length;
-    const nonLegacySyncedCount = approvedReceipts
-        .filter(r => r.receipt_url !== 'LEGACY_SYNC')
-        .reduce((sum, r) => sum + Math.max(1, r.installments_count || 1), 0);
-
-    const startingLegacyCount = reservation.legacy_current_installment || 0;
-    const newInstallmentsPaid = startingLegacyCount + nonLegacySyncedCount;
-
+/**
+ * Calculates the next_payment_date based on the current installments_paid.
+ * Does NOT modify installments_paid - that should be done via atomic increment.
+ */
+export function calculateNextPaymentDate(reservation: any): Date | null {
     const totalCuotas = reservation.lot?.cuotas || 0;
-    let nextPaymentDate: Date | null = null;
+    const currentPaid = reservation.installments_paid || 0;
 
-    if (newInstallmentsPaid < totalCuotas) {
-        const isLegacyBool = Boolean(reservation.is_legacy);
-        const baseDate = reservation.legacy_installment_start_date
-            ? new Date(reservation.legacy_installment_start_date).toISOString()
-            : reservation.created_at.toISOString();
-
-        const customStart = reservation.legacy_installment_start_date ? new Date(reservation.legacy_installment_start_date) : null;
-        const customDueDay = customStart ? customStart.getDate() : null;
-
-        nextPaymentDate = getInstallmentDueDate(
-            baseDate,
-            newInstallmentsPaid + 1,
-            isLegacyBool,
-            customDueDay,
-            Boolean(reservation.is_promo)
-        );
+    if (currentPaid >= totalCuotas) {
+        return null; // All installments paid
     }
 
-    return {
-        installments_paid: newInstallmentsPaid,
-        next_payment_date: nextPaymentDate
-    };
-}
+    const isLegacyBool = Boolean(reservation.is_legacy);
+    const baseDate = reservation.legacy_installment_start_date
+        ? new Date(reservation.legacy_installment_start_date).toISOString()
+        : reservation.created_at.toISOString();
 
+    const customStart = reservation.legacy_installment_start_date ? new Date(reservation.legacy_installment_start_date) : null;
+    const customDueDay = customStart ? customStart.getDate() : null;
+
+    return getInstallmentDueDate(
+        baseDate,
+        currentPaid + 1,
+        isLegacyBool,
+        customDueDay,
+        Boolean(reservation.is_promo)
+    );
+}
