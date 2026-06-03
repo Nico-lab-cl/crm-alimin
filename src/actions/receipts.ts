@@ -310,7 +310,7 @@ export async function approvePaymentReceipt(receiptId: string, serverAuthOverrid
             });
 
             // Calculate next_payment_date based on the new installments_paid
-            const nextPaymentDate = calculateNextPaymentDate(updatedReservation);
+            const nextPaymentDate = await calculateNextPaymentDate(updatedReservation);
             await prisma.reservation.update({
                 where: { id: receipt.reservation_id },
                 data: { next_payment_date: nextPaymentDate }
@@ -561,7 +561,7 @@ export async function removeReceiptFromManualDocuments(reservationId: string, re
  * Calculates the next_payment_date based on the current installments_paid.
  * Does NOT modify installments_paid - that should be done via atomic increment.
  */
-export function calculateNextPaymentDate(reservation: any): Date | null {
+export async function calculateNextPaymentDate(reservation: any): Promise<Date | null> {
     const totalCuotas = reservation.lot?.cuotas || 0;
     const currentPaid = reservation.installments_paid || 0;
 

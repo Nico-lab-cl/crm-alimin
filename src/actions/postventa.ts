@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma"
 import { getInstallmentDueDate, calculateTotalInterest, calculateDailyInterest } from "@/lib/financials"
 import { memoryCache } from "@/lib/cache"
 import { revalidatePath } from "next/cache"
-import { addReceiptToManualDocuments, recalculateReservationState } from "@/actions/receipts"
+import { addReceiptToManualDocuments } from "@/actions/receipts"
 
 const POSTVENTA_CACHE_KEY = 'postventa_data';
 const CACHE_TTL = 3600; // 1 hour for postventa data
