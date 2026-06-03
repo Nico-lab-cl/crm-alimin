@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 import { sendPaymentReceiptWebhook } from '@/lib/webhooks';
 import { memoryCache } from '@/lib/cache';
+import { getInstallmentDueDate } from '@/lib/financials';
 
 const POSTVENTA_CACHE_KEY = 'postventa_data';
 const RECEIPTS_PAGINATED_CACHE_KEY = 'receipts_paginated_';
@@ -290,8 +291,8 @@ export async function approvePaymentReceipt(receiptId: string, serverAuthOverrid
                 }
             });
         } else if (receipt.scope === 'INSTALLMENT') {
-            const currentInstallmentsPaid = receipt.reservation.installments_paid || 0;
-            const newInstallmentsPaid = currentInstallmentsPaid + (receipt.installments_count || 1);
+            const { installments_paid: newInstallmentsPaid, next_payment_date: nextPaymentDate } = 
+                await recalculateReservationState(receipt.reservation_id, prisma);
 
             const currentPendingAmount = (receipt.reservation as any).pending_amount || 0;
             const currentExtraPaid = (receipt.reservation as any).extra_paid_amount || 0;
@@ -301,7 +302,7 @@ export async function approvePaymentReceipt(receiptId: string, serverAuthOverrid
                 data: {
                     installments_paid: newInstallmentsPaid,
                     pipeline_stage: 'PAGO_CUOTAS',
-                    next_payment_date: null, // Clear manual override so system recalculates
+                    next_payment_date: nextPaymentDate,
                     // @ts-ignore
                     extra_paid_amount: currentExtraPaid + currentPendingAmount,
                     // @ts-ignore
@@ -548,5 +549,59 @@ export async function removeReceiptFromManualDocuments(reservationId: string, re
     } catch (err) {
         console.error("Error removing receipt from manual_documents:", err);
     }
+}
+
+export async function recalculateReservationState(reservationId: string, tx = prisma) {
+    const reservation = await tx.reservation.findUnique({
+        where: { id: reservationId },
+        include: {
+            lot: true,
+            receipts: {
+                where: {
+                    status: 'APPROVED',
+                    scope: 'INSTALLMENT'
+                }
+            }
+        }
+    });
+
+    if (!reservation) {
+        throw new Error("Reserva no encontrada");
+    }
+
+    const approvedReceipts = reservation.receipts;
+    const legacySyncedCount = approvedReceipts.filter(r => r.receipt_url === 'LEGACY_SYNC').length;
+    const nonLegacySyncedCount = approvedReceipts
+        .filter(r => r.receipt_url !== 'LEGACY_SYNC')
+        .reduce((sum, r) => sum + Math.max(1, r.installments_count || 1), 0);
+
+    const startingLegacyCount = reservation.legacy_current_installment || 0;
+    const newInstallmentsPaid = startingLegacyCount + nonLegacySyncedCount;
+
+    const totalCuotas = reservation.lot?.cuotas || 0;
+    let nextPaymentDate: Date | null = null;
+
+    if (newInstallmentsPaid < totalCuotas) {
+        const isLegacyBool = Boolean(reservation.is_legacy);
+        const baseDate = reservation.legacy_installment_start_date
+            ? new Date(reservation.legacy_installment_start_date).toISOString()
+            : reservation.created_at.toISOString();
+
+        const customStart = reservation.legacy_installment_start_date ? new Date(reservation.legacy_installment_start_date) : null;
+        const customDueDay = customStart ? customStart.getDate() : null;
+
+        nextPaymentDate = getInstallmentDueDate(
+            baseDate,
+            newInstallmentsPaid + 1,
+            isLegacyBool,
+            customDueDay,
+            Boolean(reservation.is_promo)
+        );
+    }
+
+    return {
+        installments_paid: newInstallmentsPaid,
+        next_payment_date: nextPaymentDate
+    };
 }
 

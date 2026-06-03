@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma"
 import { getInstallmentDueDate, calculateTotalInterest, calculateDailyInterest } from "@/lib/financials"
 import { memoryCache } from "@/lib/cache"
 import { revalidatePath } from "next/cache"
-import { addReceiptToManualDocuments } from "@/actions/receipts"
+import { addReceiptToManualDocuments, recalculateReservationState } from "@/actions/receipts"
 
 const POSTVENTA_CACHE_KEY = 'postventa_data';
 const CACHE_TTL = 3600; // 1 hour for postventa data
@@ -603,12 +603,15 @@ export async function registerPostventaPayment({
                 data: { pie_status: 'PAID' }
             });
         } else if (scope === 'INSTALLMENT') {
+            const { installments_paid: newInstallmentsPaid, next_payment_date: nextPaymentDate } = 
+                await recalculateReservationState(reservationId, prisma);
+
             await prisma.reservation.update({
                 where: { id: reservationId },
                 data: { 
-                    installments_paid: { increment: 1 },
+                    installments_paid: newInstallmentsPaid,
                     pipeline_stage: 'PAGO_CUOTAS',
-                    next_payment_date: null
+                    next_payment_date: nextPaymentDate
                 }
             });
         }
