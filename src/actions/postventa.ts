@@ -603,16 +603,22 @@ export async function registerPostventaPayment({
                 data: { pie_status: 'PAID' }
             });
         } else if (scope === 'INSTALLMENT') {
-            const { installments_paid: newInstallmentsPaid, next_payment_date: nextPaymentDate } = 
-                await recalculateReservationState(reservationId, prisma);
-
-            await prisma.reservation.update({
+            // Atomic increment - safe against race conditions
+            const updatedReservation = await prisma.reservation.update({
                 where: { id: reservationId },
                 data: { 
-                    installments_paid: newInstallmentsPaid,
-                    pipeline_stage: 'PAGO_CUOTAS',
-                    next_payment_date: nextPaymentDate
-                }
+                    installments_paid: { increment: 1 },
+                    pipeline_stage: 'PAGO_CUOTAS'
+                },
+                include: { lot: true }
+            });
+
+            // Calculate next_payment_date based on the new installments_paid
+            const { calculateNextPaymentDate } = await import("@/actions/receipts");
+            const nextPaymentDate = await calculateNextPaymentDate(updatedReservation);
+            await prisma.reservation.update({
+                where: { id: reservationId },
+                data: { next_payment_date: nextPaymentDate }
             });
         }
 
