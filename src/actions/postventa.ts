@@ -173,11 +173,14 @@ export async function getFullPostventaData({
                 calculatedCuotasTotal = cuotasAmount;
             }
             
-            // Total Invertido: Pie + Installments + Extra Manual Payments
-            const totalPaid = actualPieComponent + calculatedCuotasTotal + ((res as any).extra_paid_amount || 0);
+            // Include reservation payment in totalPaid if reservation status is paid/confirmed
+            const isReservationPaid = res.status === 'paid' || res.status === 'confirmed';
+            const reservationAmountPaid = isReservationPaid ? (lot.reservation_amount_clp || 500000) : 0;
+            
+            // Total Invertido: Reserva + Pie + Installments + Extra Manual Payments
+            const totalPaid = reservationAmountPaid + actualPieComponent + calculatedCuotasTotal + ((res as any).extra_paid_amount || 0);
             
             const totalToPay = lot.price_total_clp || 0;
-            // The reservation is conceptually part of the "Total Invertido" via the Pie component now.
             // Balance = Price Total - Total Invertido + Additional Debts
             const pendingBalance = Math.max(0, totalToPay - totalPaid + ((res as any).pending_amount || 0));
 
