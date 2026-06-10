@@ -43,7 +43,6 @@ import { InvestmentThesis } from '@/components/InvestmentThesis';
 import { VideoGallery } from '@/components/VideoGallery';
 import { ProjectFeatures } from '@/components/ProjectFeatures';
 import { GoogleMapsButton } from '@/components/GoogleMapsButton';
-import { CyberPromo } from '@/components/CyberPromo';
 
 import { Footer } from '@/components/Footer';
 import { AdminLogin } from '@/components/AdminLogin';
@@ -490,8 +489,6 @@ export default function Home() {
       {/* Hero Section - First Visual Impact */}
       <Hero onExploreClick={scrollToMap} />
 
-      {/* Cyber Monday Promotion Details */}
-      <CyberPromo />
 
       {/* Trust Banner - Key Value Propositions */}
       <TrustBanner />

@@ -589,31 +589,6 @@ export const LotReservationPopup = ({ lot, isOpen, onClose, onConfirm, isTempora
           </div>
 
 
-          {/* Cyber Monday Benefit Info Alert */}
-          <div className="bg-gradient-to-r from-alimin-green to-[#2A454A] text-white p-4 rounded-xl mb-6 border-l-4 border-alimin-gold flex flex-col md:flex-row md:items-center justify-between gap-3 text-left select-none">
-            <div>
-              <h4 className="font-bold text-base text-alimin-gold flex items-center gap-1.5">
-                🔥 Reserva Cyber
-              </h4>
-              <p className="text-xs text-white/90 font-semibold mt-1">
-                Paga el pie en 3 cuotas sin interés
-              </p>
-            </div>
-            <div className="bg-white/10 px-3 py-1.5 rounded-lg border border-white/20 text-center min-w-[120px]">
-              <span className="text-[10px] text-white/60 uppercase tracking-widest block font-bold">Tiempo Restante</span>
-              <span className="text-sm font-extrabold text-alimin-gold">
-                {(() => {
-                  const endDate = new Date('2026-06-01T00:00:00'); // Final de mayo 2026
-                  const now = new Date();
-                  const diff = endDate.getTime() - now.getTime();
-                  const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
-                  const validDays = Math.max(0, days);
-                  return `Quedan ${validDays} ${validDays === 1 ? 'día' : 'días'}`;
-                })()}
-              </span>
-            </div>
-          </div>
-
           {/* Contact Form - 2 columns on larger devices */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
             <div className="group space-y-2">
