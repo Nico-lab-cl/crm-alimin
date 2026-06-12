@@ -880,6 +880,15 @@ export function PostventaMobileDashboard({
                                                     <p className="font-black text-gray-900 text-[10px] truncate tracking-tight uppercase leading-none">{alert.clientName}</p>
                                                     <div className="flex items-center gap-1 mt-1">
                                                         <span className="text-[7px] font-black px-1 py-0 rounded bg-[#3f6066]/10 text-[#4A6E75] border border-[#3f6066]/20 uppercase">T-{alert.lotNumber}</span>
+                                                        {alert.legacy_installment_start_date ? (
+                                                            <span className="text-[7px] font-black px-1 py-0 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 uppercase" title="Día de pago de cada mes">
+                                                                Día {new Date(alert.legacy_installment_start_date).getDate()}
+                                                            </span>
+                                                        ) : (
+                                                            <span className="text-[7px] font-black px-1 py-0 rounded bg-gray-100 text-gray-500 border border-gray-200 uppercase" title="Día de pago de cada mes">
+                                                                Día 5
+                                                            </span>
+                                                        )}
                                                     </div>
                                                 </div>
                                                 <Badge className={`bg-white/80 ${accentClass} border-${accentClass.split('-')[1]}-500/20 text-[7px] font-black uppercase tracking-wider px-1 py-0.5`}>
@@ -887,19 +896,52 @@ export function PostventaMobileDashboard({
                                                 </Badge>
                                             </div>
 
-                                            <div className="bg-white rounded-xl p-2.5 border border-gray-200 space-y-1">
-                                                <div className="flex justify-between">
-                                                    <span className="text-[6px] text-gray-500 font-black uppercase tracking-widest">Monto</span>
-                                                    <span className={`font-black ${accentClass} text-[10px]`}>
-                                                        {isOK ? formatCurrency(alert.cuotasAmount + (alert.pending_amount || 0)) : formatCurrency((isLate ? alert.penaltyAmount : (alert.monto_cuota || 0)) + (alert.pending_amount || 0))}
-                                                    </span>
-                                                </div>
-                                                <div className="flex justify-between">
-                                                    <span className="text-[6px] text-gray-500 font-black uppercase tracking-widest">Fecha</span>
-                                                    <span className="text-[9px] text-gray-900 font-black">
-                                                        {alert.displayDueDate ? format(new Date(alert.displayDueDate), 'dd MMM', { locale: es }) : 'N/A'}
-                                                    </span>
-                                                </div>
+                                            <div className="bg-white rounded-xl p-2 md:p-2.5 border border-gray-200 space-y-1">
+                                                {isLate ? (
+                                                    <>
+                                                        <div className="flex justify-between items-center">
+                                                            <span className="text-[6px] text-gray-500 font-black uppercase tracking-widest leading-none">Cuota Base</span>
+                                                            <span className="text-[9px] text-gray-900 font-black leading-none">
+                                                                {formatCurrency(alert.valor_cuota || 0)}
+                                                            </span>
+                                                        </div>
+                                                        <div className="flex justify-between items-center">
+                                                            <span className="text-[6px] text-gray-500 font-black uppercase tracking-widest leading-none">Meses Mora</span>
+                                                            <span className="text-[8px] text-red-500 font-black truncate max-w-[80px] leading-none" title={alert.overdueInstallments?.map((o: any) => o.monthName).join(', ')}>
+                                                                {alert.overdueInstallments && alert.overdueInstallments.length > 0 
+                                                                    ? alert.overdueInstallments.map((o: any) => o.monthName).join(', ')
+                                                                    : 'Saldo Pend.'}
+                                                            </span>
+                                                        </div>
+                                                        <div className="flex justify-between items-center">
+                                                            <span className="text-[6px] text-gray-500 font-black uppercase tracking-widest leading-none">Días Atraso</span>
+                                                            <span className="text-[9px] text-red-500 font-black leading-none">
+                                                                {alert.lateDays} {alert.lateDays === 1 ? 'día' : 'días'}
+                                                            </span>
+                                                        </div>
+                                                        <div className="pt-1 mt-1 border-t border-dashed border-gray-200 flex justify-between items-center">
+                                                            <span className="text-[6px] text-[#3f6066] font-black uppercase tracking-widest leading-none">Total Vencido</span>
+                                                            <span className="text-[10px] text-red-500 font-black leading-none">
+                                                                {formatCurrency(alert.totalOverdueAmount || 0)}
+                                                            </span>
+                                                        </div>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <div className="flex justify-between items-center">
+                                                            <span className="text-[6px] text-gray-500 font-black uppercase tracking-widest leading-none">Monto</span>
+                                                            <span className={`font-black ${accentClass} text-[10px] leading-none`}>
+                                                                {isOK ? formatCurrency(alert.cuotasAmount + (alert.pending_amount || 0)) : formatCurrency((alert.monto_cuota || 0) + (alert.pending_amount || 0))}
+                                                            </span>
+                                                        </div>
+                                                        <div className="flex justify-between items-center">
+                                                            <span className="text-[6px] text-gray-500 font-black uppercase tracking-widest leading-none">Fecha</span>
+                                                            <span className="text-[9px] text-gray-900 font-black leading-none">
+                                                                {alert.displayDueDate ? format(new Date(alert.displayDueDate), 'dd MMM', { locale: es }) : 'N/A'}
+                                                            </span>
+                                                        </div>
+                                                    </>
+                                                )}
                                             </div>
 
                                             <div className="flex justify-between items-center text-[8px]">
@@ -1195,6 +1237,94 @@ export function PostventaMobileDashboard({
                                         ))}
                                     </div>
                                     
+                                    {/* Detalle de Deuda Vencida (Solo si está en Mora) */}
+                                    {selectedClientLedger.isLate && (
+                                        <div className="bg-red-500/[0.02] border border-red-500/10 rounded-[2rem] p-6 lg:p-8 space-y-6 shadow-sm">
+                                            <div className="flex items-center gap-3 border-b border-red-500/10 pb-4">
+                                                <div className="bg-red-500/15 p-2.5 rounded-2xl">
+                                                    <AlertTriangle className="w-5 h-5 text-red-500" />
+                                                </div>
+                                                <div>
+                                                    <h3 className="text-lg font-black text-gray-900 uppercase tracking-tight">Detalle de Deuda Vencida</h3>
+                                                    <p className="text-[10px] text-gray-600 font-bold uppercase mt-0.5 tracking-wider">
+                                                        Desglose del saldo atrasado requerido para poner la cuenta al día.
+                                                    </p>
+                                                </div>
+                                            </div>
+
+                                            {/* Resumen de Deuda */}
+                                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                                                <div className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm">
+                                                    <p className="text-[8px] text-gray-500 font-black uppercase tracking-widest mb-1.5">Cuotas Base Vencidas</p>
+                                                    <p className="text-lg font-black text-gray-900 tabular-nums">
+                                                        {formatCurrency(selectedClientLedger.totalOverdueInstallmentsAmount || 0)}
+                                                    </p>
+                                                </div>
+                                                <div className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm">
+                                                    <p className="text-[8px] text-gray-500 font-black uppercase tracking-widest mb-1.5">Intereses por Mora</p>
+                                                    <p className="text-lg font-black text-red-500 tabular-nums">
+                                                        {formatCurrency(selectedClientLedger.penaltyAmount || 0)}
+                                                    </p>
+                                                </div>
+                                                <div className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm">
+                                                    <p className="text-[8px] text-gray-500 font-black uppercase tracking-widest mb-1.5">Saldo Pendiente Manual</p>
+                                                    <p className="text-lg font-black text-gray-900 tabular-nums">
+                                                        {formatCurrency(selectedClientLedger.pending_amount || 0)}
+                                                    </p>
+                                                    {selectedClientLedger.pending_amount_reason && (
+                                                        <p className="text-[7px] text-gray-600 font-medium mt-1 truncate" title={selectedClientLedger.pending_amount_reason}>
+                                                            Motivo: {selectedClientLedger.pending_amount_reason}
+                                                        </p>
+                                                    )}
+                                                </div>
+                                                <div className="bg-[#36595F]/10 border border-[#36595F]/20 rounded-2xl p-4 shadow-sm">
+                                                    <p className="text-[8px] text-[#3f6066] font-black uppercase tracking-widest mb-1.5">Total Adeudado Vencido</p>
+                                                    <p className="text-xl font-black text-red-500 tabular-nums">
+                                                        {formatCurrency(selectedClientLedger.totalOverdueAmount || 0)}
+                                                    </p>
+                                                </div>
+                                            </div>
+
+                                            {/* Listado de Cuotas Overdue */}
+                                            {selectedClientLedger.overdueInstallments && selectedClientLedger.overdueInstallments.length > 0 && (
+                                                <div className="overflow-x-auto rounded-2xl border border-gray-200 bg-white shadow-sm">
+                                                    <table className="w-full text-left border-collapse">
+                                                        <thead>
+                                                            <tr className="bg-gray-50/50 border-b border-gray-200">
+                                                                <th className="p-3 text-[9px] font-black text-[#3f6066] uppercase tracking-widest text-center">N° Cuota</th>
+                                                                <th className="p-3 text-[9px] font-black text-[#3f6066] uppercase tracking-widest">Mes correspondiente</th>
+                                                                <th className="p-3 text-[9px] font-black text-[#3f6066] uppercase tracking-widest">Vencimiento</th>
+                                                                <th className="p-3 text-[9px] font-black text-[#3f6066] uppercase tracking-widest text-right">Valor Cuota</th>
+                                                                <th className="p-3 text-[9px] font-black text-[#3f6066] uppercase tracking-widest text-center">Días de Atraso</th>
+                                                                <th className="p-3 text-[9px] font-black text-[#3f6066] uppercase tracking-widest text-right">Interés Mora</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody className="divide-y divide-gray-100 text-xs">
+                                                            {selectedClientLedger.overdueInstallments.map((inst: any, idx: number) => (
+                                                                <tr key={idx} className="hover:bg-gray-50/50 transition-colors">
+                                                                    <td className="p-3 font-black text-gray-900 text-center tabular-nums">#{inst.number}</td>
+                                                                    <td className="p-3 font-bold text-gray-900 uppercase tracking-tight">{inst.monthName}</td>
+                                                                    <td className="p-3 text-gray-600 font-bold tabular-nums">
+                                                                        {format(new Date(inst.dueDate), 'dd/MM/yyyy')}
+                                                                    </td>
+                                                                    <td className="p-3 text-right font-black text-gray-900 tabular-nums">
+                                                                        {formatCurrency(inst.amount)}
+                                                                    </td>
+                                                                    <td className="p-3 text-center text-red-500 font-black tabular-nums">
+                                                                        {inst.daysLate} {inst.daysLate === 1 ? 'día' : 'días'}
+                                                                    </td>
+                                                                    <td className="p-3 text-right text-red-500 font-black tabular-nums">
+                                                                        {formatCurrency(inst.interestPenalty)}
+                                                                    </td>
+                                                                </tr>
+                                                            ))}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+
                                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
                                         {/* Left: Documents Section */}
                                         <div className="bg-white/[0.02] rounded-[2rem] border border-gray-200 p-8 flex flex-col gap-6">
