@@ -2,6 +2,14 @@ export const GRACE_PERIOD_DAYS = 5; // From day 5 to 10 (inclusive)
 export const FIXED_DAILY_PENALTY = 10000;
 export const PENALTY_START_DATE_WEB = new Date('2026-03-11T00:00:00-03:00'); // March 11, 2026
 
+export function getChileToday(): Date {
+    const now = new Date();
+    const chileStr = now.toLocaleString("en-US", { timeZone: "America/Santiago" });
+    const chileDate = new Date(chileStr);
+    chileDate.setHours(0, 0, 0, 0);
+    return chileDate;
+}
+
 export function getInstallmentDueDate(
     acquisitionDate: Date | string,
     installmentNumber: number,
@@ -54,14 +62,18 @@ export function calculateTotalInterest(
 ): number {
     if (moraFrozen) return 0;
 
+    // Convert paymentDate to Santiago timezone date to avoid UTC day shifts
+    const santiagoStr = paymentDate.toLocaleString("en-US", { timeZone: "America/Santiago" });
+    let pDate = new Date(santiagoStr);
+
     // 1. Establish Calculation Date (capped by legacy debt end date if present)
-    let pDate = new Date(paymentDate);
     if (legacyDebtEndDate) {
         const endDate = new Date(legacyDebtEndDate);
         if (pDate > endDate) {
             pDate.setTime(endDate.getTime());
         }
     }
+
     pDate.setHours(12, 0, 0, 0); // Use mid-day to avoid TZ shifts near boundaries
 
     const effectiveDueDate = new Date(dueDate);

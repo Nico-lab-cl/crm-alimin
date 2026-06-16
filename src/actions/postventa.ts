@@ -2,7 +2,7 @@
 
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
-import { getInstallmentDueDate, calculateTotalInterest, calculateDailyInterest } from "@/lib/financials"
+import { getInstallmentDueDate, calculateTotalInterest, calculateDailyInterest, getChileToday } from "@/lib/financials"
 import { memoryCache } from "@/lib/cache"
 import { revalidatePath } from "next/cache"
 import { addReceiptToManualDocuments } from "@/actions/receipts"
@@ -198,8 +198,7 @@ export async function getFullPostventaData({
                 ? new Date(res.legacy_installment_start_date).toISOString()
                 : res.created_at.toISOString();
 
-            const currentDate = new Date();
-            currentDate.setHours(0, 0, 0, 0);
+            const currentDate = getChileToday();
 
             if (paidCuotas < totalCuotas) {
                 const customStart = res.legacy_installment_start_date ? new Date(res.legacy_installment_start_date) : null;
