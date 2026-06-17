@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { calculateTotalInterest, getInstallmentDueDate } from '@/lib/financials';
+import { calculateTotalInterest, getInstallmentDueDate, calculateDaysLate } from '@/lib/financials';
 import { sendMoraWebhook } from '@/lib/webhooks';
 
 // This endpoint is called by n8n on the 11th of every month
@@ -90,13 +90,14 @@ export async function POST(req: NextRequest) {
             // If interest > 0, it means it's past the day 10 cutoff
             if (interest > 0) {
                 // Determine days late
-                const graceEnd = new Date(dueDate);
-                graceEnd.setDate(dueDate.getDate() + 5);
-                graceEnd.setHours(0, 0, 0, 0);
-                const dNow = new Date(chileNow);
-                dNow.setHours(0, 0, 0, 0);
-                const diffTime = dNow.getTime() - graceEnd.getTime();
-                const daysLate = Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
+                const daysLate = calculateDaysLate(
+                    dueDate,
+                    chileNow,
+                    res.is_legacy,
+                    res.legacy_debt_start_date,
+                    // @ts-ignore
+                    res.legacy_debt_end_date
+                );
 
                 // Avoid duplicate notifications in the SAME month for the same user
                 if (!isTest) {

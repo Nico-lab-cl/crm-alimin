@@ -2,7 +2,7 @@
 
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
-import { getInstallmentDueDate, calculateTotalInterest, calculateDailyInterest, getChileToday } from "@/lib/financials"
+import { getInstallmentDueDate, calculateTotalInterest, calculateDailyInterest, getChileToday, calculateDaysLate } from "@/lib/financials"
 import { memoryCache } from "@/lib/cache"
 import { revalidatePath } from "next/cache"
 import { addReceiptToManualDocuments } from "@/actions/receipts"
@@ -241,32 +241,13 @@ export async function getFullPostventaData({
                         const range = ranges.find((r: any) => instNum >= Number(r.from) && instNum <= Number(r.to));
                         const instAmount = range ? Number(range.amount) : (lot.valor_cuota || 0);
                         
-                        const gracePeriodEnd = new Date(iDue);
-                        gracePeriodEnd.setDate(iDue.getDate() + 5);
-                        gracePeriodEnd.setHours(23, 59, 59, 999);
-                        
-                        let effectiveMoraStart = gracePeriodEnd;
-                        if (res.legacy_debt_start_date) {
-                            const manualStart = new Date(res.legacy_debt_start_date);
-                            manualStart.setHours(0, 0, 0, 0);
-                            effectiveMoraStart = manualStart > gracePeriodEnd ? manualStart : gracePeriodEnd;
-                        }
-                        
-                        let daysLateForInst = 0;
-                        if (currentDate >= effectiveMoraStart) {
-                            let gDate = gracePeriodEnd;
-                            if (res.legacy_debt_start_date) {
-                                const manualStart = new Date(res.legacy_debt_start_date);
-                                manualStart.setHours(0, 0, 0, 0);
-                                const baseAnchor = manualStart > gracePeriodEnd ? manualStart : gracePeriodEnd;
-                                gDate = new Date(baseAnchor.getTime() - (1000 * 60 * 60 * 24));
-                            }
-                            const start = new Date(gDate);
-                            start.setHours(0, 0, 0, 0);
-                            const end = new Date(currentDate);
-                            end.setHours(0, 0, 0, 0);
-                            daysLateForInst = Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-                        }
+                        const daysLateForInst = calculateDaysLate(
+                            iDue,
+                            currentDate,
+                            isLegacyBool,
+                            res.legacy_debt_start_date,
+                            res.legacy_debt_end_date
+                        );
                         
                         const MONTHS_ES = [
                             'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',

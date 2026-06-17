@@ -2,12 +2,19 @@ export const GRACE_PERIOD_DAYS = 5; // From day 5 to 10 (inclusive)
 export const FIXED_DAILY_PENALTY = 10000;
 export const PENALTY_START_DATE_WEB = new Date('2026-03-11T00:00:00-03:00'); // March 11, 2026
 
+export function toSantiagoMidnight(date: Date | string): Date {
+    const d = typeof date === 'string' ? new Date(date) : date;
+    const santiagoStr = d.toLocaleString("en-US", { timeZone: "America/Santiago" });
+    const [datePart] = santiagoStr.split(',');
+    const [monthStr, dayStr, yearStr] = datePart.split('/');
+    const month = parseInt(monthStr, 10) - 1;
+    const day = parseInt(dayStr, 10);
+    const year = parseInt(yearStr, 10);
+    return new Date(Date.UTC(year, month, day, 12, 0, 0, 0));
+}
+
 export function getChileToday(): Date {
-    const now = new Date();
-    const chileStr = now.toLocaleString("en-US", { timeZone: "America/Santiago" });
-    const chileDate = new Date(chileStr);
-    chileDate.setHours(0, 0, 0, 0);
-    return chileDate;
+    return toSantiagoMidnight(new Date());
 }
 
 export function getInstallmentDueDate(
@@ -17,26 +24,21 @@ export function getInstallmentDueDate(
     customDueDay?: number | null,
     isPromo: boolean = false
 ): Date {
-    const base = new Date(acquisitionDate);
-    // Business Rule: All installments are due on the 5th, UNLESS a custom date is provided
+    const base = toSantiagoMidnight(acquisitionDate);
     const dueDay = customDueDay || 5;
-    const due = new Date(base.getFullYear(), base.getMonth(), dueDay, 12, 0, 0, 0);
+    
+    // Construct base due date in UTC at 12:00:00
+    const due = new Date(Date.UTC(base.getUTCFullYear(), base.getUTCMonth(), dueDay, 12, 0, 0, 0));
 
     if (customDueDay) {
-        // When admin explicitly set a start date, it represents the MONTH of cuota 1.
-        // Formula: base + (N-1). Works the same for legacy and non-legacy.
-        due.setMonth(due.getMonth() + (installmentNumber - 1));
+        due.setUTCMonth(due.getUTCMonth() + (installmentNumber - 1));
     } else if (isLegacy) {
-        // Legacy clients without custom start: base is "month before" cuota 1
-        due.setMonth(due.getMonth() + installmentNumber);
+        due.setUTCMonth(due.getUTCMonth() + installmentNumber);
     } else {
-        // Web Users without custom start:
-        // Si compraron entre el día 1 y 5 (inclusive), su primera cuota es este mismo mes.
-        // Si compraron después del día 5, su primera cuota es el mes siguiente.
-        if (base.getDate() <= 5) {
-            due.setMonth(due.getMonth() + (installmentNumber - 1));
+        if (base.getUTCDate() <= 5) {
+            due.setUTCMonth(due.getUTCMonth() + (installmentNumber - 1));
         } else {
-            due.setMonth(due.getMonth() + installmentNumber);
+            due.setUTCMonth(due.getUTCMonth() + installmentNumber);
         }
     }
 
@@ -50,6 +52,69 @@ export function calculateDailyInterest(
     return FIXED_DAILY_PENALTY;
 }
 
+export function calculateDaysLate(
+    dueDate: Date,
+    paymentDate: Date,
+    isLegacy: boolean,
+    legacyDebtStartDate?: Date | string | null,
+    legacyDebtEndDate?: Date | string | null
+): number {
+    const paymentMidnight = toSantiagoMidnight(paymentDate);
+    let effectivePayment = paymentMidnight;
+
+    if (legacyDebtEndDate) {
+        const endMidnight = toSantiagoMidnight(legacyDebtEndDate);
+        if (effectivePayment > endMidnight) {
+            effectivePayment = endMidnight;
+        }
+    }
+
+    const dueMidnight = toSantiagoMidnight(dueDate);
+    
+    // Grace period end: dueMidnight + 5 days
+    const gracePeriodEnd = new Date(dueMidnight);
+    gracePeriodEnd.setUTCDate(gracePeriodEnd.getUTCDate() + 5);
+
+    let effectiveMoraStart = gracePeriodEnd;
+    if (legacyDebtStartDate) {
+        const manualStart = toSantiagoMidnight(legacyDebtStartDate);
+        effectiveMoraStart = manualStart > gracePeriodEnd ? manualStart : gracePeriodEnd;
+    }
+
+    if (effectivePayment < effectiveMoraStart) {
+        return 0;
+    }
+
+    let gDate: Date;
+    if (legacyDebtStartDate) {
+        const manualStart = toSantiagoMidnight(legacyDebtStartDate);
+        const baseAnchor = manualStart > gracePeriodEnd ? manualStart : gracePeriodEnd;
+        // We anchor to the day before so that difference is 1 on start date
+        gDate = new Date(baseAnchor);
+        gDate.setUTCDate(gDate.getUTCDate() - 1);
+    } else {
+        gDate = gracePeriodEnd;
+    }
+
+    const effectiveIsLegacy = isLegacy || !!legacyDebtStartDate;
+    if (!effectiveIsLegacy) {
+        const webCutoff = toSantiagoMidnight(PENALTY_START_DATE_WEB);
+        if (effectivePayment < webCutoff) {
+            return 0;
+        }
+        if (gDate < webCutoff) {
+            // Anchor to March 10 so difference on March 11 is 1 day
+            const dayBeforeCutoff = new Date(webCutoff);
+            dayBeforeCutoff.setUTCDate(dayBeforeCutoff.getUTCDate() - 1);
+            gDate = dayBeforeCutoff;
+        }
+    }
+
+    const diffMs = effectivePayment.getTime() - gDate.getTime();
+    const daysLate = Math.round(diffMs / (1000 * 60 * 60 * 24));
+    return daysLate > 0 ? daysLate : 0;
+}
+
 export function calculateTotalInterest(
     totalLotPrice: number,
     lotAreaM2: number,
@@ -61,89 +126,8 @@ export function calculateTotalInterest(
     legacyDebtEndDate?: Date | string | null
 ): number {
     if (moraFrozen) return 0;
-
-    // Convert paymentDate to Santiago timezone date to avoid UTC day shifts
-    const santiagoStr = paymentDate.toLocaleString("en-US", { timeZone: "America/Santiago" });
-    let pDate = new Date(santiagoStr);
-
-    // 1. Establish Calculation Date (capped by legacy debt end date if present)
-    if (legacyDebtEndDate) {
-        const endDate = new Date(legacyDebtEndDate);
-        if (pDate > endDate) {
-            pDate.setTime(endDate.getTime());
-        }
-    }
-
-    pDate.setHours(12, 0, 0, 0); // Use mid-day to avoid TZ shifts near boundaries
-
-    const effectiveDueDate = new Date(dueDate);
-    effectiveDueDate.setHours(0, 0, 0, 0);
-    
-    // 2. Determine Grace Period End (Dynamic)
-    const gracePeriodEnd = new Date(dueDate);
-    // Rule: Grace period is 5 days. If due is 5th, grace is 6, 7, 8, 9, 10.
-    // Penalty starts on the 11th.
-    gracePeriodEnd.setDate(dueDate.getDate() + 5);
-    gracePeriodEnd.setHours(23, 59, 59, 999);
-    
-    // Determine the absolute start of mora
-    // For legacy debt, we respect the manual date but ONLY if the installment is actually due.
-    // Future installments should not be affected by the legacy start date.
-    let effectiveMoraStart = gracePeriodEnd;
-    if (legacyDebtStartDate) {
-        const manualStart = new Date(legacyDebtStartDate);
-        manualStart.setHours(0, 0, 0, 0);
-        // If the manual start is LATER than the grace period (e.g. specialized delay), we use it.
-        // Otherwise, the grace period of the installment is the natural limit for future ones.
-        effectiveMoraStart = manualStart > gracePeriodEnd ? manualStart : gracePeriodEnd;
-    }
-
-    if (pDate < effectiveMoraStart) return 0;
-
-    let gDate: Date;
-
-    if (legacyDebtStartDate) {
-        const manualStart = new Date(legacyDebtStartDate);
-        manualStart.setHours(0, 0, 0, 0);
-        
-        // Use the LATER of the manual start or the installment's grace end
-        const baseAnchor = manualStart > gracePeriodEnd ? manualStart : gracePeriodEnd;
-        
-        // We anchor to the day BEFORE the calculated start so that diff is 1 on the start date.
-        gDate = new Date(baseAnchor.getTime() - (1000 * 60 * 60 * 24));
-    } else {
-        gDate = gracePeriodEnd;
-    }
-
-    // 3. Apply Web Rule Cutoff (March 11, 2026) for non-legacy users
-    // If a user has a manual debt start date, we treat them as legacy (ignore the web cutoff)
-    const effectiveIsLegacy = isLegacy || !!legacyDebtStartDate;
-
-    if (!effectiveIsLegacy) {
-        const webCutoff = new Date(PENALTY_START_DATE_WEB);
-        webCutoff.setHours(0, 0, 0, 0); // March 11 00:00:00
-
-        // If the payment is happening before March 11, no penalty.
-        if (pDate < webCutoff) {
-            return 0;
-        }
-
-        // If the grace period end was before March 11, we move the starting line to March 10 23:59:59,
-        // so that the first day of penalty (diff > 0) is March 11.
-        if (gDate < webCutoff) {
-            gDate = new Date(webCutoff.getTime() - 1000); // March 10 23:59:59
-        }
-    }
-
-    // 4. Calculate Days Late
-    // We use a robust midnight-counting approach to avoid TZ issues
-    const start = new Date(gDate);
-    start.setHours(0, 0, 0, 0);
-    const end = new Date(pDate);
-    end.setHours(0, 0, 0, 0);
-    
-    let daysLate = Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-
+    const daysLate = calculateDaysLate(dueDate, paymentDate, isLegacy, legacyDebtStartDate, legacyDebtEndDate);
     const dailyInterest = calculateDailyInterest(totalLotPrice, lotAreaM2);
-    return dailyInterest * (daysLate > 0 ? daysLate : 0);
+    return dailyInterest * daysLate;
 }
+
