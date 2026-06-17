@@ -588,7 +588,8 @@ export async function registerPostventaPayment({
     scope,
     receiptUrl = 'MANUAL_POSTVENTA',
     date = new Date().toISOString(),
-    serverAuthOverride = false
+    serverAuthOverride = false,
+    nominalInstallmentNumber
 }: {
     reservationId: string;
     amount: number;
@@ -596,6 +597,7 @@ export async function registerPostventaPayment({
     receiptUrl?: string;
     date?: string;
     serverAuthOverride?: boolean;
+    nominalInstallmentNumber?: number;
 }) {
     if (!serverAuthOverride) {
         const session = await auth();
@@ -616,7 +618,7 @@ export async function registerPostventaPayment({
         // 1. Calculate Nominal Number for manual payment
         let nominalNumber: number | null = null;
         if (scope === 'INSTALLMENT') {
-            nominalNumber = (reservation.installments_paid || 0) + 1;
+            nominalNumber = nominalInstallmentNumber !== undefined ? nominalInstallmentNumber : (reservation.installments_paid || 0) + 1;
         }
 
         const receipt = await prisma.paymentReceipt.create({

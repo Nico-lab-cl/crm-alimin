@@ -100,6 +100,7 @@ export function PostventaMobileDashboard({
     const [isLoadingReceipts, setIsLoadingReceipts] = useState(false);
     const [manualAmount, setManualAmount] = useState('');
     const [manualScope, setManualScope] = useState<'PIE' | 'INSTALLMENT' | 'GASTOS_OPERACIONALES'>('INSTALLMENT');
+    const [manualInstallmentNumber, setManualInstallmentNumber] = useState<string>('');
     const [isUserView, setIsUserView] = useState(false);
     const [manualFile, setManualFile] = useState<File | null>(null);
     const [isRegistering, setIsRegistering] = useState(false);
@@ -124,6 +125,7 @@ export function PostventaMobileDashboard({
         if (selectedClientLedger) {
             setMoraStartDate(selectedClientLedger.legacy_debt_start_date ? new Date(selectedClientLedger.legacy_debt_start_date) : undefined);
             setMoraEndDate(selectedClientLedger.legacy_debt_end_date ? new Date(selectedClientLedger.legacy_debt_end_date) : undefined);
+            setManualInstallmentNumber(String((selectedClientLedger.paidCuotas || 0) + 1));
         }
     }, [selectedClientLedger]);
     const ALERTS_PER_PAGE = 10;
@@ -1789,7 +1791,10 @@ export function PostventaMobileDashboard({
                                 <h4 className="text-[11px] font-black text-gray-900 uppercase tracking-wider">Registrar Nuevo Pago Manual</h4>
                             </div>
                             
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className={cn(
+                                "grid grid-cols-1 gap-4",
+                                manualScope === 'INSTALLMENT' ? "md:grid-cols-4" : "md:grid-cols-3"
+                            )}>
                                 <div className="space-y-1.5">
                                     <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">Monto (CLP)</label>
                                     <Input 
@@ -1819,6 +1824,23 @@ export function PostventaMobileDashboard({
                                         ))}
                                     </div>
                                 </div>
+
+                                {manualScope === 'INSTALLMENT' && (
+                                    <div className="space-y-1.5">
+                                        <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">N° de Cuota</label>
+                                        <select
+                                            value={manualInstallmentNumber}
+                                            onChange={(e) => setManualInstallmentNumber(e.target.value)}
+                                            className="w-full bg-white border border-gray-200 rounded-xl h-10 px-3 text-xs text-gray-900 font-bold focus:outline-none focus:ring-1 focus:ring-[#3f6066]"
+                                        >
+                                            {Array.from({ length: selectedClientLedger?.totalCuotas || 48 }, (_, i) => i + 1).map(num => (
+                                                <option key={num} value={num}>
+                                                    Cuota {num}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                )}
 
                                 <div className="space-y-1.5">
                                     <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">Comprobante (Opcional)</label>
@@ -1866,7 +1888,8 @@ export function PostventaMobileDashboard({
                                                     reservationId: selectedClientLedger.id,
                                                     amount: parseInt(manualAmount),
                                                     scope: manualScope,
-                                                    receiptUrl
+                                                    receiptUrl,
+                                                    nominalInstallmentNumber: manualScope === 'INSTALLMENT' ? parseInt(manualInstallmentNumber) : undefined
                                                 });
                                                 if (res.error) toast.error(res.error);
                                                 else {
@@ -1923,7 +1946,13 @@ export function PostventaMobileDashboard({
                                             <div>
                                                 <p className="text-xs font-black text-gray-900 uppercase">{formatCurrency(p.amount_clp)}</p>
                                                 <p className="text-[9px] text-gray-500 font-bold uppercase mt-0.5 tracking-tight">
-                                                    {p.scope === 'PIE' ? 'Pago de Pie' : `${(p.installments_count || 1) > 1 ? p.installments_count + ' Cuotas' : 'Cuota'}`} · {format(new Date(p.created_at), 'dd/MM/yyyy HH:mm')}
+                                                    {p.scope === 'PIE' 
+                                                        ? 'Pago de Pie' 
+                                                        : p.nominal_installment_number 
+                                                            ? `Cuota ${p.nominal_installment_number}` 
+                                                            : p.nominal_installment_range 
+                                                                ? `Cuotas ${p.nominal_installment_range}` 
+                                                                : `${(p.installments_count || 1) > 1 ? p.installments_count + ' Cuotas' : 'Cuota'}`} · {format(new Date(p.created_at), 'dd/MM/yyyy HH:mm')}
                                                 </p>
                                             </div>
                                         </div>

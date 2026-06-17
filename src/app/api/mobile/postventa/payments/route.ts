@@ -17,7 +17,7 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { reservationId, amount, scope, receiptUrl, date } = body;
+    const { reservationId, amount, scope, receiptUrl, date, nominalInstallmentNumber } = body;
 
     if (!reservationId || !amount || !scope) {
       return NextResponse.json({ error: 'Faltan parámetros requeridos: reservationId, amount o scope' }, { status: 400 });
@@ -29,7 +29,8 @@ export async function POST(req: Request) {
         scope,
         receiptUrl,
         date,
-        serverAuthOverride: true
+        serverAuthOverride: true,
+        nominalInstallmentNumber: nominalInstallmentNumber ? Number(nominalInstallmentNumber) : undefined
     });
 
     if (result.error) {
