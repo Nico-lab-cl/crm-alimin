@@ -583,11 +583,8 @@ export async function assignLegacyLotOwner(data: {
             });
         }
 
-        // Base assumption: if pie is set, it's paid. If they gave us current installment, we calculate how many they've paid.
+        // paidInstallments is determined AFTER existingReservation is fetched below
         let paidInstallments = 0;
-        if (legacy_current_installment && legacy_current_installment > 0) {
-            paidInstallments = legacy_current_installment;
-        }
 
         // Update the Lot first to persist the financial constants
         await prisma.lot.update({
@@ -620,6 +617,58 @@ export async function assignLegacyLotOwner(data: {
                 },
                 orderBy: { created_at: 'desc' }
             });
+        }
+
+        // Determine installments_paid:
+        // - For NEW reservations: use the form value directly
+        // - For EXISTING reservations: only update if the value actually changed
+        //   (prevents perpetuating inflated values from legacy migration when postventa
+        //   is just editing other fields like observation, advisor, etc.)
+        if (existingReservation) {
+            // Default to the current DB value
+            paidInstallments = existingReservation.installments_paid || 0;
+            // Only override if postventa explicitly changed the value
+            if (legacy_current_installment !== undefined && legacy_current_installment !== existingReservation.installments_paid) {
+                paidInstallments = legacy_current_installment;
+                console.log(`[assignLegacyLotOwner] installments_paid changed: ${existingReservation.installments_paid} → ${legacy_current_installment}`);
+            }
+        } else {
+            // New reservation — use form value
+            if (legacy_current_installment && legacy_current_installment > 0) {
+                paidInstallments = legacy_current_installment;
+            }
+        }
+
+        // Calculate next_payment_date automatically if it is null/not set and installments are not finished
+        let finalNextPaymentDate: Date | null = null;
+        if (next_payment_date) {
+            finalNextPaymentDate = new Date(next_payment_date);
+        } else if (next_payment_date === null) {
+            const totalCuotas = cuotas || 0;
+            if (paidInstallments < totalCuotas) {
+                const isLegacyBool = existingReservation ? existingReservation.is_legacy : true;
+                
+                const finalInstallmentStartDate = (legacy_installment_start_date !== undefined)
+                    ? (legacy_installment_start_date ? new Date(legacy_installment_start_date) : null)
+                    : (existingReservation?.legacy_installment_start_date ? new Date(existingReservation.legacy_installment_start_date) : null);
+                
+                const baseDate = finalInstallmentStartDate
+                    ? finalInstallmentStartDate.toISOString()
+                    : (existingReservation?.created_at ? new Date(existingReservation.created_at).toISOString() : new Date().toISOString());
+
+                const customDueDay = finalInstallmentStartDate ? finalInstallmentStartDate.getDate() : null;
+
+                const { getInstallmentDueDate } = await import("@/lib/financials");
+                finalNextPaymentDate = getInstallmentDueDate(
+                    baseDate,
+                    paidInstallments + 1,
+                    isLegacyBool,
+                    customDueDay,
+                    is_promo || false
+                );
+            }
+        } else {
+            finalNextPaymentDate = existingReservation?.next_payment_date ? new Date(existingReservation.next_payment_date) : null;
         }
 
         const reservationData = {
@@ -671,7 +720,7 @@ export async function assignLegacyLotOwner(data: {
             pending_amount_reason: pending_amount_reason !== undefined ? (pending_amount_reason || null) : ((existingReservation as any)?.pending_amount_reason || null),
             // @ts-ignore
             pie: pie !== undefined ? Number(pie) : (existingReservation?.pie || 0),
-            next_payment_date: (next_payment_date !== undefined) ? (next_payment_date ? new Date(next_payment_date) : null) : (existingReservation?.next_payment_date ? new Date(existingReservation.next_payment_date) : null),
+            next_payment_date: finalNextPaymentDate,
             next_installment_discount: next_installment_discount !== undefined ? Number(next_installment_discount) : (existingReservation?.next_installment_discount || 0)
         };
 

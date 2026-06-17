@@ -29,11 +29,17 @@ export async function deletePaymentReceipt(receiptId: string) {
         if (receipt.status === 'APPROVED') {
             await removeReceiptFromManualDocuments(receipt.reservation_id, receiptId);
             if (receipt.scope === 'INSTALLMENT') {
-                await prisma.reservation.update({
+                const updatedReservation = await prisma.reservation.update({
                     where: { id: receipt.reservation_id },
                     data: {
                         installments_paid: { decrement: 1 }
-                    }
+                    },
+                    include: { lot: true }
+                });
+                const nextPaymentDate = await calculateNextPaymentDate(updatedReservation);
+                await prisma.reservation.update({
+                    where: { id: receipt.reservation_id },
+                    data: { next_payment_date: nextPaymentDate }
                 });
             } else if (receipt.scope === 'PIE') {
                 await prisma.reservation.update({

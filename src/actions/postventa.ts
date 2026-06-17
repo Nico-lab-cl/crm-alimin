@@ -8,7 +8,7 @@ import { revalidatePath } from "next/cache"
 import { addReceiptToManualDocuments } from "@/actions/receipts"
 
 const POSTVENTA_CACHE_KEY = 'postventa_data';
-const CACHE_TTL = 3600; // 1 hour for postventa data
+const CACHE_TTL = 300; // 5 minutes for postventa data (reduced from 1h to catch mora changes faster)
 
 export async function invalidatePostventaCache() {
     memoryCache.deleteByPrefix('postventa_full_');
@@ -139,6 +139,11 @@ export async function getFullPostventaData({
 
             const pieAmount = res.receipts.reduce((acc: number, r: any) => r.scope === 'PIE' ? acc + r.amount_clp : acc, 0);
             const cuotasAmount = res.receipts.reduce((acc: number, r: any) => r.scope === 'INSTALLMENT' ? acc + r.amount_clp : acc, 0);
+            
+            // Count actual installment receipts for discrepancy detection
+            const receiptBasedInstallmentCount = res.receipts
+                .filter((r: any) => r.scope === 'INSTALLMENT')
+                .reduce((sum: number, r: any) => sum + (r.installments_count || 1), 0);
             
             // Historical pie receipts were imported as Gross Pie. Subtract reservation to get Net Pie.
             // --- SIMPLIFIED FINANCIAL CALCULATION ---
@@ -440,7 +445,10 @@ export async function getFullPostventaData({
                 advisor: res.advisor || null,
                 // @ts-ignore
                 observation: res.observation || null,
-                next_payment_date: res.next_payment_date
+                next_payment_date: res.next_payment_date,
+                // Discrepancy detection: compare DB installments_paid vs actual receipt count
+                receiptBasedInstallmentCount,
+                installmentDiscrepancy: paidCuotas - receiptBasedInstallmentCount
             };
         });
 
@@ -688,5 +696,114 @@ export async function registerPostventaPayment({
     } catch (error) {
         console.error("Error registering manual payment:", error);
         return { error: 'Error al registrar el pago' };
+    }
+}
+
+/**
+ * Manually adjust the installments_paid counter for a reservation.
+ * Used when legacy migration inflated the value and needs correction.
+ * Creates an audit log entry for traceability.
+ */
+export async function adjustInstallmentsPaid({
+    reservationId,
+    newCount,
+    reason
+}: {
+    reservationId: string;
+    newCount: number;
+    reason: string;
+}) {
+    const session = await auth();
+    const isPostventa = session?.user?.email === 'postventa@lomasdelmar.cl' || session?.user?.email === 'postventa@aliminspa.cl';
+    if (!session?.user || (session.user.role !== 'ADMIN' && !isPostventa)) {
+        return { error: 'No autorizado' };
+    }
+
+    if (newCount < 0) {
+        return { error: 'El número de cuotas no puede ser negativo' };
+    }
+
+    if (!reason || reason.trim().length < 5) {
+        return { error: 'Debes indicar un motivo (mínimo 5 caracteres)' };
+    }
+
+    try {
+        const reservation = await prisma.reservation.findUnique({
+            where: { id: reservationId },
+            include: { 
+                lot: { select: { number: true, stage: true, cuotas: true } },
+                buyer: { select: { name: true, email: true } }
+            }
+        });
+
+        if (!reservation) return { error: 'Reserva no encontrada' };
+
+        const oldCount = reservation.installments_paid || 0;
+        const totalCuotas = reservation.lot?.cuotas || 0;
+
+        if (newCount > totalCuotas) {
+            return { error: `No puedes superar el total de cuotas (${totalCuotas})` };
+        }
+
+        if (newCount === oldCount) {
+            return { error: 'El valor nuevo es igual al actual' };
+        }
+
+        // 1. Update installments_paid
+        const updatedReservation = await prisma.reservation.update({
+            where: { id: reservationId },
+            data: { installments_paid: newCount },
+            include: { lot: true }
+        });
+
+        // 2. Recalculate next_payment_date
+        const { calculateNextPaymentDate } = await import("@/actions/receipts");
+        const nextPaymentDate = await calculateNextPaymentDate(updatedReservation);
+        await prisma.reservation.update({
+            where: { id: reservationId },
+            data: { next_payment_date: nextPaymentDate }
+        });
+
+        // 3. Create audit log
+        const clientName = reservation.buyer?.name || 'Desconocido';
+        const lotNumber = reservation.lot?.number || 'N/A';
+        const lotStage = reservation.lot?.stage || 'N/A';
+
+        await prisma.auditLog.create({
+            data: {
+                action: 'UPDATE',
+                entity: 'Reservation',
+                entity_id: reservationId,
+                details: JSON.stringify({
+                    type: 'ADJUST_INSTALLMENTS_PAID',
+                    oldCount,
+                    newCount,
+                    difference: newCount - oldCount,
+                    reason: reason.trim(),
+                    clientName,
+                    lotNumber,
+                    lotStage,
+                    newNextPaymentDate: nextPaymentDate?.toISOString() || null,
+                    adjustedBy: session.user.email
+                }),
+                pk: reservationId,
+                user_id: session.user.id,
+                user_email: session.user.email,
+            }
+        });
+
+        // 4. Invalidate caches
+        memoryCache.deleteByPrefix('postventa_full_');
+        memoryCache.deleteByPrefix('receipts_paginated_');
+        revalidatePath('/admin/dashboard');
+
+        return { 
+            success: true, 
+            message: `Cuotas pagadas ajustadas de ${oldCount} a ${newCount}. Próximo vencimiento recalculado.`,
+            newNextPaymentDate: nextPaymentDate
+        };
+    } catch (error) {
+        console.error("Error adjusting installments_paid:", error);
+        return { error: 'Error al ajustar las cuotas pagadas' };
     }
 }

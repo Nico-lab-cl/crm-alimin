@@ -169,7 +169,7 @@ export async function GET(req: NextRequest) {
                 const currentPendingAmount = (transaction.reservation as any).pending_amount || 0;
                 const currentExtraPaid = (transaction.reservation as any).extra_paid_amount || 0;
                 
-                await prisma.reservation.update({
+                const updatedReservation = await prisma.reservation.update({
                     where: { id: reservationId },
                     data: {
                         // @ts-ignore
@@ -182,7 +182,17 @@ export async function GET(req: NextRequest) {
                         extra_paid_amount: currentExtraPaid + currentPendingAmount,
                         // @ts-ignore - Clear the additional debt since it was paid
                         pending_amount: 0
-                    }
+                    },
+                    include: { lot: true }
+                });
+
+                // Calculate next payment date based on the new installments_paid count
+                const { calculateNextPaymentDate } = await import('@/actions/receipts');
+                const nextPaymentDate = await calculateNextPaymentDate(updatedReservation);
+
+                await prisma.reservation.update({
+                    where: { id: reservationId },
+                    data: { next_payment_date: nextPaymentDate }
                 });
             } else {
                 // RESERVATION (Standard flow)

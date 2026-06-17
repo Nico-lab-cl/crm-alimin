@@ -121,8 +121,8 @@ export default function UserDashboard() {
                                         </div>
 
                                         {/* Next Payment Info */}
-                                        {res.status !== 'paid' && res.lot.cuotas > 0 && res.installments_paid < res.lot.cuotas && (() => {
-                                            // Calculate Next Due Date (5th of current or next month)
+                                        {(res.status === 'paid' || res.status === 'confirmed') && res.lot.cuotas > 0 && res.installments_paid < res.lot.cuotas && (() => {
+                                            // Calculate Next Due Date (5th of current or next month, or custom day)
                                             // Logic: If today <= 10th, show 5th of this month (if not paid?). 
                                             // Actually simpler: 5th of Month (Paid + 1).
                                             // We need acquisition date to be precise, ensuring we align with `getInstallmentDueDate`.
@@ -141,7 +141,7 @@ export default function UserDashboard() {
                                                     <div className="flex justify-between items-center text-sm font-semibold text-[#36595F]">
                                                         <span>Próximo Vencimiento:</span>
                                                         <span className={isUrgent ? "text-red-600" : ""}>
-                                                            5 de {nextDueDate.toLocaleDateString('es-CL', { month: 'long' })}
+                                                            {nextDueDate.toLocaleDateString('es-CL', { day: 'numeric', month: 'long' })}
                                                         </span>
                                                     </div>
                                                     <div className="text-[10px] text-gray-600 leading-tight">

@@ -18,7 +18,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { approvePaymentReceipt, rejectPaymentReceipt, deletePaymentReceipt, editReceiptAmount } from '@/actions/receipts';
-import { syncLegacyReceipts, getReservationReceipts, registerPostventaPayment } from '@/actions/postventa';
+import { syncLegacyReceipts, getReservationReceipts, registerPostventaPayment, adjustInstallmentsPaid } from '@/actions/postventa';
 import { toggleMoraFreeze, updateMoraDates } from '@/actions/dashboard';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
@@ -113,6 +113,12 @@ export function PostventaMobileDashboard({
     const [editAmount, setEditAmount] = useState('');
     const [editReason, setEditReason] = useState('');
     const [isEditingAmount, setIsEditingAmount] = useState(false);
+
+    // Adjust Cuotas State
+    const [isAdjustingCuotas, setIsAdjustingCuotas] = useState(false);
+    const [adjustCuotasValue, setAdjustCuotasValue] = useState('');
+    const [adjustCuotasReason, setAdjustCuotasReason] = useState('');
+    const [isSubmittingAdjust, setIsSubmittingAdjust] = useState(false);
 
     useEffect(() => {
         if (selectedClientLedger) {
@@ -1237,6 +1243,121 @@ export function PostventaMobileDashboard({
                                         ))}
                                     </div>
                                     
+                                    {/* Discrepancy Alert - installments_paid vs actual receipts */}
+                                    {selectedClientLedger.installmentDiscrepancy > 0 && (
+                                        <div className="bg-amber-500/5 border-2 border-dashed border-amber-500/30 rounded-2xl p-5 space-y-3">
+                                            <div className="flex items-center gap-3">
+                                                <div className="bg-amber-500/15 p-2 rounded-xl">
+                                                    <AlertTriangle className="w-5 h-5 text-amber-500" />
+                                                </div>
+                                                <div className="flex-1">
+                                                    <p className="text-xs font-black text-amber-600 uppercase tracking-wider">Discrepancia Detectada</p>
+                                                    <p className="text-[10px] text-gray-600 mt-0.5">
+                                                        La BD registra <strong className="text-gray-900">{selectedClientLedger.paidCuotas}</strong> cuotas pagadas, pero solo hay <strong className="text-gray-900">{selectedClientLedger.receiptBasedInstallmentCount}</strong> recibos digitales.
+                                                        <span className="text-amber-600 font-bold"> ({selectedClientLedger.installmentDiscrepancy} cuotas sin respaldo)</span>
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            
+                                            {!isAdjustingCuotas ? (
+                                                <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    onClick={() => {
+                                                        setIsAdjustingCuotas(true);
+                                                        setAdjustCuotasValue(String(selectedClientLedger.receiptBasedInstallmentCount));
+                                                        setAdjustCuotasReason('');
+                                                    }}
+                                                    className="bg-amber-500/10 border-amber-500/30 text-amber-600 hover:bg-amber-500/20 text-[10px] font-black uppercase tracking-widest h-9 rounded-xl w-full"
+                                                >
+                                                    <Pencil className="w-3 h-3 mr-2" />
+                                                    Ajustar Cuotas Pagadas
+                                                </Button>
+                                            ) : (
+                                                <div className="bg-white rounded-xl p-4 border border-gray-200 space-y-3">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="flex-1">
+                                                            <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest block mb-1">Nuevo valor de cuotas pagadas</label>
+                                                            <Input
+                                                                type="number"
+                                                                min={0}
+                                                                max={selectedClientLedger.totalCuotas}
+                                                                value={adjustCuotasValue}
+                                                                onChange={(e) => setAdjustCuotasValue(e.target.value)}
+                                                                className="h-10 text-center text-lg font-black rounded-xl"
+                                                            />
+                                                        </div>
+                                                        <div className="text-center pt-4">
+                                                            <p className="text-[8px] text-gray-400 font-bold">de</p>
+                                                            <p className="text-sm font-black text-gray-900">{selectedClientLedger.totalCuotas}</p>
+                                                        </div>
+                                                    </div>
+                                                    <div>
+                                                        <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest block mb-1">Motivo del ajuste</label>
+                                                        <Textarea
+                                                            value={adjustCuotasReason}
+                                                            onChange={(e) => setAdjustCuotasReason(e.target.value)}
+                                                            placeholder="Ej: Corrección migración legacy, solo 4 cuotas fueron pagadas realmente..."
+                                                            className="text-xs resize-none rounded-xl"
+                                                            rows={2}
+                                                        />
+                                                    </div>
+                                                    <div className="flex gap-2">
+                                                        <Button
+                                                            size="sm"
+                                                            variant="outline"
+                                                            onClick={() => setIsAdjustingCuotas(false)}
+                                                            className="flex-1 h-9 text-[10px] font-black uppercase tracking-widest rounded-xl"
+                                                            disabled={isSubmittingAdjust}
+                                                        >
+                                                            Cancelar
+                                                        </Button>
+                                                        <Button
+                                                            size="sm"
+                                                            onClick={async () => {
+                                                                const newVal = parseInt(adjustCuotasValue);
+                                                                if (isNaN(newVal) || newVal < 0) {
+                                                                    toast.error('Ingresa un número válido');
+                                                                    return;
+                                                                }
+                                                                if (!adjustCuotasReason.trim() || adjustCuotasReason.trim().length < 5) {
+                                                                    toast.error('Ingresa un motivo (mínimo 5 caracteres)');
+                                                                    return;
+                                                                }
+                                                                setIsSubmittingAdjust(true);
+                                                                try {
+                                                                    const res = await adjustInstallmentsPaid({
+                                                                        reservationId: selectedClientLedger.id,
+                                                                        newCount: newVal,
+                                                                        reason: adjustCuotasReason.trim()
+                                                                    });
+                                                                    if (res.error) {
+                                                                        toast.error(res.error);
+                                                                    } else {
+                                                                        toast.success(res.message || 'Cuotas ajustadas correctamente');
+                                                                        setIsAdjustingCuotas(false);
+                                                                        refreshData();
+                                                                    }
+                                                                } catch (e) {
+                                                                    toast.error('Error al ajustar cuotas');
+                                                                } finally {
+                                                                    setIsSubmittingAdjust(false);
+                                                                }
+                                                            }}
+                                                            disabled={isSubmittingAdjust}
+                                                            className="flex-1 h-9 bg-amber-500 hover:bg-amber-600 text-white text-[10px] font-black uppercase tracking-widest rounded-xl"
+                                                        >
+                                                            {isSubmittingAdjust ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Confirmar Ajuste'}
+                                                        </Button>
+                                                    </div>
+                                                    <p className="text-[8px] text-gray-400 text-center">
+                                                        Este cambio queda registrado en la auditoría del sistema.
+                                                    </p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+
                                     {/* Detalle de Deuda Vencida (Solo si está en Mora) */}
                                     {selectedClientLedger.isLate && (
                                         <div className="bg-red-500/[0.02] border border-red-500/10 rounded-[2rem] p-6 lg:p-8 space-y-6 shadow-sm">
