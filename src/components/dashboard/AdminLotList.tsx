@@ -237,7 +237,19 @@ export const AdminLotList = ({ lots: initialLots }: AdminLotListProps) => {
                                                 </span>
                                             </div>
                                         </div>
-                                    ) : null}
+                                    ) : (
+                                        <div className="mt-2 text-[10px] text-gray-500 space-y-0.5">
+                                            <div className="flex justify-between font-bold text-green-600">
+                                                <span>Pago al Contado</span>
+                                            </div>
+                                            <div className="flex justify-between">
+                                                <span>Total:</span>
+                                                <span className="text-[#3f6066] font-black">
+                                                    {new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(lot.price_total_clp || 0)}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 

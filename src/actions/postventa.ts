@@ -182,14 +182,18 @@ export async function getFullPostventaData({
             const isReservationPaid = res.status === 'paid' || res.status === 'confirmed';
             const reservationAmountPaid = isReservationPaid ? (lot.reservation_amount_clp || 500000) : 0;
             
-            // Total Invertido: Reserva + Pie + Installments + Extra Manual Payments
-            const totalPaid = reservationAmountPaid + actualPieComponent + calculatedCuotasTotal + ((res as any).extra_paid_amount || 0);
-            
             const totalToPay = lot.price_total_clp || 0;
+            const totalCuotas = lot.cuotas || 0;
+
+            // Total Invertido: Reserva + Pie + Installments + Extra Manual Payments
+            // For cash sales (totalCuotas === 0), totalPaid is simply the total lot price plus extra paid amounts
+            let totalPaid = reservationAmountPaid + actualPieComponent + calculatedCuotasTotal + ((res as any).extra_paid_amount || 0);
+            if (totalCuotas === 0) {
+                totalPaid = totalToPay + ((res as any).extra_paid_amount || 0);
+            }
+            
             // Balance = Price Total - Total Invertido + Additional Debts
             const pendingBalance = Math.max(0, totalToPay - totalPaid + ((res as any).pending_amount || 0));
-
-            const totalCuotas = lot.cuotas || 0;
             // -- redundant paidCuotas removed --
 
             let nextDueDate = null;

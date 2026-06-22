@@ -954,7 +954,9 @@ export function PostventaMobileDashboard({
 
                                             <div className="flex justify-between items-center text-[8px]">
                                                 <span className={`${accentClass} font-black uppercase`}>{statusText}</span>
-                                                <span className="text-gray-500 font-bold uppercase text-[7px] tracking-tighter">#{alert.paidCuotas + 1}</span>
+                                                <span className="text-gray-500 font-bold uppercase text-[7px] tracking-tighter">
+                                                    {alert.totalCuotas === 0 ? "CONTADO" : `#${alert.paidCuotas + 1}`}
+                                                </span>
                                             </div>
                                         </div>
                                     </div>
@@ -1224,7 +1226,7 @@ export function PostventaMobileDashboard({
                                             <>
                                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
                                         {[
-                                            { label: 'Cuotas Pagadas', value: `${selectedClientLedger.paidCuotas} / ${selectedClientLedger.totalCuotas}`, icon: Wallet },
+                                            { label: 'Cuotas Pagadas', value: selectedClientLedger.totalCuotas === 0 ? 'Al Contado' : `${selectedClientLedger.paidCuotas} / ${selectedClientLedger.totalCuotas}`, icon: Wallet },
                                             { label: 'Próximo Pago', value: selectedClientLedger.nextDueDate ? format(new Date(selectedClientLedger.nextDueDate), 'dd MMM yy', { locale: es }) : 'N/A', icon: CalendarDays, color: 'text-[#4A6E75]' },
                                             { label: 'Monto Cuota', value: formatCurrency(selectedClientLedger.valor_cuota || 0), icon: CreditCard },
                                             { label: 'Estado Pie', value: selectedClientLedger.pieStatus, badge: true }

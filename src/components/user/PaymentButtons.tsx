@@ -372,7 +372,7 @@ export function PaymentButtons({ reservationId, lot, reservation, acquisitionDat
             {/* PIE STATUS BADGE */}
             {isPiePaid && (
                 <div className="p-2 bg-green-100 text-green-800 rounded-md text-center text-sm font-medium border border-green-200">
-                    ✅ Pie Pagado
+                    {totalCuotas === 0 ? "✅ Terreno Pagado (Venta al Contado)" : "✅ Pie Pagado"}
                 </div>
             )}
 
@@ -603,6 +603,12 @@ export function PaymentButtons({ reservationId, lot, reservation, acquisitionDat
                         ? <span className="text-green-600 font-bold text-sm">¡Crédito Pagado Completamente! 🎉</span>
                         : <span className="text-[#E0B457] font-bold text-sm uppercase tracking-wide">Pendientes: {remainingCuotas} / {totalCuotas} cuotas por pagar</span>
                     }
+                </div>
+            )}
+
+            {totalCuotas === 0 && isPiePaid && (
+                <div className="text-center mt-2">
+                    <span className="text-green-600 font-bold text-sm">¡Compra al Contado - Terreno Pagado Completamente! 🎉</span>
                 </div>
             )}
         </div>

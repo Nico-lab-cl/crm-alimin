@@ -64,6 +64,7 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
     })
 
     const [hasDebt, setHasDebt] = useState(false)
+    const [isContado, setIsContado] = useState(false)
     const [debtStartDate, setDebtStartDate] = useState<Date | undefined>(undefined)
     const [debtEndDate, setDebtEndDate] = useState<Date | undefined>(undefined)
     const [installmentStartDate, setInstallmentStartDate] = useState<Date | undefined>(undefined)
@@ -140,6 +141,8 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
             } else {
                 setInstallmentRanges([]);
             }
+            const isClientContado = existingReservation.lot?.cuotas === 0;
+            setIsContado(isClientContado);
         } else if (open && !existingReservation) {
             // Reset if opening in create mode
             setFormData({
@@ -153,6 +156,7 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
                 next_installment_discount: 0
             })
             setHasDebt(false)
+            setIsContado(false)
             setDebtStartDate(undefined)
             setDebtEndDate(undefined)
             setInstallmentStartDate(undefined)
@@ -160,6 +164,19 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
             setInstallmentRanges([])
         }
     }, [open, existingReservation])
+
+    useEffect(() => {
+        if (isContado) {
+            setFormData(prev => ({
+                ...prev,
+                cuotas: 0,
+                valor_cuota: 0,
+                last_installment_amount: 0,
+                pie: prev.price_total_clp,
+                isPiePaid: true
+            }));
+        }
+    }, [isContado, formData.price_total_clp])
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -437,6 +454,32 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
                     <h3 className="font-bold text-lg text-[#36595F]">Datos Financieros del Contrato</h3>
                     <p className="text-sm text-gray-500 mb-4">Ingresa los valores exactos definidos en la venta.</p>
 
+                    <div className="bg-gray-50/50 p-4 rounded-xl border border-gray-200/60 space-y-2 mb-4">
+                        <Label className="text-[#36595F] font-bold block mb-1">Tipo de Pago / Venta</Label>
+                        <div className="flex gap-6">
+                            <label className="flex items-center gap-2 cursor-pointer text-sm font-medium text-gray-700">
+                                <input
+                                    type="radio"
+                                    name="payment_type"
+                                    checked={!isContado}
+                                    onChange={() => setIsContado(false)}
+                                    className="w-4 h-4 text-[#36595F] focus:ring-[#36595F] accent-[#36595F]"
+                                />
+                                Crédito Directo (Cuotas)
+                            </label>
+                            <label className="flex items-center gap-2 cursor-pointer text-sm font-medium text-gray-700">
+                                <input
+                                    type="radio"
+                                    name="payment_type"
+                                    checked={isContado}
+                                    onChange={() => setIsContado(true)}
+                                    className="w-4 h-4 text-[#36595F] focus:ring-[#36595F] accent-[#36595F]"
+                                />
+                                Al Contado (Sin Cuotas)
+                            </label>
+                        </div>
+                    </div>
+
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div className="space-y-2">
                             <Label htmlFor="price_total_clp">Valor Total Terreno (CLP)</Label>
@@ -445,7 +488,14 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
                                 type="number"
                                 required
                                 value={formData.price_total_clp === 0 ? "" : formData.price_total_clp}
-                                onChange={(e) => setFormData({ ...formData, price_total_clp: Number(e.target.value) })}
+                                onChange={(e) => {
+                                    const val = Number(e.target.value);
+                                    setFormData(prev => ({
+                                        ...prev,
+                                        price_total_clp: val,
+                                        pie: isContado ? val : prev.pie
+                                    }));
+                                }}
                             />
                         </div>
                         <div className="space-y-2">
@@ -464,7 +514,8 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
                                 id="pie"
                                 type="number"
                                 required
-                                value={formData.pie === 0 ? "" : formData.pie}
+                                disabled={isContado}
+                                value={isContado ? formData.price_total_clp : (formData.pie === 0 ? "" : formData.pie)}
                                 onChange={(e) => setFormData({ ...formData, pie: Number(e.target.value) })}
                             />
                         </div>
@@ -522,7 +573,8 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
                         <input
                             type="checkbox"
                             id="isPiePaid"
-                            className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                            disabled={isContado}
+                            className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 disabled:opacity-50"
                             checked={formData.isPiePaid}
                             onChange={(e) => setFormData({ ...formData, isPiePaid: e.target.checked })}
                         />
@@ -608,8 +660,9 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
                             <Input
                                 id="cuotas"
                                 type="number"
-                                required
-                                value={formData.cuotas === 0 ? "" : formData.cuotas}
+                                required={!isContado}
+                                disabled={isContado}
+                                value={isContado ? 0 : (formData.cuotas === 0 ? "" : formData.cuotas)}
                                 onChange={(e) => setFormData({ ...formData, cuotas: Number(e.target.value) })}
                             />
                         </div>
@@ -618,8 +671,9 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
                             <Input
                                 id="valor_cuota"
                                 type="number"
-                                required
-                                value={formData.valor_cuota === 0 ? "" : formData.valor_cuota}
+                                required={!isContado}
+                                disabled={isContado}
+                                value={isContado ? 0 : (formData.valor_cuota === 0 ? "" : formData.valor_cuota)}
                                 onChange={(e) => setFormData({ ...formData, valor_cuota: Number(e.target.value) })}
                             />
                         </div>
@@ -628,236 +682,158 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
                             <Input
                                 id="last_installment_amount"
                                 type="number"
-                                required
-                                value={formData.last_installment_amount === 0 ? "" : formData.last_installment_amount}
+                                required={!isContado}
+                                disabled={isContado}
+                                value={isContado ? 0 : (formData.last_installment_amount === 0 ? "" : formData.last_installment_amount)}
                                 onChange={(e) => setFormData({ ...formData, last_installment_amount: Number(e.target.value) })}
                             />
                         </div>
                     </div>
 
-                    <div className="bg-amber-50/50 p-4 rounded-lg border border-amber-100 space-y-4">
-                        <div className="flex items-center justify-between border-b border-amber-200 pb-2">
-                            <div>
-                                <h4 className="font-semibold text-amber-900">Excepciones de Precios (Opcional)</h4>
-                                <p className="text-xs text-amber-700">Si un grupo de cuotas tiene un valor diferente al normal, defínelo aquí.</p>
-                            </div>
-                            <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                className="text-amber-700 border-amber-300 hover:bg-amber-100"
-                                onClick={() => setInstallmentRanges([...installmentRanges, { from: '', to: '', amount: '' }])}
-                            >
-                                + Agregar Rango Excepcional
-                            </Button>
-                        </div>
-
-                        {installmentRanges.length > 0 && (
-                            <div className="space-y-3">
-                                {installmentRanges.map((range, index) => (
-                                    <div key={index} className="flex flex-wrap md:flex-nowrap items-end gap-2 bg-white/60 p-2 rounded border border-amber-200 shadow-sm">
-                                        <div className="w-full md:w-1/4 space-y-1">
-                                            <Label className="text-xs text-amber-800">Desde Cuota</Label>
-                                            <Input
-                                                type="number"
-                                                min="1"
-                                                value={range.from}
-                                                onChange={(e) => {
-                                                    const newArr = [...installmentRanges]
-                                                    newArr[index].from = e.target.value ? Number(e.target.value) : ''
-                                                    setInstallmentRanges(newArr)
-                                                }}
-                                                placeholder="Ej: 1"
-                                                required
-                                            />
-                                        </div>
-                                        <div className="w-full md:w-1/4 space-y-1">
-                                            <Label className="text-xs text-amber-800">Hasta Cuota</Label>
-                                            <Input
-                                                type="number"
-                                                min="1"
-                                                value={range.to}
-                                                onChange={(e) => {
-                                                    const newArr = [...installmentRanges]
-                                                    newArr[index].to = e.target.value ? Number(e.target.value) : ''
-                                                    setInstallmentRanges(newArr)
-                                                }}
-                                                placeholder="Ej: 3"
-                                                required
-                                            />
-                                        </div>
-                                        <div className="w-full md:w-2/4 space-y-1">
-                                            <Label className="text-xs text-amber-800">Monto Exceptuado (CLP)</Label>
-                                            <Input
-                                                type="number"
-                                                value={range.amount}
-                                                onChange={(e) => {
-                                                    const newArr = [...installmentRanges]
-                                                    newArr[index].amount = e.target.value ? Number(e.target.value) : ''
-                                                    setInstallmentRanges(newArr)
-                                                }}
-                                                placeholder="Ej: 650000"
-                                                required
-                                            />
-                                        </div>
-                                        <Button
-                                            type="button"
-                                            variant="ghost"
-                                            className="text-red-500 hover:bg-red-50 px-2"
-                                            onClick={() => {
-                                                const newArr = [...installmentRanges]
-                                                newArr.splice(index, 1)
-                                                setInstallmentRanges(newArr)
-                                            }}
-                                        >
-                                            X
-                                        </Button>
+                    {!isContado && (
+                        <>
+                            <div className="bg-amber-50/50 p-4 rounded-lg border border-amber-100 space-y-4">
+                                <div className="flex items-center justify-between border-b border-amber-200 pb-2">
+                                    <div>
+                                        <h4 className="font-semibold text-amber-900">Excepciones de Precios (Opcional)</h4>
+                                        <p className="text-xs text-amber-700">Si un grupo de cuotas tiene un valor diferente al normal, defínelo aquí.</p>
                                     </div>
-                                ))}
-                            </div>
-                        )}
-                    </div>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        className="text-amber-700 border-amber-300 hover:bg-amber-100"
+                                        onClick={() => setInstallmentRanges([...installmentRanges, { from: '', to: '', amount: '' }])}
+                                    >
+                                        + Agregar Rango Excepcional
+                                    </Button>
+                                </div>
 
-                    <div className="bg-blue-50/50 p-4 rounded-lg border border-blue-100 space-y-4">
-                        <h4 className="font-semibold text-blue-900 border-b border-blue-200 pb-2">Estado de Pagos Actual</h4>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="legacy_current_installment">Cuotas ya PAGADAS por el cliente</Label>
-                                <Input
-                                    id="legacy_current_installment"
-                                    type="number"
-                                    min="0"
-                                    required
-                                    value={formData.legacy_current_installment}
-                                    onChange={(e) => setFormData({ ...formData, legacy_current_installment: Number(e.target.value) })}
-                                />
-                                <p className="text-xs text-blue-600 font-medium">Indica el número total de cuotas que el cliente ya tiene canceladas. Ej: Si pagó 2, pon 2.</p>
+                                {installmentRanges.length > 0 && (
+                                    <div className="space-y-3">
+                                        {installmentRanges.map((range, index) => (
+                                            <div key={index} className="flex flex-wrap md:flex-nowrap items-end gap-2 bg-white/60 p-2 rounded border border-amber-200 shadow-sm">
+                                                <div className="w-full md:w-1/4 space-y-1">
+                                                    <Label className="text-xs text-amber-800">Desde Cuota</Label>
+                                                    <Input
+                                                        type="number"
+                                                        min="1"
+                                                        value={range.from}
+                                                        onChange={(e) => {
+                                                            const newArr = [...installmentRanges]
+                                                            newArr[index].from = e.target.value ? Number(e.target.value) : ''
+                                                            setInstallmentRanges(newArr)
+                                                        }}
+                                                        placeholder="Ej: 1"
+                                                        required
+                                                    />
+                                                </div>
+                                                <div className="w-full md:w-1/4 space-y-1">
+                                                    <Label className="text-xs text-amber-800">Hasta Cuota</Label>
+                                                    <Input
+                                                        type="number"
+                                                        min="1"
+                                                        value={range.to}
+                                                        onChange={(e) => {
+                                                            const newArr = [...installmentRanges]
+                                                            newArr[index].to = e.target.value ? Number(e.target.value) : ''
+                                                            setInstallmentRanges(newArr)
+                                                        }}
+                                                        placeholder="Ej: 3"
+                                                        required
+                                                    />
+                                                </div>
+                                                <div className="w-full md:w-2/4 space-y-1">
+                                                    <Label className="text-xs text-amber-800">Monto Exceptuado (CLP)</Label>
+                                                    <Input
+                                                        type="number"
+                                                        value={range.amount}
+                                                        onChange={(e) => {
+                                                            const newArr = [...installmentRanges]
+                                                            newArr[index].amount = e.target.value ? Number(e.target.value) : ''
+                                                            setInstallmentRanges(newArr)
+                                                        }}
+                                                        placeholder="Ej: 650000"
+                                                        required
+                                                    />
+                                                </div>
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    className="text-red-500 hover:bg-red-50 px-2"
+                                                    onClick={() => {
+                                                        const newArr = [...installmentRanges]
+                                                        newArr.splice(index, 1)
+                                                        setInstallmentRanges(newArr)
+                                                    }}
+                                                >
+                                                    X
+                                                </Button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
 
-                            <div className="space-y-2">
-                                <Label>Fecha Inicio de Cuotas</Label>
-                                <p className="text-xs text-gray-500">Selecciona el <strong>día 5 del MES de la primera cuota</strong>. Ej: si la cuota 1 fue en Enero, selecciona 5 de Enero.</p>
-                                <Popover>
-                                    <PopoverTrigger asChild>
-                                        <Button
-                                            type="button"
-                                            variant="outline"
-                                            className={cn(
-                                                "w-full justify-start text-left font-normal",
-                                                !installmentStartDate && "text-muted-foreground"
-                                            )}
-                                        >
-                                            <CalendarIcon className="mr-2 h-4 w-4" />
-                                            {installmentStartDate ? format(installmentStartDate, "dd/MM/yyyy", { locale: es }) : <span>Seleccionar fecha base</span>}
-                                        </Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-auto p-0" align="start">
-                                        <Calendar
-                                            mode="single"
-                                            selected={installmentStartDate}
-                                            onSelect={setInstallmentStartDate}
-                                            initialFocus
+                            <div className="bg-blue-50/50 p-4 rounded-lg border border-blue-100 space-y-4">
+                                <h4 className="font-semibold text-blue-900 border-b border-blue-200 pb-2">Estado de Pagos Actual</h4>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="legacy_current_installment">Cuotas ya PAGADAS por el cliente</Label>
+                                        <Input
+                                            id="legacy_current_installment"
+                                            type="number"
+                                            min="0"
+                                            required
+                                            value={formData.legacy_current_installment}
+                                            onChange={(e) => setFormData({ ...formData, legacy_current_installment: Number(e.target.value) })}
                                         />
-                                    </PopoverContent>
-                                </Popover>
-                            </div>
+                                        <p className="text-xs text-blue-600 font-medium">Indica el número total de cuotas que el cliente ya tiene canceladas. Ej: Si pagó 2, pon 2.</p>
+                                    </div>
 
-                            <div className="space-y-2">
-                                <Label className="text-blue-900 font-bold">Manual: Próximo Pago</Label>
-                                <p className="text-xs text-blue-700">Opcional: Sobrescribe la fecha calculada para el siguiente pago solamente.</p>
-                                <Popover>
-                                    <PopoverTrigger asChild>
-                                        <Button
-                                            type="button"
-                                            variant="outline"
-                                            className={cn(
-                                                "w-full justify-start text-left font-semibold border-blue-300 bg-blue-50/50 hover:bg-blue-100",
-                                                !nextPaymentDate && "text-muted-foreground"
-                                            )}
-                                        >
-                                            <CalendarIcon className="mr-2 h-4 w-4 text-blue-600" />
-                                            {nextPaymentDate ? format(nextPaymentDate, "dd/MM/yyyy", { locale: es }) : <span>Automático (Día 5)</span>}
-                                        </Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-auto p-0" align="start">
-                                        <div className="p-2 border-b border-gray-100">
-                                            <Button 
-                                                variant="ghost" 
-                                                size="sm" 
-                                                className="w-full text-xs text-red-500 hover:text-red-700 h-7"
-                                                onClick={() => setNextPaymentDate(undefined)}
-                                            >
-                                                Limpiar / Volver a Automático
-                                            </Button>
-                                        </div>
-                                        <Calendar
-                                            mode="single"
-                                            selected={nextPaymentDate}
-                                            onSelect={setNextPaymentDate}
-                                            initialFocus
-                                        />
-                                    </PopoverContent>
-                                </Popover>
-                            </div>
-                        </div>
-
-                        <div className="space-y-3 pt-2 border-t border-blue-200">
-                            <Label>¿Este cliente presenta deuda previa (mora)?</Label>
-                            <div className="flex items-center space-x-2">
-                                <input
-                                    type="checkbox"
-                                    id="hasDebt"
-                                    checked={hasDebt}
-                                    onChange={(e) => setHasDebt(e.target.checked)}
-                                    className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                                />
-                                <label htmlFor="hasDebt" className="text-sm font-medium text-gray-700">
-                                    Viene con mora acumulada
-                                </label>
-                            </div>
-
-                            {hasDebt && (
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-                                    <div className="space-y-1">
-                                        <Label className="block mb-2 text-[10px] font-bold uppercase text-blue-900">Fecha INICIO mora</Label>
+                                    <div className="space-y-2">
+                                        <Label>Fecha Inicio de Cuotas</Label>
+                                        <p className="text-xs text-gray-500">Selecciona el <strong>día 5 del MES de la primera cuota</strong>. Ej: si la cuota 1 fue en Enero, selecciona 5 de Enero.</p>
                                         <Popover>
                                             <PopoverTrigger asChild>
                                                 <Button
                                                     type="button"
-                                                    variant={"outline"}
+                                                    variant="outline"
                                                     className={cn(
-                                                        "w-full justify-start text-left font-normal border-blue-200",
-                                                        !debtStartDate && "text-muted-foreground"
+                                                        "w-full justify-start text-left font-normal",
+                                                        !installmentStartDate && "text-muted-foreground"
                                                     )}
                                                 >
                                                     <CalendarIcon className="mr-2 h-4 w-4" />
-                                                    {debtStartDate ? format(debtStartDate, "dd/MM/yyyy", { locale: es }) : <span>Seleccionar Inicio</span>}
+                                                    {installmentStartDate ? format(installmentStartDate, "dd/MM/yyyy", { locale: es }) : <span>Seleccionar fecha base</span>}
                                                 </Button>
                                             </PopoverTrigger>
                                             <PopoverContent className="w-auto p-0" align="start">
                                                 <Calendar
                                                     mode="single"
-                                                    selected={debtStartDate}
-                                                    onSelect={setDebtStartDate}
+                                                    selected={installmentStartDate}
+                                                    onSelect={setInstallmentStartDate}
                                                     initialFocus
                                                 />
                                             </PopoverContent>
                                         </Popover>
                                     </div>
-                                    <div className="space-y-1">
-                                        <Label className="block mb-2 text-[10px] font-bold uppercase text-blue-900">Fecha FIN mora (Opcional)</Label>
+
+                                    <div className="space-y-2">
+                                        <Label className="text-blue-900 font-bold">Manual: Próximo Pago</Label>
+                                        <p className="text-xs text-blue-700">Opcional: Sobrescribe la fecha calculada para el siguiente pago solamente.</p>
                                         <Popover>
                                             <PopoverTrigger asChild>
                                                 <Button
                                                     type="button"
-                                                    variant={"outline"}
+                                                    variant="outline"
                                                     className={cn(
-                                                        "w-full justify-start text-left font-normal border-blue-200",
-                                                        !debtEndDate && "text-muted-foreground"
+                                                        "w-full justify-start text-left font-semibold border-blue-300 bg-blue-50/50 hover:bg-blue-100",
+                                                        !nextPaymentDate && "text-muted-foreground"
                                                     )}
                                                 >
-                                                    <CalendarIcon className="mr-2 h-4 w-4" />
-                                                    {debtEndDate ? format(debtEndDate, "dd/MM/yyyy", { locale: es }) : <span>Hasta hoy (Dinámico)</span>}
+                                                    <CalendarIcon className="mr-2 h-4 w-4 text-blue-600" />
+                                                    {nextPaymentDate ? format(nextPaymentDate, "dd/MM/yyyy", { locale: es }) : <span>Automático (Día 5)</span>}
                                                 </Button>
                                             </PopoverTrigger>
                                             <PopoverContent className="w-auto p-0" align="start">
@@ -866,25 +842,108 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
                                                         variant="ghost" 
                                                         size="sm" 
                                                         className="w-full text-xs text-red-500 hover:text-red-700 h-7"
-                                                        onClick={() => setDebtEndDate(undefined)}
+                                                        onClick={() => setNextPaymentDate(undefined)}
                                                     >
-                                                        Limpiar / Hasta hoy
+                                                        Limpiar / Volver a Automático
                                                     </Button>
                                                 </div>
                                                 <Calendar
                                                     mode="single"
-                                                    selected={debtEndDate}
-                                                    onSelect={setDebtEndDate}
+                                                    selected={nextPaymentDate}
+                                                    onSelect={setNextPaymentDate}
                                                     initialFocus
                                                 />
                                             </PopoverContent>
                                         </Popover>
-                                        <p className="text-[9px] text-blue-600 mt-1">Si se deja vacío, la mora se calcula hasta el día de hoy.</p>
                                     </div>
                                 </div>
-                            )}
-                        </div>
-                    </div>
+
+                                <div className="space-y-3 pt-2 border-t border-blue-200">
+                                    <Label>¿Este cliente presenta deuda previa (mora)?</Label>
+                                    <div className="flex items-center space-x-2">
+                                        <input
+                                            type="checkbox"
+                                            id="hasDebt"
+                                            checked={hasDebt}
+                                            onChange={(e) => setHasDebt(e.target.checked)}
+                                            className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                        />
+                                        <label htmlFor="hasDebt" className="text-sm font-medium text-gray-700">
+                                            Viene con mora acumulada
+                                        </label>
+                                    </div>
+
+                                    {hasDebt && (
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                                            <div className="space-y-1">
+                                                <Label className="block mb-2 text-[10px] font-bold uppercase text-blue-900">Fecha INICIO mora</Label>
+                                                <Popover>
+                                                    <PopoverTrigger asChild>
+                                                        <Button
+                                                            type="button"
+                                                            variant={"outline"}
+                                                            className={cn(
+                                                                "w-full justify-start text-left font-normal border-blue-200",
+                                                                !debtStartDate && "text-muted-foreground"
+                                                            )}
+                                                        >
+                                                            <CalendarIcon className="mr-2 h-4 w-4" />
+                                                            {debtStartDate ? format(debtStartDate, "dd/MM/yyyy", { locale: es }) : <span>Seleccionar Inicio</span>}
+                                                        </Button>
+                                                    </PopoverTrigger>
+                                                    <PopoverContent className="w-auto p-0" align="start">
+                                                        <Calendar
+                                                            mode="single"
+                                                            selected={debtStartDate}
+                                                            onSelect={setDebtStartDate}
+                                                            initialFocus
+                                                        />
+                                                    </PopoverContent>
+                                                </Popover>
+                                            </div>
+                                            <div className="space-y-1">
+                                                <Label className="block mb-2 text-[10px] font-bold uppercase text-blue-900">Fecha FIN mora (Opcional)</Label>
+                                                <Popover>
+                                                    <PopoverTrigger asChild>
+                                                        <Button
+                                                            type="button"
+                                                            variant={"outline"}
+                                                            className={cn(
+                                                                "w-full justify-start text-left font-normal border-blue-200",
+                                                                !debtEndDate && "text-muted-foreground"
+                                                            )}
+                                                        >
+                                                            <CalendarIcon className="mr-2 h-4 w-4" />
+                                                            {debtEndDate ? format(debtEndDate, "dd/MM/yyyy", { locale: es }) : <span>Hasta hoy (Dinámico)</span>}
+                                                        </Button>
+                                                    </PopoverTrigger>
+                                                    <PopoverContent className="w-auto p-0" align="start">
+                                                        <div className="p-2 border-b border-gray-100">
+                                                            <Button 
+                                                                variant="ghost" 
+                                                                size="sm" 
+                                                                className="w-full text-xs text-red-500 hover:text-red-700 h-7"
+                                                                onClick={() => setDebtEndDate(undefined)}
+                                                            >
+                                                                Limpiar / Hasta hoy
+                                                            </Button>
+                                                        </div>
+                                                        <Calendar
+                                                            mode="single"
+                                                            selected={debtEndDate}
+                                                            onSelect={setDebtEndDate}
+                                                            initialFocus
+                                                        />
+                                                    </PopoverContent>
+                                                </Popover>
+                                                <p className="text-[9px] text-blue-600 mt-1">Si se deja vacío, la mora se calcula hasta el día de hoy.</p>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </>
+                    )}
 
                     <div className="bg-amber-50/50 p-4 rounded-lg border border-amber-100 space-y-4">
                         <h4 className="font-semibold text-amber-900 border-b border-amber-200 pb-2">Seguimiento Interno</h4>
