@@ -101,7 +101,8 @@ export async function getFullPostventaData({
                         id: true,
                         amount_clp: true,
                         scope: true,
-                        created_at: true
+                        created_at: true,
+                        nominal_installment_number: true
                     }
                 },
                 rut: true,
@@ -264,12 +265,17 @@ export async function getFullPostventaData({
                         ];
                         const monthName = MONTHS_ES[iDue.getMonth()];
                         
+                        // Calculate MORA credits specifically for this installment number
+                        const instMoraCredits = res.receipts
+                            .filter((r: any) => r.scope === 'MORA' && r.nominal_installment_number === instNum)
+                            .reduce((sum: number, r: any) => sum + r.amount_clp, 0);
+
                         overdueInstallments.push({
                             number: instNum,
                             dueDate: iDue.toISOString(),
                             amount: instAmount,
                             daysLate: Math.max(0, daysLateForInst),
-                            interestPenalty: instInterest,
+                            interestPenalty: Math.max(0, instInterest - instMoraCredits),
                             monthName
                         });
                         totalOverdueInstallmentsAmount += instAmount;

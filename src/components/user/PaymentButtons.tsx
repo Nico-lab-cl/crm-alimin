@@ -493,6 +493,10 @@ export function PaymentButtons({ reservationId, lot, reservation, acquisitionDat
                                                         lastInstallmentPrice,
                                                         reservation.legacy_installment_ranges
                                                     );
+                                                    
+                                                    const instMoraCredits = reservation.receipts
+                                                        ?.filter((r: any) => r.scope === 'MORA' && r.status === 'APPROVED' && r.nominal_installment_number === instNum)
+                                                        .reduce((sum: number, r: any) => sum + r.amount_clp, 0) || 0;
 
                                                     return (
                                                         <div key={instNum} className={`flex flex-col p-2 rounded ${isOverdue ? 'bg-red-50 border border-red-100' : 'bg-blue-50'}`}>
@@ -507,7 +511,9 @@ export function PaymentButtons({ reservationId, lot, reservation, acquisitionDat
                                                             <div className="flex justify-between text-[10px] mt-1">
                                                                 <span className="text-gray-500">Monto: {formatCurrency(instBaseAmount)}</span>
                                                                 {instInterest > 0 && (
-                                                                    <span className="text-red-600 font-bold">Interés: +{formatCurrency(instInterest)}</span>
+                                                                    <span className="text-red-600 font-bold">
+                                                                        Interés: +{formatCurrency(Math.max(0, instInterest - instMoraCredits))}
+                                                                    </span>
                                                                 )}
                                                             </div>
                                                         </div>
