@@ -122,6 +122,11 @@ export function PaymentButtons({ reservationId, lot, reservation, acquisitionDat
     const pendingPieReceipt = reservation.receipts?.find((r: any) => r.scope === 'PIE' && r.status === 'PENDING');
     const pendingInstReceipt = reservation.receipts?.find((r: any) => r.scope === 'INSTALLMENT' && r.status === 'PENDING');
 
+    // Calculate mora credits (abonos parciales de intereses)
+    const moraCredits = reservation.receipts
+        ?.filter((r: any) => r.scope === 'MORA' && r.status === 'APPROVED')
+        .reduce((acc: number, r: any) => acc + r.amount_clp, 0) || 0;
+
     // Use simulatedDate if provided (Admin Mode), otherwise Now
     const currentDate = simulatedDate ? new Date(simulatedDate) : new Date();
 
@@ -232,6 +237,7 @@ export function PaymentButtons({ reservationId, lot, reservation, acquisitionDat
     }
 
     const calculatedInterest = accumulatedInterest;
+    const effectiveInterest = Math.max(0, calculatedInterest - moraCredits);
     const daysLateForDisplay = maxDaysLate;
     let lateRangeDisplay = "";
     if (earliestRangeStart && latestRangeEnd) {
@@ -240,7 +246,7 @@ export function PaymentButtons({ reservationId, lot, reservation, acquisitionDat
 
     const discount = reservation.next_installment_discount || 0;
     const additionalDebt = reservation.pending_amount || 0;
-    const finalTotal = Math.max(0, totalToPay + calculatedInterest + additionalDebt - discount);
+    const finalTotal = Math.max(0, totalToPay + effectiveInterest + additionalDebt - discount);
 
     const firstDue = getInstallmentDueDate(baseDate, paidCuotas + 1, isLegacyBool, customDueDay, isPromoBool);
     const lastDue = getInstallmentDueDate(baseDate, paidCuotas + count, isLegacyBool, customDueDay, isPromoBool);
@@ -455,8 +461,8 @@ export function PaymentButtons({ reservationId, lot, reservation, acquisitionDat
                                                 {overdueCount >= 1 && (
                                                     <div className="flex justify-between items-center mt-1">
                                                         <span className="bg-red-600 text-white text-[8px] px-1 rounded font-bold">OBLIGATORIO</span>
-                                                        {calculatedInterest > 0 && (
-                                                            <span className="text-[10px] text-red-600 font-bold">+ {formatCurrency(calculatedInterest)} interés</span>
+                                                        {effectiveInterest > 0 && (
+                                                            <span className="text-[10px] text-red-600 font-bold">+ {formatCurrency(effectiveInterest)} interés</span>
                                                         )}
                                                     </div>
                                                 )}
@@ -521,6 +527,13 @@ export function PaymentButtons({ reservationId, lot, reservation, acquisitionDat
                                                         ({lateRangeDisplay}: hasta {daysLateForDisplay} días de atraso)
                                                     </div>
                                                 )}
+                                            </div>
+                                        )}
+
+                                        {moraCredits > 0 && (
+                                            <div className="flex justify-between text-green-600 font-bold text-sm mt-2 border-t border-green-100 pt-1">
+                                                <span>Abono a Intereses:</span>
+                                                <span>-{formatCurrency(moraCredits)}</span>
                                             </div>
                                         )}
 

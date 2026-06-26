@@ -326,7 +326,7 @@ export function UserDocumentsList({ reservations }: { reservations: Reservation[
                                                             <div className="flex flex-col">
                                                                 <span className="text-[9px] font-black text-indigo-300 uppercase">Recibo #{receipt.id.slice(-4)}</span>
                                                                 <span className="text-[8px] text-gray-500 uppercase font-medium">
-                                                                    {receipt.scope === 'PIE' ? 'Pago de Pie' : receipt.scope === 'RESERVATION' ? 'Reserva' : 'Cuota Pagada'}
+                                                                    {receipt.scope === 'PIE' ? 'Pago de Pie' : receipt.scope === 'RESERVATION' ? 'Reserva' : receipt.scope === 'MORA' ? 'Abono Interés' : 'Cuota Pagada'}
                                                                 </span>
                                                             </div>
                                                             <div className="flex gap-3">

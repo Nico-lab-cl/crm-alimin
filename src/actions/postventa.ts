@@ -140,6 +140,11 @@ export async function getFullPostventaData({
             const pieAmount = res.receipts.reduce((acc: number, r: any) => r.scope === 'PIE' ? acc + r.amount_clp : acc, 0);
             const cuotasAmount = res.receipts.reduce((acc: number, r: any) => r.scope === 'INSTALLMENT' ? acc + r.amount_clp : acc, 0);
             
+            // Calculate mora credits (abonos parciales de intereses)
+            const moraCredits = res.receipts
+                .filter((r: any) => r.scope === 'MORA')
+                .reduce((acc: number, r: any) => acc + r.amount_clp, 0);
+            
             // Count actual installment receipts for discrepancy detection
             const receiptBasedInstallmentCount = res.receipts
                 .filter((r: any) => r.scope === 'INSTALLMENT')
@@ -386,19 +391,21 @@ export async function getFullPostventaData({
                 is_legacy: Boolean(res.is_legacy),
                 lateDays,
                 penaltyAmount,
+                moraCredits,
+                effectivePenalty: Math.max(0, penaltyAmount - moraCredits),
                 pending_amount: (res as any).pending_amount || 0,
                 pending_amount_reason: (res as any).pending_amount_reason || null,
                 isUpcoming,
-                isLate: penaltyAmount > 0 || ((res as any).pending_amount || 0) > 0,
-                isUpToDate: !isGracePeriod && penaltyAmount <= 0 && !isUpcoming && ((res as any).pending_amount || 0) <= 0,
-                status: (penaltyAmount > 0 && !Boolean(res.mora_frozen)) ? 'LATE' : 
+                isLate: Math.max(0, penaltyAmount - moraCredits) > 0 || ((res as any).pending_amount || 0) > 0,
+                isUpToDate: !isGracePeriod && Math.max(0, penaltyAmount - moraCredits) <= 0 && !isUpcoming && ((res as any).pending_amount || 0) <= 0,
+                status: (Math.max(0, penaltyAmount - moraCredits) > 0 && !Boolean(res.mora_frozen)) ? 'LATE' : 
                         (((res as any).pending_amount || 0) > 0 && !Boolean(res.mora_frozen)) ? 'LATE' :
                         (isGracePeriod && !Boolean(res.mora_frozen)) ? 'GRACE' : 
                         (isUpcoming && !Boolean(res.mora_frozen)) ? 'UPCOMING' : 'OK',
                 reservationStatus: res.status,
                 overdueInstallments,
                 totalOverdueInstallmentsAmount,
-                totalOverdueAmount: totalOverdueInstallmentsAmount + penaltyAmount + ((res as any).pending_amount || 0),
+                totalOverdueAmount: totalOverdueInstallmentsAmount + Math.max(0, penaltyAmount - moraCredits) + ((res as any).pending_amount || 0),
                 // Additional fields for editing
                 lotId: lot.id,
                 buyer: buyer,
@@ -597,7 +604,7 @@ export async function registerPostventaPayment({
 }: {
     reservationId: string;
     amount: number;
-    scope: 'PIE' | 'INSTALLMENT' | 'GASTOS_OPERACIONALES';
+    scope: 'PIE' | 'INSTALLMENT' | 'GASTOS_OPERACIONALES' | 'MORA';
     receiptUrl?: string;
     date?: string;
     serverAuthOverride?: boolean;
@@ -623,6 +630,9 @@ export async function registerPostventaPayment({
         let nominalNumber: number | null = null;
         if (scope === 'INSTALLMENT') {
             nominalNumber = nominalInstallmentNumber !== undefined ? nominalInstallmentNumber : (reservation.installments_paid || 0) + 1;
+        } else if (scope === 'MORA') {
+            // For mora credits, track which installment the interest payment corresponds to
+            nominalNumber = nominalInstallmentNumber !== undefined ? nominalInstallmentNumber : null;
         }
 
         const receipt = await prisma.paymentReceipt.create({
@@ -630,7 +640,7 @@ export async function registerPostventaPayment({
                 amount_clp: amount,
                 status: 'APPROVED',
                 receipt_url: receiptUrl,
-                scope: scope === 'GASTOS_OPERACIONALES' ? 'OTHERS' : scope,
+                scope: scope === 'GASTOS_OPERACIONALES' ? 'OTHERS' : (scope === 'MORA' ? 'MORA' : scope),
                 installments_count: scope === 'INSTALLMENT' ? 1 : undefined,
                 nominal_installment_number: nominalNumber,
                 reservation_id: reservationId,
@@ -673,6 +683,7 @@ export async function registerPostventaPayment({
                 data: { next_payment_date: nextPaymentDate }
             });
         }
+        // MORA scope: no state change needed - it's only an interest credit, not an installment payment
 
         memoryCache.deleteByPrefix('postventa_full_');
         memoryCache.deleteByPrefix('receipts_paginated_');

@@ -99,7 +99,7 @@ export function PostventaMobileDashboard({
     const [clientReceipts, setClientReceipts] = useState<any[]>([]);
     const [isLoadingReceipts, setIsLoadingReceipts] = useState(false);
     const [manualAmount, setManualAmount] = useState('');
-    const [manualScope, setManualScope] = useState<'PIE' | 'INSTALLMENT' | 'GASTOS_OPERACIONALES'>('INSTALLMENT');
+    const [manualScope, setManualScope] = useState<'PIE' | 'INSTALLMENT' | 'GASTOS_OPERACIONALES' | 'MORA'>('INSTALLMENT');
     const [manualInstallmentNumber, setManualInstallmentNumber] = useState<string>('');
     const [isUserView, setIsUserView] = useState(false);
     const [manualFile, setManualFile] = useState<File | null>(null);
@@ -1391,6 +1391,14 @@ export function PostventaMobileDashboard({
                                                         {formatCurrency(selectedClientLedger.penaltyAmount || 0)}
                                                     </p>
                                                 </div>
+                                                {(selectedClientLedger.moraCredits || 0) > 0 && (
+                                                    <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 shadow-sm">
+                                                        <p className="text-[8px] text-emerald-600 font-black uppercase tracking-widest mb-1.5">Abono a Intereses</p>
+                                                        <p className="text-lg font-black text-emerald-600 tabular-nums">
+                                                            -{formatCurrency(selectedClientLedger.moraCredits || 0)}
+                                                        </p>
+                                                    </div>
+                                                )}
                                                 <div className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm">
                                                     <p className="text-[8px] text-gray-500 font-black uppercase tracking-widest mb-1.5">Saldo Pendiente Manual</p>
                                                     <p className="text-lg font-black text-gray-900 tabular-nums">
@@ -1811,25 +1819,27 @@ export function PostventaMobileDashboard({
                                 <div className="space-y-1.5">
                                     <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">Tipo de Pago</label>
                                     <div className="flex gap-1">
-                                        {(['PIE', 'INSTALLMENT', 'GASTOS_OPERACIONALES'] as const).map(s => (
+                                        {(['PIE', 'INSTALLMENT', 'GASTOS_OPERACIONALES', 'MORA'] as const).map(s => (
                                             <button
                                                 key={s}
                                                 onClick={() => setManualScope(s)}
                                                 className={`flex-1 h-10 rounded-xl text-[8px] font-black uppercase transition-all border ${
                                                     manualScope === s 
-                                                    ? 'bg-[#3f6066] text-gray-900 border-[#3f6066]' 
+                                                    ? (s === 'MORA' ? 'bg-emerald-500 text-white border-emerald-500' : 'bg-[#3f6066] text-gray-900 border-[#3f6066]')
                                                     : 'bg-gray-50 text-gray-500 border-gray-200 hover:border-gray-200'
                                                 }`}
                                             >
-                                                {s === 'PIE' ? 'Pie' : s === 'INSTALLMENT' ? 'Cuota' : 'Gastos'}
+                                                {s === 'PIE' ? 'Pie' : s === 'INSTALLMENT' ? 'Cuota' : s === 'GASTOS_OPERACIONALES' ? 'Gastos' : 'Abono Interés'}
                                             </button>
                                         ))}
                                     </div>
                                 </div>
 
-                                {manualScope === 'INSTALLMENT' && (
+                                {(manualScope === 'INSTALLMENT' || manualScope === 'MORA') && (
                                     <div className="space-y-1.5">
-                                        <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">N° de Cuota</label>
+                                        <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">
+                                            {manualScope === 'MORA' ? 'Cuota Asociada al Interés' : 'N° de Cuota'}
+                                        </label>
                                         <select
                                             value={manualInstallmentNumber}
                                             onChange={(e) => setManualInstallmentNumber(e.target.value)}
@@ -1845,7 +1855,9 @@ export function PostventaMobileDashboard({
                                 )}
 
                                 <div className="space-y-1.5">
-                                    <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">Comprobante (Opcional)</label>
+                                    <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">
+                                        Comprobante {manualScope === 'MORA' ? '(Obligatorio)' : '(Opcional)'}
+                                    </label>
                                     <div className="relative group">
                                         <input 
                                             type="file"
@@ -1873,6 +1885,11 @@ export function PostventaMobileDashboard({
                                     <Button
                                         onClick={async () => {
                                             if (!manualAmount || isRegistering) return;
+                                            // MORA requires a receipt file
+                                            if (manualScope === 'MORA' && !manualFile) {
+                                                toast.error('El comprobante es obligatorio para abonos de interés');
+                                                return;
+                                            }
                                             setIsRegistering(true);
                                             try {
                                                 let receiptUrl = 'MANUAL_POSTVENTA';
@@ -1891,7 +1908,7 @@ export function PostventaMobileDashboard({
                                                     amount: parseInt(manualAmount),
                                                     scope: manualScope,
                                                     receiptUrl,
-                                                    nominalInstallmentNumber: manualScope === 'INSTALLMENT' ? parseInt(manualInstallmentNumber) : undefined
+                                                    nominalInstallmentNumber: (manualScope === 'INSTALLMENT' || manualScope === 'MORA') ? parseInt(manualInstallmentNumber) : undefined
                                                 });
                                                 if (res.error) toast.error(res.error);
                                                 else {
@@ -1950,11 +1967,13 @@ export function PostventaMobileDashboard({
                                                 <p className="text-[9px] text-gray-500 font-bold uppercase mt-0.5 tracking-tight">
                                                     {p.scope === 'PIE' 
                                                         ? 'Pago de Pie' 
-                                                        : p.nominal_installment_number 
-                                                            ? `Cuota ${p.nominal_installment_number}` 
-                                                            : p.nominal_installment_range 
-                                                                ? `Cuotas ${p.nominal_installment_range}` 
-                                                                : `${(p.installments_count || 1) > 1 ? p.installments_count + ' Cuotas' : 'Cuota'}`} · {format(new Date(p.created_at), 'dd/MM/yyyy HH:mm')}
+                                                        : p.scope === 'MORA'
+                                                            ? `Abono Interés${p.nominal_installment_number ? ` (Cuota ${p.nominal_installment_number})` : ''}`
+                                                            : p.nominal_installment_number 
+                                                                ? `Cuota ${p.nominal_installment_number}` 
+                                                                : p.nominal_installment_range 
+                                                                    ? `Cuotas ${p.nominal_installment_range}` 
+                                                                    : `${(p.installments_count || 1) > 1 ? p.installments_count + ' Cuotas' : 'Cuota'}`} · {format(new Date(p.created_at), 'dd/MM/yyyy HH:mm')}
                                                 </p>
                                             </div>
                                         </div>
