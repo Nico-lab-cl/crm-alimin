@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { calculateTotalInterest, getInstallmentDueDate, calculateDaysLate } from '@/lib/financials';
+import { calculateTotalInterest, getInstallmentDueDate, calculateDaysLate, calculateResidualMoraOnPaidInstallments } from '@/lib/financials';
 import { sendMoraWebhook } from '@/lib/webhooks';
 
 // This endpoint is called by n8n on the 11th of every month
@@ -37,7 +37,8 @@ export async function POST(req: NextRequest) {
             },
             include: {
                 buyer: true,
-                lot: true
+                lot: true,
+                receipts: true
             }
         });
 
@@ -114,6 +115,26 @@ export async function POST(req: NextRequest) {
                 }
 
                 const valorCuota = res.lot.valor_cuota || 0;
+
+                // Residuo de mora en cuotas YA PAGADAS (mora desacoplada del capital)
+                const chileNowMidnight = new Date(chileNow);
+                chileNowMidnight.setHours(0, 0, 0, 0);
+                const residualMoraTotal = calculateResidualMoraOnPaidInstallments({
+                    baseDate,
+                    paidCuotas: installmentsPaid,
+                    isLegacy: Boolean(res.is_legacy),
+                    customDueDay,
+                    isPromo: Boolean(res.is_promo),
+                    currentDate: chileNowMidnight,
+                    moraFrozen: Boolean((res as any).mora_frozen),
+                    legacyDebtStartDate: res.legacy_debt_start_date,
+                    // @ts-ignore
+                    legacyDebtEndDate: res.legacy_debt_end_date,
+                    moraReceipts: ((res as any).receipts || []).filter((r: any) => r.scope === 'MORA' && r.status === 'APPROVED'),
+                    totalLotPrice: res.lot.price_total_clp || 0,
+                    lotAreaM2: res.lot.area_m2 || 200,
+                }).total;
+
                 const payload = {
                     reservation_id: res.id,
                     contact_name: res.buyer.name,
@@ -123,7 +144,7 @@ export async function POST(req: NextRequest) {
                     cuota_numero: nextInstallmentNum,
                     monto_cuota: valorCuota,
                     interes_mora: interest,
-                    total_a_pagar: valorCuota + interest,
+                    total_a_pagar: valorCuota + interest + residualMoraTotal,
                     dias_atraso: daysLate,
                     link_gestion_terreno: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://aliminlomasdelmar.com'}/user/plots`
                 };

@@ -131,3 +131,93 @@ export function calculateTotalInterest(
     return dailyInterest * daysLate;
 }
 
+export interface ResidualMoraInstallment {
+    number: number;
+    dueDate: string;
+    interest: number;
+    credits: number;
+    residual: number;
+    daysLate: number;
+}
+
+/**
+ * Residuo de mora en cuotas YA PAGADAS (capital cubierto) cuyo interés de mora
+ * todavía no se salda. Desacopla la mora del capital: una cuota sigue acumulando
+ * mora a $10.000/día aunque su capital esté pagado, HASTA que los abonos de mora
+ * (scope=MORA, nominal_installment_number = N) cubran el interés devengado.
+ *
+ * OPT-IN (gating): solo aplica a cuotas pagadas que tengan al menos un abono de
+ * mora registrado. Así no se reactiva retroactivamente la mora de cuotas antiguas
+ * pagadas tarde sin abono. Para frenar definitivamente el residuo, usar mora_frozen
+ * o la fecha de cierre (legacy_debt_end_date), que ya topan el cálculo.
+ */
+export function calculateResidualMoraOnPaidInstallments(params: {
+    baseDate: Date | string;
+    paidCuotas: number;
+    isLegacy: boolean;
+    customDueDay?: number | null;
+    isPromo?: boolean;
+    currentDate: Date;
+    moraFrozen?: boolean;
+    legacyDebtStartDate?: Date | string | null;
+    legacyDebtEndDate?: Date | string | null;
+    moraReceipts: Array<{ nominal_installment_number: number | null; amount_clp: number }>;
+    totalLotPrice: number;
+    lotAreaM2: number;
+}): { total: number; installments: ResidualMoraInstallment[] } {
+    const installments: ResidualMoraInstallment[] = [];
+    if (params.moraFrozen || params.paidCuotas <= 0) return { total: 0, installments };
+
+    let total = 0;
+    for (let n = 1; n <= params.paidCuotas; n++) {
+        // Gating: solo cuotas con abono de mora explícito
+        const credits = params.moraReceipts
+            .filter((r) => r.nominal_installment_number === n)
+            .reduce((sum, r) => sum + (r.amount_clp || 0), 0);
+        if (credits <= 0) continue;
+
+        const due = getInstallmentDueDate(
+            params.baseDate,
+            n,
+            params.isLegacy,
+            params.customDueDay ?? null,
+            Boolean(params.isPromo)
+        );
+        if (due >= params.currentDate) continue;
+
+        const interest = calculateTotalInterest(
+            params.totalLotPrice,
+            params.lotAreaM2,
+            due,
+            params.isLegacy,
+            params.currentDate,
+            false,
+            params.legacyDebtStartDate,
+            params.legacyDebtEndDate
+        );
+
+        const residual = Math.max(0, interest - credits);
+        if (residual <= 0) continue;
+
+        const daysLate = calculateDaysLate(
+            due,
+            params.currentDate,
+            params.isLegacy,
+            params.legacyDebtStartDate,
+            params.legacyDebtEndDate
+        );
+
+        installments.push({
+            number: n,
+            dueDate: due.toISOString(),
+            interest,
+            credits,
+            residual,
+            daysLate: Math.max(0, daysLate),
+        });
+        total += residual;
+    }
+
+    return { total, installments };
+}
+

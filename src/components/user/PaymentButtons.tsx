@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/select";
 import { Loader2, CreditCard, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
-import { getInstallmentDueDate, calculateDailyInterest, calculateTotalInterest } from '@/lib/financials';
+import { getInstallmentDueDate, calculateDailyInterest, calculateTotalInterest, calculateResidualMoraOnPaidInstallments } from '@/lib/financials';
 import { uploadPaymentReceipt } from '@/actions/receipts';
 import { Input } from '@/components/ui/input';
 
@@ -237,7 +237,31 @@ export function PaymentButtons({ reservationId, lot, reservation, acquisitionDat
     }
 
     const calculatedInterest = accumulatedInterest;
-    const effectiveInterest = Math.max(0, calculatedInterest - moraCredits);
+
+    // Residuo de mora en cuotas YA PAGADAS (mora desacoplada del capital)
+    const residualMoraResult = calculateResidualMoraOnPaidInstallments({
+        baseDate,
+        paidCuotas,
+        isLegacy: isLegacyBool,
+        customDueDay,
+        isPromo: isPromoBool,
+        currentDate: checkDate,
+        moraFrozen: Boolean(reservation.mora_frozen),
+        legacyDebtStartDate: reservation.legacy_debt_start_date,
+        legacyDebtEndDate: reservation.legacy_debt_end_date,
+        moraReceipts: (reservation.receipts || []).filter((r: any) => r.scope === 'MORA' && r.status === 'APPROVED'),
+        totalLotPrice: lot.price_total_clp || 0,
+        lotAreaM2: lot.area_m2 || 200,
+    });
+    const residualMoraTotal = residualMoraResult.total;
+
+    // Créditos de mora ya consumidos por el residuo de cuotas pagadas (evita doble descuento)
+    const moraCreditsPaidTracked = (reservation.receipts || [])
+        .filter((r: any) => r.scope === 'MORA' && r.status === 'APPROVED' && r.nominal_installment_number != null && r.nominal_installment_number <= paidCuotas)
+        .reduce((acc: number, r: any) => acc + r.amount_clp, 0);
+    const moraCreditsUnpaid = Math.max(0, moraCredits - moraCreditsPaidTracked);
+
+    const effectiveInterest = Math.max(0, calculatedInterest - moraCreditsUnpaid);
     const daysLateForDisplay = maxDaysLate;
     let lateRangeDisplay = "";
     if (earliestRangeStart && latestRangeEnd) {
@@ -246,7 +270,7 @@ export function PaymentButtons({ reservationId, lot, reservation, acquisitionDat
 
     const discount = reservation.next_installment_discount || 0;
     const additionalDebt = reservation.pending_amount || 0;
-    const finalTotal = Math.max(0, totalToPay + effectiveInterest + additionalDebt - discount);
+    const finalTotal = Math.max(0, totalToPay + effectiveInterest + residualMoraTotal + additionalDebt - discount);
 
     const firstDue = getInstallmentDueDate(baseDate, paidCuotas + 1, isLegacyBool, customDueDay, isPromoBool);
     const lastDue = getInstallmentDueDate(baseDate, paidCuotas + count, isLegacyBool, customDueDay, isPromoBool);
@@ -540,6 +564,18 @@ export function PaymentButtons({ reservationId, lot, reservation, acquisitionDat
                                             <div className="flex justify-between text-green-600 font-bold text-sm mt-2 border-t border-green-100 pt-1">
                                                 <span>Abono a Intereses:</span>
                                                 <span>-{formatCurrency(moraCredits)}</span>
+                                            </div>
+                                        )}
+
+                                        {residualMoraTotal > 0 && (
+                                            <div className="mt-2 border-t border-red-100 pt-1">
+                                                <div className="flex justify-between text-red-600 font-bold text-sm">
+                                                    <span>Interés mora pendiente (cuotas pagadas):</span>
+                                                    <span>{formatCurrency(residualMoraTotal)}</span>
+                                                </div>
+                                                <div className="text-xs font-normal text-red-500 text-right">
+                                                    (Cuota{residualMoraResult.installments.length > 1 ? 's' : ''} {residualMoraResult.installments.map(i => `#${i.number}`).join(', ')})
+                                                </div>
                                             </div>
                                         )}
 

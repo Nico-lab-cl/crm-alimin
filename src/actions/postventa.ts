@@ -2,7 +2,7 @@
 
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
-import { getInstallmentDueDate, calculateTotalInterest, calculateDailyInterest, getChileToday, calculateDaysLate } from "@/lib/financials"
+import { getInstallmentDueDate, calculateTotalInterest, calculateDailyInterest, getChileToday, calculateDaysLate, calculateResidualMoraOnPaidInstallments } from "@/lib/financials"
 import { memoryCache } from "@/lib/cache"
 import { revalidatePath } from "next/cache"
 import { addReceiptToManualDocuments } from "@/actions/receipts"
@@ -360,6 +360,48 @@ export async function getFullPostventaData({
                 } catch (e) {}
             }
 
+            // --- RESIDUO DE MORA EN CUOTAS YA PAGADAS (mora desacoplada del capital) ---
+            const customDueDayPaid = res.legacy_installment_start_date
+                ? new Date(res.legacy_installment_start_date).getDate()
+                : null;
+            const residualMora = calculateResidualMoraOnPaidInstallments({
+                baseDate,
+                paidCuotas,
+                isLegacy: isLegacyBool,
+                customDueDay: customDueDayPaid,
+                isPromo: Boolean(res.is_promo),
+                currentDate,
+                moraFrozen: Boolean(res.mora_frozen),
+                legacyDebtStartDate: res.legacy_debt_start_date,
+                legacyDebtEndDate: res.legacy_debt_end_date,
+                moraReceipts: res.receipts.filter((r: any) => r.scope === 'MORA'),
+                totalLotPrice: totalToPay,
+                lotAreaM2: lot.area_m2 || 200,
+            });
+
+            // Créditos de mora ya consumidos por el residuo de cuotas pagadas (evita doble descuento)
+            const moraCreditsPaidTracked = res.receipts
+                .filter((r: any) => r.scope === 'MORA' && r.nominal_installment_number != null && r.nominal_installment_number <= paidCuotas)
+                .reduce((acc: number, r: any) => acc + r.amount_clp, 0);
+            const moraCreditsUnpaid = Math.max(0, moraCredits - moraCreditsPaidTracked);
+
+            // Mora efectiva = (interés de cuotas impagas - créditos no aplicados) + residuo de cuotas pagadas
+            const effectivePenalty = Math.max(0, penaltyAmount - moraCreditsUnpaid) + residualMora.total;
+
+            // Reflejar las cuotas pagadas con mora pendiente en el desglose de deuda vencida
+            const MONTHS_ES_RESIDUAL = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+            for (const ri of residualMora.installments) {
+                overdueInstallments.push({
+                    number: ri.number,
+                    dueDate: ri.dueDate,
+                    amount: 0,
+                    daysLate: ri.daysLate,
+                    interestPenalty: ri.residual,
+                    monthName: MONTHS_ES_RESIDUAL[new Date(ri.dueDate).getUTCMonth()],
+                    capitalPaid: true,
+                });
+            }
+
             const fetchedName = buyer?.name || res.name || 'Sin nombre';
             const fetchedLastName = (res as any).last_name || '';
             const fullNameConcat = fetchedLastName ? `${fetchedName} ${fetchedLastName}`.trim() : fetchedName;
@@ -398,20 +440,20 @@ export async function getFullPostventaData({
                 lateDays,
                 penaltyAmount,
                 moraCredits,
-                effectivePenalty: Math.max(0, penaltyAmount - moraCredits),
+                effectivePenalty: effectivePenalty,
                 pending_amount: (res as any).pending_amount || 0,
                 pending_amount_reason: (res as any).pending_amount_reason || null,
                 isUpcoming,
-                isLate: Math.max(0, penaltyAmount - moraCredits) > 0 || ((res as any).pending_amount || 0) > 0,
-                isUpToDate: !isGracePeriod && Math.max(0, penaltyAmount - moraCredits) <= 0 && !isUpcoming && ((res as any).pending_amount || 0) <= 0,
-                status: (Math.max(0, penaltyAmount - moraCredits) > 0 && !Boolean(res.mora_frozen)) ? 'LATE' : 
+                isLate: effectivePenalty > 0 || ((res as any).pending_amount || 0) > 0,
+                isUpToDate: !isGracePeriod && effectivePenalty <= 0 && !isUpcoming && ((res as any).pending_amount || 0) <= 0,
+                status: (effectivePenalty > 0 && !Boolean(res.mora_frozen)) ? 'LATE' : 
                         (((res as any).pending_amount || 0) > 0 && !Boolean(res.mora_frozen)) ? 'LATE' :
                         (isGracePeriod && !Boolean(res.mora_frozen)) ? 'GRACE' : 
                         (isUpcoming && !Boolean(res.mora_frozen)) ? 'UPCOMING' : 'OK',
                 reservationStatus: res.status,
                 overdueInstallments,
                 totalOverdueInstallmentsAmount,
-                totalOverdueAmount: totalOverdueInstallmentsAmount + Math.max(0, penaltyAmount - moraCredits) + ((res as any).pending_amount || 0),
+                totalOverdueAmount: totalOverdueInstallmentsAmount + effectivePenalty + ((res as any).pending_amount || 0),
                 // Additional fields for editing
                 lotId: lot.id,
                 buyer: buyer,

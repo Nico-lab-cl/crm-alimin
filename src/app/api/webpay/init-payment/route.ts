@@ -2,7 +2,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { webpayCreate } from '@/lib/transbank'; // Use shared utility
-import { calculateTotalInterest, getInstallmentDueDate } from '@/lib/financials';
+import { calculateTotalInterest, getInstallmentDueDate, calculateResidualMoraOnPaidInstallments } from '@/lib/financials';
 
 // Helper: Determine the exact price for a specific installment number
 function getInstallmentAmount(
@@ -37,7 +37,7 @@ export async function POST(request: Request) {
 
         const reservation = await prisma.reservation.findUnique({
             where: { id: reservationId },
-            include: { lot: true }
+            include: { lot: true, receipts: true }
         });
 
         if (!reservation || !reservation.lot) {
@@ -142,10 +142,31 @@ export async function POST(request: Request) {
                 }
             }
 
+            // Residuo de mora en cuotas YA PAGADAS (mora desacoplada del capital)
+            const effectiveNowResidual = comparisonDate || simulatedDate || new Date();
+            const chileNowResidual = new Date(new Date(effectiveNowResidual).toLocaleString("en-US", { timeZone: "America/Santiago" }));
+            chileNowResidual.setHours(0, 0, 0, 0);
+            const residualMoraResult = calculateResidualMoraOnPaidInstallments({
+                baseDate: acquisitionDate,
+                paidCuotas: currentPaid,
+                isLegacy: Boolean(reservation.is_legacy),
+                customDueDay,
+                isPromo: Boolean(reservation.is_promo),
+                currentDate: chileNowResidual,
+                moraFrozen: Boolean((reservation as any).mora_frozen),
+                legacyDebtStartDate: reservation.legacy_debt_start_date,
+                // @ts-ignore
+                legacyDebtEndDate: reservation.legacy_debt_end_date,
+                moraReceipts: ((reservation as any).receipts || []).filter((r: any) => r.scope === 'MORA' && r.status === 'APPROVED'),
+                totalLotPrice: reservation.lot.price_total_clp || 0,
+                lotAreaM2: reservation.lot.area_m2 || 200,
+            });
+            const residualMoraTotal = residualMoraResult.total;
+
             const additionalDebt = (reservation as any).pending_amount || 0;
             const discount = (reservation as any).next_installment_discount || 0;
-            amount = Math.max(0, amount + totalInterest + additionalDebt - discount);
-            console.log(`Total Amount: ${amount} (Includes Interest: ${totalInterest}, Additional Debt: ${additionalDebt}, Discount: ${discount})`);
+            amount = Math.max(0, amount + totalInterest + residualMoraTotal + additionalDebt - discount);
+            console.log(`Total Amount: ${amount} (Includes Interest: ${totalInterest}, Residual Mora: ${residualMoraTotal}, Additional Debt: ${additionalDebt}, Discount: ${discount})`);
 
             buyOrderScope = 'CUOTA';
             installmentsCount = installments;
