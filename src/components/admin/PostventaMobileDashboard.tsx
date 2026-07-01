@@ -1399,6 +1399,14 @@ export function PostventaMobileDashboard({
                                                         </p>
                                                     </div>
                                                 )}
+                                                {(selectedClientLedger.residualMoraTotal || 0) > 0 && (
+                                                    <div className="bg-red-50 border border-red-200 rounded-2xl p-4 shadow-sm">
+                                                        <p className="text-[8px] text-red-600 font-black uppercase tracking-widest mb-1.5">Interés Mora (Cuotas Pagadas)</p>
+                                                        <p className="text-lg font-black text-red-600 tabular-nums">
+                                                            {formatCurrency(selectedClientLedger.residualMoraTotal || 0)}
+                                                        </p>
+                                                    </div>
+                                                )}
                                                 <div className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm">
                                                     <p className="text-[8px] text-gray-500 font-black uppercase tracking-widest mb-1.5">Saldo Pendiente Manual</p>
                                                     <p className="text-lg font-black text-gray-900 tabular-nums">

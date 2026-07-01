@@ -440,6 +440,7 @@ export async function getFullPostventaData({
                 lateDays,
                 penaltyAmount,
                 moraCredits,
+                residualMoraTotal: residualMora.total,
                 effectivePenalty: effectivePenalty,
                 pending_amount: (res as any).pending_amount || 0,
                 pending_amount_reason: (res as any).pending_amount_reason || null,
