@@ -844,13 +844,113 @@ export async function adjustInstallmentsPaid({
         memoryCache.deleteByPrefix('receipts_paginated_');
         revalidatePath('/admin/dashboard');
 
-        return { 
-            success: true, 
+        return {
+            success: true,
             message: `Cuotas pagadas ajustadas de ${oldCount} a ${newCount}. Próximo vencimiento recalculado.`,
             newNextPaymentDate: nextPaymentDate
         };
     } catch (error) {
         console.error("Error adjusting installments_paid:", error);
         return { error: 'Error al ajustar las cuotas pagadas' };
+    }
+}
+
+/**
+ * Sealed action: manually adjust the "Fecha Inicio de Cuotas" (legacy_installment_start_date).
+ * This date drives every due-date and mora calculation, so it requires a mandatory reason
+ * and is logged for traceability, same pattern as adjustInstallmentsPaid.
+ */
+export async function updateInstallmentStartDate({
+    reservationId,
+    newStartDate,
+    reason
+}: {
+    reservationId: string;
+    newStartDate: string;
+    reason: string;
+}) {
+    const session = await auth();
+    const isPostventa = session?.user?.email === 'postventa@lomasdelmar.cl' || session?.user?.email === 'postventa@aliminspa.cl';
+    if (!session?.user || (session.user.role !== 'ADMIN' && !isPostventa)) {
+        return { error: 'No autorizado' };
+    }
+
+    if (!newStartDate) {
+        return { error: 'Debes indicar la nueva fecha de inicio de cuotas' };
+    }
+
+    if (!reason || reason.trim().length < 5) {
+        return { error: 'Debes indicar un motivo (mínimo 5 caracteres)' };
+    }
+
+    try {
+        const reservation = await prisma.reservation.findUnique({
+            where: { id: reservationId },
+            include: {
+                lot: { select: { number: true, stage: true, cuotas: true } },
+                buyer: { select: { name: true, email: true } }
+            }
+        });
+
+        if (!reservation) return { error: 'Reserva no encontrada' };
+
+        const oldDate = reservation.legacy_installment_start_date;
+        const newDate = new Date(newStartDate);
+
+        // 1. Update legacy_installment_start_date
+        const updatedReservation = await prisma.reservation.update({
+            where: { id: reservationId },
+            data: { legacy_installment_start_date: newDate },
+            include: { lot: true }
+        });
+
+        // 2. Recalculate next_payment_date
+        const { calculateNextPaymentDate } = await import("@/actions/receipts");
+        const nextPaymentDate = await calculateNextPaymentDate(updatedReservation);
+        await prisma.reservation.update({
+            where: { id: reservationId },
+            data: { next_payment_date: nextPaymentDate }
+        });
+
+        // 3. Create audit log
+        const clientName = reservation.buyer?.name || 'Desconocido';
+        const lotNumber = reservation.lot?.number || 'N/A';
+        const lotStage = reservation.lot?.stage || 'N/A';
+
+        await prisma.auditLog.create({
+            data: {
+                action: 'UPDATE',
+                entity: 'Reservation',
+                entity_id: reservationId,
+                details: JSON.stringify({
+                    type: 'UPDATE_INSTALLMENT_START_DATE',
+                    oldDate: oldDate ? new Date(oldDate).toISOString() : null,
+                    newDate: newDate.toISOString(),
+                    reason: reason.trim(),
+                    clientName,
+                    lotNumber,
+                    lotStage,
+                    newNextPaymentDate: nextPaymentDate?.toISOString() || null,
+                    adjustedBy: session.user.email
+                }),
+                pk: reservationId,
+                user_id: session.user.id,
+                user_email: session.user.email,
+            }
+        });
+
+        // 4. Invalidate caches
+        memoryCache.deleteByPrefix('postventa_full_');
+        memoryCache.deleteByPrefix('receipts_paginated_');
+        revalidatePath('/admin/dashboard');
+
+        return {
+            success: true,
+            message: `Fecha de inicio de cuotas actualizada. Próximo vencimiento recalculado.`,
+            newNextPaymentDate: nextPaymentDate
+        };
+    } catch (error) {
+        console.error("Error updating installment start date:", error);
+        return { error: 'Error al actualizar la fecha de inicio de cuotas' };
     }
 }

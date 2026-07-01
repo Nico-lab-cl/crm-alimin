@@ -5,9 +5,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 import { assignLegacyLotOwner, impersonateUser } from "@/actions/dashboard"
+import { adjustInstallmentsPaid, updateInstallmentStartDate } from "@/actions/postventa"
 import { toast } from "sonner"
-import { Loader2, Calendar as CalendarIcon, Eye } from "lucide-react"
+import { Loader2, Calendar as CalendarIcon, Eye, Lock } from "lucide-react"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
 import { format } from "date-fns"
@@ -70,6 +72,65 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
     const [installmentStartDate, setInstallmentStartDate] = useState<Date | undefined>(undefined)
     const [nextPaymentDate, setNextPaymentDate] = useState<Date | undefined>(undefined)
     const [installmentRanges, setInstallmentRanges] = useState<{ from: number | '', to: number | '', amount: number | '' }[]>([])
+
+    // --- Sealed fields: "Cuotas ya PAGADAS" y "Fecha Inicio de Cuotas" ---
+    // Estos campos afectan directamente el cálculo de mora y vencimientos, por lo
+    // que se editan vía acciones dedicadas con motivo obligatorio + auditoría,
+    // en vez del formulario general de "Editar Cliente".
+    const [showAdjustCuotasDialog, setShowAdjustCuotasDialog] = useState(false)
+    const [adjustCuotasValue, setAdjustCuotasValue] = useState("")
+    const [adjustCuotasReason, setAdjustCuotasReason] = useState("")
+    const [adjustingCuotas, setAdjustingCuotas] = useState(false)
+
+    const [showAdjustDateDialog, setShowAdjustDateDialog] = useState(false)
+    const [adjustDateValue, setAdjustDateValue] = useState<Date | undefined>(undefined)
+    const [adjustDateReason, setAdjustDateReason] = useState("")
+    const [adjustingDate, setAdjustingDate] = useState(false)
+
+    const handleAdjustCuotas = async () => {
+        if (!existingReservation?.id) return
+        const newCount = Number(adjustCuotasValue)
+        if (isNaN(newCount) || adjustCuotasValue.trim() === "") {
+            toast.error("Ingresa un número de cuotas válido")
+            return
+        }
+        setAdjustingCuotas(true)
+        try {
+            const res = await adjustInstallmentsPaid({ reservationId: existingReservation.id, newCount, reason: adjustCuotasReason })
+            if (res.error) {
+                toast.error(res.error)
+                return
+            }
+            toast.success(res.message || "Cuotas pagadas actualizadas")
+            setShowAdjustCuotasDialog(false)
+            setAdjustCuotasReason("")
+            onSuccess()
+        } finally {
+            setAdjustingCuotas(false)
+        }
+    }
+
+    const handleAdjustStartDate = async () => {
+        if (!existingReservation?.id || !adjustDateValue) return
+        setAdjustingDate(true)
+        try {
+            const res = await updateInstallmentStartDate({
+                reservationId: existingReservation.id,
+                newStartDate: adjustDateValue.toISOString(),
+                reason: adjustDateReason
+            })
+            if (res.error) {
+                toast.error(res.error)
+                return
+            }
+            toast.success(res.message || "Fecha de inicio de cuotas actualizada")
+            setShowAdjustDateDialog(false)
+            setAdjustDateReason("")
+            onSuccess()
+        } finally {
+            setAdjustingDate(false)
+        }
+    }
 
     useEffect(() => {
         if (open && existingReservation && (existingReservation.buyer || existingReservation.name)) {
@@ -261,6 +322,7 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
     }
 
     return (
+        <>
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
@@ -779,44 +841,66 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
                                 <h4 className="font-semibold text-blue-900 border-b border-blue-200 pb-2">Estado de Pagos Actual</h4>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                        <Label htmlFor="legacy_current_installment">Cuotas ya PAGADAS por el cliente</Label>
+                                        <div className="flex items-center justify-between">
+                                            <Label htmlFor="legacy_current_installment">Cuotas ya PAGADAS por el cliente</Label>
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="sm"
+                                                className="h-6 px-2 text-[10px] text-amber-700 hover:bg-amber-50 gap-1"
+                                                onClick={() => {
+                                                    setAdjustCuotasValue(String(formData.legacy_current_installment))
+                                                    setAdjustCuotasReason("")
+                                                    setShowAdjustCuotasDialog(true)
+                                                }}
+                                            >
+                                                <Lock className="w-3 h-3" /> Modificar con motivo
+                                            </Button>
+                                        </div>
                                         <Input
                                             id="legacy_current_installment"
                                             type="number"
                                             min="0"
                                             required
+                                            disabled
                                             value={formData.legacy_current_installment}
-                                            onChange={(e) => setFormData({ ...formData, legacy_current_installment: Number(e.target.value) })}
+                                            className="bg-gray-100 text-gray-500 cursor-not-allowed"
                                         />
                                         <p className="text-xs text-blue-600 font-medium">Indica el número total de cuotas que el cliente ya tiene canceladas. Ej: Si pagó 2, pon 2.</p>
+                                        <p className="text-xs text-amber-600 font-semibold flex items-center gap-1"><Lock className="w-3 h-3" /> Campo sellado: afecta el cálculo de mora. Usa &quot;Modificar con motivo&quot;.</p>
                                     </div>
 
                                     <div className="space-y-2">
-                                        <Label>Fecha Inicio de Cuotas</Label>
+                                        <div className="flex items-center justify-between">
+                                            <Label>Fecha Inicio de Cuotas</Label>
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="sm"
+                                                className="h-6 px-2 text-[10px] text-amber-700 hover:bg-amber-50 gap-1"
+                                                onClick={() => {
+                                                    setAdjustDateValue(installmentStartDate)
+                                                    setAdjustDateReason("")
+                                                    setShowAdjustDateDialog(true)
+                                                }}
+                                            >
+                                                <Lock className="w-3 h-3" /> Modificar con motivo
+                                            </Button>
+                                        </div>
                                         <p className="text-xs text-gray-500">Selecciona el <strong>día 5 del MES de la primera cuota</strong>. Ej: si la cuota 1 fue en Enero, selecciona 5 de Enero.</p>
-                                        <Popover>
-                                            <PopoverTrigger asChild>
-                                                <Button
-                                                    type="button"
-                                                    variant="outline"
-                                                    className={cn(
-                                                        "w-full justify-start text-left font-normal",
-                                                        !installmentStartDate && "text-muted-foreground"
-                                                    )}
-                                                >
-                                                    <CalendarIcon className="mr-2 h-4 w-4" />
-                                                    {installmentStartDate ? format(installmentStartDate, "dd/MM/yyyy", { locale: es }) : <span>Seleccionar fecha base</span>}
-                                                </Button>
-                                            </PopoverTrigger>
-                                            <PopoverContent className="w-auto p-0" align="start">
-                                                <Calendar
-                                                    mode="single"
-                                                    selected={installmentStartDate}
-                                                    onSelect={setInstallmentStartDate}
-                                                    initialFocus
-                                                />
-                                            </PopoverContent>
-                                        </Popover>
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            disabled
+                                            className={cn(
+                                                "w-full justify-start text-left font-normal bg-gray-100 text-gray-500 cursor-not-allowed disabled:opacity-100",
+                                                !installmentStartDate && "text-muted-foreground"
+                                            )}
+                                        >
+                                            <CalendarIcon className="mr-2 h-4 w-4" />
+                                            {installmentStartDate ? format(installmentStartDate, "dd/MM/yyyy", { locale: es }) : <span>Sin fecha configurada</span>}
+                                        </Button>
+                                        <p className="text-xs text-amber-600 font-semibold flex items-center gap-1"><Lock className="w-3 h-3" /> Campo sellado: afecta el cálculo de mora. Usa &quot;Modificar con motivo&quot;.</p>
                                     </div>
 
                                     <div className="space-y-2">
@@ -1049,5 +1133,122 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
                 </form>
             </DialogContent>
         </Dialog>
+
+        {/* Sealed action: Cuotas ya PAGADAS */}
+        <Dialog open={showAdjustCuotasDialog} onOpenChange={setShowAdjustCuotasDialog}>
+            <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2">
+                        <Lock className="w-4 h-4 text-amber-600" /> Modificar Cuotas Pagadas
+                    </DialogTitle>
+                    <DialogDescription>
+                        Este campo afecta directamente el cálculo de mora y el próximo vencimiento. El cambio queda registrado en el historial de auditoría.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 pt-2">
+                    <div className="space-y-2">
+                        <Label htmlFor="adjust-cuotas-value">Nuevo número de cuotas pagadas</Label>
+                        <Input
+                            id="adjust-cuotas-value"
+                            type="number"
+                            min="0"
+                            value={adjustCuotasValue}
+                            onChange={(e) => setAdjustCuotasValue(e.target.value)}
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="adjust-cuotas-reason">Motivo del cambio (obligatorio)</Label>
+                        <Textarea
+                            id="adjust-cuotas-reason"
+                            rows={3}
+                            placeholder="Ej: Corrección de migración legacy, cliente presentó comprobantes de 3 cuotas..."
+                            value={adjustCuotasReason}
+                            onChange={(e) => setAdjustCuotasReason(e.target.value)}
+                        />
+                    </div>
+                </div>
+                <div className="flex justify-end gap-2 pt-2">
+                    <Button type="button" variant="outline" onClick={() => setShowAdjustCuotasDialog(false)} disabled={adjustingCuotas}>
+                        Cancelar
+                    </Button>
+                    <Button
+                        type="button"
+                        className="bg-amber-600 text-white hover:bg-amber-700"
+                        onClick={handleAdjustCuotas}
+                        disabled={adjustingCuotas || adjustCuotasReason.trim().length < 5}
+                    >
+                        {adjustingCuotas ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Lock className="w-4 h-4 mr-2" />}
+                        Confirmar Cambio
+                    </Button>
+                </div>
+            </DialogContent>
+        </Dialog>
+
+        {/* Sealed action: Fecha Inicio de Cuotas */}
+        <Dialog open={showAdjustDateDialog} onOpenChange={setShowAdjustDateDialog}>
+            <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2">
+                        <Lock className="w-4 h-4 text-amber-600" /> Modificar Fecha Inicio de Cuotas
+                    </DialogTitle>
+                    <DialogDescription>
+                        Este campo afecta directamente el cálculo de mora y el próximo vencimiento. El cambio queda registrado en el historial de auditoría.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 pt-2">
+                    <div className="space-y-2">
+                        <Label>Nueva fecha (día 5 del mes de la primera cuota)</Label>
+                        <Popover>
+                            <PopoverTrigger asChild>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    className={cn(
+                                        "w-full justify-start text-left font-normal",
+                                        !adjustDateValue && "text-muted-foreground"
+                                    )}
+                                >
+                                    <CalendarIcon className="mr-2 h-4 w-4" />
+                                    {adjustDateValue ? format(adjustDateValue, "dd/MM/yyyy", { locale: es }) : <span>Seleccionar fecha base</span>}
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                                <Calendar
+                                    mode="single"
+                                    selected={adjustDateValue}
+                                    onSelect={setAdjustDateValue}
+                                    initialFocus
+                                />
+                            </PopoverContent>
+                        </Popover>
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="adjust-date-reason">Motivo del cambio (obligatorio)</Label>
+                        <Textarea
+                            id="adjust-date-reason"
+                            rows={3}
+                            placeholder="Ej: Cliente Ivis Peña, primera cuota real fue en Julio, no Marzo..."
+                            value={adjustDateReason}
+                            onChange={(e) => setAdjustDateReason(e.target.value)}
+                        />
+                    </div>
+                </div>
+                <div className="flex justify-end gap-2 pt-2">
+                    <Button type="button" variant="outline" onClick={() => setShowAdjustDateDialog(false)} disabled={adjustingDate}>
+                        Cancelar
+                    </Button>
+                    <Button
+                        type="button"
+                        className="bg-amber-600 text-white hover:bg-amber-700"
+                        onClick={handleAdjustStartDate}
+                        disabled={adjustingDate || !adjustDateValue || adjustDateReason.trim().length < 5}
+                    >
+                        {adjustingDate ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Lock className="w-4 h-4 mr-2" />}
+                        Confirmar Cambio
+                    </Button>
+                </div>
+            </DialogContent>
+        </Dialog>
+        </>
     )
 }
