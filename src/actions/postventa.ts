@@ -954,3 +954,84 @@ export async function updateInstallmentStartDate({
         return { error: 'Error al actualizar la fecha de inicio de cuotas' };
     }
 }
+
+/**
+ * Postventa-editable action: override the "Próximo Pago" date (next_payment_date).
+ *
+ * A diferencia de los campos SELLADOS ("Cuotas ya PAGADAS" y "Fecha Inicio de Cuotas"),
+ * que alimentan el cálculo de mora/intereses, `next_payment_date` es SOLO un override de
+ * la fecha de vencimiento mostrada del siguiente pago. NO afecta la mora, el capital, las
+ * cuotas pagadas ni ningún otro campo del cliente. Escribe exactamente una columna y el
+ * sistema la recalcula automáticamente cuando entra el siguiente pago real.
+ *
+ * Permitido para ADMIN y ambas cuentas de postventa (@lomasdelmar.cl y @aliminspa.cl).
+ */
+export async function updateNextPaymentDate({
+    reservationId,
+    nextPaymentDate
+}: {
+    reservationId: string;
+    nextPaymentDate: string | null;
+}) {
+    const session = await auth();
+    const isPostventa = session?.user?.email === 'postventa@lomasdelmar.cl' || session?.user?.email === 'postventa@aliminspa.cl';
+    if (!session?.user || (session.user.role !== 'ADMIN' && !isPostventa)) {
+        return { error: 'No autorizado' };
+    }
+
+    try {
+        const reservation = await prisma.reservation.findUnique({
+            where: { id: reservationId },
+            include: {
+                lot: { select: { number: true, stage: true } },
+                buyer: { select: { name: true } }
+            }
+        });
+
+        if (!reservation) return { error: 'Reserva no encontrada' };
+
+        const oldDate = reservation.next_payment_date;
+        const newDate = nextPaymentDate ? new Date(nextPaymentDate) : null;
+
+        // Escribe ÚNICAMENTE next_payment_date. Ningún otro dato del cliente se toca.
+        await prisma.reservation.update({
+            where: { id: reservationId },
+            data: { next_payment_date: newDate }
+        });
+
+        // Registro de auditoría para trazabilidad
+        await prisma.auditLog.create({
+            data: {
+                action: 'UPDATE',
+                entity: 'Reservation',
+                entity_id: reservationId,
+                details: JSON.stringify({
+                    type: 'UPDATE_NEXT_PAYMENT_DATE',
+                    oldDate: oldDate ? new Date(oldDate).toISOString() : null,
+                    newDate: newDate ? newDate.toISOString() : null,
+                    clientName: reservation.buyer?.name || 'Desconocido',
+                    lotNumber: reservation.lot?.number || 'N/A',
+                    lotStage: reservation.lot?.stage || 'N/A',
+                    adjustedBy: session.user.email
+                }),
+                pk: reservationId,
+                user_id: session.user.id,
+                user_email: session.user.email,
+            }
+        });
+
+        memoryCache.deleteByPrefix('postventa_full_');
+        memoryCache.deleteByPrefix('receipts_paginated_');
+        revalidatePath('/admin/dashboard');
+
+        return {
+            success: true,
+            message: newDate
+                ? `Próximo pago actualizado al ${newDate.toLocaleDateString('es-CL')}.`
+                : 'Próximo pago restablecido a cálculo automático (Día 5).'
+        };
+    } catch (error) {
+        console.error("Error updating next payment date:", error);
+        return { error: 'Error al actualizar el próximo pago' };
+    }
+}

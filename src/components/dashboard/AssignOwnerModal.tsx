@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { assignLegacyLotOwner, impersonateUser } from "@/actions/dashboard"
-import { adjustInstallmentsPaid, updateInstallmentStartDate } from "@/actions/postventa"
+import { adjustInstallmentsPaid, updateInstallmentStartDate, updateNextPaymentDate } from "@/actions/postventa"
 import { toast } from "sonner"
 import { Loader2, Calendar as CalendarIcon, Eye, Lock } from "lucide-react"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
@@ -86,6 +86,30 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
     const [adjustDateValue, setAdjustDateValue] = useState<Date | undefined>(undefined)
     const [adjustDateReason, setAdjustDateReason] = useState("")
     const [adjustingDate, setAdjustingDate] = useState(false)
+
+    // --- "Próximo Pago": editable por postventa vía acción dedicada ---
+    // A diferencia de los campos sellados, esto escribe SOLO next_payment_date
+    // (override de la fecha mostrada); no afecta mora ni ningún otro dato.
+    const [savingNextPayment, setSavingNextPayment] = useState(false)
+
+    const handleSaveNextPayment = async () => {
+        if (!existingReservation?.id) return
+        setSavingNextPayment(true)
+        try {
+            const res = await updateNextPaymentDate({
+                reservationId: existingReservation.id,
+                nextPaymentDate: nextPaymentDate?.toISOString() || null
+            })
+            if (res.error) {
+                toast.error(res.error)
+                return
+            }
+            toast.success(res.message || "Próximo pago actualizado")
+            onSuccess()
+        } finally {
+            setSavingNextPayment(false)
+        }
+    }
 
     const handleAdjustCuotas = async () => {
         if (!existingReservation?.id) return
@@ -939,6 +963,21 @@ export function AssignOwnerModal({ lotId, lotNumber, open, onOpenChange, onSucce
                                                 />
                                             </PopoverContent>
                                         </Popover>
+                                        {existingReservation?.id && (
+                                            <>
+                                                <Button
+                                                    type="button"
+                                                    size="sm"
+                                                    onClick={handleSaveNextPayment}
+                                                    disabled={savingNextPayment}
+                                                    className="w-full h-8 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold"
+                                                >
+                                                    {savingNextPayment ? <Loader2 className="w-3 h-3 mr-2 animate-spin" /> : null}
+                                                    Guardar próximo pago
+                                                </Button>
+                                                <p className="text-[11px] text-gray-500">Solo actualiza la fecha del próximo vencimiento. No modifica mora ni otros datos.</p>
+                                            </>
+                                        )}
                                     </div>
                                 </div>
 
