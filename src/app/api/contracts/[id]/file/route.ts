@@ -93,8 +93,9 @@ export async function GET(
         // --- NEW: Handle direct URLs (S3, External, etc. or local API paths) ---
         if (base64Data.startsWith('http') || base64Data.startsWith('/')) {
             console.log(`[File Proxy] Redirecting to URL: ${base64Data}`);
+            const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://aliminlomasdelmar.com';
             const redirectUrl = base64Data.startsWith('/')
-                ? `${request.nextUrl.origin}${base64Data}`
+                ? `${baseUrl}${base64Data}`
                 : base64Data;
             return NextResponse.redirect(new URL(redirectUrl));
         }
