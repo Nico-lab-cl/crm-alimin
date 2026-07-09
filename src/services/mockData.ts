@@ -270,16 +270,16 @@ const generateInitialLots = (): Lot[] => {
     let valorCuota: number | null = null;
     let fallbackTotalPrice: number | null = null;
 
-    if (area && area >= 200 && area <= 299) {
-      cuotas = 45;
-      pie = 5500000;
+    if (stage !== 4 && area && area >= 200 && area <= 299) {
+      cuotas = 71;
+      pie = 1500000;
       valorCuota = 550000;
-      fallbackTotalPrice = 29990000;
-    } else if (area && area >= 300 && area <= 399) {
-      cuotas = 56;
-      pie = 7500000;
+      fallbackTotalPrice = 40990000;
+    } else if (stage !== 4 && area && area >= 300 && area <= 399) {
+      cuotas = 87;
+      pie = 3000000;
       valorCuota = 550000;
-      fallbackTotalPrice = 37990000;
+      fallbackTotalPrice = 50990000;
     }
 
     // Determinar estado del lote (fuente de verdad final: Supabase/DB, pero inicializar con forceSold)

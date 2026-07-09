@@ -76,15 +76,15 @@ export const LotReservationPopup = ({ lot, isOpen, onClose, onConfirm, isTempora
   // Fallback calculation in case DB data is missing or loading
   const getTotalInstallments = (area: number | null | undefined, stage?: number | null) => {
     if (area == null || stage === 4) return null;
-    if (area >= 200 && area <= 299) return 45;
-    if (area >= 300 && area <= 399) return 56;
+    if (area >= 200 && area <= 299) return 71;
+    if (area >= 300 && area <= 399) return 87;
     return null;
   };
 
   const getPieAmount = (area: number | null | undefined, stage?: number | null) => {
     if (area == null || stage === 4) return null;
-    if (area >= 200 && area <= 299) return 5500000;
-    if (area >= 300 && area <= 399) return 7500000;
+    if (area >= 200 && area <= 299) return 1500000;
+    if (area >= 300 && area <= 399) return 3000000;
     return null;
   };
 
@@ -393,6 +393,13 @@ export const LotReservationPopup = ({ lot, isOpen, onClose, onConfirm, isTempora
               <span className="inline-block mt-3 px-4 py-1.5 bg-primary/10 text-primary text-sm font-medium rounded-full transition-all duration-200 hover:bg-primary/20 hover:scale-105">
                 Etapa {lotStageLabel}
               </span>
+            )}
+            {pieAmount != null && lotStageLabel !== 4 && (
+              <div className="mt-3">
+                <span className="inline-block px-4 py-1.5 bg-amber-400/20 text-amber-700 text-sm font-bold rounded-full border border-amber-400/40 animate-pulse">
+                  🎉 Promoción Minipie
+                </span>
+              </div>
             )}
           </div>
 

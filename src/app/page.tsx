@@ -516,6 +516,9 @@ export default function Home() {
           <p className="text-muted-foreground max-w-2xl mx-auto font-medium">
             Visualiza la ubicación real y el entorno de tu futuro terreno
           </p>
+          <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-400/15 border border-amber-400/40 text-amber-700 text-sm font-bold">
+            🎉 Promoción Minipie: pie desde $1.500.000 en lotes de 200m² y $3.000.000 en lotes de 390m²
+          </div>
         </div>
 
         <div className="w-full max-w-[1920px] mx-auto">
@@ -577,6 +580,9 @@ export default function Home() {
             <p className="text-muted-foreground max-w-2xl mx-auto md:text-xl font-medium">
               Visualiza la ubicación real y el entorno de tu futuro terreno
             </p>
+            <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-400/15 border border-amber-400/40 text-amber-700 text-sm font-bold">
+              🎉 Promoción Minipie: pie desde $1.500.000 en lotes de 200m² y $3.000.000 en lotes de 390m²
+            </div>
           </div>
 
           <div className="w-full max-w-[1920px] mx-auto md:px-8">

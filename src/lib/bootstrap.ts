@@ -58,17 +58,17 @@ export async function bootstrapDatabase(prisma: PrismaClient) {
         if (stage !== 4 && targetStatus === 'available') {
             if (area && area >= 200 && area <= 299) {
                 pricingData = {
-                    price_total_clp: 29990000,
-                    pie: 5500000,
-                    cuotas: 45,
+                    price_total_clp: 40990000,
+                    pie: 1500000,
+                    cuotas: 71,
                     valor_cuota: 550000,
                     last_installment_amount: 290000
                 };
             } else if (area && area >= 300 && area <= 399) {
                 pricingData = {
-                    price_total_clp: 37990000,
-                    pie: 7500000,
-                    cuotas: 56,
+                    price_total_clp: 50990000,
+                    pie: 3000000,
+                    cuotas: 87,
                     valor_cuota: 550000,
                     last_installment_amount: 240000
                 };

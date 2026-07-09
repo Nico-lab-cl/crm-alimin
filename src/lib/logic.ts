@@ -107,8 +107,8 @@ export const computeLotDetailsFromId = (lotId: number) => {
 
     const price_total_clp = (() => {
         if (stage === 4) return null; // Conservar lógica original o "Consultar" para Etapa 4
-        if (area_m2 != null && area_m2 >= 200 && area_m2 <= 299) return 29990000;
-        if (area_m2 != null && area_m2 >= 300 && area_m2 <= 399) return 37990000;
+        if (area_m2 != null && area_m2 >= 200 && area_m2 <= 299) return 40990000;
+        if (area_m2 != null && area_m2 >= 300 && area_m2 <= 399) return 50990000;
         return null;
     })();
 
