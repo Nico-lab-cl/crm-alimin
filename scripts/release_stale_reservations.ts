@@ -6,15 +6,30 @@ const prisma = new PrismaClient();
 // Libera lotes con status='reserved' cuyo bloqueo temporal (reserved_until)
 // ya expiro y nunca se limpio, aplicando el mismo precio minipie que a los
 // lotes ya disponibles. Espeja lo que bootstrap.ts hace en cada arranque.
+//
+// IMPORTANTE: reserved_until vencido NO implica que el checkout fue
+// abandonado -- un cliente puede haber pagado su reserva y el campo
+// simplemente nunca se limpio despues del pago. Por eso este script
+// EXCLUYE cualquier lote que tenga una Reservation con status='paid',
+// para no tocar precio/disponibilidad de un cliente que ya pago.
 async function main() {
     console.log('🔄 Liberando reservas vencidas y aplicando precio minipie...');
     console.log('--------------------------------------------------');
 
     const now = new Date();
     const reservedLots = await prisma.lot.findMany({ where: { status: 'reserved' } });
-    const stale = reservedLots.filter(l => !l.reserved_until || l.reserved_until < now);
+    const staleCandidates = reservedLots.filter(l => !l.reserved_until || l.reserved_until < now);
 
-    console.log(`Encontrados ${stale.length} lotes con reserva vencida.`);
+    const paidReservations = await prisma.reservation.findMany({
+        where: { lot_id: { in: staleCandidates.map(l => l.id) }, status: 'paid' },
+        select: { lot_id: true },
+    });
+    const paidLotIds = new Set(paidReservations.map(r => r.lot_id));
+
+    const stale = staleCandidates.filter(l => !paidLotIds.has(l.id));
+    const skipped = staleCandidates.length - stale.length;
+
+    console.log(`Encontrados ${staleCandidates.length} lotes con reserva vencida (${skipped} excluidos por tener una Reservation pagada -- cliente real, no se tocan).`);
 
     let updated200 = 0;
     let updated390 = 0;
