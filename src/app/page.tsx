@@ -273,17 +273,31 @@ export default function Home() {
               remoteStatus === 'sold' ? 'sold' : isExpiredReserved ? 'available' : remoteStatus ?? 'available';
 
             const nextReservedUntil = Number.isFinite(reservedUntilMs) ? reservedUntilMs : null;
-            if (nextStatus === lot.status && nextReservedUntil === (lot.reservedUntil ?? null)) {
+            const nextPie = row?.pie ?? lot.pie;
+            const nextCuotas = row?.cuotas ?? lot.cuotas;
+            const nextValorCuota = row?.valor_cuota ?? lot.valorCuota;
+            const nextTotalPrice = row?.price_total_clp ?? lot.totalPrice;
+            const nextLastInstallment = row?.last_installment_amount ?? lot.last_installment_amount;
+
+            if (
+              nextStatus === lot.status &&
+              nextReservedUntil === (lot.reservedUntil ?? null) &&
+              nextPie === lot.pie &&
+              nextCuotas === lot.cuotas &&
+              nextValorCuota === lot.valorCuota &&
+              nextTotalPrice === lot.totalPrice &&
+              nextLastInstallment === lot.last_installment_amount
+            ) {
               return lot;
             }
 
             return {
               ...lot,
-              cuotas: row?.cuotas ?? lot.cuotas,
-              pie: row?.pie ?? lot.pie,
-              valorCuota: row?.valor_cuota ?? lot.valorCuota,
-              totalPrice: row?.price_total_clp ?? lot.totalPrice,
-              last_installment_amount: row?.last_installment_amount ?? lot.last_installment_amount,
+              cuotas: nextCuotas,
+              pie: nextPie,
+              valorCuota: nextValorCuota,
+              totalPrice: nextTotalPrice,
+              last_installment_amount: nextLastInstallment,
               status: nextStatus,
               reservedUntil: nextReservedUntil,
             };
