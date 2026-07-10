@@ -48,8 +48,15 @@ export async function GET(
             const customStart = receipt.reservation.legacy_installment_start_date ? new Date(receipt.reservation.legacy_installment_start_date) : null;
             const customDueDay = customStart ? customStart.getUTCDate() : null; // Using UTC date to avoid timezone shift
 
-            const effectiveInstallmentNum = receipt.nominal_installment_number || receipt.installments_count || 1;
-            
+            // Si el recibo cubre un rango (ej. "4-8"), la fecha de vencimiento debe
+            // calcularse sobre la ULTIMA cuota del rango, no sobre la cantidad de
+            // cuotas cubiertas (installments_count) que es solo un conteo.
+            let effectiveInstallmentNum = receipt.nominal_installment_number || receipt.installments_count || 1;
+            if (receipt.nominal_installment_range) {
+                const rangeEnd = parseInt(receipt.nominal_installment_range.split('-')[1], 10);
+                if (Number.isFinite(rangeEnd)) effectiveInstallmentNum = rangeEnd;
+            }
+
             installmentDueDate = getInstallmentDueDate(
                 baseDate,
                 effectiveInstallmentNum,
