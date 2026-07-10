@@ -633,7 +633,10 @@ export async function getReservationReceipts(reservationId: string) {
                 status: true,
                 processed_at: true,
                 created_at: true,
-                receipt_url: true
+                receipt_url: true,
+                installments_count: true,
+                nominal_installment_number: true,
+                nominal_installment_range: true
             }
         });
         return { success: true, receipts };
@@ -649,7 +652,8 @@ export async function registerPostventaPayment({
     receiptUrl = 'MANUAL_POSTVENTA',
     date = new Date().toISOString(),
     serverAuthOverride = false,
-    nominalInstallmentNumber
+    nominalInstallmentNumber,
+    installmentsCount
 }: {
     reservationId: string;
     amount: number;
@@ -658,6 +662,9 @@ export async function registerPostventaPayment({
     date?: string;
     serverAuthOverride?: boolean;
     nominalInstallmentNumber?: number;
+    // Cantidad de cuotas consecutivas que cubre este pago (ej. 5 cuotas en un solo comprobante).
+    // Solo aplica a scope='INSTALLMENT'. Default 1 preserva el comportamiento existente.
+    installmentsCount?: number;
 }) {
     if (!serverAuthOverride) {
         const session = await auth();
@@ -675,10 +682,20 @@ export async function registerPostventaPayment({
 
         if (!reservation) return { error: 'Reserva no encontrada' };
 
-        // 1. Calculate Nominal Number for manual payment
+        // 1. Calculate Nominal Number/Range for manual payment
+        // Mismo patron que approvePaymentReceipt (receipts.ts): count=1 -> numero puntual,
+        // count>1 -> rango consecutivo desde la proxima cuota pendiente.
+        const currentPaid = reservation.installments_paid || 0;
+        const count = scope === 'INSTALLMENT' && installmentsCount && installmentsCount > 1 ? installmentsCount : 1;
+
         let nominalNumber: number | null = null;
+        let nominalRange: string | null = null;
         if (scope === 'INSTALLMENT') {
-            nominalNumber = nominalInstallmentNumber !== undefined ? nominalInstallmentNumber : (reservation.installments_paid || 0) + 1;
+            if (count > 1) {
+                nominalRange = `${currentPaid + 1}-${currentPaid + count}`;
+            } else {
+                nominalNumber = nominalInstallmentNumber !== undefined ? nominalInstallmentNumber : currentPaid + 1;
+            }
         } else if (scope === 'MORA') {
             // For mora credits, track which installment the interest payment corresponds to
             nominalNumber = nominalInstallmentNumber !== undefined ? nominalInstallmentNumber : null;
@@ -690,8 +707,9 @@ export async function registerPostventaPayment({
                 status: 'APPROVED',
                 receipt_url: receiptUrl,
                 scope: scope === 'GASTOS_OPERACIONALES' ? 'OTHERS' : (scope === 'MORA' ? 'MORA' : scope),
-                installments_count: scope === 'INSTALLMENT' ? 1 : undefined,
+                installments_count: scope === 'INSTALLMENT' ? count : undefined,
                 nominal_installment_number: nominalNumber,
+                nominal_installment_range: nominalRange,
                 reservation_id: reservationId,
                 lot_id: reservation.lot_id,
                 processed_at: new Date(date),
@@ -717,8 +735,8 @@ export async function registerPostventaPayment({
             // Atomic increment - safe against race conditions
             const updatedReservation = await prisma.reservation.update({
                 where: { id: reservationId },
-                data: { 
-                    installments_paid: { increment: 1 },
+                data: {
+                    installments_paid: { increment: count },
                     pipeline_stage: 'PAGO_CUOTAS'
                 },
                 include: { lot: true }

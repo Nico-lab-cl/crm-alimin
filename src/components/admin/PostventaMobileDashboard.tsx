@@ -101,6 +101,7 @@ export function PostventaMobileDashboard({
     const [manualAmount, setManualAmount] = useState('');
     const [manualScope, setManualScope] = useState<'PIE' | 'INSTALLMENT' | 'GASTOS_OPERACIONALES' | 'MORA'>('INSTALLMENT');
     const [manualInstallmentNumber, setManualInstallmentNumber] = useState<string>('');
+    const [manualInstallmentsCount, setManualInstallmentsCount] = useState<string>('1');
     const [isUserView, setIsUserView] = useState(false);
     const [manualFile, setManualFile] = useState<File | null>(null);
     const [isRegistering, setIsRegistering] = useState(false);
@@ -126,6 +127,7 @@ export function PostventaMobileDashboard({
             setMoraStartDate(selectedClientLedger.legacy_debt_start_date ? new Date(selectedClientLedger.legacy_debt_start_date) : undefined);
             setMoraEndDate(selectedClientLedger.legacy_debt_end_date ? new Date(selectedClientLedger.legacy_debt_end_date) : undefined);
             setManualInstallmentNumber(String((selectedClientLedger.paidCuotas || 0) + 1));
+            setManualInstallmentsCount('1');
         }
     }, [selectedClientLedger]);
     const ALERTS_PER_PAGE = 10;
@@ -1811,7 +1813,7 @@ export function PostventaMobileDashboard({
                             
                             <div className={cn(
                                 "grid grid-cols-1 gap-4",
-                                manualScope === 'INSTALLMENT' ? "md:grid-cols-4" : "md:grid-cols-3"
+                                manualScope === 'INSTALLMENT' ? "md:grid-cols-5" : (manualScope === 'MORA' ? "md:grid-cols-4" : "md:grid-cols-3")
                             )}>
                                 <div className="space-y-1.5">
                                     <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">Monto (CLP)</label>
@@ -1843,7 +1845,27 @@ export function PostventaMobileDashboard({
                                     </div>
                                 </div>
 
-                                {(manualScope === 'INSTALLMENT' || manualScope === 'MORA') && (
+                                {manualScope === 'INSTALLMENT' && (
+                                    <div className="space-y-1.5">
+                                        <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">Cantidad de Cuotas</label>
+                                        <select
+                                            value={manualInstallmentsCount}
+                                            onChange={(e) => setManualInstallmentsCount(e.target.value)}
+                                            className="w-full bg-white border border-gray-200 rounded-xl h-10 px-3 text-xs text-gray-900 font-bold focus:outline-none focus:ring-1 focus:ring-[#3f6066]"
+                                        >
+                                            {Array.from(
+                                                { length: Math.max(1, (selectedClientLedger?.totalCuotas || 48) - (selectedClientLedger?.paidCuotas || 0)) },
+                                                (_, i) => i + 1
+                                            ).map(num => (
+                                                <option key={num} value={num}>
+                                                    {num} {num === 1 ? 'cuota' : 'cuotas'}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                )}
+
+                                {(manualScope === 'MORA' || (manualScope === 'INSTALLMENT' && manualInstallmentsCount === '1')) && (
                                     <div className="space-y-1.5">
                                         <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">
                                             {manualScope === 'MORA' ? 'Cuota Asociada al Interés' : 'N° de Cuota'}
@@ -1859,6 +1881,15 @@ export function PostventaMobileDashboard({
                                                 </option>
                                             ))}
                                         </select>
+                                    </div>
+                                )}
+
+                                {manualScope === 'INSTALLMENT' && manualInstallmentsCount !== '1' && (
+                                    <div className="space-y-1.5">
+                                        <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">Cubrirá</label>
+                                        <p className="text-xs font-bold text-emerald-600 h-10 flex items-center px-3 bg-emerald-500/10 rounded-xl border border-emerald-500/20">
+                                            Cuotas {(selectedClientLedger?.paidCuotas || 0) + 1} a {(selectedClientLedger?.paidCuotas || 0) + parseInt(manualInstallmentsCount || '1')}
+                                        </p>
                                     </div>
                                 )}
 
@@ -1916,13 +1947,15 @@ export function PostventaMobileDashboard({
                                                     amount: parseInt(manualAmount),
                                                     scope: manualScope,
                                                     receiptUrl,
-                                                    nominalInstallmentNumber: (manualScope === 'INSTALLMENT' || manualScope === 'MORA') ? parseInt(manualInstallmentNumber) : undefined
+                                                    nominalInstallmentNumber: (manualScope === 'INSTALLMENT' || manualScope === 'MORA') ? parseInt(manualInstallmentNumber) : undefined,
+                                                    installmentsCount: manualScope === 'INSTALLMENT' ? parseInt(manualInstallmentsCount || '1') : undefined
                                                 });
                                                 if (res.error) toast.error(res.error);
                                                 else {
                                                     toast.success("Pago registrado exitosamente");
                                                     setManualAmount('');
                                                     setManualFile(null);
+                                                    setManualInstallmentsCount('1');
                                                     // Refresh the listing
                                                     setIsLoadingReceipts(true);
                                                     const updatedRes = await getReservationReceipts(selectedClientLedger.id);
