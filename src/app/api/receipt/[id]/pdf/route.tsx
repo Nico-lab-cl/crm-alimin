@@ -40,11 +40,12 @@ export async function GET(
         const logoPath = 'public/favicon.png';
 
         let installmentDueDate: Date | undefined;
+        let installmentBreakdown: { number: number; dueDate: Date; amount: number }[] | undefined;
         if (receipt.scope === 'INSTALLMENT' && receipt.installments_count) {
-            const baseDate = receipt.reservation.legacy_installment_start_date 
+            const baseDate = receipt.reservation.legacy_installment_start_date
                 ? new Date(receipt.reservation.legacy_installment_start_date)
                 : new Date(receipt.reservation.created_at);
-            
+
             const customStart = receipt.reservation.legacy_installment_start_date ? new Date(receipt.reservation.legacy_installment_start_date) : null;
             const customDueDay = customStart ? customStart.getUTCDate() : null; // Using UTC date to avoid timezone shift
 
@@ -52,10 +53,8 @@ export async function GET(
             // calcularse sobre la ULTIMA cuota del rango, no sobre la cantidad de
             // cuotas cubiertas (installments_count) que es solo un conteo.
             let effectiveInstallmentNum = receipt.nominal_installment_number || receipt.installments_count || 1;
-            if (receipt.nominal_installment_range) {
-                const rangeEnd = parseInt(receipt.nominal_installment_range.split('-')[1], 10);
-                if (Number.isFinite(rangeEnd)) effectiveInstallmentNum = rangeEnd;
-            }
+            const rangeMatch = receipt.nominal_installment_range?.match(/^(\d+)-(\d+)$/);
+            if (rangeMatch) effectiveInstallmentNum = parseInt(rangeMatch[2], 10);
 
             installmentDueDate = getInstallmentDueDate(
                 baseDate,
@@ -64,6 +63,30 @@ export async function GET(
                 customDueDay,
                 Boolean(receipt.reservation.is_promo)
             );
+
+            // Si cubre varias cuotas, desglosar cada una con su propio vencimiento
+            // en vez de una sola linea "Cuotas #4-8" (poco clara para el cliente).
+            if (rangeMatch) {
+                const rangeStart = parseInt(rangeMatch[1], 10);
+                const rangeEnd = parseInt(rangeMatch[2], 10);
+                const count = rangeEnd - rangeStart + 1;
+                const baseAmount = Math.floor(receipt.amount_clp / count);
+                installmentBreakdown = [];
+                for (let n = rangeStart; n <= rangeEnd; n++) {
+                    installmentBreakdown.push({
+                        number: n,
+                        dueDate: getInstallmentDueDate(
+                            baseDate,
+                            n,
+                            Boolean(receipt.reservation.is_legacy),
+                            customDueDay,
+                            Boolean(receipt.reservation.is_promo)
+                        ),
+                        // La ultima cuota absorbe el residuo de redondeo para que la suma cuadre exacto.
+                        amount: n === rangeEnd ? receipt.amount_clp - baseAmount * (count - 1) : baseAmount,
+                    });
+                }
+            }
         }
 
         const stream = await renderToStream(
@@ -82,6 +105,7 @@ export async function GET(
                 nominalInstallmentNumber={receipt.nominal_installment_number}
                 nominalInstallmentRange={receipt.nominal_installment_range}
                 installmentDueDate={installmentDueDate}
+                installmentBreakdown={installmentBreakdown}
                 logoPath={logoPath}
             />
         );

@@ -177,6 +177,7 @@ interface PaymentReceiptPDFProps {
     installmentsCount?: number;
     totalInstallments?: number;
     installmentDueDate?: Date;
+    installmentBreakdown?: { number: number; dueDate: Date; amount: number }[];
     nominalInstallmentNumber?: number | null;
     nominalInstallmentRange?: string | null;
     logoPath: string;
@@ -195,6 +196,7 @@ export const PaymentReceiptPDF = ({
     installmentsCount = 0,
     totalInstallments = 0,
     installmentDueDate,
+    installmentBreakdown,
     nominalInstallmentNumber,
     nominalInstallmentRange,
     logoPath
@@ -284,19 +286,37 @@ export const PaymentReceiptPDF = ({
                         <Text style={styles.tableHeaderCellAmount}>CANTIDAD (CLP)</Text>
                     </View>
 
-                    <View style={styles.tableRow}>
-                        <View style={{ width: '60%' }}>
-                            <Text style={styles.tableCellItem}>{itemName} - Lote {lotNumber}</Text>
-                            {installmentDueDate && (
-                                <Text style={{ fontSize: 9, color: '#666', marginTop: 4 }}>
-                                    Fecha de vencimiento: {format(installmentDueDate, "dd 'de' MMMM, yyyy", { locale: es })}
+                    {installmentBreakdown && installmentBreakdown.length > 1 ? (
+                        installmentBreakdown.map((item) => (
+                            <View style={styles.tableRow} key={item.number}>
+                                <View style={{ width: '60%' }}>
+                                    <Text style={styles.tableCellItem}>
+                                        Cuota #{String(item.number).padStart(2, '0')}/{totalInstallments} - Lote {lotNumber}
+                                    </Text>
+                                    <Text style={{ fontSize: 9, color: '#666', marginTop: 4 }}>
+                                        Fecha de vencimiento: {format(item.dueDate, "dd 'de' MMMM, yyyy", { locale: es })}
+                                    </Text>
+                                </View>
+                                <Text style={styles.tableCellAmount}>
+                                    {new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(item.amount)}
                                 </Text>
-                            )}
+                            </View>
+                        ))
+                    ) : (
+                        <View style={styles.tableRow}>
+                            <View style={{ width: '60%' }}>
+                                <Text style={styles.tableCellItem}>{itemName} - Lote {lotNumber}</Text>
+                                {installmentDueDate && (
+                                    <Text style={{ fontSize: 9, color: '#666', marginTop: 4 }}>
+                                        Fecha de vencimiento: {format(installmentDueDate, "dd 'de' MMMM, yyyy", { locale: es })}
+                                    </Text>
+                                )}
+                            </View>
+                            <Text style={styles.tableCellAmount}>
+                                {new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(amountPaid)}
+                            </Text>
                         </View>
-                        <Text style={styles.tableCellAmount}>
-                            {new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(amountPaid)}
-                        </Text>
-                    </View>
+                    )}
 
                     <View style={styles.totalRow}>
                         <Text style={styles.totalLabel}>TOTAL RECIBIDO</Text>
