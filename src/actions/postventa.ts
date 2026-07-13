@@ -705,21 +705,29 @@ export async function registerPostventaPayment({
     amount,
     scope,
     receiptUrl = 'MANUAL_POSTVENTA',
+    extraReceiptUrls = [],
     date = new Date().toISOString(),
     serverAuthOverride = false,
     nominalInstallmentNumber,
-    installmentsCount
+    installmentsCount,
+    moraInterestAmount
 }: {
     reservationId: string;
     amount: number;
     scope: 'PIE' | 'INSTALLMENT' | 'GASTOS_OPERACIONALES' | 'MORA';
     receiptUrl?: string;
+    // Comprobantes adicionales mas alla del primero (ej. cliente mando 3 transferencias para un
+    // solo pago). Se guardan como documentos de respaldo extra, no crean recibos/receipts nuevos.
+    extraReceiptUrls?: string[];
     date?: string;
     serverAuthOverride?: boolean;
     nominalInstallmentNumber?: number;
     // Cantidad de cuotas consecutivas que cubre este pago (ej. 5 cuotas en un solo comprobante).
     // Solo aplica a scope='INSTALLMENT'. Default 1 preserva el comportamiento existente.
     installmentsCount?: number;
+    // Si se paga 1 sola cuota (installmentsCount=1) y ademas se abona su interes de mora en el
+    // mismo pago, se crea un segundo PaymentReceipt scope='MORA' ligado a la misma cuota.
+    moraInterestAmount?: number;
 }) {
     if (!serverAuthOverride) {
         const session = await auth();
@@ -779,6 +787,64 @@ export async function registerPostventaPayment({
             nominal_installment_number: receipt.nominal_installment_number,
             nominal_installment_range: receipt.nominal_installment_range
         });
+
+        // Comprobantes adicionales (mas de 1 archivo subido): se guardan como documentos de
+        // respaldo extra en manual_documents, sin crear PaymentReceipts nuevos.
+        if (extraReceiptUrls.length > 0) {
+            const extraReservation = await prisma.reservation.findUnique({
+                where: { id: reservationId },
+                select: { manual_documents: true }
+            });
+            if (extraReservation) {
+                let manualDocs: any[] = [];
+                if (extraReservation.manual_documents) {
+                    try {
+                        manualDocs = Array.isArray(extraReservation.manual_documents)
+                            ? (extraReservation.manual_documents as any[])
+                            : JSON.parse(extraReservation.manual_documents as string);
+                    } catch (e) {
+                        console.error("Error parsing manual_documents:", e);
+                    }
+                }
+                const baseLabel = scope === 'PIE' ? 'Comprobante de Pie' : scope === 'INSTALLMENT' ? 'Comprobante de Cuota' : 'Comprobante';
+                extraReceiptUrls.forEach((url, idx) => {
+                    manualDocs.push({
+                        name: `${baseLabel} (${idx + 2} de ${extraReceiptUrls.length + 1}).pdf`,
+                        url,
+                        category: scope === 'PIE' ? 'PIE' : scope === 'INSTALLMENT' ? 'CUOTAS' : 'OTRO',
+                        uploadedAt: new Date().toISOString()
+                    });
+                });
+                await prisma.reservation.update({
+                    where: { id: reservationId },
+                    data: { manual_documents: manualDocs }
+                });
+            }
+        }
+
+        // Pago combinado: si se abona el interes de mora de la MISMA cuota en este mismo pago,
+        // crear un segundo PaymentReceipt scope='MORA' ligado al mismo numero de cuota.
+        if (scope === 'INSTALLMENT' && count === 1 && nominalNumber != null && moraInterestAmount && moraInterestAmount > 0) {
+            const moraReceipt = await prisma.paymentReceipt.create({
+                data: {
+                    amount_clp: moraInterestAmount,
+                    status: 'APPROVED',
+                    receipt_url: receiptUrl,
+                    scope: 'MORA',
+                    nominal_installment_number: nominalNumber,
+                    reservation_id: reservationId,
+                    lot_id: reservation.lot_id,
+                    processed_at: new Date(date),
+                    created_at: new Date(date)
+                }
+            });
+            await addReceiptToManualDocuments(reservationId, {
+                id: moraReceipt.id,
+                scope: moraReceipt.scope,
+                nominal_installment_number: moraReceipt.nominal_installment_number,
+                nominal_installment_range: null
+            });
+        }
 
         // 2. Update Reservation State
         if (scope === 'PIE') {

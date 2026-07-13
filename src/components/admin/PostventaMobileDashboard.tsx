@@ -102,8 +102,9 @@ export function PostventaMobileDashboard({
     const [manualScope, setManualScope] = useState<'PIE' | 'INSTALLMENT' | 'GASTOS_OPERACIONALES' | 'MORA'>('INSTALLMENT');
     const [manualInstallmentNumber, setManualInstallmentNumber] = useState<string>('');
     const [manualInstallmentsCount, setManualInstallmentsCount] = useState<string>('1');
+    const [manualMoraAmount, setManualMoraAmount] = useState('');
     const [isUserView, setIsUserView] = useState(false);
-    const [manualFile, setManualFile] = useState<File | null>(null);
+    const [manualFiles, setManualFiles] = useState<File[]>([]);
     const [isRegistering, setIsRegistering] = useState(false);
 
     const [moraStartDate, setMoraStartDate] = useState<Date | undefined>(undefined);
@@ -133,6 +134,8 @@ export function PostventaMobileDashboard({
             setMoraEndDate(selectedClientLedger.legacy_debt_end_date ? new Date(selectedClientLedger.legacy_debt_end_date) : undefined);
             setManualInstallmentNumber(String((selectedClientLedger.paidCuotas || 0) + 1));
             setManualInstallmentsCount('1');
+            setManualMoraAmount('');
+            setManualFiles([]);
         }
     }, [selectedClientLedger]);
     const ALERTS_PER_PAGE = 10;
@@ -2014,29 +2017,66 @@ export function PostventaMobileDashboard({
                                     </div>
                                 )}
 
+                                {manualScope === 'INSTALLMENT' && manualInstallmentsCount === '1' && (() => {
+                                    const suggestedMora = (selectedClientLedger?.overdueInstallments || []).find(
+                                        (inst: any) => inst.number === parseInt(manualInstallmentNumber || '0')
+                                    )?.interestPenalty || 0;
+                                    return (
+                                        <div className="space-y-1.5">
+                                            <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">Interés de Mora (Opcional)</label>
+                                            <div className="flex gap-1">
+                                                <Input
+                                                    type="number"
+                                                    placeholder="Ej: 30000"
+                                                    value={manualMoraAmount}
+                                                    onChange={(e) => setManualMoraAmount(e.target.value)}
+                                                    className="bg-white/20 border-gray-200 h-10 text-xs text-gray-900 placeholder:text-gray-400 font-bold"
+                                                />
+                                                {suggestedMora > 0 && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setManualMoraAmount(String(suggestedMora))}
+                                                        title={`Usar sugerido: ${formatCurrency(suggestedMora)}`}
+                                                        className="shrink-0 h-10 px-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-600 text-[9px] font-black uppercase"
+                                                    >
+                                                        {formatCurrency(suggestedMora)}
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </div>
+                                    );
+                                })()}
+
                                 <div className="space-y-1.5">
                                     <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">
-                                        Comprobante {manualScope === 'MORA' ? '(Obligatorio)' : '(Opcional)'}
+                                        Comprobante(s) {manualScope === 'MORA' ? '(Obligatorio)' : '(Opcional)'}
                                     </label>
                                     <div className="relative group">
-                                        <input 
+                                        <input
                                             type="file"
-                                            onChange={(e) => setManualFile(e.target.files?.[0] || null)}
+                                            multiple
+                                            onChange={(e) => setManualFiles(e.target.files ? Array.from(e.target.files) : [])}
                                             className="hidden"
                                             id="manual-receipt-upload"
                                             accept="image/*,.pdf"
                                         />
-                                        <label 
+                                        <label
                                             htmlFor="manual-receipt-upload"
                                             className={cn(
                                                 "flex items-center gap-2 px-3 h-10 rounded-xl border border-dashed transition-all cursor-pointer text-[10px] font-bold uppercase",
-                                                manualFile 
-                                                    ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400" 
+                                                manualFiles.length > 0
+                                                    ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
                                                     : "bg-white/20 border-gray-200 text-gray-500 hover:border-gray-200"
                                             )}
                                         >
                                             <UploadCloud className="w-3.5 h-3.5 shrink-0" />
-                                            <span className="truncate">{manualFile ? manualFile.name : "Subir Comprobante"}</span>
+                                            <span className="truncate">
+                                                {manualFiles.length === 0
+                                                    ? "Subir Comprobante(s)"
+                                                    : manualFiles.length === 1
+                                                        ? manualFiles[0].name
+                                                        : `${manualFiles.length} archivos seleccionados`}
+                                            </span>
                                         </label>
                                     </div>
                                 </div>
@@ -2046,36 +2086,38 @@ export function PostventaMobileDashboard({
                                         onClick={async () => {
                                             if (!manualAmount || isRegistering) return;
                                             // MORA requires a receipt file
-                                            if (manualScope === 'MORA' && !manualFile) {
+                                            if (manualScope === 'MORA' && manualFiles.length === 0) {
                                                 toast.error('El comprobante es obligatorio para abonos de interés');
                                                 return;
                                             }
                                             setIsRegistering(true);
                                             try {
-                                                let receiptUrl = 'MANUAL_POSTVENTA';
-                                                
-                                                if (manualFile) {
-                                                    const reader = new FileReader();
-                                                    const base64Promise = new Promise<string>((resolve) => {
+                                                const filesAsBase64 = await Promise.all(manualFiles.map(file => {
+                                                    return new Promise<string>((resolve) => {
+                                                        const reader = new FileReader();
                                                         reader.onload = () => resolve(reader.result as string);
-                                                        reader.readAsDataURL(manualFile);
+                                                        reader.readAsDataURL(file);
                                                     });
-                                                    receiptUrl = await base64Promise;
-                                                }
+                                                }));
+                                                const receiptUrl = filesAsBase64[0] || 'MANUAL_POSTVENTA';
+                                                const extraReceiptUrls = filesAsBase64.slice(1);
 
                                                 const res = await registerPostventaPayment({
                                                     reservationId: selectedClientLedger.id,
                                                     amount: parseInt(manualAmount),
                                                     scope: manualScope,
                                                     receiptUrl,
+                                                    extraReceiptUrls,
                                                     nominalInstallmentNumber: (manualScope === 'INSTALLMENT' || manualScope === 'MORA') ? parseInt(manualInstallmentNumber) : undefined,
-                                                    installmentsCount: manualScope === 'INSTALLMENT' ? parseInt(manualInstallmentsCount || '1') : undefined
+                                                    installmentsCount: manualScope === 'INSTALLMENT' ? parseInt(manualInstallmentsCount || '1') : undefined,
+                                                    moraInterestAmount: (manualScope === 'INSTALLMENT' && manualInstallmentsCount === '1' && manualMoraAmount) ? parseInt(manualMoraAmount) : undefined
                                                 });
                                                 if (res.error) toast.error(res.error);
                                                 else {
                                                     toast.success("Pago registrado exitosamente");
                                                     setManualAmount('');
-                                                    setManualFile(null);
+                                                    setManualFiles([]);
+                                                    setManualMoraAmount('');
                                                     setManualInstallmentsCount('1');
                                                     // Refresh the listing
                                                     setIsLoadingReceipts(true);
