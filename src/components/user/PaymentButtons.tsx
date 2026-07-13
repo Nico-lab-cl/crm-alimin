@@ -123,16 +123,23 @@ export function PaymentButtons({ reservationId, lot, reservation, acquisitionDat
     const pendingInstReceipt = reservation.receipts?.find((r: any) => r.scope === 'INSTALLMENT' && r.status === 'PENDING');
 
     // Calculate mora credits (abonos parciales de intereses).
-    // moraCredits = TOTAL (abonos reales + condonaciones administrativas): se usa tal cual para
-    // el descuento del interes efectivo mas abajo, ya que una condonacion tambien debe reducirlo.
-    // moraCondoned / moraCreditsReal desglosan ese mismo total SOLO para mostrarlo por separado:
-    // una condonacion no es plata que el cliente haya pagado, no debe etiquetarse como "abono".
+    // moraCredits = TOTAL (abonos reales + condonaciones administrativas), sin filtrar por cuota:
+    // se usa tal cual para el descuento del interes efectivo mas abajo (moraCreditsUnpaid), ya que
+    // una condonacion tambien debe reducirlo.
     const approvedMoraReceipts = reservation.receipts?.filter((r: any) => r.scope === 'MORA' && r.status === 'APPROVED') || [];
-    const condonedReceipts = approvedMoraReceipts.filter((r: any) => r.receipt_url === 'CONDONACION_ADMIN');
+    const moraCredits = approvedMoraReceipts.reduce((acc: number, r: any) => acc + r.amount_clp, 0);
+
+    // Para MOSTRAR "Abono a Intereses"/"Condonación de Mora" en esta pantalla, solo interesan los
+    // creditos que aun son relevantes para ESTE pago (cuotas no pagadas todavia, o sin cuota
+    // asociada). Los creditos de cuotas YA pagadas (nominal_installment_number <= paidCuotas) ya
+    // fueron consumidos por el residuo de esa cuota historica -- mostrarlos aqui es ruido confuso
+    // sin ningun efecto en el total que se esta cobrando ahora mismo.
+    const relevantMoraReceipts = approvedMoraReceipts.filter((r: any) => r.nominal_installment_number == null || r.nominal_installment_number > (reservation.installments_paid || 0));
+    const condonedReceipts = relevantMoraReceipts.filter((r: any) => r.receipt_url === 'CONDONACION_ADMIN');
     const moraCondoned = condonedReceipts.reduce((acc: number, r: any) => acc + r.amount_clp, 0);
     const condonedInstallmentNumbers = Array.from(new Set(condonedReceipts.map((r: any) => r.nominal_installment_number).filter((n: any) => n != null))).sort((a: any, b: any) => a - b);
-    const moraCredits = approvedMoraReceipts.reduce((acc: number, r: any) => acc + r.amount_clp, 0);
-    const moraCreditsReal = moraCredits - moraCondoned;
+    const moraCreditsRelevant = relevantMoraReceipts.reduce((acc: number, r: any) => acc + r.amount_clp, 0);
+    const moraCreditsReal = moraCreditsRelevant - moraCondoned;
 
     // Use simulatedDate if provided (Admin Mode), otherwise Now
     const currentDate = simulatedDate ? new Date(simulatedDate) : new Date();
