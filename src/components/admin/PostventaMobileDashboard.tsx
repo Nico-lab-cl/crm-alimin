@@ -1728,7 +1728,7 @@ export function PostventaMobileDashboard({
                                                                 <span className="text-[8px] text-gray-600 font-bold tabular-nums">{format(new Date(r.created_at), 'dd/MM/yyyy')}</span>
                                                             </div>
                                                             <p className="text-[8px] text-[#3f6066] font-black uppercase tracking-tight mt-0.5">
-                                                                {r.receipt_url === 'CONDONACION_ADMIN' ? 'Condonación de Mora' : r.scope === 'PIE' ? 'Pago de Pie' : r.scope === 'MORA' ? 'Abono Interés' : 'Abono Cuota'}
+                                                                {r.receipt_url === 'CONDONACION_ADMIN' ? 'Condonación de Mora' : r.scope === 'PIE' ? 'Pago de Pie' : r.scope === 'MORA' ? (r.isFullyPaidInterest ? 'Interés Pagado' : 'Abono Interés') : 'Abono Cuota'}
                                                             </p>
                                                         </div>
                                                     </div>
@@ -2132,7 +2132,7 @@ export function PostventaMobileDashboard({
                                                         : p.scope === 'PIE'
                                                             ? 'Pago de Pie'
                                                             : p.scope === 'MORA'
-                                                                ? `Abono Interés${p.nominal_installment_number ? ` (Cuota ${p.nominal_installment_number})` : ''}`
+                                                                ? `${p.isFullyPaidInterest ? 'Interés Pagado' : 'Abono Interés'}${p.nominal_installment_number ? ` (Cuota ${p.nominal_installment_number})` : ''}`
                                                                 : p.nominal_installment_number
                                                                     ? `Cuota ${p.nominal_installment_number}`
                                                                     : p.nominal_installment_range

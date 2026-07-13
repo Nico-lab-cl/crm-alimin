@@ -649,7 +649,52 @@ export async function getReservationReceipts(reservationId: string) {
                 nominal_installment_range: true
             }
         });
-        return { success: true, receipts };
+
+        // Para recibos de tipo MORA (abonos de interes reales, no condonaciones), calcular si
+        // el monto pagado cubrio COMPLETO el interes acumulado de esa cuota al momento del pago,
+        // o si fue solo un abono parcial. Es un flag de solo lectura para la UI (no cambia ningun
+        // calculo existente de mora/residuo, solo permite mostrar "Interés Pagado" vs "Abono a
+        // Intereses" con precision).
+        const needsInterestCheck = receipts.some(r => r.scope === 'MORA' && r.receipt_url !== 'CONDONACION_ADMIN' && r.nominal_installment_number != null);
+        let isFullyPaidByReceiptId: Record<string, boolean> = {};
+
+        if (needsInterestCheck) {
+            const reservation = await prisma.reservation.findUnique({
+                where: { id: reservationId },
+                include: { lot: { select: { price_total_clp: true, area_m2: true } } }
+            });
+
+            if (reservation) {
+                const baseDate = reservation.legacy_installment_start_date
+                    ? new Date(reservation.legacy_installment_start_date)
+                    : new Date(reservation.created_at);
+                const customStart = reservation.legacy_installment_start_date ? new Date(reservation.legacy_installment_start_date) : null;
+                const customDueDay = customStart ? customStart.getUTCDate() : null;
+
+                for (const r of receipts) {
+                    if (r.scope !== 'MORA' || r.receipt_url === 'CONDONACION_ADMIN' || r.nominal_installment_number == null) continue;
+                    const dueDate = getInstallmentDueDate(baseDate, r.nominal_installment_number, Boolean(reservation.is_legacy), customDueDay, Boolean(reservation.is_promo));
+                    const interestAtPayment = calculateTotalInterest(
+                        reservation.lot?.price_total_clp || 0,
+                        reservation.lot?.area_m2 || 200,
+                        dueDate,
+                        Boolean(reservation.is_legacy),
+                        r.created_at,
+                        false,
+                        reservation.legacy_debt_start_date,
+                        reservation.legacy_debt_end_date
+                    );
+                    isFullyPaidByReceiptId[r.id] = r.amount_clp >= interestAtPayment;
+                }
+            }
+        }
+
+        const enrichedReceipts = receipts.map(r => ({
+            ...r,
+            isFullyPaidInterest: isFullyPaidByReceiptId[r.id] ?? false
+        }));
+
+        return { success: true, receipts: enrichedReceipts };
     } catch (error) {
         console.error("Error fetching reservation receipts:", error);
         return { error: "Error al cargar recibos" };
