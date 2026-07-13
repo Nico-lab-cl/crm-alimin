@@ -307,10 +307,13 @@ export function UserDocumentsList({ reservations }: { reservations: Reservation[
                                 });
                             })()}
 
-                            {res.receipts && res.receipts.filter((r: any) => r.status === 'APPROVED').length > 0 && (() => {
-                                const allApproved = res.receipts.filter((r: any) => r.status === 'APPROVED');
+                            {res.receipts && res.receipts.filter((r: any) => r.status === 'APPROVED' && r.receipt_url !== 'CONDONACION_ADMIN').length > 0 && (() => {
+                                // Condonaciones administrativas (receipt_url === 'CONDONACION_ADMIN') no son un pago real
+                                // del cliente: se excluyen de este listado para no mostrar un "comprobante" de dinero
+                                // que nunca se recibio. Su efecto (bajar el interes de mora a pagar) sigue aplicando igual.
+                                const allApproved = res.receipts.filter((r: any) => r.status === 'APPROVED' && r.receipt_url !== 'CONDONACION_ADMIN');
                                 // Include all types of approved receipts (PIE, INSTALLMENT, RESERVATION)
-                                const validReceipts = allApproved; 
+                                const validReceipts = allApproved;
 
                                 return (
                                     <>
