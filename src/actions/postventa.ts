@@ -874,6 +874,109 @@ export async function adjustInstallmentsPaid({
 }
 
 /**
+ * Condona (perdona) el interes de mora residual de UNA cuota especifica ya pagada
+ * (capital al dia, pero con intereses de mora acumulados). Requiere motivo obligatorio
+ * y queda registrado en AuditLog, igual que adjustInstallmentsPaid.
+ *
+ * Tecnicamente crea un PaymentReceipt scope='MORA' ligado a esa cuota (el mismo
+ * mecanismo que un "abono a intereses" real), pero marcado con receipt_url
+ * 'CONDONACION_ADMIN' para que la UI lo distinga de un abono con plata real recibida.
+ * No genera comprobante PDF para el cliente (no hay transaccion real que documentar).
+ */
+export async function condoneMoraInterest({
+    reservationId,
+    installmentNumber,
+    amount,
+    reason
+}: {
+    reservationId: string;
+    installmentNumber: number;
+    amount: number;
+    reason: string;
+}) {
+    const session = await auth();
+    const isPostventa = session?.user?.email === 'postventa@lomasdelmar.cl' || session?.user?.email === 'postventa@aliminspa.cl';
+    if (!session?.user || (session.user.role !== 'ADMIN' && !isPostventa)) {
+        return { error: 'No autorizado' };
+    }
+
+    if (!Number.isFinite(installmentNumber) || installmentNumber <= 0) {
+        return { error: 'Número de cuota inválido' };
+    }
+
+    if (!Number.isFinite(amount) || amount <= 0) {
+        return { error: 'El monto a condonar debe ser mayor a cero' };
+    }
+
+    if (!reason || reason.trim().length < 5) {
+        return { error: 'Debes indicar un motivo (mínimo 5 caracteres)' };
+    }
+
+    try {
+        const reservation = await prisma.reservation.findUnique({
+            where: { id: reservationId },
+            include: {
+                lot: { select: { number: true, stage: true } },
+                buyer: { select: { name: true, email: true } }
+            }
+        });
+
+        if (!reservation) return { error: 'Reserva no encontrada' };
+
+        await prisma.paymentReceipt.create({
+            data: {
+                amount_clp: amount,
+                status: 'APPROVED',
+                receipt_url: 'CONDONACION_ADMIN',
+                scope: 'MORA',
+                nominal_installment_number: installmentNumber,
+                reservation_id: reservationId,
+                lot_id: reservation.lot_id,
+                processed_at: new Date(),
+                created_at: new Date()
+            }
+        });
+
+        const clientName = reservation.buyer?.name || reservation.name || 'Desconocido';
+        const lotNumber = reservation.lot?.number || 'N/A';
+        const lotStage = reservation.lot?.stage || 'N/A';
+
+        await prisma.auditLog.create({
+            data: {
+                action: 'UPDATE',
+                entity: 'Reservation',
+                entity_id: reservationId,
+                details: JSON.stringify({
+                    type: 'CONDONE_MORA_INTEREST',
+                    installmentNumber,
+                    amount,
+                    reason: reason.trim(),
+                    clientName,
+                    lotNumber,
+                    lotStage,
+                    condonedBy: session.user.email
+                }),
+                pk: reservationId,
+                user_id: session.user.id,
+                user_email: session.user.email,
+            }
+        });
+
+        memoryCache.deleteByPrefix('postventa_full_');
+        memoryCache.deleteByPrefix('receipts_paginated_');
+        revalidatePath('/admin/dashboard');
+
+        return {
+            success: true,
+            message: `Interés de mora de la cuota #${installmentNumber} condonado por ${amount.toLocaleString('es-CL')}.`
+        };
+    } catch (error) {
+        console.error("Error condoning mora interest:", error);
+        return { error: 'Error al condonar el interés de mora' };
+    }
+}
+
+/**
  * Sealed action: manually adjust the "Fecha Inicio de Cuotas" (legacy_installment_start_date).
  * This date drives every due-date and mora calculation, so it requires a mandatory reason
  * and is logged for traceability, same pattern as adjustInstallmentsPaid.

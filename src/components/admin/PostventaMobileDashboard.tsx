@@ -18,7 +18,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { approvePaymentReceipt, rejectPaymentReceipt, deletePaymentReceipt, editReceiptAmount } from '@/actions/receipts';
-import { syncLegacyReceipts, getReservationReceipts, registerPostventaPayment, adjustInstallmentsPaid } from '@/actions/postventa';
+import { syncLegacyReceipts, getReservationReceipts, registerPostventaPayment, adjustInstallmentsPaid, condoneMoraInterest } from '@/actions/postventa';
 import { toggleMoraFreeze, updateMoraDates } from '@/actions/dashboard';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
@@ -121,6 +121,11 @@ export function PostventaMobileDashboard({
     const [adjustCuotasValue, setAdjustCuotasValue] = useState('');
     const [adjustCuotasReason, setAdjustCuotasReason] = useState('');
     const [isSubmittingAdjust, setIsSubmittingAdjust] = useState(false);
+
+    // Condone Mora Interest State
+    const [condoningInstallment, setCondoningInstallment] = useState<{ number: number; amount: number; monthName: string } | null>(null);
+    const [condoneReason, setCondoneReason] = useState('');
+    const [isCondoning, setIsCondoning] = useState(false);
 
     useEffect(() => {
         if (selectedClientLedger) {
@@ -247,6 +252,35 @@ export function PostventaMobileDashboard({
         } catch (error) {
             console.error(error);
             toast.error("No se pudo eliminar el pago");
+        }
+    };
+
+    const handleCondoneMoraInterest = async () => {
+        if (!condoningInstallment || !selectedClientLedger?.id || isCondoning) return;
+        if (!condoneReason || condoneReason.trim().length < 5) {
+            toast.error('Ingresa un motivo (mínimo 5 caracteres)');
+            return;
+        }
+        setIsCondoning(true);
+        try {
+            const res = await condoneMoraInterest({
+                reservationId: selectedClientLedger.id,
+                installmentNumber: condoningInstallment.number,
+                amount: condoningInstallment.amount,
+                reason: condoneReason
+            });
+            if (res.error) {
+                toast.error(res.error);
+            } else {
+                toast.success(res.message || 'Interés de mora condonado');
+                setCondoningInstallment(null);
+                setCondoneReason('');
+                refreshData();
+            }
+        } catch (e) {
+            toast.error('Error al condonar el interés de mora');
+        } finally {
+            setIsCondoning(false);
         }
     };
 
@@ -1440,6 +1474,7 @@ export function PostventaMobileDashboard({
                                                                 <th className="p-3 text-[9px] font-black text-[#3f6066] uppercase tracking-widest text-right">Valor Cuota</th>
                                                                 <th className="p-3 text-[9px] font-black text-[#3f6066] uppercase tracking-widest text-center">Días de Atraso</th>
                                                                 <th className="p-3 text-[9px] font-black text-[#3f6066] uppercase tracking-widest text-right">Interés Mora</th>
+                                                                <th className="p-3 text-[9px] font-black text-[#3f6066] uppercase tracking-widest text-center">Acción</th>
                                                             </tr>
                                                         </thead>
                                                         <tbody className="divide-y divide-gray-100 text-xs">
@@ -1458,6 +1493,17 @@ export function PostventaMobileDashboard({
                                                                     </td>
                                                                     <td className="p-3 text-right text-red-500 font-black tabular-nums">
                                                                         {formatCurrency(inst.interestPenalty)}
+                                                                    </td>
+                                                                    <td className="p-3 text-center">
+                                                                        {inst.capitalPaid && inst.interestPenalty > 0 && (
+                                                                            <button
+                                                                                onClick={() => setCondoningInstallment({ number: inst.number, amount: inst.interestPenalty, monthName: inst.monthName })}
+                                                                                className="text-[9px] font-black uppercase tracking-widest text-emerald-500 hover:text-emerald-600 underline underline-offset-2"
+                                                                                title="Condonar interés de mora de esta cuota"
+                                                                            >
+                                                                                Condonar
+                                                                            </button>
+                                                                        )}
                                                                     </td>
                                                                 </tr>
                                                             ))}
@@ -1791,6 +1837,71 @@ export function PostventaMobileDashboard({
             </DialogContent>
         </Dialog>
 
+        {/* Condone Mora Interest Modal */}
+        <Dialog open={!!condoningInstallment} onOpenChange={(open) => { if (!open) { setCondoningInstallment(null); setCondoneReason(''); } }}>
+            <DialogContent className="max-w-[90vw] md:max-w-md bg-white border-gray-200 rounded-3xl">
+                <DialogHeader>
+                    <DialogTitle className="text-gray-900 font-black uppercase tracking-tight flex items-center gap-3">
+                        <Gavel className="w-5 h-5 text-emerald-500" />
+                        Condonar Interés de Mora
+                    </DialogTitle>
+                    <DialogDescription className="text-gray-500 text-xs">
+                        Perdona el interés de mora acumulado de esta cuota. Se guardará un registro de auditoría con el motivo.
+                    </DialogDescription>
+                </DialogHeader>
+                {condoningInstallment && (
+                    <div className="py-4 space-y-5">
+                        <div className="bg-gray-50 border border-gray-200 rounded-2xl p-4 space-y-2">
+                            <div className="flex justify-between items-center">
+                                <span className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Cuota</span>
+                                <span className="text-[10px] font-bold text-[#4A6E75] uppercase">#{condoningInstallment.number} · {condoningInstallment.monthName}</span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                                <span className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Interés de Mora a Condonar</span>
+                                <span className="text-lg font-black text-emerald-500 tabular-nums">{formatCurrency(condoningInstallment.amount)}</span>
+                            </div>
+                        </div>
+
+                        <div className="space-y-1.5">
+                            <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">Motivo de la Condonación</label>
+                            <Textarea
+                                placeholder="Ej: Consenso del equipo de postventa para perdonar la multa..."
+                                value={condoneReason}
+                                onChange={(e) => setCondoneReason(e.target.value)}
+                                rows={2}
+                                className="bg-white/20 border-gray-200 text-xs text-gray-900 placeholder:text-gray-400"
+                                autoFocus
+                            />
+                        </div>
+
+                        <div className="bg-amber-500/5 border border-amber-500/20 rounded-xl p-3 flex items-start gap-2">
+                            <ShieldAlert className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                            <p className="text-[9px] text-amber-400/80 font-bold leading-relaxed">
+                                Esta condonación quedará registrada en el log de auditoría con tu usuario, la fecha y el motivo. No genera comprobante para el cliente ni afecta otras cuotas.
+                            </p>
+                        </div>
+                    </div>
+                )}
+                <div className="flex flex-col-reverse sm:flex-row justify-end gap-2">
+                    <Button
+                        variant="outline"
+                        onClick={() => { setCondoningInstallment(null); setCondoneReason(''); }}
+                        className="min-h-[44px] bg-gray-50 border-gray-200 text-gray-900 hover:bg-gray-100 font-black uppercase text-[10px] tracking-widest rounded-xl"
+                    >
+                        Cancelar
+                    </Button>
+                    <Button
+                        onClick={handleCondoneMoraInterest}
+                        disabled={isCondoning || condoneReason.trim().length < 5}
+                        className="min-h-[44px] bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-500 border border-emerald-500/30 font-black uppercase text-[10px] tracking-widest rounded-xl"
+                    >
+                        {isCondoning ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Gavel className="w-4 h-4 mr-2" />}
+                        Confirmar Condonación
+                    </Button>
+                </div>
+            </DialogContent>
+        </Dialog>
+
             {/* Global History Modal */}
             <Dialog open={showPaymentsModal} onOpenChange={setShowPaymentsModal}>
                 <DialogContent className="max-w-2xl w-[95vw] h-[80vh] bg-white border-gray-200 p-0 overflow-hidden flex flex-col rounded-[2.5rem]">
@@ -2006,27 +2117,31 @@ export function PostventaMobileDashboard({
                                             <div>
                                                 <p className="text-xs font-black text-gray-900 uppercase">{formatCurrency(p.amount_clp)}</p>
                                                 <p className="text-[9px] text-gray-500 font-bold uppercase mt-0.5 tracking-tight">
-                                                    {p.scope === 'PIE' 
-                                                        ? 'Pago de Pie' 
-                                                        : p.scope === 'MORA'
-                                                            ? `Abono Interés${p.nominal_installment_number ? ` (Cuota ${p.nominal_installment_number})` : ''}`
-                                                            : p.nominal_installment_number 
-                                                                ? `Cuota ${p.nominal_installment_number}` 
-                                                                : p.nominal_installment_range 
-                                                                    ? `Cuotas ${p.nominal_installment_range}` 
-                                                                    : `${(p.installments_count || 1) > 1 ? p.installments_count + ' Cuotas' : 'Cuota'}`} · {format(new Date(p.created_at), 'dd/MM/yyyy HH:mm')}
+                                                    {p.receipt_url === 'CONDONACION_ADMIN'
+                                                        ? `Condonación de Mora${p.nominal_installment_number ? ` (Cuota ${p.nominal_installment_number})` : ''}`
+                                                        : p.scope === 'PIE'
+                                                            ? 'Pago de Pie'
+                                                            : p.scope === 'MORA'
+                                                                ? `Abono Interés${p.nominal_installment_number ? ` (Cuota ${p.nominal_installment_number})` : ''}`
+                                                                : p.nominal_installment_number
+                                                                    ? `Cuota ${p.nominal_installment_number}`
+                                                                    : p.nominal_installment_range
+                                                                        ? `Cuotas ${p.nominal_installment_range}`
+                                                                        : `${(p.installments_count || 1) > 1 ? p.installments_count + ' Cuotas' : 'Cuota'}`} · {format(new Date(p.created_at), 'dd/MM/yyyy HH:mm')}
                                                 </p>
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-2">
                                             {getStatusBadge(p.status)}
-                                            <button 
-                                                onClick={() => setViewerConfig({ isOpen: true, url: p.receipt_url, name: `Recibo ${format(new Date(p.created_at), 'dd/MM/yyyy')}`, category: 'PAGO' })}
-                                                className="p-2 bg-[#3f6066]/20 hover:bg-[#3f6066]/30 text-[#4A6E75] rounded-lg transition-all"
-                                                title="Ver"
-                                            >
-                                                <Eye className="w-4 h-4" />
-                                            </button>
+                                            {p.receipt_url !== 'CONDONACION_ADMIN' && (
+                                                <button
+                                                    onClick={() => setViewerConfig({ isOpen: true, url: p.receipt_url, name: `Recibo ${format(new Date(p.created_at), 'dd/MM/yyyy')}`, category: 'PAGO' })}
+                                                    className="p-2 bg-[#3f6066]/20 hover:bg-[#3f6066]/30 text-[#4A6E75] rounded-lg transition-all"
+                                                    title="Ver"
+                                                >
+                                                    <Eye className="w-4 h-4" />
+                                                </button>
+                                            )}
                                             <button 
                                                 onClick={() => {
                                                     setEditingReceipt(p);
