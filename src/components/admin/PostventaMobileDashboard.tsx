@@ -1427,11 +1427,19 @@ export function PostventaMobileDashboard({
                                                         {formatCurrency(selectedClientLedger.penaltyAmount || 0)}
                                                     </p>
                                                 </div>
-                                                {(selectedClientLedger.moraCredits || 0) > 0 && (
+                                                {(selectedClientLedger.moraCreditsReal || 0) > 0 && (
                                                     <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 shadow-sm">
                                                         <p className="text-[8px] text-emerald-600 font-black uppercase tracking-widest mb-1.5">Abono a Intereses</p>
                                                         <p className="text-lg font-black text-emerald-600 tabular-nums">
-                                                            -{formatCurrency(selectedClientLedger.moraCredits || 0)}
+                                                            -{formatCurrency(selectedClientLedger.moraCreditsReal || 0)}
+                                                        </p>
+                                                    </div>
+                                                )}
+                                                {(selectedClientLedger.moraCondoned || 0) > 0 && (
+                                                    <div className="bg-teal-50 border border-teal-200 rounded-2xl p-4 shadow-sm">
+                                                        <p className="text-[8px] text-teal-600 font-black uppercase tracking-widest mb-1.5">Condonado</p>
+                                                        <p className="text-lg font-black text-teal-600 tabular-nums">
+                                                            -{formatCurrency(selectedClientLedger.moraCondoned || 0)}
                                                         </p>
                                                     </div>
                                                 )}
@@ -1719,7 +1727,9 @@ export function PostventaMobileDashboard({
                                                                 <p className="text-[10px] font-black text-gray-900 uppercase tracking-widest">{formatCurrency(r.amount_clp)}</p>
                                                                 <span className="text-[8px] text-gray-600 font-bold tabular-nums">{format(new Date(r.created_at), 'dd/MM/yyyy')}</span>
                                                             </div>
-                                                            <p className="text-[8px] text-[#3f6066] font-black uppercase tracking-tight mt-0.5">{r.scope === 'PIE' ? 'Pago de Pie' : 'Abono Cuota'}</p>
+                                                            <p className="text-[8px] text-[#3f6066] font-black uppercase tracking-tight mt-0.5">
+                                                                {r.receipt_url === 'CONDONACION_ADMIN' ? 'Condonación de Mora' : r.scope === 'PIE' ? 'Pago de Pie' : r.scope === 'MORA' ? 'Abono Interés' : 'Abono Cuota'}
+                                                            </p>
                                                         </div>
                                                     </div>
                                                 ))}

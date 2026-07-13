@@ -122,10 +122,17 @@ export function PaymentButtons({ reservationId, lot, reservation, acquisitionDat
     const pendingPieReceipt = reservation.receipts?.find((r: any) => r.scope === 'PIE' && r.status === 'PENDING');
     const pendingInstReceipt = reservation.receipts?.find((r: any) => r.scope === 'INSTALLMENT' && r.status === 'PENDING');
 
-    // Calculate mora credits (abonos parciales de intereses)
-    const moraCredits = reservation.receipts
-        ?.filter((r: any) => r.scope === 'MORA' && r.status === 'APPROVED')
-        .reduce((acc: number, r: any) => acc + r.amount_clp, 0) || 0;
+    // Calculate mora credits (abonos parciales de intereses).
+    // moraCredits = TOTAL (abonos reales + condonaciones administrativas): se usa tal cual para
+    // el descuento del interes efectivo mas abajo, ya que una condonacion tambien debe reducirlo.
+    // moraCondoned / moraCreditsReal desglosan ese mismo total SOLO para mostrarlo por separado:
+    // una condonacion no es plata que el cliente haya pagado, no debe etiquetarse como "abono".
+    const approvedMoraReceipts = reservation.receipts?.filter((r: any) => r.scope === 'MORA' && r.status === 'APPROVED') || [];
+    const moraCondoned = approvedMoraReceipts
+        .filter((r: any) => r.receipt_url === 'CONDONACION_ADMIN')
+        .reduce((acc: number, r: any) => acc + r.amount_clp, 0);
+    const moraCredits = approvedMoraReceipts.reduce((acc: number, r: any) => acc + r.amount_clp, 0);
+    const moraCreditsReal = moraCredits - moraCondoned;
 
     // Use simulatedDate if provided (Admin Mode), otherwise Now
     const currentDate = simulatedDate ? new Date(simulatedDate) : new Date();
@@ -560,10 +567,16 @@ export function PaymentButtons({ reservationId, lot, reservation, acquisitionDat
                                             </div>
                                         )}
 
-                                        {moraCredits > 0 && (
+                                        {moraCreditsReal > 0 && (
                                             <div className="flex justify-between text-green-600 font-bold text-sm mt-2 border-t border-green-100 pt-1">
                                                 <span>Abono a Intereses:</span>
-                                                <span>-{formatCurrency(moraCredits)}</span>
+                                                <span>-{formatCurrency(moraCreditsReal)}</span>
+                                            </div>
+                                        )}
+                                        {moraCondoned > 0 && (
+                                            <div className="flex justify-between text-teal-600 font-bold text-sm mt-2 border-t border-teal-100 pt-1">
+                                                <span>Condonación de Mora:</span>
+                                                <span>-{formatCurrency(moraCondoned)}</span>
                                             </div>
                                         )}
 

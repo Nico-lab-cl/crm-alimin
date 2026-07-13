@@ -141,11 +141,18 @@ export async function getFullPostventaData({
             const pieAmount = res.receipts.reduce((acc: number, r: any) => r.scope === 'PIE' ? acc + r.amount_clp : acc, 0);
             const cuotasAmount = res.receipts.reduce((acc: number, r: any) => r.scope === 'INSTALLMENT' ? acc + r.amount_clp : acc, 0);
             
-            // Calculate mora credits (abonos parciales de intereses)
-            const moraCredits = res.receipts
-                .filter((r: any) => r.scope === 'MORA')
+            // Calculate mora credits (abonos parciales de intereses).
+            // moraCredits = TOTAL (abonos reales + condonaciones administrativas) -- se usa tal cual
+            // para el descuento del interes efectivo, ya que una condonacion tambien debe reducirlo.
+            // moraCondoned / moraCreditsReal son el mismo total desglosado SOLO para mostrarlo
+            // por separado en la UI (una condonacion no es plata recibida, no debe llamarse "abono").
+            const moraReceipts = res.receipts.filter((r: any) => r.scope === 'MORA');
+            const moraCondoned = moraReceipts
+                .filter((r: any) => r.receipt_url === 'CONDONACION_ADMIN')
                 .reduce((acc: number, r: any) => acc + r.amount_clp, 0);
-            
+            const moraCredits = moraReceipts.reduce((acc: number, r: any) => acc + r.amount_clp, 0);
+            const moraCreditsReal = moraCredits - moraCondoned;
+
             // Count actual installment receipts for discrepancy detection
             const receiptBasedInstallmentCount = res.receipts
                 .filter((r: any) => r.scope === 'INSTALLMENT')
@@ -440,6 +447,8 @@ export async function getFullPostventaData({
                 lateDays,
                 penaltyAmount,
                 moraCredits,
+                moraCreditsReal,
+                moraCondoned,
                 residualMoraTotal: residualMora.total,
                 effectivePenalty: effectivePenalty,
                 pending_amount: (res as any).pending_amount || 0,
