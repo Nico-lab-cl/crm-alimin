@@ -128,9 +128,9 @@ export function PaymentButtons({ reservationId, lot, reservation, acquisitionDat
     // moraCondoned / moraCreditsReal desglosan ese mismo total SOLO para mostrarlo por separado:
     // una condonacion no es plata que el cliente haya pagado, no debe etiquetarse como "abono".
     const approvedMoraReceipts = reservation.receipts?.filter((r: any) => r.scope === 'MORA' && r.status === 'APPROVED') || [];
-    const moraCondoned = approvedMoraReceipts
-        .filter((r: any) => r.receipt_url === 'CONDONACION_ADMIN')
-        .reduce((acc: number, r: any) => acc + r.amount_clp, 0);
+    const condonedReceipts = approvedMoraReceipts.filter((r: any) => r.receipt_url === 'CONDONACION_ADMIN');
+    const moraCondoned = condonedReceipts.reduce((acc: number, r: any) => acc + r.amount_clp, 0);
+    const condonedInstallmentNumbers = Array.from(new Set(condonedReceipts.map((r: any) => r.nominal_installment_number).filter((n: any) => n != null))).sort((a: any, b: any) => a - b);
     const moraCredits = approvedMoraReceipts.reduce((acc: number, r: any) => acc + r.amount_clp, 0);
     const moraCreditsReal = moraCredits - moraCondoned;
 
@@ -575,7 +575,10 @@ export function PaymentButtons({ reservationId, lot, reservation, acquisitionDat
                                         )}
                                         {moraCondoned > 0 && (
                                             <div className="flex justify-between text-teal-600 font-bold text-sm mt-2 border-t border-teal-100 pt-1">
-                                                <span>Condonación de Mora:</span>
+                                                <span>
+                                                    Condonación de Mora
+                                                    {condonedInstallmentNumbers.length > 0 && ` (Cuota${condonedInstallmentNumbers.length > 1 ? 's' : ''} ${condonedInstallmentNumbers.join(', ')})`}:
+                                                </span>
                                                 <span>-{formatCurrency(moraCondoned)}</span>
                                             </div>
                                         )}
