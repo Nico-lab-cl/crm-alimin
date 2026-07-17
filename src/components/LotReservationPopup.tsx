@@ -76,7 +76,7 @@ export const LotReservationPopup = ({ lot, isOpen, onClose, onConfirm, isTempora
   // Fallback calculation in case DB data is missing or loading
   const getTotalInstallments = (area: number | null | undefined, stage?: number | null) => {
     if (area == null || stage === 4) return null;
-    if (area >= 200 && area <= 299) return 71;
+    if (area >= 200 && area <= 299) return 72;
     if (area >= 300 && area <= 399) return 87;
     return null;
   };
@@ -342,7 +342,7 @@ export const LotReservationPopup = ({ lot, isOpen, onClose, onConfirm, isTempora
   const pieAmount = lot.pie ?? getPieAmount(lotArea, lotStageLabel);
   // Use valorCuota from lot data (DB) first, fallback to calculation if missing
   const valorCuotaAmount = lot.valorCuota ?? getValorCuota(lotArea);
-  const lastInstallmentAmount = lot.last_installment_amount ?? (lotArea != null && lotStageLabel !== 4 ? (lotArea < 300 ? 290000 : 240000) : null);
+  const lastInstallmentAmount = lot.last_installment_amount ?? (lotArea != null && lotStageLabel !== 4 ? (lotArea < 300 ? 440000 : 240000) : null);
   const offerPrice = OFFER_PRICE;
   const showOfferSection = totalInstallments != null;
   const whatsappHref = `https://wa.me/56973077128?text=${encodeURIComponent(

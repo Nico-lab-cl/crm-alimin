@@ -271,7 +271,7 @@ const generateInitialLots = (): Lot[] => {
     let fallbackTotalPrice: number | null = null;
 
     if (stage !== 4 && area && area >= 200 && area <= 299) {
-      cuotas = 71;
+      cuotas = 72;
       pie = 1500000;
       valorCuota = 550000;
       fallbackTotalPrice = 40990000;
