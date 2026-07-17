@@ -68,9 +68,9 @@ export async function bootstrapDatabase(prisma: PrismaClient) {
                 pricingData = {
                     price_total_clp: 50990000,
                     pie: 3000000,
-                    cuotas: 87,
+                    cuotas: 88,
                     valor_cuota: 550000,
-                    last_installment_amount: 240000
+                    last_installment_amount: 140000
                 };
             }
         }
