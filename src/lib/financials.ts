@@ -89,9 +89,10 @@ export function calculateDaysLate(
     if (legacyDebtStartDate) {
         const manualStart = toSantiagoMidnight(legacyDebtStartDate);
         const baseAnchor = manualStart > gracePeriodEnd ? manualStart : gracePeriodEnd;
-        // We anchor to the day before so that difference is 1 on start date
-        gDate = new Date(baseAnchor);
-        gDate.setUTCDate(gDate.getUTCDate() - 1);
+        // Sin corrimiento: el ultimo dia de gracia (baseAnchor) queda libre de multa,
+        // igual que la rama sin legacyDebtStartDate. Antes se restaba 1 dia aqui, lo
+        // que cobraba mora un dia antes de que terminara la gracia prometida.
+        gDate = baseAnchor;
     } else {
         gDate = gracePeriodEnd;
     }
