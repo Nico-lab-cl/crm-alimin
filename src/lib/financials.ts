@@ -150,6 +150,12 @@ export interface ResidualMoraInstallment {
  * mora registrado. Así no se reactiva retroactivamente la mora de cuotas antiguas
  * pagadas tarde sin abono. Para frenar definitivamente el residuo, usar mora_frozen
  * o la fecha de cierre (legacy_debt_end_date), que ya topan el cálculo.
+ *
+ * Auto-resolución: si la suma de abonos/condonaciones de una cuota ya cubría el
+ * interés devengado a la fecha del último de esos movimientos, esa cuota queda
+ * resuelta desde esa fecha (no sigue comparándose contra "hoy" indefinidamente).
+ * Si el último movimiento fue parcial, el residuo sigue creciendo $10.000/día hasta
+ * que algo lo cubra — igual que antes.
  */
 export function calculateResidualMoraOnPaidInstallments(params: {
     baseDate: Date | string;
@@ -161,7 +167,7 @@ export function calculateResidualMoraOnPaidInstallments(params: {
     moraFrozen?: boolean;
     legacyDebtStartDate?: Date | string | null;
     legacyDebtEndDate?: Date | string | null;
-    moraReceipts: Array<{ nominal_installment_number: number | null; amount_clp: number }>;
+    moraReceipts: Array<{ nominal_installment_number: number | null; amount_clp: number; created_at?: Date | string | null }>;
     totalLotPrice: number;
     lotAreaM2: number;
 }): { total: number; installments: ResidualMoraInstallment[] } {
@@ -171,9 +177,8 @@ export function calculateResidualMoraOnPaidInstallments(params: {
     let total = 0;
     for (let n = 1; n <= params.paidCuotas; n++) {
         // Gating: solo cuotas con abono de mora explícito
-        const credits = params.moraReceipts
-            .filter((r) => r.nominal_installment_number === n)
-            .reduce((sum, r) => sum + (r.amount_clp || 0), 0);
+        const nReceipts = params.moraReceipts.filter((r) => r.nominal_installment_number === n);
+        const credits = nReceipts.reduce((sum, r) => sum + (r.amount_clp || 0), 0);
         if (credits <= 0) continue;
 
         const due = getInstallmentDueDate(
@@ -185,12 +190,37 @@ export function calculateResidualMoraOnPaidInstallments(params: {
         );
         if (due >= params.currentDate) continue;
 
+        // Fecha efectiva de cálculo: por defecto "hoy", salvo que el último abono/
+        // condonación ya haya cubierto el interés devengado a esa fecha (resuelto).
+        let effectiveDate = params.currentDate;
+        const lastCreditDate = nReceipts.reduce<Date | null>((latest, r) => {
+            if (!r.created_at) return latest;
+            const d = toSantiagoMidnight(r.created_at);
+            return !latest || d > latest ? d : latest;
+        }, null);
+
+        if (lastCreditDate && lastCreditDate < params.currentDate) {
+            const interestAtLastCredit = calculateTotalInterest(
+                params.totalLotPrice,
+                params.lotAreaM2,
+                due,
+                params.isLegacy,
+                lastCreditDate,
+                false,
+                params.legacyDebtStartDate,
+                params.legacyDebtEndDate
+            );
+            if (credits >= interestAtLastCredit) {
+                effectiveDate = lastCreditDate;
+            }
+        }
+
         const interest = calculateTotalInterest(
             params.totalLotPrice,
             params.lotAreaM2,
             due,
             params.isLegacy,
-            params.currentDate,
+            effectiveDate,
             false,
             params.legacyDebtStartDate,
             params.legacyDebtEndDate
@@ -201,7 +231,7 @@ export function calculateResidualMoraOnPaidInstallments(params: {
 
         const daysLate = calculateDaysLate(
             due,
-            params.currentDate,
+            effectiveDate,
             params.isLegacy,
             params.legacyDebtStartDate,
             params.legacyDebtEndDate
