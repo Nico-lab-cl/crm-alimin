@@ -277,6 +277,31 @@ export async function GET(req: NextRequest) {
                     console.error("Failed to trigger payment webhook", e);
                 }
 
+                // --- CAPTAR AL CLIENTE EN EL PORTAL DE PAGOS ---
+                // Apenas se paga la reserva, avisamos al portal (pagos.aliminspa.cl)
+                // para que traiga a este cliente recien reservado. El portal decide
+                // solo-insercion: si ya existe no hace nada. El secreto va por env,
+                // nunca hardcodeado. Si no esta configurado, se omite sin romper el pago.
+                try {
+                    const portalSyncUrl = process.env.PORTAL_SYNC_URL || "https://pagos.aliminspa.cl/api/cron/sync-lomas";
+                    const portalSecret = process.env.PORTAL_SYNC_SECRET || "";
+                    if (portalSecret) {
+                        const ctrl = new AbortController();
+                        const t = setTimeout(() => ctrl.abort(), 25000);
+                        const resp = await fetch(portalSyncUrl, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${portalSecret}` },
+                            signal: ctrl.signal,
+                        });
+                        clearTimeout(t);
+                        console.log("Portal sync triggered:", resp.status);
+                    } else {
+                        console.warn("PORTAL_SYNC_SECRET no configurado; no se avisó al portal de pagos");
+                    }
+                } catch (e) {
+                    console.error("Failed to trigger portal sync (el pago NO se ve afectado)", e);
+                }
+
                 // Fire Meta CAPI Purchase for Reservation
                 try {
                     const { sendMetaCAPIEvent, prepareCAPIUserData } = await import('@/lib/metaCAPI');
