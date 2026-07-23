@@ -45,7 +45,31 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                         const passwordsMatch = await bcrypt.compare(password.trim(), user.password);
                         if (passwordsMatch) {
                             console.log(`[Auth] Login successful for: ${email}`);
-                            return user;
+
+                            // --- CUTOVER AL PORTAL DE PAGOS ---
+                            // Los clientes (role USER) que ya reservaron y pagaron ya no
+                            // deben usar Lomas: su ficha (pagos, mora, documentos) vive en
+                            // el portal de pagos.aliminspa.cl. EXCEPCION: si aun le falta
+                            // firmar el Contrato de Reserva (y no es legacy/papel), lo
+                            // dejamos entrar normal hasta que pueda firmar (esa parte todavia
+                            // no existe en el portal).
+                            let needsPortalRedirect = false;
+                            if (user.role === Role.USER) {
+                                const stillNeedsToSign = await prisma.reservation.count({
+                                    where: {
+                                        buyer_id: user.id,
+                                        status: 'paid',
+                                        signed_at: null,
+                                        is_legacy: false,
+                                    },
+                                });
+                                const hasAnyPaidReservation = await prisma.reservation.count({
+                                    where: { buyer_id: user.id, status: 'paid' },
+                                });
+                                needsPortalRedirect = hasAnyPaidReservation > 0 && stillNeedsToSign === 0;
+                            }
+
+                            return { ...user, needsPortalRedirect };
                         }
 
                         console.log(`[Auth] Password mismatch for: ${email}`);
@@ -75,6 +99,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                 token.id = user.id
                 // Use type assertion if needed, though extending types/next-auth.d.ts should handle it
                 token.mustChangePassword = (user as any).mustChangePassword;
+                token.needsPortalRedirect = (user as any).needsPortalRedirect ?? false;
             }
             return token
         },
@@ -83,6 +108,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                 session.user.role = token.role as Role
                 session.user.id = token.id as string
                 session.user.mustChangePassword = token.mustChangePassword as boolean;
+                session.user.needsPortalRedirect = (token.needsPortalRedirect as boolean) ?? false;
 
                 // --- Administrative Impersonation Support ---
                 // If the logged-in user is an ADMIN and an 'impersonation_token' exists,

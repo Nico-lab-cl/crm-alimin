@@ -4,9 +4,18 @@ import { NextResponse } from "next/server"
 export default auth((req) => {
     const isLoggedIn = !!req.auth
     const isOnChangePassword = req.nextUrl.pathname === '/user/change-password'
+    const isOnPortalRedirect = req.nextUrl.pathname === '/cuenta-migrada'
+
+    // Cutover al portal de pagos: clientes que ya no necesitan Lomas (ya
+    // firmaron o son legacy) se bloquean aqui y se les manda a la pantalla
+    // que los dirige a pagos.aliminspa.cl.
+    const needsPortalRedirect = req.auth?.user?.needsPortalRedirect
+    if (isLoggedIn && needsPortalRedirect && !isOnPortalRedirect) {
+        return NextResponse.redirect(new URL('/cuenta-migrada', req.nextUrl))
+    }
 
     // Check if user must change password
-    // We need to cast because the type might not be fully inferred in middleware context sometimes, 
+    // We need to cast because the type might not be fully inferred in middleware context sometimes,
     // but we updated types/next-auth.d.ts so it should be fine.
     const mustChangePassword = req.auth?.user?.mustChangePassword
 

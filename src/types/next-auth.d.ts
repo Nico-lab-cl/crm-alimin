@@ -12,12 +12,15 @@ declare module "next-auth" {
             role: Role
             id: string
             mustChangePassword: boolean
+            /** True si el cliente ya no necesita usar Lomas (debe ir al portal de pagos) */
+            needsPortalRedirect: boolean
         } & DefaultSession["user"]
     }
 
     interface User {
         role: Role
         mustChangePassword: boolean
+        needsPortalRedirect?: boolean
     }
 }
 
@@ -26,5 +29,6 @@ declare module "next-auth/jwt" {
     interface JWT {
         role: Role
         id: string
+        needsPortalRedirect?: boolean
     }
 }
