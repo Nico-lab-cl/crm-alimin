@@ -215,19 +215,34 @@ export const Header = ({ projectName }: HeaderProps) => {
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <div className="flex flex-col items-center gap-1">
-                <Link href="/login">
+              <div className="flex items-center gap-2 md:gap-3">
+                <a
+                  href="https://pagos.aliminspa.cl/login"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
                   <Button
-                    variant="default"
+                    variant="outline"
                     size="sm"
-                    className="h-9 px-6 bg-[#36595F] hover:bg-[#2b464a] text-white shadow-md hover:shadow-lg transition-all rounded-full font-medium"
+                    className="h-9 px-4 md:px-6 border-alimin-gold/60 bg-transparent text-alimin-gold hover:bg-alimin-gold/10 hover:text-alimin-gold shadow-sm transition-all rounded-full font-medium"
                   >
-                    Iniciar Sesión
+                    Portal de Pagos
                   </Button>
-                </Link>
-                <Link href="/register" className="text-[10px] text-muted-foreground hover:text-primary transition-colors underline decoration-dotted">
-                  Registrarse
-                </Link>
+                </a>
+                <div className="flex flex-col items-center gap-1">
+                  <Link href="/login">
+                    <Button
+                      variant="default"
+                      size="sm"
+                      className="h-9 px-6 bg-[#36595F] hover:bg-[#2b464a] text-white shadow-md hover:shadow-lg transition-all rounded-full font-medium"
+                    >
+                      Iniciar Sesión
+                    </Button>
+                  </Link>
+                  <Link href="/register" className="text-[10px] text-muted-foreground hover:text-primary transition-colors underline decoration-dotted">
+                    Registrarse
+                  </Link>
+                </div>
               </div>
             )}
           </div>
