@@ -31,7 +31,9 @@ export default auth((req) => {
 })
 
 export const config = {
-    // Apply to all user dashboard routes and potentially others where auth is required
-    // We exclude api (except maybe protected ones?), static files, etc.
-    matcher: ['/user/:path*'],
+    // Apply to all user dashboard routes AND the home page, ya que el login
+    // redirige a '/' primero -- si no interceptamos ahi, el cutover al portal
+    // nunca se dispara en la practica (el cliente ve el home normal y nunca
+    // navega manualmente a /user/*).
+    matcher: ['/', '/user/:path*'],
 }
