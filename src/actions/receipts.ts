@@ -10,6 +10,78 @@ import { getInstallmentDueDate } from '@/lib/financials';
 const POSTVENTA_CACHE_KEY = 'postventa_data';
 const RECEIPTS_PAGINATED_CACHE_KEY = 'receipts_paginated_';
 
+/**
+ * Espeja un comprobante recien subido en la bandeja del portal de pagos.
+ *
+ * Los clientes de Lomas ya no deberian pagar aca (ver el cutover a
+ * pagos.aliminspa.cl), pero la bandera que los redirige se calcula al iniciar
+ * sesion y vive en el JWT, que dura 30 dias: quien tenia sesion abierta desde
+ * antes del cutover sigue llegando a este formulario. Cuando eso pasa el pago
+ * quedaba solo en Lomas y postventa, que ya revisa en el portal, no lo veia.
+ *
+ * Por eso el comprobante se escribe tambien en `pagos.payment_receipts`. Ambos
+ * schemas viven en la misma base, asi que basta con SQL directo.
+ *
+ * Es idempotente (el NOT EXISTS evita duplicar si se reintenta) y no lanza:
+ * si el espejo falla, el pago del cliente igual queda guardado en Lomas.
+ */
+async function espejarComprobanteEnPortal(params: {
+    reservationId: string;
+    amount: number;
+    receiptUrl: string;
+    scope: string;
+    installmentsCount: number;
+    createdAt: Date;
+}) {
+    try {
+        const origen = await prisma.reservation.findUnique({
+            where: { id: params.reservationId },
+            select: { buyer: { select: { email: true } }, lot: { select: { number: true, stage: true } } }
+        });
+
+        const email = origen?.buyer?.email?.toLowerCase();
+        if (!email || !origen?.lot) {
+            console.warn('[espejo-portal] sin email o lote; no se espeja', params.reservationId);
+            return;
+        }
+
+        const filas = await prisma.$executeRawUnsafe(
+            `INSERT INTO pagos.payment_receipts
+                (reservation_id, lot_id, amount_clp, status, receipt_url, scope, installments_count, created_at)
+             SELECT r.id, r.lot_id, $1, 'PENDING', $2, $3, $4, $5
+             FROM pagos.reservations r
+             JOIN pagos.lots l ON l.id = r.lot_id
+             JOIN pagos.projects p ON p.id = l.project_id
+             WHERE p.slug = 'lomas-del-mar'
+               AND lower(r.email) = $6
+               AND l.number = $7
+               AND COALESCE(l.stage, '') = $8
+               AND NOT EXISTS (
+                   SELECT 1 FROM pagos.payment_receipts x
+                   WHERE x.reservation_id = r.id
+                     AND x.amount_clp = $1
+                     AND x.created_at = $5
+               )`,
+            params.amount,
+            params.receiptUrl,
+            params.scope,
+            Math.max(1, params.installmentsCount || 1),
+            params.createdAt,
+            email,
+            String(origen.lot.number),
+            String(origen.lot.stage ?? '')
+        );
+
+        if (filas > 0) {
+            console.log(`[espejo-portal] comprobante espejado en el portal (${email}, lote ${origen.lot.number})`);
+        } else {
+            console.warn(`[espejo-portal] sin match o ya existia en el portal (${email}, lote ${origen.lot.number})`);
+        }
+    } catch (e) {
+        console.error('[espejo-portal] fallo al espejar; el comprobante quedo solo en Lomas:', e);
+    }
+}
+
 export async function deletePaymentReceipt(receiptId: string) {
     const session = await auth();
     const isPostventa = session?.user?.email === 'postventa@lomasdelmar.cl' || session?.user?.email === 'postventa@aliminspa.cl';
@@ -221,6 +293,18 @@ export async function uploadPaymentReceipt({
 
         // Trigger webhook or notification logic if necessary
 
+        // La bandeja donde postventa revisa los pagos es la del portal, asi que
+        // el comprobante se escribe alla tambien. Se espera a proposito: si
+        // falla, queda registrado en el log y el pago igual esta guardado aca.
+        await espejarComprobanteEnPortal({
+            reservationId: reservationId,
+            amount: amount,
+            receiptUrl: receiptUrl,
+            scope: scope,
+            installmentsCount: installmentsCount,
+            createdAt: receipt.created_at
+        });
+
         memoryCache.deleteByPrefix('postventa_full_');
         memoryCache.deleteByPrefix('receipts_paginated_');
         revalidatePath('/admin/receipts');
@@ -233,12 +317,48 @@ export async function uploadPaymentReceipt({
     }
 }
 
+/**
+ * Indica si este comprobante ya existe en la bandeja del portal (por espejo o
+ * por copia manual). Se compara por monto + fecha exacta de creacion, que es la
+ * pareja que el espejo preserva al copiar.
+ *
+ * Ante un error de consulta devuelve false a proposito: un problema transitorio
+ * no debe dejar a postventa sin poder trabajar. El log queda para revisarlo.
+ */
+async function estaEnLaBandejaDelPortal(receiptId: string): Promise<boolean> {
+    try {
+        const r = await prisma.paymentReceipt.findUnique({
+            where: { id: receiptId },
+            select: { amount_clp: true, created_at: true }
+        });
+        if (!r) return false;
+
+        const filas: any[] = await prisma.$queryRawUnsafe(
+            `SELECT 1 FROM pagos.payment_receipts WHERE amount_clp = $1 AND created_at = $2 LIMIT 1`,
+            r.amount_clp,
+            r.created_at
+        );
+        return filas.length > 0;
+    } catch (e) {
+        console.error('[espejo-portal] no se pudo verificar si ya esta en el portal:', e);
+        return false;
+    }
+}
+
 export async function approvePaymentReceipt(receiptId: string, serverAuthOverride = false) {
     if (!serverAuthOverride) {
         const session = await auth();
         if (!session?.user || session.user.role !== 'ADMIN') {
             throw new Error("Unauthorized");
         }
+    }
+
+    // Este comprobante ya vive en la bandeja del portal, que es donde postventa
+    // revisa. Aprobarlo aca dejaria las cuotas de Lomas y del portal en numeros
+    // distintos para el mismo pago. Se corta antes del try para que el mensaje
+    // llegue tal cual a la pantalla y no lo tape el catch generico de abajo.
+    if (await estaEnLaBandejaDelPortal(receiptId)) {
+        throw new Error("Este pago se aprueba en el portal (pagos.aliminspa.cl), no aqui.");
     }
 
     try {
