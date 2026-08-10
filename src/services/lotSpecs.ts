@@ -215,6 +215,26 @@ export const calculateLotPricing = (area: number | null): { totalPrice: number |
   };
 };
 
+// Precio alternativo pagando al contado (condiciones de venta 2026-08).
+// Vive solo en el front: el modelo Lot no tiene columna para este valor.
+export const CASH_PRICING_RULES = {
+  CASH_PRICE_200M2: 35000000,
+  CASH_PRICE_390M2: 43000000,
+} as const;
+
+/**
+ * Precio al contado según el área del lote.
+ * - 200 a 299 m² → 35.000.000 CLP
+ * - 300 a 399 m² → 43.000.000 CLP
+ * - otro → null (no se muestra la alternativa)
+ */
+export const calculateCashPrice = (area: number | null): number | null => {
+  if (area == null) return null;
+  if (area >= 200 && area <= 299) return CASH_PRICING_RULES.CASH_PRICE_200M2;
+  if (area >= 300 && area <= 399) return CASH_PRICING_RULES.CASH_PRICE_390M2;
+  return null;
+};
+
 /**
  * Determina si un lote debe marcarse como VENDIDO por regla de área.
  * Regla: área > 390 m² → sold

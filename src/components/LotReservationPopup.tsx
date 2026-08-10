@@ -19,7 +19,7 @@ import {
   MessageCircle
 } from 'lucide-react';
 import { OFFER_PRICE } from '@/services/mockData';
-import { getLotSpec, getStageLotSpec } from '@/services/lotSpecs';
+import { getLotSpec, getStageLotSpec, calculateCashPrice } from '@/services/lotSpecs';
 import { useToast } from '@/hooks/use-toast';
 import { RutInput } from '@/components/RutInput';
 import { z } from 'zod';
@@ -344,6 +344,8 @@ export const LotReservationPopup = ({ lot, isOpen, onClose, onConfirm, isTempora
   const valorCuotaAmount = lot.valorCuota ?? getValorCuota(lotArea);
   const lastInstallmentAmount = lot.last_installment_amount ?? (lotArea != null && lotStageLabel !== 4 ? (lotArea < 300 ? 440000 : 140000) : null);
   const offerPrice = OFFER_PRICE;
+  // El precio contado no vive en la base: se deriva del area en el front.
+  const cashPrice = calculateCashPrice(lotArea ?? null);
   const showOfferSection = totalInstallments != null;
   const whatsappHref = `https://wa.me/56973077128?text=${encodeURIComponent(
     `Promoción Lomas del Mar - ${lotStageLabel != null ? `Etapa ${lotStageLabel} - ` : ''}Quiero comprar mi terreno en Lomas del Mar, quiero consultar por el lote "${lotLabel}".`
@@ -393,13 +395,6 @@ export const LotReservationPopup = ({ lot, isOpen, onClose, onConfirm, isTempora
               <span className="inline-block mt-3 px-4 py-1.5 bg-primary/10 text-primary text-sm font-medium rounded-full transition-all duration-200 hover:bg-primary/20 hover:scale-105">
                 Etapa {lotStageLabel}
               </span>
-            )}
-            {pieAmount != null && lotStageLabel !== 4 && (
-              <div className="mt-3">
-                <span className="inline-block px-4 py-1.5 bg-amber-400/20 text-amber-700 text-sm font-bold rounded-full border border-amber-400/40 animate-pulse">
-                  🎉 Promoción Minipie
-                </span>
-              </div>
             )}
           </div>
 
@@ -527,6 +522,13 @@ export const LotReservationPopup = ({ lot, isOpen, onClose, onConfirm, isTempora
                 </div>
               )}
             </div>
+
+            {cashPrice != null && (
+              <div className="flex justify-between items-center gap-3 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3">
+                <span className="text-sm md:text-base font-medium text-foreground">Alternativa al contado</span>
+                <span className="text-lg font-bold text-primary">{formatCurrency(cashPrice)}</span>
+              </div>
+            )}
 
             {showOfferSection && (
               <>

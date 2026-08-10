@@ -472,11 +472,6 @@ export const LotGrid = ({
         </div>
       </div>
 
-      {/* Promo Banner */}
-      <div className="mb-4 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-400/15 border border-amber-400/40 text-amber-700 text-sm font-bold">
-        🎉 Promoción Minipie: pie desde $1.500.000 en lotes de 200m² y $3.000.000 en lotes de 390m²
-      </div>
-
       {/* Mobile hint */}
       <p className="text-xs text-muted-foreground mb-2 md:hidden flex items-center gap-1">
         <span>👆</span> Desliza horizontalmente para ver todo el plano
@@ -631,9 +626,6 @@ export const LotGrid = ({
                         <p className={`font-bold ${lot.status === 'available' ? 'text-primary' : 'text-muted-foreground'}`}>
                           {lot.totalPrice ? formatCurrency(lot.totalPrice) : 'Consultar'}
                         </p>
-                        {lot.status === 'available' && lot.area != null && lot.area >= 200 && lot.area <= 399 && (lot.displayStage ?? lot.stage) !== 4 && (
-                          <p className="text-xs font-bold text-amber-600 mt-1">🎉 Promoción Minipie</p>
-                        )}
                         {lot.status === 'reserved' && (
                           <p className="text-xs text-amber-600 mt-1">Reservado</p>
                         )}
