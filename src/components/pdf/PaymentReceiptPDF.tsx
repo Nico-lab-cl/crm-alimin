@@ -164,6 +164,13 @@ const styles = StyleSheet.create({
     }
 });
 
+// "Marzo 2026". Acompana al numero de cuota para que el cliente identifique
+// de inmediato que periodo esta pagando, sin tener que leer el vencimiento.
+const formatMonthYear = (date: Date) => {
+    const label = format(date, 'MMMM yyyy', { locale: es });
+    return label.charAt(0).toUpperCase() + label.slice(1);
+};
+
 interface PaymentReceiptPDFProps {
     receiptId: string;
     receiptDate: Date;
@@ -204,10 +211,11 @@ export const PaymentReceiptPDF = ({
 
     // Helper text logic
     const isCuotas = paymentScope === 'INSTALLMENT';
-    const monthYear = (isCuotas && installmentDueDate) 
-        ? ` (${format(installmentDueDate, 'MMMM yyyy', { locale: es }).toUpperCase()})` 
+    const monthYear = (isCuotas && installmentDueDate)
+        ? ` - ${formatMonthYear(installmentDueDate)}`
         : '';
-        
+
+
     let installmentLabel = '';
     if (nominalInstallmentRange) {
         installmentLabel = `Cuotas #${nominalInstallmentRange}`;
@@ -291,7 +299,7 @@ export const PaymentReceiptPDF = ({
                             <View style={styles.tableRow} key={item.number}>
                                 <View style={{ width: '60%' }}>
                                     <Text style={styles.tableCellItem}>
-                                        Cuota #{String(item.number).padStart(2, '0')}/{totalInstallments} - Lote {lotNumber}
+                                        Cuota #{String(item.number).padStart(2, '0')}/{totalInstallments} - {formatMonthYear(item.dueDate)} - Lote {lotNumber}
                                     </Text>
                                     <Text style={{ fontSize: 9, color: '#666', marginTop: 4 }}>
                                         Fecha de vencimiento: {format(item.dueDate, "dd 'de' MMMM, yyyy", { locale: es })}
